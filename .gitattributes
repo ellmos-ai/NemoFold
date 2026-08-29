@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.pdf binary
+*.docx binary
+*.odt binary
+*.zip binary
+*.sqlite3 binary
