@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 400" width="1600" height="400" role="img" aria-label="NemoFold logo lockup for light-surface">
+  <g transform="translate(70 74) scale(4.464285714)">
+    <circle cx="28" cy="28" r="35" fill="none" stroke="#5AD2D0" stroke-width="2.2"/>
+    <path d="M-7.507 7.500 A41 41 0 0 1 68.775 23.714" fill="none" stroke="#FF6B4A" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="6,8 30,0 52,18 27,30" fill="#FF6B4A"/>
+    <polygon points="27,30 52,18 46,49 20,56" fill="#5AD2D0"/>
+    <polygon points="6,8 27,30 20,56 0,31" fill="#1F9D72"/>
+  </g>
+  <text x="380" y="222" font-family="Segoe UI, DejaVu Sans, Arial, sans-serif" font-size="190" font-weight="800" fill="#073B49">Nemo<tspan fill="#0B4A59">Fold</tspan></text>
+  <text x="392" y="304" font-family="Segoe UI, DejaVu Sans, Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="7" fill="#5AD2D0">PRIVATE · PERSISTENT · EVIDENCE-FIRST</text>
+</svg>

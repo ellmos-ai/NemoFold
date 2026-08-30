@@ -6,7 +6,7 @@ Claim-safe visual asset suite with deterministic SVG sources and host-rendered P
 
 ## 1. Design Rationale & Concepts
 
-This visual suite provides three distinct design directions tailored for presentation banners, thumbnails, and social sharing cards. Every graphic adheres strictly to implemented local-first capabilities and verified product invariants.
+This visual suite provides three original evidence-led design directions plus three cinematic Nautilus brand extensions tailored for YouTube and Devpost thumbnails. Every graphic adheres strictly to implemented local-first capabilities and verified product invariants.
 
 ### Concept A — `trust-voyage`
 * **Theme**: Oceanic depth, calm negative space, and local authority.
@@ -163,3 +163,59 @@ for fname, dims in expected_dims.items():
 * **Typography & Visual Quality**: Contrast and clipping were visually inspected; no formal WCAG contrast measurement was performed. In `evidence-ledger` thumbnail and social variants, cards were simplified so no rendered font is smaller than 10 px.
 * **Claim-Safe Compliance**: Full compliance with product truth and safe-claim policies. All test artifacts removed.
 * **Residual Visual Uncertainty**: Platform thumbnail downscaling may reduce secondary card-detail readability; primary headline/status copy remains the selection criterion. User preference between the three variants remains open.
+
+---
+
+## 8. Nautilus Brand Extensions
+
+The extension turns the project name into a repeatable visual story: Captain Nemo and an original Victorian-futurist Nautilus descend into a private document archive while the existing NemoFold fold mark, palette, and exact wordmark remain constant.
+
+### Reusable Brand Anchor
+
+The stable lockup combines the existing three-color fold with a porthole/sonar ring and the exact `NemoFold` wordmark. Transparent SVG and PNG versions are provided for both dark and light surfaces:
+
+- `brand/nemofold-nautilus-lockup-dark-surface.svg`
+- `brand/nemofold-nautilus-lockup-dark-surface.png`
+- `brand/nemofold-nautilus-lockup-light-surface.svg`
+- `brand/nemofold-nautilus-lockup-light-surface.png`
+
+The wordmark is deliberately composited with a fixed layout rather than generated inside the artwork. This preserves spelling, typography, and placement across every future asset; PNG bytes are reproducible on the same pinned Pillow/font stack.
+
+### Platform Assets
+
+| Direction | YouTube 16:9 | Devpost 4:3 | Primary hook |
+| :--- | :--- | :--- | :--- |
+| **Nautilus Descent** | `nautilus-descent-youtube.png` · 1280 × 720 | `nautilus-descent-devpost.png` · 1200 × 900 | `DIVE INTO YOUR DOCUMENTS` |
+| **Captain Nemo Observatory** | `captain-nemo-observatory-youtube.png` · 1280 × 720 | `captain-nemo-observatory-devpost.png` · 1200 × 900 | `YOUR FILES. YOUR RULES.` |
+| **Fold Depth** | `fold-depth-youtube.png` · 1280 × 720 | `fold-depth-devpost.png` · 1200 × 900 | `DIVE DEEP. STAY LOCAL.` |
+
+Brand-title variants reverse the hierarchy: the reusable `NemoFold` mark is the large title and the campaign line becomes a compact subtitle hook.
+
+| Direction | YouTube 16:9 | Devpost 4:3 | Subtitle hook |
+| :--- | :--- | :--- | :--- |
+| **Nautilus Descent** | `nautilus-descent-brand-youtube.png` · 1280 × 720 | `nautilus-descent-brand-devpost.png` · 1200 × 900 | `Dive into your documents.` |
+| **Captain Nemo Observatory** | `captain-nemo-observatory-brand-youtube.png` · 1280 × 720 | `captain-nemo-observatory-brand-devpost.png` · 1200 × 900 | `Your files. Your rules.` |
+| **Fold Depth** | `fold-depth-brand-youtube.png` · 1280 × 720 | `fold-depth-brand-devpost.png` · 1200 × 900 | `Dive deep. Stay local.` |
+
+Recommended first-use pairing:
+
+- **YouTube:** `nautilus-descent-brand-youtube.png` when brand recognition is primary; `nautilus-descent-youtube.png` remains the strongest action-led alternative.
+- **Devpost:** `captain-nemo-observatory-brand-devpost.png` for the clearest Captain Nemo connection with an immediate project-name anchor.
+
+### Production Path
+
+- Master illustrations: OpenAI built-in image generation, stored text-free under `sources/`.
+- Normalized production prompts: `nautilus-prompts.md`.
+- Exact logo and platform copy: `generate_nautilus_assets.py` using fixed-layout Pillow composition.
+- Machine-readable inventory: `nautilus-manifest.json`.
+- Safe claims: no customer, deployment, completed cloud-run, or benchmark assertions appear in the artwork.
+
+Rebuild and verify:
+
+```powershell
+python generate_nautilus_assets.py
+```
+
+The generator checks all twelve platform PNGs for their required dimensions and RGB mode, and verifies the two reusable lockup PNGs as 1600 × 400 RGBA images with transparency.
+
+Font lookup is portable across the supported production stacks: Segoe UI/Georgia on Windows, DejaVu Sans/Serif on Linux, and Arial/Georgia on macOS. Install one complete listed pair before rebuilding. Exact PNG bytes are expected to match only when Pillow, FreeType, fonts, and compression settings are pinned to the same host stack.

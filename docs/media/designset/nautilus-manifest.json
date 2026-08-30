@@ -1,0 +1,149 @@
+{
+  "title": "NemoFold Nautilus Brand Extensions",
+  "wordmark": "NemoFold",
+  "tagline": "Your files. Your rules. Your agent.",
+  "generation": {
+    "master_art": "OpenAI built-in imagegen",
+    "composition": "Fixed-layout Pillow overlays; byte-reproducible on the same pinned host stack",
+    "prompt_file": "nautilus-prompts.md",
+    "safe_claims": true
+  },
+  "lockups": [
+    {
+      "surface": "dark-surface",
+      "svg": "brand/nemofold-nautilus-lockup-dark-surface.svg",
+      "png": "brand/nemofold-nautilus-lockup-dark-surface.png",
+      "dimensions": "1600x400",
+      "png_mode": "RGBA"
+    },
+    {
+      "surface": "light-surface",
+      "svg": "brand/nemofold-nautilus-lockup-light-surface.svg",
+      "png": "brand/nemofold-nautilus-lockup-light-surface.png",
+      "dimensions": "1600x400",
+      "png_mode": "RGBA"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "nautilus-descent",
+      "source": "sources/nautilus-descent-master.png",
+      "headline": [
+        "DIVE INTO",
+        "YOUR DOCUMENTS"
+      ],
+      "brand_hook": "Dive into your documents.",
+      "alt": "The Nautilus descends into a teal archive trench while Captain Nemo stands inside its illuminated observation window.",
+      "outputs": [
+        {
+          "layout": "campaign",
+          "platform": "youtube",
+          "file": "nautilus-descent-youtube.png",
+          "dimensions": "1280x720",
+          "mode": "RGB"
+        },
+        {
+          "layout": "campaign",
+          "platform": "devpost",
+          "file": "nautilus-descent-devpost.png",
+          "dimensions": "1200x900",
+          "mode": "RGB"
+        },
+        {
+          "layout": "brand",
+          "platform": "youtube",
+          "file": "nautilus-descent-brand-youtube.png",
+          "dimensions": "1280x720",
+          "mode": "RGB"
+        },
+        {
+          "layout": "brand",
+          "platform": "devpost",
+          "file": "nautilus-descent-brand-devpost.png",
+          "dimensions": "1200x900",
+          "mode": "RGB"
+        }
+      ]
+    },
+    {
+      "id": "captain-nemo-observatory",
+      "source": "sources/captain-nemo-observatory-master.png",
+      "headline": [
+        "YOUR FILES.",
+        "YOUR RULES."
+      ],
+      "brand_hook": "Your files. Your rules.",
+      "alt": "Captain Nemo watches the Nautilus dive past ordered document layers through a circular observation window.",
+      "outputs": [
+        {
+          "layout": "campaign",
+          "platform": "youtube",
+          "file": "captain-nemo-observatory-youtube.png",
+          "dimensions": "1280x720",
+          "mode": "RGB"
+        },
+        {
+          "layout": "campaign",
+          "platform": "devpost",
+          "file": "captain-nemo-observatory-devpost.png",
+          "dimensions": "1200x900",
+          "mode": "RGB"
+        },
+        {
+          "layout": "brand",
+          "platform": "youtube",
+          "file": "captain-nemo-observatory-brand-youtube.png",
+          "dimensions": "1280x720",
+          "mode": "RGB"
+        },
+        {
+          "layout": "brand",
+          "platform": "devpost",
+          "file": "captain-nemo-observatory-brand-devpost.png",
+          "dimensions": "1200x900",
+          "mode": "RGB"
+        }
+      ]
+    },
+    {
+      "id": "fold-depth",
+      "source": "sources/fold-depth-master.png",
+      "headline": [
+        "DIVE DEEP.",
+        "STAY LOCAL."
+      ],
+      "brand_hook": "Dive deep. Stay local.",
+      "alt": "The Nautilus crosses a luminous document fold inside a protected teal trust boundary, with a narrow evidence path returning locally.",
+      "outputs": [
+        {
+          "layout": "campaign",
+          "platform": "youtube",
+          "file": "fold-depth-youtube.png",
+          "dimensions": "1280x720",
+          "mode": "RGB"
+        },
+        {
+          "layout": "campaign",
+          "platform": "devpost",
+          "file": "fold-depth-devpost.png",
+          "dimensions": "1200x900",
+          "mode": "RGB"
+        },
+        {
+          "layout": "brand",
+          "platform": "youtube",
+          "file": "fold-depth-brand-youtube.png",
+          "dimensions": "1280x720",
+          "mode": "RGB"
+        },
+        {
+          "layout": "brand",
+          "platform": "devpost",
+          "file": "fold-depth-brand-devpost.png",
+          "dimensions": "1200x900",
+          "mode": "RGB"
+        }
+      ]
+    }
+  ]
+}

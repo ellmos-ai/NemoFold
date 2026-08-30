@@ -157,6 +157,7 @@ is the default safe path; action workflows additionally require the server-side
 - [NemoClaw integration](docs/nemoclaw-integration.md)
 - [Product story](docs/product-story.md)
 - [Three-minute jury demo](docs/jury-demo.md)
+- [Jury design set and Nautilus brand kit](docs/media/designset/README.md)
 - [Submission readiness](docs/submission-readiness.md)
 - [Competition code map](COMPETITION_CODE_MAP.md)
 - [Third-party software](THIRD_PARTY_LICENSES.md)
