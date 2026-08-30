@@ -57,3 +57,43 @@ External language-model output cannot directly mutate any authoritative layer.
 
 See [NemoClaw integration](nemoclaw-integration.md) for the supported skill route and
 the separate runtime-plugin route.
+
+## Diagram choice and source
+
+The primary view is a curated UML-like application architecture bridge: it combines a
+C4-style container overview with the one runtime boundary a juror needs to understand.
+Its question is "what stays authoritative locally, and what may cross to the model?"
+The audience is jurors first and developers second. A sequence diagram is the fallback
+for the approved live-run evidence because message order then matters more than topology.
+
+The Mermaid block above is the editable source for the detailed view. The simplified
+capture source is in [the jury-demo plan](jury-demo.md), and its accessible deterministic
+SVG export is [nemofold-trust-boundary.svg](media/nemofold-trust-boundary.svg). These are
+hand-curated explanatory views, not generated reverse-engineering output. They describe
+the repository state reviewed on 2026-08-30; the open NemoClaw/Nebius acceptance path is
+therefore labeled as open rather than inferred to be working.
+
+## Console-to-contract blueprint
+
+The console has one human wait point: configure a bounded job, inspect its preview, and
+decide whether to run it. Everything between that decision and the result is application
+logic, not another screen. The fields are the human-readable form of the same strict job
+contract used by the CLI and skill:
+
+| Console element | Question it asks | Contract effect | Empty or invalid behavior |
+|---|---|---|---|
+| Workflow | What job should NemoFold perform? | Selects one of the eight workflow modules | Unknown values are rejected |
+| Approved input roots | Which folders may this run read? | Sets the only readable source roots | A missing or out-of-scope root blocks the run |
+| Approved target roots | Where may an action workflow write? | Bounds action destinations | Optional for analysis; required and checked for actions |
+| Questions | What should the evidence workflow answer? | Preserves ordered questions in the job snapshot | Required by question-driven workflows |
+| Privacy | May context remain local, be previewed, or leave once? | Selects `local_only`, `preview`, or `allow_once` | External work blocks without `allow_once` and later live gates |
+| Action mode | Is this only a plan or an approved local action? | Selects `dry_run` or `apply` | Apply still blocks unless the server has its action gate |
+| Model ID and maximum cost | Which bounded worker may reason, and at what ceiling? | Constrains the external package | Optional locally; a live run requires a Nemotron ID and valid budget |
+| Workflow parameters | Which workflow-specific choices apply this time? | Adds strict, typed parameters | Unknown or malformed JSON is rejected rather than ignored |
+| Preview exact scope | Is this the intended scope before work begins? | Produces receipts and a no-action preview | Never transfers context or applies file actions |
+| Run locally | Execute this accepted job now? | Calls the shared application service | External work remains blocked without the separate live-transfer path |
+| Result panel | What happened, what is proven, and what remains open? | Returns the structured run report | Errors and open proof states remain visible |
+
+This mapping makes the control boundary explicit: a click assembles a job-specific
+instruction, but it never silently supplies missing permission, model, budget, or action
+approval.

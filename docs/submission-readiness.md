@@ -27,7 +27,7 @@ submission should choose one primary track and keep the pitch focused.
   the README: local repo and Linux/Windows CI workflow ready; **public remote, first
   hosted CI readback, and final live-use documentation open**.
 - Public working demo URL or test build: **OPEN**.
-- Public YouTube or Vimeo demo, no longer than three minutes, with audio explaining
+- Public YouTube demo, no longer than three minutes, with audio explaining
   Nebius and Nemotron use: script ready; **recording and upload open**.
 - Project description, technology list, track, model/prompting/comparison answers, and
   honest Nebius/Nemotron feedback: product story ready; experience-dependent answers

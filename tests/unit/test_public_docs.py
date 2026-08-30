@@ -72,12 +72,12 @@ def test_root_relative_links_keep_exact_repository_case() -> None:
 def test_jury_narration_keeps_live_evidence_gate() -> None:
     text = (REPO_ROOT / "docs" / "jury-demo.md").read_text(encoding="utf-8")
     primary_cut = text.split("## Alternate opening:", 1)[0]
-    live_section = primary_cut.split(
-        "### 2:08-2:43 — Mandatory live platform proof", 1
-    )[1].split("### 2:43-2:58 — Close", 1)[0]
-    live_spoken = live_section.split(
-        "**Say only after a real successful verified run:**", 1
-    )[1].split("**Current state:**", 1)[0]
+    live_section = primary_cut.split("### 2:08-2:43 — Mandatory live platform proof", 1)[1].split(
+        "### 2:43-2:58 — Close", 1
+    )[0]
+    live_spoken = live_section.split("**Say only after a real successful verified run:**", 1)[
+        1
+    ].split("**Current state:**", 1)[0]
     spoken_lines: list[str] = []
     in_spoken_block = False
     for line in primary_cut.splitlines():
@@ -106,9 +106,7 @@ def test_jury_narration_keeps_live_evidence_gate() -> None:
         start = int(match[1]) * 60 + int(match[2])
         end = int(match[3]) * 60 + int(match[4])
         quoted = " ".join(
-            line.lstrip("> ").strip()
-            for line in match[5].splitlines()
-            if line.startswith(">")
+            line.lstrip("> ").strip() for line in match[5].splitlines() if line.startswith(">")
         )
         segment_words = len(re.findall(r"[A-Za-z0-9_*'-]+", quoted))
         assert end > start
@@ -128,3 +126,13 @@ def test_jury_narration_keeps_live_evidence_gate() -> None:
     )
     assert "The final render is blocked while any `{LIVE_*}` marker remains." in text
     assert "below 180 seconds" in text
+
+
+def test_public_docs_require_the_live_devpost_youtube_deliverable() -> None:
+    readiness = (REPO_ROOT / "docs" / "submission-readiness.md").read_text(encoding="utf-8")
+    jury_demo = (REPO_ROOT / "docs" / "jury-demo.md").read_text(encoding="utf-8")
+
+    assert "Public YouTube demo" in readiness
+    assert "public YouTube URL" in jury_demo
+    assert "YouTube or Vimeo" not in readiness
+    assert "YouTube/Vimeo" not in jury_demo

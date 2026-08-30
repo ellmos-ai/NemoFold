@@ -156,5 +156,5 @@ makes the Nebius/Nemotron role understandable before the feature sequence begins
 ## Final evidence gate
 
 The media package is **fast, not complete** while the live segment, final render,
-duration/audio readback, public YouTube/Vimeo URL, and user selection between variants
+duration/audio readback, public YouTube URL, and user selection between variants
 are open. No screenshot, mock response, or simulated transport can close those items.

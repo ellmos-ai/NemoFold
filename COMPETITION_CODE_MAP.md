@@ -32,3 +32,8 @@ cross-platform public-document guards are captured in commit
 `ac20494a15330a05e0b81076ee4c42f5380558d9`.
 The accessible, deterministic SVG export of the jury trust-boundary view is captured
 in commit `f718d8ade06a3fc0e33e3bd1689921052bff105c`.
+The three claim-safe jury design directions, their deterministic SVG/PNG generator, and
+their manifest are captured in commit
+`3e2cc158c07bb6a6f3a98d91042e9525637d9dfa`.
+Whitespace-normalized, rerunnable design-asset output is captured in commit
+`18fea5dba56dd5f5d9bc40206f494f8803644ec9`.
