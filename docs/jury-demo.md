@@ -23,6 +23,9 @@ Text alternative: approved files feed a persistent local memory. Only the policy
 can create a bounded, pseudonymized package for NVIDIA Nemotron on Nebius. The answer,
 usage, and citations return to a local verifier. A missing approval stops at the gate.
 
+Recording export: [accessible SVG](media/nemofold-trust-boundary.svg). Mermaid remains
+the editable source; the SVG is the deterministic capture asset.
+
 ## Shot list and verbatim narration
 
 The spoken text below is the recording source. Do not improvise measured values or
