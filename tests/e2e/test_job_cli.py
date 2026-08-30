@@ -383,7 +383,9 @@ def test_external_preview_is_pseudonymized_and_never_marks_a_transfer(tmp_path, 
     assert "external_models_disabled" in report["metadata"]["execution_gate_reasons"]
 
 
-def test_package_command_requires_positive_gate_and_never_claims_transfer(tmp_path, capsys) -> None:
+def test_package_command_requires_positive_gate_and_never_claims_transfer(
+    tmp_path, capsys, monkeypatch
+) -> None:
     documents = tmp_path / "documents"
     documents.mkdir()
     (documents / "case.txt").write_text(
@@ -400,7 +402,7 @@ def test_package_command_requires_positive_gate_and_never_claims_transfer(tmp_pa
                 "questions": ["When does coverage begin?"],
                 "privacy_mode": "allow_once",
                 "action_mode": "dry_run",
-                "model_id": "nvidia/nemotron",
+                "model_id": "nvidia/nemotron-3-super-120b-a12b",
                 "model_budget_usd": 1.0,
             }
         ),
@@ -433,6 +435,27 @@ def test_package_command_requires_positive_gate_and_never_claims_transfer(tmp_pa
     )
     assert gate["decision"]["allowed"] is True
     assert gate["transfer_performed"] is False
+
+    monkeypatch.delenv("NEBIUS_API_KEY", raising=False)
+    package_path = tmp_path / "output" / "nemoclaw-packages" / "package_1"
+    preflight_exit = main(
+        [
+            "token-factory-preflight",
+            str(package_path),
+            "--input-price-usd-per-million",
+            "0.1",
+            "--output-price-usd-per-million",
+            "0.2",
+        ]
+    )
+    preflight = json.loads(capsys.readouterr().out)
+
+    assert preflight_exit == 0
+    assert preflight["local_preflight_passed"] is True
+    assert preflight["api_key_present"] is False
+    assert preflight["network_called"] is False
+    assert preflight["transfer_performed"] is False
+    assert preflight["cloud_proof"] is False
 
 
 def test_token_factory_cli_does_not_hide_a_transfer_after_validation_failure(

@@ -96,6 +96,10 @@ to repeat a package that already contains `result.json` or a durable transfer at
 
 ```powershell
 $env:NEBIUS_API_KEY = "<session-only-key>"
+python -m nemofold token-factory-preflight <package-directory> `
+  --input-price-usd-per-million <current-input-rate> `
+  --output-price-usd-per-million <current-output-rate> `
+  --max-completion-tokens 1200
 python -m nemofold token-factory-run <package-directory> `
   --approve-live-transfer `
   --input-price-usd-per-million <current-input-rate> `
@@ -114,6 +118,18 @@ API key. A failed provider response records `transfer_performed: true` but never
 `cloud_proof: true`. If the connection ends without a response, the pre-request
 `transfer-attempt.json` remains in place, reports an uncertain transfer state, and
 blocks an unsafe automatic retry.
+
+`token-factory-preflight` performs no network request and writes no transfer receipt.
+It validates the immutable package, endpoint, explicit Nemotron model, JSON request,
+current caller-supplied prices, conservative maximum cost, job budget, duplicate-run
+guards, and whether a session key is present. Its output always keeps
+`network_called`, `transfer_performed`, and `cloud_proof` false; a pass is readiness,
+not execution evidence and not transfer approval.
+
+The request uses Token Factory's documented `json_object` response mode. NemoFold
+includes its complete output schema inside the bounded user payload and validates the
+returned object locally. It therefore does not depend on model-specific server-side
+JSON-schema enforcement to protect the evidence contract.
 
 The optional declared NemoClaw version is metadata only. The result records
 `nemoclaw_proof: false`; only a separately captured, sanitized runtime log from the

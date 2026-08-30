@@ -90,7 +90,8 @@ TOKEN_FACTORY_SYSTEM_PROMPT = (
     "claim must cite an exact substring from one declared chunk, with the matching "
     "chunk_id and source_id. If the chunks do not support an answer, return "
     "insufficient_evidence with no claims. Never infer paths, identities, missing "
-    "facts, or outside knowledge. Return only JSON matching the supplied schema."
+    "facts, or outside knowledge. The user payload contains an output_schema field. "
+    "Return only one JSON object matching that schema."
 )
 
 
@@ -120,6 +121,7 @@ def expected_token_factory_request(
         "run_id": job.get("run_id"),
         "questions": job.get("questions"),
         "context_receipts": receipts,
+        "output_schema": MODEL_OUTPUT_SCHEMA,
     }
     return {
         "model": model["id"],
@@ -135,10 +137,11 @@ def expected_token_factory_request(
         "temperature": 0,
         "n": 1,
         "stream": False,
-        "response_format": {
-            "type": "json_schema",
-            "json_schema": MODEL_OUTPUT_SCHEMA,
-        },
+        # Token Factory's chat-completion API reference guarantees json_object.
+        # The complete schema travels in the user payload and the result is then
+        # validated locally, so correctness never depends on provider-side schema
+        # enforcement that may vary by model.
+        "response_format": {"type": "json_object"},
     }
 
 

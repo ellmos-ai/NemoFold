@@ -16,6 +16,7 @@ from nemofold.live_result import json_sha256, validate_result_package
 from nemofold.nebius_token_factory import (
     HTTPExchange,
     TokenFactoryConfig,
+    preflight_token_factory_package,
     run_token_factory_package,
 )
 from nemofold.nemoclaw_package import (
@@ -190,6 +191,63 @@ def test_live_adapter_records_verifiable_proof_without_secret(tmp_path) -> None:
             transport=transport,
         )
     assert len(transport.calls) == 1
+
+
+def test_request_uses_portable_json_mode_and_supplies_the_local_schema(tmp_path) -> None:
+    package = make_package(tmp_path)
+    transport = RecordingTransport()
+
+    run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=transport,
+    )
+
+    request = json.loads(transport.calls[0]["body"])
+    task = json.loads(request["messages"][1]["content"])
+
+    assert request["response_format"] == {"type": "json_object"}
+    assert task["output_schema"]["type"] == "object"
+    assert task["output_schema"]["required"] == ["answers", "read_source_ids"]
+    assert task["output_schema"]["additionalProperties"] is False
+
+
+def test_preflight_proves_local_readiness_without_network_or_writes(tmp_path) -> None:
+    package = make_package(tmp_path)
+    before = sorted(path.name for path in package.iterdir())
+
+    report = preflight_token_factory_package(
+        package,
+        config(),
+        api_key_present=False,
+    )
+
+    assert report["local_preflight_passed"] is True
+    assert report["transfer_prerequisites_present"] is False
+    assert report["external_gates"] == [
+        "api_key_missing",
+        "explicit_user_approval_required",
+    ]
+    assert report["model_id"] == MODEL_ID
+    assert report["response_mode"] == "json_object"
+    assert report["local_schema_in_payload"] is True
+    assert report["budget_ok"] is True
+    assert report["network_called"] is False
+    assert report["transfer_performed"] is False
+    assert report["cloud_proof"] is False
+    assert sorted(path.name for path in package.iterdir()) == before
+
+
+def test_preflight_blocks_a_package_with_existing_transfer_evidence(tmp_path) -> None:
+    package = make_package(tmp_path)
+    (package / TRANSFER_ATTEMPT_FILENAME).write_text("{}\n", encoding="utf-8")
+
+    report = preflight_token_factory_package(package, config(), api_key_present=True)
+
+    assert report["local_preflight_passed"] is False
+    assert report["transfer_prerequisites_present"] is False
+    assert "transfer_attempt_already_exists" in report["errors"]
 
 
 def test_provider_echoed_secret_is_redacted_before_result_is_written(tmp_path) -> None:

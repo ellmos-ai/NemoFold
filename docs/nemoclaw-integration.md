@@ -29,6 +29,9 @@ The implemented Token Factory worker remains a separate, human-controlled step:
 
 ```powershell
 $env:NEBIUS_API_KEY = "<session-only-key>"
+python -m nemofold token-factory-preflight <job-package> `
+  --input-price-usd-per-million <current-input-rate> `
+  --output-price-usd-per-million <current-output-rate>
 python -m nemofold token-factory-run <job-package> `
   --approve-live-transfer `
   --input-price-usd-per-million <current-input-rate> `
@@ -44,6 +47,14 @@ attempt/result files. It atomically records `transfer-attempt.json` before netwo
 so a connection loss cannot silently authorize a duplicate paid request. The result
 verifier recomputes the exact request from the package, checks output quotes against
 supplied chunks, and binds the attempt plus sanitized request/response logs to hashes.
+The request uses the Token Factory chat API's documented `json_object` mode, includes
+the complete result schema inside the bounded user payload, and enforces that schema
+locally after the response. This avoids relying on model-specific server-side
+`json_schema` support.
+The preflight command performs the same local package, endpoint, model, request, cost,
+budget, and duplicate-attempt checks without contacting Nebius or creating a durable
+attempt. It reports key presence only as a boolean and still requires the separate
+live-transfer approval flag for execution.
 Supplying `--declared-nemoclaw-version` records self-declared environment metadata. The
 result always keeps `nemoclaw_proof: false`; the value is not, by itself, evidence that
 NemoClaw executed the command.

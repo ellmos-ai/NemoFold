@@ -177,6 +177,97 @@ def maximum_estimated_cost_usd(request_body: dict[str, Any], config: TokenFactor
     ) / 1_000_000
 
 
+def preflight_token_factory_package(
+    path: str | Path,
+    config: TokenFactoryConfig,
+    *,
+    api_key_present: bool | None = None,
+) -> dict[str, Any]:
+    """Check every local live-transfer prerequisite without network or durable writes."""
+    package_path = Path(path)
+    validation = validate_job_package(package_path)
+    errors = list(validation.errors)
+    result_exists = (package_path / "result.json").exists()
+    attempt_exists = (package_path / TRANSFER_ATTEMPT_FILENAME).exists()
+    if result_exists:
+        errors.append("result_already_exists")
+    if attempt_exists:
+        errors.append("transfer_attempt_already_exists")
+
+    key_present = bool(config.api_key.strip()) if api_key_present is None else api_key_present
+    report: dict[str, Any] = {
+        "schema": "nemofold.token-factory-preflight.v1",
+        "run_id": validation.run_id,
+        "package_valid": validation.valid,
+        "model_id": None,
+        "endpoint_origin": None,
+        "request_sha256": None,
+        "response_mode": "json_object",
+        "local_schema_in_payload": True,
+        "model_catalog_checked": False,
+        "input_price_usd_per_million": config.input_price_usd_per_million,
+        "output_price_usd_per_million": config.output_price_usd_per_million,
+        "max_completion_tokens": config.max_completion_tokens,
+        "maximum_estimated_cost_usd": None,
+        "job_budget_usd": None,
+        "budget_ok": False,
+        "api_key_present": key_present,
+        "explicit_transfer_approval_required": True,
+        "network_called": False,
+        "transfer_performed": False,
+        "cloud_proof": False,
+    }
+    if validation.valid:
+        try:
+            job, receipts = _load_package(package_path)
+            request_body = build_token_factory_request(
+                job,
+                receipts,
+                max_completion_tokens=config.max_completion_tokens,
+            )
+            model_value = job.get("model")
+            model = model_value if isinstance(model_value, dict) else {}
+            model_id = model.get("id")
+            budget = model.get("max_cost_usd")
+            maximum_cost = maximum_estimated_cost_usd(request_body, config)
+            _, origin = token_factory_endpoint(config.base_url)
+            report.update(
+                {
+                    "model_id": model_id,
+                    "endpoint_origin": origin,
+                    "request_sha256": json_sha256(request_body),
+                    "maximum_estimated_cost_usd": maximum_cost,
+                    "job_budget_usd": budget,
+                }
+            )
+            if not isinstance(model_id, str) or not model_id.startswith(
+                "nvidia/nemotron-"
+            ):
+                errors.append("competition_model_not_nemotron")
+            if (
+                isinstance(budget, bool)
+                or not isinstance(budget, (int, float))
+                or not math.isfinite(budget)
+            ):
+                errors.append("job_budget_invalid")
+            elif maximum_cost > budget:
+                errors.append("maximum_cost_exceeds_job_budget")
+            else:
+                report["budget_ok"] = True
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            errors.append(f"preflight_contract_error:{type(exc).__name__}")
+
+    local_errors = tuple(dict.fromkeys(errors))
+    report["errors"] = list(local_errors)
+    report["local_preflight_passed"] = not local_errors
+    report["transfer_prerequisites_present"] = not local_errors and key_present
+    if not key_present:
+        report["external_gates"] = ["api_key_missing", "explicit_user_approval_required"]
+    else:
+        report["external_gates"] = ["explicit_user_approval_required"]
+    return report
+
+
 def _create_transfer_attempt(path: Path, attempt: dict[str, Any]) -> None:
     data = (json.dumps(attempt, indent=2, sort_keys=True) + "\n").encode("utf-8")
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL

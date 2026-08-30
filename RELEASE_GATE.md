@@ -6,12 +6,19 @@ Gate date: 2026-08-30
 
 - `python -m ruff check src tests`: pass
 - `python -m mypy src`: pass for 30 source files
-- `python -m pytest -q`: 132 passed
+- `python -m pytest -q`: 146 passed, one Windows privilege-dependent symlink test skipped
 - `python -m compileall -q src tests`: pass
 - `node --check src/nemofold/web/app.js`: pass
 - `python -m build`: source and wheel distributions built
 - `git diff --check`: pass
 - Focused format check for changed source and tests: pass
+- Local Token Factory preflight over the immutable synthetic package: pass with
+  `network_called=false`, `transfer_performed=false`, and `cloud_proof=false`; API key,
+  current provider prices, explicit user approval, model-catalog readback, and the real
+  request remain external gates.
+- Public synthetic HTTP demo runtime: executed with server-controlled roots,
+  ephemeral output, no external model authority, no file-action authority, and
+  `cloud_proof=false`.
 
 The repository-wide format check is not asserted because 21 unchanged pre-existing
 files are outside the current formatting slice.
@@ -39,7 +46,8 @@ files are outside the current formatting slice.
 - Real Nebius Token Factory plus NVIDIA Nemotron run
 - Sanitized NemoClaw runtime proof
 - Public deployment of the implemented synthetic-only demo mode
-- Acceptance of the linked YouTube video's content, audio, and three-minute limit
+- User acceptance and upload of the checked local 73.07-second Andrew video draft; the
+  linked Devpost YouTube video has not been replaced
 - Final live-content readback of the already submitted Devpost project
 
 ## Hosted repository acceptance

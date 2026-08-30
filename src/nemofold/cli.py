@@ -23,7 +23,11 @@ from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
 from .ledger import RunLedger, validate_run_id
 from .live_result import validate_result_package
-from .nebius_token_factory import TokenFactoryConfig, run_token_factory_package
+from .nebius_token_factory import (
+    TokenFactoryConfig,
+    preflight_token_factory_package,
+    run_token_factory_package,
+)
 from .nemoclaw_package import TRANSFER_ATTEMPT_FILENAME, validate_job_package
 from .policy import PolicyConfig, PolicyGate
 from .report_verifier import verify_run_report
@@ -53,6 +57,22 @@ def build_parser() -> argparse.ArgumentParser:
         "verify-result", help="validate a live Token Factory result and its package"
     )
     verify_result.add_argument("path")
+    token_factory_preflight = commands.add_parser(
+        "token-factory-preflight",
+        help="check a Token Factory package and cost bound without network access",
+    )
+    token_factory_preflight.add_argument("path")
+    token_factory_preflight.add_argument(
+        "--input-price-usd-per-million", type=float, required=True
+    )
+    token_factory_preflight.add_argument(
+        "--output-price-usd-per-million", type=float, required=True
+    )
+    token_factory_preflight.add_argument("--max-completion-tokens", type=int, default=1200)
+    token_factory_preflight.add_argument("--timeout-seconds", type=float, default=60.0)
+    token_factory_preflight.add_argument(
+        "--base-url", default="https://api.tokenfactory.nebius.com/v1"
+    )
     token_factory = commands.add_parser(
         "token-factory-run",
         help="execute one explicitly approved NemoClaw package on Nebius Token Factory",
@@ -156,6 +176,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return 0 if result_validation.valid else 2
+    if args.command == "token-factory-preflight":
+        return _token_factory_preflight_command(args)
     if args.command == "token-factory-run":
         return _token_factory_run_command(args)
     if args.command == "package":
@@ -187,6 +209,41 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _serve_demo_command(args)
     parser.print_help()
     return 0
+
+
+def _token_factory_preflight_command(args: argparse.Namespace) -> int:
+    api_key = os.environ.get("NEBIUS_API_KEY", "")
+    try:
+        report = preflight_token_factory_package(
+            args.path,
+            TokenFactoryConfig(
+                api_key=api_key or "preflight-only-placeholder",
+                input_price_usd_per_million=args.input_price_usd_per_million,
+                output_price_usd_per_million=args.output_price_usd_per_million,
+                max_completion_tokens=args.max_completion_tokens,
+                timeout_seconds=args.timeout_seconds,
+                base_url=args.base_url,
+            ),
+            api_key_present=bool(api_key.strip()),
+        )
+    except (OSError, ValueError) as exc:
+        print(
+            json.dumps(
+                {
+                    "schema": "nemofold.token-factory-preflight.v1",
+                    "local_preflight_passed": False,
+                    "network_called": False,
+                    "transfer_performed": False,
+                    "cloud_proof": False,
+                    "errors": [str(exc)],
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if report["local_preflight_passed"] else 2
 
 
 def _token_factory_run_command(args: argparse.Namespace) -> int:
