@@ -33,7 +33,7 @@
 
   <!-- 1. Dark Architecture Canvas -->
   <rect width="1280" height="720" fill="url(#bgGradC_thumbnail)"/>
-  
+
   <!-- Subtle Blueprint Grid Lines -->
   <g opacity="0.12">
     <line x1="0" y1="180" x2="1280" y2="180" stroke="#5AD2D0" stroke-width="1"/>
@@ -101,13 +101,13 @@
 
   <!-- 3. Right Graphic: Trust Split Boundary Diagram -->
   <g transform="translate(705, 85)" filter="url(#shadowC_thumbnail)">
-    
+
     <!-- Outer Master Graphic Container -->
     <rect width="515" height="550" rx="14" fill="#031A22" stroke="#073B49" stroke-width="2"/>
 
     <!-- ZONE A: LOCAL AUTHORITY (Left ~56% of graphic) -->
     <rect x="14" y="14" width="288" height="522" rx="11" fill="url(#localCardGradC_thumbnail)" stroke="#1F9D72" stroke-width="1.8"/>
-    
+
     <!-- Zone Header -->
     <g transform="translate(24, 35)">
       <circle cx="6" cy="6" r="4.800000000000001" fill="#1F9D72"/>
@@ -152,7 +152,7 @@
     <!-- ZONE B: BOUNDED REASONING (Right ~34% of graphic) -->
     <g transform="translate(324, 14)">
       <rect width="175" height="522" rx="11" fill="url(#cloudCardGradC_thumbnail)" stroke="#818CF8" stroke-width="1.5"/>
-      
+
       <!-- Zone Header -->
       <g transform="translate(11, 35)">
         <circle cx="5" cy="5" r="4.4" fill="#818CF8"/>
@@ -164,7 +164,7 @@
         <rect width="153" height="220" rx="8" fill="#0A0F1D" stroke="#6366F1" stroke-width="1.4"/>
         <text x="9" y="24" font-family="'Segoe UI', sans-serif" font-size="12px" font-weight="700" fill="#A5B4FC">NVIDIA Nemotron</text>
         <text x="9" y="42" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#818CF8">on Nebius</text>
-        
+
         <line x1="9" y1="53" x2="143" y2="53" stroke="#334155" stroke-width="1"/>
 
         <text x="9" y="79" font-family="'Segoe UI', sans-serif" font-size="11px" fill="#94A3B8">· Optional reasoning</text>

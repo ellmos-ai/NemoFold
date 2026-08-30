@@ -90,17 +90,17 @@
 
   <!-- 3. Right Column: Layered Evidence Board -->
   <g transform="translate(735, 75)">
-    
+
     <!-- Card 1: Evidence & Citation Structural Contract (Simplified Thumbnail) -->
     <g transform="translate(0, 0)" filter="url(#topShadowB_thumbnail)">
       <rect width="480" height="280" rx="14" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.5"/>
-      
+
       <!-- Card Header Bar -->
       <rect width="480" height="42" rx="14" fill="#073B49"/>
       <rect y="28" width="480" height="14" fill="#073B49"/>
-      
+
       <text x="18" y="27" font-family="'Segoe UI', sans-serif" font-size="12.5px" font-weight="700" fill="#F7F1E7" letter-spacing="0.8px">EVIDENCE STRUCTURE &amp; CITATION CONTRACT</text>
-      
+
       <!-- Field 1: QUESTION -->
       <g transform="translate(16, 54)">
         <rect width="448" height="38" rx="6" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
@@ -121,12 +121,12 @@
       <g transform="translate(16, 146)">
         <rect width="448" height="76" rx="8" fill="#FAF8F5" stroke="#E2D7C3" stroke-width="1.2"/>
         <rect x="0" y="0" width="4" height="76" fill="#FF6B4A" rx="2"/>
-        
+
         <g transform="translate(12, 10)">
           <rect width="200" height="20" rx="4" fill="#FF6B4A" fill-opacity="0.15" stroke="#FF6B4A" stroke-width="1"/>
           <text x="100" y="14.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="800" fill="#C2410C" letter-spacing="0.4px">EXACT QUOTE + SOURCE LOCATION</text>
         </g>
-        
+
         <text x="12" y="47" font-family="Georgia, serif" font-size="12px" font-style="italic" fill="#0F172A">Verifiable passage pinned to source ID and line or page range</text>
         <text x="12" y="66" font-family="'Segoe UI', sans-serif" font-size="11px" fill="#64748B">Every promoted claim keeps an exact quote and source locator</text>
       </g>
@@ -143,7 +143,7 @@
     <!-- Card 2: Coverage Matrix & Report Contract (Simplified Thumbnail) -->
     <g transform="translate(0, 296)" filter="url(#cardShadowB_thumbnail)">
       <rect width="480" height="255" rx="14" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.5"/>
-      
+
       <!-- Ledger Header -->
       <g transform="translate(16, 18)">
         <text font-family="'Segoe UI', sans-serif" font-size="12px" font-weight="800" fill="#073B49" letter-spacing="0.7px">COVERAGE MATRIX &amp; EXPORT CONTRACT</text>
@@ -153,12 +153,12 @@
       <!-- Item 1: COVERAGE -->
       <g transform="translate(16, 42)">
         <rect width="448" height="90" rx="8" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
-        
+
         <g transform="translate(10, 8)">
           <rect width="320" height="20" rx="4" fill="#073B49"/>
           <text x="160" y="14.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="700" fill="#F7F1E7" letter-spacing="0.4px">COVERAGE: READ · CITED · UNSUPPORTED · UNREADABLE</text>
         </g>
-        
+
         <text x="10" y="44" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="600" fill="#0F172A">Auditable folder coverage accounting without silent omissions</text>
         <text x="10" y="62" font-family="'Segoe UI', sans-serif" font-size="11px" fill="#64748B">Explicit classification for every scanned file in approved workspace</text>
         <text x="10" y="80" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#1F9D72">✓ Run ledger and action journal stay local</text>
@@ -167,12 +167,12 @@
       <!-- Item 2: REPORT CONTRACT -->
       <g transform="translate(16, 142)">
         <rect width="448" height="98" rx="8" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
-        
+
         <g transform="translate(10, 8)">
           <rect width="280" height="20" rx="4" fill="#0B4A59"/>
           <text x="140" y="14.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="700" fill="#F7F1E7" letter-spacing="0.4px">REPORT CONTRACT → MD · TXT · PDF · DOCX · ODT</text>
         </g>
-        
+
         <text x="10" y="44" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="600" fill="#0F172A">Validated multi-format export with exact quotes and source locations</text>
         <text x="10" y="64" font-family="'Segoe UI', sans-serif" font-size="11px" fill="#64748B">Structured outputs for reports, receipts, and run ledgers</text>
         <text x="10" y="84" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#FF6B4A">⚡ Reversible file operations with safety gates</text>

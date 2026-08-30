@@ -89,16 +89,16 @@
   <g transform="translate(770, 115)" filter="url(#shadowCardA_thumbnail)">
     <!-- Main Card Body -->
     <rect width="440" height="470" rx="14" fill="url(#cardGradA_thumbnail)" stroke="#5AD2D0" stroke-width="1.5" stroke-opacity="0.45"/>
-    
+
     <!-- Inner Header Container -->
     <rect x="0" y="0" width="440" height="51" rx="14" fill="#0B4A59" fill-opacity="0.75"/>
     <rect x="0" y="36" width="440" height="15" fill="#0B4A59" fill-opacity="0.75"/>
-    
+
     <!-- Header Content -->
     <circle cx="27" cy="25" r="7" fill="#1F9D72"/>
     <path d="M24,25 L26,28 L31,23" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
     <text x="43" y="30" class="card-title-a">LOCAL-FIRST TRUST MATRIX</text>
-    
+
     <!-- Row 1: Approved Boundary -->
     <g transform="translate(17, 70)">
       <rect width="405" height="103" rx="9" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>

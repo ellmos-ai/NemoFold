@@ -17,12 +17,18 @@ from PIL import Image
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
+
+def normalize_svg(svg_content):
+    """Remove line-end whitespace and ensure one final newline."""
+    return "\n".join(line.rstrip() for line in svg_content.splitlines()) + "\n"
+
+
 # ==============================================================================
 # CONCEPT A — trust-voyage
 # ==============================================================================
 def get_concept_a_svg(width, height, variant_name):
     scale = width / 1600.0
-    
+
     if variant_name == "banner":
         # 1600 x 900
         pad_x = 90
@@ -73,7 +79,7 @@ def get_concept_a_svg(width, height, variant_name):
         card_num_fs = 12
         row_title_fs = 13.5
         badge_summary_fs = 11.5
-    else: # social 1200 x 630
+    else:  # social 1200 x 630
         pad_x = 64
         pad_y = 55
         eb_w = 345
@@ -148,14 +154,14 @@ def get_concept_a_svg(width, height, variant_name):
   <rect width="{width}" height="{height}" fill="url(#vignetteA_{variant_name})"/>
 
   <!-- Top Accent Ribbon -->
-  <rect x="0" y="0" width="{width}" height="{max(3, int(4*scale))}" fill="url(#accentGradA_{variant_name})"/>
+  <rect x="0" y="0" width="{width}" height="{max(3, int(4 * scale))}" fill="url(#accentGradA_{variant_name})"/>
 
   <!-- 3. Left Content Group -->
   <!-- Eyebrow Capsule -->
   <g transform="translate({pad_x}, {pad_y})">
-    <rect x="0" y="0" width="{eb_w}" height="{max(26, int(32*scale))}" rx="{max(13, int(16*scale))}" fill="#073B49" fill-opacity="0.85" stroke="#5AD2D0" stroke-width="1.2" stroke-opacity="0.7"/>
-    <circle cx="{int(18*scale)}" cy="{max(13, int(16*scale))}" r="{max(3.5, 4.5*scale)}" fill="#5AD2D0"/>
-    <text x="{int(34*scale)}" y="{max(17, int(21*scale))}" class="eb-text-a">PRIVATE · PERSISTENT · EVIDENCE-FIRST</text>
+    <rect x="0" y="0" width="{eb_w}" height="{max(26, int(32 * scale))}" rx="{max(13, int(16 * scale))}" fill="#073B49" fill-opacity="0.85" stroke="#5AD2D0" stroke-width="1.2" stroke-opacity="0.7"/>
+    <circle cx="{int(18 * scale)}" cy="{max(13, int(16 * scale))}" r="{max(3.5, 4.5 * scale)}" fill="#5AD2D0"/>
+    <text x="{int(34 * scale)}" y="{max(17, int(21 * scale))}" class="eb-text-a">PRIVATE · PERSISTENT · EVIDENCE-FIRST</text>
   </g>
 
   <!-- Product Brand Mark & Name -->
@@ -166,7 +172,7 @@ def get_concept_a_svg(width, height, variant_name):
       <path d="M18,20 L42,6 L36,36 L12,48 Z" fill="#5AD2D0"/>
       <path d="M0,0 L18,20 L12,48 L-6,26 Z" fill="#1F9D72"/>
     </g>
-    <text x="{int(58*scale)}" y="{int(32*scale)}" class="prod-text-a">Nemo<tspan class="prod-sub-a">Fold</tspan></text>
+    <text x="{int(58 * scale)}" y="{int(32 * scale)}" class="prod-text-a">Nemo<tspan class="prod-sub-a">Fold</tspan></text>
   </g>
 
   <!-- Headline -->
@@ -178,62 +184,63 @@ def get_concept_a_svg(width, height, variant_name):
 
   <!-- Status Chip: Local core ready · Live cloud proof open -->
   <g transform="translate({pad_x}, {chip_y})">
-    <rect x="0" y="0" width="{chip_w}" height="{max(36, int(46*scale))}" rx="{max(18, int(23*scale))}" fill="#073B49" fill-opacity="0.92" stroke="#1F9D72" stroke-width="1.8"/>
+    <rect x="0" y="0" width="{chip_w}" height="{max(36, int(46 * scale))}" rx="{max(18, int(23 * scale))}" fill="#073B49" fill-opacity="0.92" stroke="#1F9D72" stroke-width="1.8"/>
     <!-- Emerald Status Indicator -->
-    <circle cx="{int(24*scale)}" cy="{max(18, int(23*scale))}" r="{max(4.5, 6*scale)}" fill="#1F9D72" filter="url(#glowA_{variant_name})"/>
-    <circle cx="{int(24*scale)}" cy="{max(18, int(23*scale))}" r="{max(3.5, 4.5*scale)}" fill="#1F9D72"/>
-    <text x="{int(42*scale)}" y="{max(23, int(29.5*scale))}" class="chip-text-a">Local core ready · Live cloud proof open</text>
+    <circle cx="{int(24 * scale)}" cy="{max(18, int(23 * scale))}" r="{max(4.5, 6 * scale)}" fill="#1F9D72" filter="url(#glowA_{variant_name})"/>
+    <circle cx="{int(24 * scale)}" cy="{max(18, int(23 * scale))}" r="{max(3.5, 4.5 * scale)}" fill="#1F9D72"/>
+    <text x="{int(42 * scale)}" y="{max(23, int(29.5 * scale))}" class="chip-text-a">Local core ready · Live cloud proof open</text>
   </g>
 
   <!-- 4. Right Hero Feature Matrix Card -->
   <g transform="translate({badge_x}, {badge_y})" filter="url(#shadowCardA_{variant_name})">
     <!-- Main Card Body -->
-    <rect width="{badge_w}" height="{badge_h}" rx="{max(12, int(18*scale))}" fill="url(#cardGradA_{variant_name})" stroke="#5AD2D0" stroke-width="1.5" stroke-opacity="0.45"/>
-    
+    <rect width="{badge_w}" height="{badge_h}" rx="{max(12, int(18 * scale))}" fill="url(#cardGradA_{variant_name})" stroke="#5AD2D0" stroke-width="1.5" stroke-opacity="0.45"/>
+
     <!-- Inner Header Container -->
-    <rect x="0" y="0" width="{badge_w}" height="{max(48, int(64*scale))}" rx="{max(12, int(18*scale))}" fill="#0B4A59" fill-opacity="0.75"/>
-    <rect x="0" y="{max(34, int(45*scale))}" width="{badge_w}" height="{max(14, int(19*scale))}" fill="#0B4A59" fill-opacity="0.75"/>
-    
+    <rect x="0" y="0" width="{badge_w}" height="{max(48, int(64 * scale))}" rx="{max(12, int(18 * scale))}" fill="#0B4A59" fill-opacity="0.75"/>
+    <rect x="0" y="{max(34, int(45 * scale))}" width="{badge_w}" height="{max(14, int(19 * scale))}" fill="#0B4A59" fill-opacity="0.75"/>
+
     <!-- Header Content -->
-    <circle cx="{int(34*scale)}" cy="{max(24, int(32*scale))}" r="{max(7, int(9*scale))}" fill="#1F9D72"/>
-    <path d="M{int(30*scale)},{max(24, int(32*scale))} L{int(33*scale)},{max(27, int(35*scale))} L{int(39*scale)},{max(21, int(29*scale))}" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
-    <text x="{int(54*scale)}" y="{max(29, int(38*scale))}" class="card-title-a">LOCAL-FIRST TRUST MATRIX</text>
-    
+    <circle cx="{int(34 * scale)}" cy="{max(24, int(32 * scale))}" r="{max(7, int(9 * scale))}" fill="#1F9D72"/>
+    <path d="M{int(30 * scale)},{max(24, int(32 * scale))} L{int(33 * scale)},{max(27, int(35 * scale))} L{int(39 * scale)},{max(21, int(29 * scale))}" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+    <text x="{int(54 * scale)}" y="{max(29, int(38 * scale))}" class="card-title-a">LOCAL-FIRST TRUST MATRIX</text>
+
     <!-- Row 1: Approved Boundary -->
-    <g transform="translate({int(22*scale)}, {int(badge_h * 0.15)})">
-      <rect width="{badge_w - int(44*scale)}" height="{int(badge_h * 0.22)}" rx="{max(8, int(12*scale))}" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
-      <circle cx="{int(26*scale)}" cy="{int(badge_h * 0.11)}" r="{max(9, int(13*scale))}" fill="#073B49"/>
-      <text x="{int(26*scale)}" y="{int(badge_h * 0.11) + int(5*scale)}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{card_num_fs}px" font-weight="700" fill="#5AD2D0">1</text>
-      <text x="{int(52*scale)}" y="{int(badge_h * 0.085)}" font-family="'Segoe UI', sans-serif" font-size="{row_title_fs}px" font-weight="700" fill="#F7F1E7">Approved Folders Boundary</text>
-      <text x="{int(52*scale)}" y="{int(badge_h * 0.155)}" class="card-item-a">Explicit local paths only · Unapproved transfer fails closed</text>
+    <g transform="translate({int(22 * scale)}, {int(badge_h * 0.15)})">
+      <rect width="{badge_w - int(44 * scale)}" height="{int(badge_h * 0.22)}" rx="{max(8, int(12 * scale))}" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
+      <circle cx="{int(26 * scale)}" cy="{int(badge_h * 0.11)}" r="{max(9, int(13 * scale))}" fill="#073B49"/>
+      <text x="{int(26 * scale)}" y="{int(badge_h * 0.11) + int(5 * scale)}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{card_num_fs}px" font-weight="700" fill="#5AD2D0">1</text>
+      <text x="{int(52 * scale)}" y="{int(badge_h * 0.085)}" font-family="'Segoe UI', sans-serif" font-size="{row_title_fs}px" font-weight="700" fill="#F7F1E7">Approved Folders Boundary</text>
+      <text x="{int(52 * scale)}" y="{int(badge_h * 0.155)}" class="card-item-a">Explicit local paths only · Unapproved transfer fails closed</text>
     </g>
 
     <!-- Row 2: Memory & Ledgers -->
-    <g transform="translate({int(22*scale)}, {int(badge_h * 0.40)})">
-      <rect width="{badge_w - int(44*scale)}" height="{int(badge_h * 0.22)}" rx="{max(8, int(12*scale))}" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
-      <circle cx="{int(26*scale)}" cy="{int(badge_h * 0.11)}" r="{max(9, int(13*scale))}" fill="#073B49"/>
-      <text x="{int(26*scale)}" y="{int(badge_h * 0.11) + int(5*scale)}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{card_num_fs}px" font-weight="700" fill="#5AD2D0">2</text>
-      <text x="{int(52*scale)}" y="{int(badge_h * 0.085)}" font-family="'Segoe UI', sans-serif" font-size="{row_title_fs}px" font-weight="700" fill="#F7F1E7">Persistent Document Memory</text>
-      <text x="{int(52*scale)}" y="{int(badge_h * 0.155)}" class="card-item-a">Deterministic index, content hashes &amp; action ledgers</text>
+    <g transform="translate({int(22 * scale)}, {int(badge_h * 0.40)})">
+      <rect width="{badge_w - int(44 * scale)}" height="{int(badge_h * 0.22)}" rx="{max(8, int(12 * scale))}" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
+      <circle cx="{int(26 * scale)}" cy="{int(badge_h * 0.11)}" r="{max(9, int(13 * scale))}" fill="#073B49"/>
+      <text x="{int(26 * scale)}" y="{int(badge_h * 0.11) + int(5 * scale)}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{card_num_fs}px" font-weight="700" fill="#5AD2D0">2</text>
+      <text x="{int(52 * scale)}" y="{int(badge_h * 0.085)}" font-family="'Segoe UI', sans-serif" font-size="{row_title_fs}px" font-weight="700" fill="#F7F1E7">Persistent Document Memory</text>
+      <text x="{int(52 * scale)}" y="{int(badge_h * 0.155)}" class="card-item-a">Deterministic index, content hashes &amp; action ledgers</text>
     </g>
 
     <!-- Row 3: Bounded & Verified -->
-    <g transform="translate({int(22*scale)}, {int(badge_h * 0.65)})">
-      <rect width="{badge_w - int(44*scale)}" height="{int(badge_h * 0.22)}" rx="{max(8, int(12*scale))}" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
-      <circle cx="{int(26*scale)}" cy="{int(badge_h * 0.11)}" r="{max(9, int(13*scale))}" fill="#073B49"/>
-      <text x="{int(26*scale)}" y="{int(badge_h * 0.11) + int(5*scale)}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{card_num_fs}px" font-weight="700" fill="#5AD2D0">3</text>
-      <text x="{int(52*scale)}" y="{int(badge_h * 0.085)}" font-family="'Segoe UI', sans-serif" font-size="{row_title_fs}px" font-weight="700" fill="#F7F1E7">Local Evidence Verifier</text>
-      <text x="{int(52*scale)}" y="{int(badge_h * 0.155)}" class="card-item-a">Exact quotes &amp; citations verified before memory commit</text>
+    <g transform="translate({int(22 * scale)}, {int(badge_h * 0.65)})">
+      <rect width="{badge_w - int(44 * scale)}" height="{int(badge_h * 0.22)}" rx="{max(8, int(12 * scale))}" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
+      <circle cx="{int(26 * scale)}" cy="{int(badge_h * 0.11)}" r="{max(9, int(13 * scale))}" fill="#073B49"/>
+      <text x="{int(26 * scale)}" y="{int(badge_h * 0.11) + int(5 * scale)}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{card_num_fs}px" font-weight="700" fill="#5AD2D0">3</text>
+      <text x="{int(52 * scale)}" y="{int(badge_h * 0.085)}" font-family="'Segoe UI', sans-serif" font-size="{row_title_fs}px" font-weight="700" fill="#F7F1E7">Local Evidence Verifier</text>
+      <text x="{int(52 * scale)}" y="{int(badge_h * 0.155)}" class="card-item-a">Exact quotes &amp; citations verified before memory commit</text>
     </g>
 
     <!-- Bottom Badge Summary -->
-    <g transform="translate({int(22*scale)}, {badge_h - max(36, int(52*scale))})">
-      <rect width="{badge_w - int(44*scale)}" height="{max(30, int(38*scale))}" rx="{max(6, int(10*scale))}" fill="#0B4A59" fill-opacity="0.5" stroke="#1F9D72" stroke-width="1.2" stroke-dasharray="5 3"/>
-      <text x="{int((badge_w - 44*scale)/2)}" y="{max(20, int(24*scale))}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{badge_summary_fs}px" font-weight="700" fill="#5AD2D0">REVERSIBLE ACTIONS · AUDITABLE RUNS</text>
+    <g transform="translate({int(22 * scale)}, {badge_h - max(36, int(52 * scale))})">
+      <rect width="{badge_w - int(44 * scale)}" height="{max(30, int(38 * scale))}" rx="{max(6, int(10 * scale))}" fill="#0B4A59" fill-opacity="0.5" stroke="#1F9D72" stroke-width="1.2" stroke-dasharray="5 3"/>
+      <text x="{int((badge_w - 44 * scale) / 2)}" y="{max(20, int(24 * scale))}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{badge_summary_fs}px" font-weight="700" fill="#5AD2D0">REVERSIBLE ACTIONS · AUDITABLE RUNS</text>
     </g>
   </g>
 </svg>"""
     return svg
+
 
 # ==============================================================================
 # CONCEPT B — evidence-ledger
@@ -281,7 +288,7 @@ def get_concept_b_svg(width, height, variant_name):
         chip_fs = 14
         bullet_fs = 13
         bullet_spacing = 32
-    else: # social 1200 x 630
+    else:  # social 1200 x 630
         pad_x = 64
         pad_y = 55
         eb_w = 295
@@ -308,13 +315,13 @@ def get_concept_b_svg(width, height, variant_name):
     <!-- Card 1 (Top Layer): Evidence & Citation Structural Contract -->
     <g transform="translate(0, 0)" filter="url(#topShadowB_{variant_name})">
       <rect width="{badge_w}" height="345" rx="16" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.6"/>
-      
+
       <!-- Card Header Bar -->
       <rect width="{badge_w}" height="50" rx="16" fill="#073B49"/>
       <rect y="34" width="{badge_w}" height="16" fill="#073B49"/>
-      
+
       <text x="22" y="32" font-family="'Segoe UI', sans-serif" font-size="14px" font-weight="700" fill="#F7F1E7" letter-spacing="1px">EVIDENCE STRUCTURE &amp; CITATION CONTRACT</text>
-      
+
       <!-- Header Pill Badge -->
       <g transform="translate({badge_w - 155}, 11)">
         <rect width="135" height="28" rx="14" fill="#FF6B4A"/>
@@ -343,15 +350,15 @@ def get_concept_b_svg(width, height, variant_name):
       <g transform="translate(20, 178)">
         <rect width="{badge_w - 40}" height="100" rx="8" fill="#FAF8F5" stroke="#E2D7C3" stroke-width="1.2"/>
         <rect x="0" y="0" width="5" height="100" fill="#FF6B4A" rx="2.5"/>
-        
+
         <g transform="translate(16, 12)">
           <rect width="210" height="22" rx="4" fill="#FF6B4A" fill-opacity="0.15" stroke="#FF6B4A" stroke-width="1"/>
           <text x="105" y="15.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="800" fill="#C2410C" letter-spacing="0.5px">EXACT QUOTE + SOURCE LOCATION</text>
         </g>
-        
+
         <text x="16" y="54" font-family="Georgia, serif" font-size="13.5px" font-style="italic" fill="#0F172A">Verifiable verbatim passage pinned to source ID and line or page range</text>
         <text x="16" y="74" font-family="'Segoe UI', sans-serif" font-size="12px" fill="#64748B">Every promoted claim keeps an exact quote and source locator</text>
-        
+
         <!-- Pill on bottom right: CONFLICT HINTS STAY VISIBLE -->
         <g transform="translate({badge_w - 245}, 66)">
           <rect width="195" height="24" rx="12" fill="#FEF3C7" stroke="#F59E0B" stroke-width="1"/>
@@ -372,7 +379,7 @@ def get_concept_b_svg(width, height, variant_name):
     <!-- Card 2 (Bottom Layer): Coverage & Report Contract -->
     <g transform="translate(0, 365)" filter="url(#cardShadowB_{variant_name})">
       <rect width="{badge_w}" height="300" rx="16" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.6"/>
-      
+
       <!-- Ledger Header -->
       <g transform="translate(20, 22)">
         <text font-family="'Segoe UI', sans-serif" font-size="13.5px" font-weight="800" fill="#073B49" letter-spacing="0.8px">COVERAGE MATRIX &amp; EXPORT CONTRACT</text>
@@ -382,12 +389,12 @@ def get_concept_b_svg(width, height, variant_name):
       <!-- Item 1: COVERAGE: READ · CITED · UNSUPPORTED · UNREADABLE -->
       <g transform="translate(20, 50)">
         <rect width="{badge_w - 40}" height="102" rx="8" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
-        
+
         <g transform="translate(12, 10)">
           <rect width="340" height="22" rx="4" fill="#073B49"/>
           <text x="170" y="15.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="700" fill="#F7F1E7" letter-spacing="0.5px">COVERAGE: READ · CITED · UNSUPPORTED · UNREADABLE</text>
         </g>
-        
+
         <text x="12" y="52" font-family="'Segoe UI', sans-serif" font-size="12.5px" font-weight="600" fill="#0F172A">Auditable folder coverage accounting without silent omissions</text>
         <text x="12" y="72" font-family="'Segoe UI', sans-serif" font-size="11.5px" fill="#64748B">Explicit classification for every scanned file in the approved workspace</text>
         <text x="12" y="91" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="600" fill="#1F9D72">✓ Run ledger and action journal stay local</text>
@@ -396,12 +403,12 @@ def get_concept_b_svg(width, height, variant_name):
       <!-- Item 2: REPORT CONTRACT → MD · TXT · PDF · DOCX · ODT -->
       <g transform="translate(20, 166)">
         <rect width="{badge_w - 40}" height="114" rx="8" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
-        
+
         <g transform="translate(12, 10)">
           <rect width="300" height="22" rx="4" fill="#0B4A59"/>
           <text x="150" y="15.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="700" fill="#F7F1E7" letter-spacing="0.5px">REPORT CONTRACT → MD · TXT · PDF · DOCX · ODT</text>
         </g>
-        
+
         <text x="12" y="52" font-family="'Segoe UI', sans-serif" font-size="12.5px" font-weight="600" fill="#0F172A">Validated multi-format export with exact quotes and source locations</text>
         <text x="12" y="72" font-family="'Segoe UI', sans-serif" font-size="11.5px" fill="#64748B">Structured outputs for reports, receipts, and run ledgers</text>
         <text x="12" y="94" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="600" fill="#FF6B4A">⚡ Reversible file operations with pre-execution safety gates</text>
@@ -413,13 +420,13 @@ def get_concept_b_svg(width, height, variant_name):
     <!-- Card 1: Evidence & Citation Structural Contract (Simplified Thumbnail) -->
     <g transform="translate(0, 0)" filter="url(#topShadowB_{variant_name})">
       <rect width="{badge_w}" height="280" rx="14" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.5"/>
-      
+
       <!-- Card Header Bar -->
       <rect width="{badge_w}" height="42" rx="14" fill="#073B49"/>
       <rect y="28" width="{badge_w}" height="14" fill="#073B49"/>
-      
+
       <text x="18" y="27" font-family="'Segoe UI', sans-serif" font-size="12.5px" font-weight="700" fill="#F7F1E7" letter-spacing="0.8px">EVIDENCE STRUCTURE &amp; CITATION CONTRACT</text>
-      
+
       <!-- Field 1: QUESTION -->
       <g transform="translate(16, 54)">
         <rect width="{badge_w - 32}" height="38" rx="6" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
@@ -440,12 +447,12 @@ def get_concept_b_svg(width, height, variant_name):
       <g transform="translate(16, 146)">
         <rect width="{badge_w - 32}" height="76" rx="8" fill="#FAF8F5" stroke="#E2D7C3" stroke-width="1.2"/>
         <rect x="0" y="0" width="4" height="76" fill="#FF6B4A" rx="2"/>
-        
+
         <g transform="translate(12, 10)">
           <rect width="200" height="20" rx="4" fill="#FF6B4A" fill-opacity="0.15" stroke="#FF6B4A" stroke-width="1"/>
           <text x="100" y="14.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="800" fill="#C2410C" letter-spacing="0.4px">EXACT QUOTE + SOURCE LOCATION</text>
         </g>
-        
+
         <text x="12" y="47" font-family="Georgia, serif" font-size="12px" font-style="italic" fill="#0F172A">Verifiable passage pinned to source ID and line or page range</text>
         <text x="12" y="66" font-family="'Segoe UI', sans-serif" font-size="11px" fill="#64748B">Every promoted claim keeps an exact quote and source locator</text>
       </g>
@@ -462,7 +469,7 @@ def get_concept_b_svg(width, height, variant_name):
     <!-- Card 2: Coverage Matrix & Report Contract (Simplified Thumbnail) -->
     <g transform="translate(0, 296)" filter="url(#cardShadowB_{variant_name})">
       <rect width="{badge_w}" height="255" rx="14" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.5"/>
-      
+
       <!-- Ledger Header -->
       <g transform="translate(16, 18)">
         <text font-family="'Segoe UI', sans-serif" font-size="12px" font-weight="800" fill="#073B49" letter-spacing="0.7px">COVERAGE MATRIX &amp; EXPORT CONTRACT</text>
@@ -472,12 +479,12 @@ def get_concept_b_svg(width, height, variant_name):
       <!-- Item 1: COVERAGE -->
       <g transform="translate(16, 42)">
         <rect width="{badge_w - 32}" height="90" rx="8" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
-        
+
         <g transform="translate(10, 8)">
           <rect width="320" height="20" rx="4" fill="#073B49"/>
           <text x="160" y="14.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="700" fill="#F7F1E7" letter-spacing="0.4px">COVERAGE: READ · CITED · UNSUPPORTED · UNREADABLE</text>
         </g>
-        
+
         <text x="10" y="44" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="600" fill="#0F172A">Auditable folder coverage accounting without silent omissions</text>
         <text x="10" y="62" font-family="'Segoe UI', sans-serif" font-size="11px" fill="#64748B">Explicit classification for every scanned file in approved workspace</text>
         <text x="10" y="80" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#1F9D72">✓ Run ledger and action journal stay local</text>
@@ -486,12 +493,12 @@ def get_concept_b_svg(width, height, variant_name):
       <!-- Item 2: REPORT CONTRACT -->
       <g transform="translate(16, 142)">
         <rect width="{badge_w - 32}" height="98" rx="8" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
-        
+
         <g transform="translate(10, 8)">
           <rect width="280" height="20" rx="4" fill="#0B4A59"/>
           <text x="140" y="14.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="700" fill="#F7F1E7" letter-spacing="0.4px">REPORT CONTRACT → MD · TXT · PDF · DOCX · ODT</text>
         </g>
-        
+
         <text x="10" y="44" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="600" fill="#0F172A">Validated multi-format export with exact quotes and source locations</text>
         <text x="10" y="64" font-family="'Segoe UI', sans-serif" font-size="11px" fill="#64748B">Structured outputs for reports, receipts, and run ledgers</text>
         <text x="10" y="84" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#FF6B4A">⚡ Reversible file operations with safety gates</text>
@@ -503,13 +510,13 @@ def get_concept_b_svg(width, height, variant_name):
     <!-- Card 1: Evidence & Citation Structural Contract (Simplified Social) -->
     <g transform="translate(0, 0)" filter="url(#topShadowB_{variant_name})">
       <rect width="{badge_w}" height="250" rx="12" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.5"/>
-      
+
       <!-- Card Header Bar -->
       <rect width="{badge_w}" height="38" rx="12" fill="#073B49"/>
       <rect y="26" width="{badge_w}" height="12" fill="#073B49"/>
-      
+
       <text x="16" y="25" font-family="'Segoe UI', sans-serif" font-size="12px" font-weight="700" fill="#F7F1E7" letter-spacing="0.7px">EVIDENCE STRUCTURE &amp; CITATION CONTRACT</text>
-      
+
       <!-- Field 1: QUESTION -->
       <g transform="translate(14, 48)">
         <rect width="{badge_w - 28}" height="34" rx="5" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
@@ -530,12 +537,12 @@ def get_concept_b_svg(width, height, variant_name):
       <g transform="translate(14, 128)">
         <rect width="{badge_w - 28}" height="70" rx="6" fill="#FAF8F5" stroke="#E2D7C3" stroke-width="1.2"/>
         <rect x="0" y="0" width="4" height="70" fill="#FF6B4A" rx="2"/>
-        
+
         <g transform="translate(10, 8)">
           <rect width="190" height="18" rx="3" fill="#FF6B4A" fill-opacity="0.15" stroke="#FF6B4A" stroke-width="1"/>
           <text x="95" y="13.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="800" fill="#C2410C" letter-spacing="0.3px">EXACT QUOTE + SOURCE LOCATION</text>
         </g>
-        
+
         <text x="10" y="42" font-family="Georgia, serif" font-size="11.5px" font-style="italic" fill="#0F172A">Verifiable passage pinned to source ID and line or page range</text>
         <text x="10" y="59" font-family="'Segoe UI', sans-serif" font-size="10.5px" fill="#64748B">Every promoted claim keeps an exact quote and source locator</text>
       </g>
@@ -552,7 +559,7 @@ def get_concept_b_svg(width, height, variant_name):
     <!-- Card 2: Coverage Matrix & Report Contract (Simplified Social) -->
     <g transform="translate(0, 262)" filter="url(#cardShadowB_{variant_name})">
       <rect width="{badge_w}" height="236" rx="12" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.5"/>
-      
+
       <!-- Ledger Header -->
       <g transform="translate(14, 16)">
         <text font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="800" fill="#073B49" letter-spacing="0.6px">COVERAGE MATRIX &amp; EXPORT CONTRACT</text>
@@ -562,12 +569,12 @@ def get_concept_b_svg(width, height, variant_name):
       <!-- Item 1: COVERAGE -->
       <g transform="translate(14, 36)">
         <rect width="{badge_w - 28}" height="84" rx="6" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
-        
+
         <g transform="translate(8, 7)">
           <rect width="300" height="18" rx="3" fill="#073B49"/>
           <text x="150" y="13.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="700" fill="#F7F1E7" letter-spacing="0.3px">COVERAGE: READ · CITED · UNSUPPORTED · UNREADABLE</text>
         </g>
-        
+
         <text x="8" y="40" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#0F172A">Auditable folder coverage accounting without silent omissions</text>
         <text x="8" y="57" font-family="'Segoe UI', sans-serif" font-size="10.5px" fill="#64748B">Explicit classification for every scanned file in approved workspace</text>
         <text x="8" y="74" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="600" fill="#1F9D72">✓ Run ledger and action journal stay local</text>
@@ -576,12 +583,12 @@ def get_concept_b_svg(width, height, variant_name):
       <!-- Item 2: REPORT CONTRACT -->
       <g transform="translate(14, 128)">
         <rect width="{badge_w - 28}" height="94" rx="6" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
-        
+
         <g transform="translate(8, 7)">
           <rect width="265" height="18" rx="3" fill="#0B4A59"/>
           <text x="132.5" y="13.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="700" fill="#F7F1E7" letter-spacing="0.3px">REPORT CONTRACT → MD · TXT · PDF · DOCX · ODT</text>
         </g>
-        
+
         <text x="8" y="40" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#0F172A">Validated multi-format export with exact quotes and source locations</text>
         <text x="8" y="58" font-family="'Segoe UI', sans-serif" font-size="10.5px" fill="#64748B">Structured outputs for reports, receipts, and run ledgers</text>
         <text x="8" y="78" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="600" fill="#FF6B4A">⚡ Reversible file operations with safety gates</text>
@@ -591,8 +598,8 @@ def get_concept_b_svg(width, height, variant_name):
     svg = f"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {height}" width="{width}" height="{height}" role="img" aria-label="NemoFold - Evidence Ledger">
   <defs>
     <!-- Background Grid Pattern -->
-    <pattern id="gridB_{variant_name}" width="{max(24, int(32*scale))}" height="{max(24, int(32*scale))}" patternUnits="userSpaceOnUse">
-      <path d="M {max(24, int(32*scale))} 0 L 0 0 0 {max(24, int(32*scale))}" fill="none" stroke="#E6DEC9" stroke-width="0.8"/>
+    <pattern id="gridB_{variant_name}" width="{max(24, int(32 * scale))}" height="{max(24, int(32 * scale))}" patternUnits="userSpaceOnUse">
+      <path d="M {max(24, int(32 * scale))} 0 L 0 0 0 {max(24, int(32 * scale))}" fill="none" stroke="#E6DEC9" stroke-width="0.8"/>
       <circle cx="0" cy="0" r="1.2" fill="#D5CABA"/>
     </pattern>
     <filter id="topShadowB_{variant_name}" x="-10%" y="-10%" width="125%" height="125%">
@@ -621,15 +628,15 @@ def get_concept_b_svg(width, height, variant_name):
   <rect width="{width}" height="{height}" fill="url(#gridB_{variant_name})"/>
 
   <!-- Left/Top Brand Borders -->
-  <rect x="0" y="0" width="{max(4, int(6*scale))}" height="{height}" fill="#073B49"/>
-  <rect x="0" y="0" width="{width}" height="{max(3, int(4*scale))}" fill="url(#coralGradB_{variant_name})"/>
+  <rect x="0" y="0" width="{max(4, int(6 * scale))}" height="{height}" fill="#073B49"/>
+  <rect x="0" y="0" width="{width}" height="{max(3, int(4 * scale))}" fill="url(#coralGradB_{variant_name})"/>
 
   <!-- 2. Left Column: Text & Brand -->
   <!-- Eyebrow Pill -->
   <g transform="translate({pad_x}, {pad_y})">
-    <rect x="0" y="0" width="{eb_w}" height="{max(26, int(32*scale))}" rx="{max(6, int(8*scale))}" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.2"/>
-    <circle cx="{int(16*scale)}" cy="{max(13, int(16*scale))}" r="{max(3.5, 4.5*scale)}" fill="#FF6B4A"/>
-    <text x="{int(32*scale)}" y="{max(17, int(21*scale))}" class="eb-text-b">EVIDENCE-FIRST DOCUMENT AGENT</text>
+    <rect x="0" y="0" width="{eb_w}" height="{max(26, int(32 * scale))}" rx="{max(6, int(8 * scale))}" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.2"/>
+    <circle cx="{int(16 * scale)}" cy="{max(13, int(16 * scale))}" r="{max(3.5, 4.5 * scale)}" fill="#FF6B4A"/>
+    <text x="{int(32 * scale)}" y="{max(17, int(21 * scale))}" class="eb-text-b">EVIDENCE-FIRST DOCUMENT AGENT</text>
   </g>
 
   <!-- Product Brand Mark & Name -->
@@ -640,7 +647,7 @@ def get_concept_b_svg(width, height, variant_name):
       <path d="M18,20 L42,6 L36,36 L12,48 Z" fill="#FF6B4A"/>
       <path d="M0,0 L18,20 L12,48 L-6,26 Z" fill="#1F9D72"/>
     </g>
-    <text x="{int(58*scale)}" y="{int(32*scale)}" class="prod-text-b">Nemo<tspan class="prod-sub-b">Fold</tspan></text>
+    <text x="{int(58 * scale)}" y="{int(32 * scale)}" class="prod-text-b">Nemo<tspan class="prod-sub-b">Fold</tspan></text>
   </g>
 
   <!-- Headline -->
@@ -652,29 +659,29 @@ def get_concept_b_svg(width, height, variant_name):
 
   <!-- Status Chip: Local core ready -->
   <g transform="translate({pad_x}, {chip_y})">
-    <rect x="0" y="0" width="{chip_w}" height="{max(36, int(46*scale))}" rx="{max(18, int(23*scale))}" fill="#E8F8F0" stroke="#1F9D72" stroke-width="1.8"/>
+    <rect x="0" y="0" width="{chip_w}" height="{max(36, int(46 * scale))}" rx="{max(18, int(23 * scale))}" fill="#E8F8F0" stroke="#1F9D72" stroke-width="1.8"/>
     <!-- Emerald Shield Icon -->
-    <circle cx="{int(24*scale)}" cy="{max(18, int(23*scale))}" r="{max(7, int(9*scale))}" fill="#1F9D72"/>
-    <path d="M{int(20*scale)},{max(18, int(23*scale))} L{int(23*scale)},{max(21, int(26*scale))} L{int(28*scale)},{max(15, int(20*scale))}" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
-    <text x="{int(42*scale)}" y="{max(23, int(29.5*scale))}" class="chip-text-b">Local core ready</text>
+    <circle cx="{int(24 * scale)}" cy="{max(18, int(23 * scale))}" r="{max(7, int(9 * scale))}" fill="#1F9D72"/>
+    <path d="M{int(20 * scale)},{max(18, int(23 * scale))} L{int(23 * scale)},{max(21, int(26 * scale))} L{int(28 * scale)},{max(15, int(20 * scale))}" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+    <text x="{int(42 * scale)}" y="{max(23, int(29.5 * scale))}" class="chip-text-b">Local core ready</text>
   </g>
 
   <!-- Safe Trust Bullet Highlights -->
-  <g transform="translate({pad_x}, {chip_y + int(65*scale)})">
+  <g transform="translate({pad_x}, {chip_y + int(65 * scale)})">
     <g transform="translate(0, 0)">
-      <circle cx="{int(9*scale)}" cy="{int(9*scale)}" r="{max(6, int(8*scale))}" fill="#073B49"/>
-      <path d="M{int(6*scale)},{int(9*scale)} L{int(8*scale)},{int(11.5*scale)} L{int(12*scale)},{int(6.5*scale)}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
-      <text x="{int(26*scale)}" y="{int(13.5*scale)}" font-family="'Segoe UI', sans-serif" font-size="{bullet_fs}px" font-weight="600" fill="#073B49">Multiple questions · Exact quotes · Source locations</text>
+      <circle cx="{int(9 * scale)}" cy="{int(9 * scale)}" r="{max(6, int(8 * scale))}" fill="#073B49"/>
+      <path d="M{int(6 * scale)},{int(9 * scale)} L{int(8 * scale)},{int(11.5 * scale)} L{int(12 * scale)},{int(6.5 * scale)}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="{int(26 * scale)}" y="{int(13.5 * scale)}" font-family="'Segoe UI', sans-serif" font-size="{bullet_fs}px" font-weight="600" fill="#073B49">Multiple questions · Exact quotes · Source locations</text>
     </g>
     <g transform="translate(0, {bullet_spacing})">
-      <circle cx="{int(9*scale)}" cy="{int(9*scale)}" r="{max(6, int(8*scale))}" fill="#073B49"/>
-      <path d="M{int(6*scale)},{int(9*scale)} L{int(8*scale)},{int(11.5*scale)} L{int(12*scale)},{int(6.5*scale)}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
-      <text x="{int(26*scale)}" y="{int(13.5*scale)}" font-family="'Segoe UI', sans-serif" font-size="{bullet_fs}px" font-weight="600" fill="#073B49">Coverage keeps unsupported and unreadable files visible</text>
+      <circle cx="{int(9 * scale)}" cy="{int(9 * scale)}" r="{max(6, int(8 * scale))}" fill="#073B49"/>
+      <path d="M{int(6 * scale)},{int(9 * scale)} L{int(8 * scale)},{int(11.5 * scale)} L{int(12 * scale)},{int(6.5 * scale)}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="{int(26 * scale)}" y="{int(13.5 * scale)}" font-family="'Segoe UI', sans-serif" font-size="{bullet_fs}px" font-weight="600" fill="#073B49">Coverage keeps unsupported and unreadable files visible</text>
     </g>
     <g transform="translate(0, {bullet_spacing * 2})">
-      <circle cx="{int(9*scale)}" cy="{int(9*scale)}" r="{max(6, int(8*scale))}" fill="#073B49"/>
-      <path d="M{int(6*scale)},{int(9*scale)} L{int(8*scale)},{int(11.5*scale)} L{int(12*scale)},{int(6.5*scale)}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
-      <text x="{int(26*scale)}" y="{int(13.5*scale)}" font-family="'Segoe UI', sans-serif" font-size="{bullet_fs}px" font-weight="600" fill="#073B49">Persistent inventory and local full-text index</text>
+      <circle cx="{int(9 * scale)}" cy="{int(9 * scale)}" r="{max(6, int(8 * scale))}" fill="#073B49"/>
+      <path d="M{int(6 * scale)},{int(9 * scale)} L{int(8 * scale)},{int(11.5 * scale)} L{int(12 * scale)},{int(6.5 * scale)}" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="{int(26 * scale)}" y="{int(13.5 * scale)}" font-family="'Segoe UI', sans-serif" font-size="{bullet_fs}px" font-weight="600" fill="#073B49">Persistent inventory and local full-text index</text>
     </g>
   </g>
 
@@ -684,6 +691,7 @@ def get_concept_b_svg(width, height, variant_name):
   </g>
 </svg>"""
     return svg
+
 
 # ==============================================================================
 # CONCEPT C — bounded-reasoning
@@ -753,7 +761,7 @@ def get_concept_c_svg(width, height, variant_name):
         cloud_item_fs = 11
         ret_hdr_fs = 10
         ret_sub_fs = 10.5
-    else: # social 1200 x 630
+    else:  # social 1200 x 630
         pad_x = 64
         pad_y = 55
         eb_w = 345
@@ -784,7 +792,7 @@ def get_concept_c_svg(width, height, variant_name):
         cloud_item_fs = 10.5
         ret_hdr_fs = 10
         ret_sub_fs = 10
-    
+
     local_box_w = int(badge_w * 0.56)
     cloud_box_w = int(badge_w * 0.34)
     cloud_box_x = int(badge_w * 0.63)
@@ -825,26 +833,26 @@ def get_concept_c_svg(width, height, variant_name):
 
   <!-- 1. Dark Architecture Canvas -->
   <rect width="{width}" height="{height}" fill="url(#bgGradC_{variant_name})"/>
-  
+
   <!-- Subtle Blueprint Grid Lines -->
   <g opacity="0.12">
-    <line x1="0" y1="{int(height*0.25)}" x2="{width}" y2="{int(height*0.25)}" stroke="#5AD2D0" stroke-width="1"/>
-    <line x1="0" y1="{int(height*0.50)}" x2="{width}" y2="{int(height*0.50)}" stroke="#5AD2D0" stroke-width="1"/>
-    <line x1="0" y1="{int(height*0.75)}" x2="{width}" y2="{int(height*0.75)}" stroke="#5AD2D0" stroke-width="1"/>
-    <line x1="{int(width*0.25)}" y1="0" x2="{int(width*0.25)}" y2="{height}" stroke="#5AD2D0" stroke-width="1"/>
-    <line x1="{int(width*0.50)}" y1="0" x2="{int(width*0.50)}" y2="{height}" stroke="#5AD2D0" stroke-width="1"/>
-    <line x1="{int(width*0.75)}" y1="0" x2="{int(width*0.75)}" y2="{height}" stroke="#5AD2D0" stroke-width="1"/>
+    <line x1="0" y1="{int(height * 0.25)}" x2="{width}" y2="{int(height * 0.25)}" stroke="#5AD2D0" stroke-width="1"/>
+    <line x1="0" y1="{int(height * 0.50)}" x2="{width}" y2="{int(height * 0.50)}" stroke="#5AD2D0" stroke-width="1"/>
+    <line x1="0" y1="{int(height * 0.75)}" x2="{width}" y2="{int(height * 0.75)}" stroke="#5AD2D0" stroke-width="1"/>
+    <line x1="{int(width * 0.25)}" y1="0" x2="{int(width * 0.25)}" y2="{height}" stroke="#5AD2D0" stroke-width="1"/>
+    <line x1="{int(width * 0.50)}" y1="0" x2="{int(width * 0.50)}" y2="{height}" stroke="#5AD2D0" stroke-width="1"/>
+    <line x1="{int(width * 0.75)}" y1="0" x2="{int(width * 0.75)}" y2="{height}" stroke="#5AD2D0" stroke-width="1"/>
   </g>
 
   <!-- Top Accent Bar -->
-  <rect x="0" y="0" width="{width}" height="{max(3, int(4*scale))}" fill="#5AD2D0"/>
+  <rect x="0" y="0" width="{width}" height="{max(3, int(4 * scale))}" fill="#5AD2D0"/>
 
   <!-- 2. Left Column: Text & Brand -->
   <!-- Eyebrow Pill -->
   <g transform="translate({pad_x}, {pad_y})">
-    <rect x="0" y="0" width="{eb_w}" height="{max(26, int(32*scale))}" rx="{max(13, int(16*scale))}" fill="#073B49" stroke="#5AD2D0" stroke-width="1.2"/>
-    <circle cx="{int(16*scale)}" cy="{max(13, int(16*scale))}" r="{max(3.5, 4.5*scale)}" fill="#5AD2D0"/>
-    <text x="{int(32*scale)}" y="{max(17, int(21*scale))}" class="eb-text-c">LOCAL AUTHORITY · BOUNDED REASONING</text>
+    <rect x="0" y="0" width="{eb_w}" height="{max(26, int(32 * scale))}" rx="{max(13, int(16 * scale))}" fill="#073B49" stroke="#5AD2D0" stroke-width="1.2"/>
+    <circle cx="{int(16 * scale)}" cy="{max(13, int(16 * scale))}" r="{max(3.5, 4.5 * scale)}" fill="#5AD2D0"/>
+    <text x="{int(32 * scale)}" y="{max(17, int(21 * scale))}" class="eb-text-c">LOCAL AUTHORITY · BOUNDED REASONING</text>
   </g>
 
   <!-- Product Brand Mark & Name -->
@@ -854,7 +862,7 @@ def get_concept_c_svg(width, height, variant_name):
       <path d="M18,20 L42,6 L36,36 L12,48 Z" fill="#5AD2D0"/>
       <path d="M0,0 L18,20 L12,48 L-6,26 Z" fill="#1F9D72"/>
     </g>
-    <text x="{int(58*scale)}" y="{int(32*scale)}" class="prod-text-c">Nemo<tspan class="prod-sub-c">Fold</tspan></text>
+    <text x="{int(58 * scale)}" y="{int(32 * scale)}" class="prod-text-c">Nemo<tspan class="prod-sub-c">Fold</tspan></text>
   </g>
 
   <!-- Headline -->
@@ -866,116 +874,117 @@ def get_concept_c_svg(width, height, variant_name):
 
   <!-- Status Chip: Cloud proof: pending -->
   <g transform="translate({pad_x}, {chip_y})">
-    <rect x="0" y="0" width="{chip_w}" height="{max(36, int(46*scale))}" rx="{max(18, int(23*scale))}" fill="#1E293B" stroke="#F59E0B" stroke-width="1.8"/>
+    <rect x="0" y="0" width="{chip_w}" height="{max(36, int(46 * scale))}" rx="{max(18, int(23 * scale))}" fill="#1E293B" stroke="#F59E0B" stroke-width="1.8"/>
     <!-- Pending Amber Dot -->
-    <circle cx="{int(24*scale)}" cy="{max(18, int(23*scale))}" r="{max(4.5, 6*scale)}" fill="#F59E0B"/>
-    <text x="{int(42*scale)}" y="{max(23, int(29.5*scale))}" class="chip-text-c">Cloud proof: pending</text>
+    <circle cx="{int(24 * scale)}" cy="{max(18, int(23 * scale))}" r="{max(4.5, 6 * scale)}" fill="#F59E0B"/>
+    <text x="{int(42 * scale)}" y="{max(23, int(29.5 * scale))}" class="chip-text-c">Cloud proof: pending</text>
   </g>
 
   <!-- Key Architecture Invariants -->
-  <g transform="translate({pad_x}, {chip_y + int(70*scale)})">
+  <g transform="translate({pad_x}, {chip_y + int(70 * scale)})">
     <g transform="translate(0, 0)">
-      <rect width="{max(20, int(24*scale))}" height="{max(20, int(24*scale))}" rx="{max(5, int(6*scale))}" fill="#0B4A59" stroke="#5AD2D0" stroke-width="1"/>
-      <path d="M{max(6, int(7*scale))},{max(10, int(12*scale))} L{max(9, int(11*scale))},{max(14, int(16*scale))} L{max(15, int(17*scale))},{max(7, int(8*scale))}" fill="none" stroke="#5AD2D0" stroke-width="2" stroke-linecap="round"/>
-      <text x="{max(28, int(36*scale))}" y="{max(14, int(17*scale))}" font-family="'Segoe UI', sans-serif" font-size="{inv_fs}px" font-weight="600" fill="#F7F1E7">Approved Folders: originals &amp; paths never leave disk</text>
+      <rect width="{max(20, int(24 * scale))}" height="{max(20, int(24 * scale))}" rx="{max(5, int(6 * scale))}" fill="#0B4A59" stroke="#5AD2D0" stroke-width="1"/>
+      <path d="M{max(6, int(7 * scale))},{max(10, int(12 * scale))} L{max(9, int(11 * scale))},{max(14, int(16 * scale))} L{max(15, int(17 * scale))},{max(7, int(8 * scale))}" fill="none" stroke="#5AD2D0" stroke-width="2" stroke-linecap="round"/>
+      <text x="{max(28, int(36 * scale))}" y="{max(14, int(17 * scale))}" font-family="'Segoe UI', sans-serif" font-size="{inv_fs}px" font-weight="600" fill="#F7F1E7">Approved Folders: originals &amp; paths never leave disk</text>
     </g>
     <g transform="translate(0, {inv_spacing})">
-      <rect width="{max(20, int(24*scale))}" height="{max(20, int(24*scale))}" rx="{max(5, int(6*scale))}" fill="#0B4A59" stroke="#5AD2D0" stroke-width="1"/>
-      <path d="M{max(6, int(7*scale))},{max(10, int(12*scale))} L{max(9, int(11*scale))},{max(14, int(16*scale))} L{max(15, int(17*scale))},{max(7, int(8*scale))}" fill="none" stroke="#5AD2D0" stroke-width="2" stroke-linecap="round"/>
-      <text x="{max(28, int(36*scale))}" y="{max(14, int(17*scale))}" font-family="'Segoe UI', sans-serif" font-size="{inv_fs}px" font-weight="600" fill="#F7F1E7">Policy &amp; Privacy Gate: fail-closed bounded budget</text>
+      <rect width="{max(20, int(24 * scale))}" height="{max(20, int(24 * scale))}" rx="{max(5, int(6 * scale))}" fill="#0B4A59" stroke="#5AD2D0" stroke-width="1"/>
+      <path d="M{max(6, int(7 * scale))},{max(10, int(12 * scale))} L{max(9, int(11 * scale))},{max(14, int(16 * scale))} L{max(15, int(17 * scale))},{max(7, int(8 * scale))}" fill="none" stroke="#5AD2D0" stroke-width="2" stroke-linecap="round"/>
+      <text x="{max(28, int(36 * scale))}" y="{max(14, int(17 * scale))}" font-family="'Segoe UI', sans-serif" font-size="{inv_fs}px" font-weight="600" fill="#F7F1E7">Policy &amp; Privacy Gate: fail-closed bounded budget</text>
     </g>
     <g transform="translate(0, {inv_spacing * 2})">
-      <rect width="{max(20, int(24*scale))}" height="{max(20, int(24*scale))}" rx="{max(5, int(6*scale))}" fill="#0B4A59" stroke="#5AD2D0" stroke-width="1"/>
-      <path d="M{max(6, int(7*scale))},{max(10, int(12*scale))} L{max(9, int(11*scale))},{max(14, int(16*scale))} L{max(15, int(17*scale))},{max(7, int(8*scale))}" fill="none" stroke="#5AD2D0" stroke-width="2" stroke-linecap="round"/>
-      <text x="{max(28, int(36*scale))}" y="{max(14, int(17*scale))}" font-family="'Segoe UI', sans-serif" font-size="{inv_fs}px" font-weight="600" fill="#F7F1E7">Evidence Verifier: local schema &amp; quote validation</text>
+      <rect width="{max(20, int(24 * scale))}" height="{max(20, int(24 * scale))}" rx="{max(5, int(6 * scale))}" fill="#0B4A59" stroke="#5AD2D0" stroke-width="1"/>
+      <path d="M{max(6, int(7 * scale))},{max(10, int(12 * scale))} L{max(9, int(11 * scale))},{max(14, int(16 * scale))} L{max(15, int(17 * scale))},{max(7, int(8 * scale))}" fill="none" stroke="#5AD2D0" stroke-width="2" stroke-linecap="round"/>
+      <text x="{max(28, int(36 * scale))}" y="{max(14, int(17 * scale))}" font-family="'Segoe UI', sans-serif" font-size="{inv_fs}px" font-weight="600" fill="#F7F1E7">Evidence Verifier: local schema &amp; quote validation</text>
     </g>
   </g>
 
   <!-- 3. Right Graphic: Trust Split Boundary Diagram -->
   <g transform="translate({badge_x}, {badge_y})" filter="url(#shadowC_{variant_name})">
-    
+
     <!-- Outer Master Graphic Container -->
-    <rect width="{badge_w}" height="{badge_h}" rx="{max(12, int(18*scale))}" fill="#031A22" stroke="#073B49" stroke-width="2"/>
+    <rect width="{badge_w}" height="{badge_h}" rx="{max(12, int(18 * scale))}" fill="#031A22" stroke="#073B49" stroke-width="2"/>
 
     <!-- ZONE A: LOCAL AUTHORITY (Left ~56% of graphic) -->
-    <rect x="{int(18*scale)}" y="{int(18*scale)}" width="{local_box_w}" height="{badge_h - int(36*scale)}" rx="{max(10, int(14*scale))}" fill="url(#localCardGradC_{variant_name})" stroke="#1F9D72" stroke-width="1.8"/>
-    
+    <rect x="{int(18 * scale)}" y="{int(18 * scale)}" width="{local_box_w}" height="{badge_h - int(36 * scale)}" rx="{max(10, int(14 * scale))}" fill="url(#localCardGradC_{variant_name})" stroke="#1F9D72" stroke-width="1.8"/>
+
     <!-- Zone Header -->
-    <g transform="translate({int(30*scale)}, {int(44*scale)})">
-      <circle cx="{int(8*scale)}" cy="{int(8*scale)}" r="{max(4.5, 6*scale)}" fill="#1F9D72"/>
-      <text x="{int(22*scale)}" y="{int(12.5*scale)}" font-family="'Segoe UI', sans-serif" font-size="{local_hdr_fs}px" font-weight="800" fill="#F7F1E7" letter-spacing="1.2px">LOCAL AUTHORITY (DOMINANT)</text>
+    <g transform="translate({int(30 * scale)}, {int(44 * scale)})">
+      <circle cx="{int(8 * scale)}" cy="{int(8 * scale)}" r="{max(4.5, 6 * scale)}" fill="#1F9D72"/>
+      <text x="{int(22 * scale)}" y="{int(12.5 * scale)}" font-family="'Segoe UI', sans-serif" font-size="{local_hdr_fs}px" font-weight="800" fill="#F7F1E7" letter-spacing="1.2px">LOCAL AUTHORITY (DOMINANT)</text>
     </g>
 
     <!-- Node 1: Approved Files & Memory -->
-    <g transform="translate({int(28*scale)}, {int(badge_h * 0.115)})">
-      <rect width="{local_box_w - int(24*scale)}" height="{int(badge_h * 0.155)}" rx="{max(6, int(10*scale))}" fill="#04232C" stroke="#0E5C6E" stroke-width="1.2"/>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.045)}" font-family="'Segoe UI', sans-serif" font-size="{local_title_fs}px" font-weight="700" fill="#5AD2D0">Approved Files &amp; Memory</text>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.082)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Original documents never leave disk</text>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.118)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Local index, hashes &amp; action ledgers</text>
+    <g transform="translate({int(28 * scale)}, {int(badge_h * 0.115)})">
+      <rect width="{local_box_w - int(24 * scale)}" height="{int(badge_h * 0.155)}" rx="{max(6, int(10 * scale))}" fill="#04232C" stroke="#0E5C6E" stroke-width="1.2"/>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.045)}" font-family="'Segoe UI', sans-serif" font-size="{local_title_fs}px" font-weight="700" fill="#5AD2D0">Approved Files &amp; Memory</text>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.082)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Original documents never leave disk</text>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.118)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Local index, hashes &amp; action ledgers</text>
     </g>
 
     <!-- Node 2: Policy & Privacy Gate -->
-    <g transform="translate({int(28*scale)}, {int(badge_h * 0.29)})">
-      <rect width="{local_box_w - int(24*scale)}" height="{int(badge_h * 0.155)}" rx="{max(6, int(10*scale))}" fill="#04232C" stroke="#FF6B4A" stroke-width="1.4"/>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.045)}" font-family="'Segoe UI', sans-serif" font-size="{local_title_fs}px" font-weight="700" fill="#FF6B4A">Policy + Privacy Gate</text>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.082)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Explicit scope &amp; pseudonymization</text>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.118)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Fail closed: unapproved stays local</text>
+    <g transform="translate({int(28 * scale)}, {int(badge_h * 0.29)})">
+      <rect width="{local_box_w - int(24 * scale)}" height="{int(badge_h * 0.155)}" rx="{max(6, int(10 * scale))}" fill="#04232C" stroke="#FF6B4A" stroke-width="1.4"/>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.045)}" font-family="'Segoe UI', sans-serif" font-size="{local_title_fs}px" font-weight="700" fill="#FF6B4A">Policy + Privacy Gate</text>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.082)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Explicit scope &amp; pseudonymization</text>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.118)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Fail closed: unapproved stays local</text>
     </g>
 
     <!-- Node 3: Local Evidence Verifier -->
-    <g transform="translate({int(28*scale)}, {int(badge_h * 0.465)})">
-      <rect width="{local_box_w - int(24*scale)}" height="{int(badge_h * 0.155)}" rx="{max(6, int(10*scale))}" fill="#04232C" stroke="#1F9D72" stroke-width="1.4"/>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.045)}" font-family="'Segoe UI', sans-serif" font-size="{local_title_fs}px" font-weight="700" fill="#1F9D72">Evidence Verifier</text>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.082)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Checks quotes against local text</text>
-      <text x="{int(14*scale)}" y="{int(badge_h * 0.118)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Verifies source IDs &amp; schema before commit</text>
+    <g transform="translate({int(28 * scale)}, {int(badge_h * 0.465)})">
+      <rect width="{local_box_w - int(24 * scale)}" height="{int(badge_h * 0.155)}" rx="{max(6, int(10 * scale))}" fill="#04232C" stroke="#1F9D72" stroke-width="1.4"/>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.045)}" font-family="'Segoe UI', sans-serif" font-size="{local_title_fs}px" font-weight="700" fill="#1F9D72">Evidence Verifier</text>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.082)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Checks quotes against local text</text>
+      <text x="{int(14 * scale)}" y="{int(badge_h * 0.118)}" font-family="'Segoe UI', sans-serif" font-size="{local_desc_fs}px" fill="#C8E3E1">· Verifies source IDs &amp; schema before commit</text>
     </g>
 
     <!-- Local Summary Guarantee Bar -->
-    <g transform="translate({int(28*scale)}, {badge_h - max(36, int(54*scale))})">
-      <rect width="{local_box_w - int(24*scale)}" height="{max(28, int(38*scale))}" rx="{max(6, int(8*scale))}" fill="#073B49" stroke="#1F9D72" stroke-width="1" stroke-dasharray="4 3"/>
-      <text x="{int((local_box_w - 24*scale)/2)}" y="{max(19, int(24*scale))}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{guar_fs}px" font-weight="700" fill="#5AD2D0">NO ORIGINAL FILES OR HOST PATHS</text>
+    <g transform="translate({int(28 * scale)}, {badge_h - max(36, int(54 * scale))})">
+      <rect width="{local_box_w - int(24 * scale)}" height="{max(28, int(38 * scale))}" rx="{max(6, int(8 * scale))}" fill="#073B49" stroke="#1F9D72" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="{int((local_box_w - 24 * scale) / 2)}" y="{max(19, int(24 * scale))}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{guar_fs}px" font-weight="700" fill="#5AD2D0">NO ORIGINAL FILES OR HOST PATHS</text>
     </g>
 
     <!-- TRUST BOUNDARY DIVIDER -->
-    <g transform="translate({divider_x}, {int(24*scale)})">
-      <line x1="0" y1="0" x2="0" y2="{badge_h - int(48*scale)}" stroke="#5AD2D0" stroke-width="2" stroke-dasharray="6 4" filter="url(#glowCyanC_{variant_name})"/>
+    <g transform="translate({divider_x}, {int(24 * scale)})">
+      <line x1="0" y1="0" x2="0" y2="{badge_h - int(48 * scale)}" stroke="#5AD2D0" stroke-width="2" stroke-dasharray="6 4" filter="url(#glowCyanC_{variant_name})"/>
     </g>
 
     <!-- ZONE B: BOUNDED REASONING (Right ~34% of graphic) -->
-    <g transform="translate({cloud_box_x}, {int(18*scale)})">
-      <rect width="{cloud_box_w}" height="{badge_h - int(36*scale)}" rx="{max(10, int(14*scale))}" fill="url(#cloudCardGradC_{variant_name})" stroke="#818CF8" stroke-width="1.5"/>
-      
+    <g transform="translate({cloud_box_x}, {int(18 * scale)})">
+      <rect width="{cloud_box_w}" height="{badge_h - int(36 * scale)}" rx="{max(10, int(14 * scale))}" fill="url(#cloudCardGradC_{variant_name})" stroke="#818CF8" stroke-width="1.5"/>
+
       <!-- Zone Header -->
-      <g transform="translate({int(14*scale)}, {int(44*scale)})">
-        <circle cx="{int(7*scale)}" cy="{int(7*scale)}" r="{max(4, 5.5*scale)}" fill="#818CF8"/>
-        <text x="{int(18*scale)}" y="{int(11.5*scale)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_hdr_fs}px" font-weight="800" fill="#C7D2FE" letter-spacing="0.8px">BOUNDED ZONE</text>
+      <g transform="translate({int(14 * scale)}, {int(44 * scale)})">
+        <circle cx="{int(7 * scale)}" cy="{int(7 * scale)}" r="{max(4, 5.5 * scale)}" fill="#818CF8"/>
+        <text x="{int(18 * scale)}" y="{int(11.5 * scale)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_hdr_fs}px" font-weight="800" fill="#C7D2FE" letter-spacing="0.8px">BOUNDED ZONE</text>
       </g>
 
       <!-- Cloud Reasoning Box (4 Proven Items) -->
-      <g transform="translate({int(14*scale)}, {int(badge_h * 0.115)})">
-        <rect width="{cloud_box_w - int(28*scale)}" height="{int(badge_h * 0.40)}" rx="{max(6, int(10*scale))}" fill="#0A0F1D" stroke="#6366F1" stroke-width="1.4"/>
-        <text x="{int(12*scale)}" y="{int(badge_h * 0.045)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_model_fs}px" font-weight="700" fill="#A5B4FC">NVIDIA Nemotron</text>
-        <text x="{int(12*scale)}" y="{int(badge_h * 0.078)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_sub_fs}px" font-weight="600" fill="#818CF8">on Nebius</text>
-        
-        <line x1="{int(12*scale)}" y1="{int(badge_h * 0.098)}" x2="{cloud_box_w - int(40*scale)}" y2="{int(badge_h * 0.098)}" stroke="#334155" stroke-width="1"/>
+      <g transform="translate({int(14 * scale)}, {int(badge_h * 0.115)})">
+        <rect width="{cloud_box_w - int(28 * scale)}" height="{int(badge_h * 0.40)}" rx="{max(6, int(10 * scale))}" fill="#0A0F1D" stroke="#6366F1" stroke-width="1.4"/>
+        <text x="{int(12 * scale)}" y="{int(badge_h * 0.045)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_model_fs}px" font-weight="700" fill="#A5B4FC">NVIDIA Nemotron</text>
+        <text x="{int(12 * scale)}" y="{int(badge_h * 0.078)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_sub_fs}px" font-weight="600" fill="#818CF8">on Nebius</text>
 
-        <text x="{int(12*scale)}" y="{int(badge_h * 0.145)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_item_fs}px" fill="#94A3B8">· Optional reasoning</text>
-        <text x="{int(12*scale)}" y="{int(badge_h * 0.185)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_item_fs}px" fill="#94A3B8">· Selected context</text>
-        <text x="{int(12*scale)}" y="{int(badge_h * 0.225)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_item_fs}px" fill="#94A3B8">· Pseudonymized</text>
-        <text x="{int(12*scale)}" y="{int(badge_h * 0.265)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_item_fs}px" fill="#94A3B8">· Bounded budget</text>
+        <line x1="{int(12 * scale)}" y1="{int(badge_h * 0.098)}" x2="{cloud_box_w - int(40 * scale)}" y2="{int(badge_h * 0.098)}" stroke="#334155" stroke-width="1"/>
+
+        <text x="{int(12 * scale)}" y="{int(badge_h * 0.145)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_item_fs}px" fill="#94A3B8">· Optional reasoning</text>
+        <text x="{int(12 * scale)}" y="{int(badge_h * 0.185)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_item_fs}px" fill="#94A3B8">· Selected context</text>
+        <text x="{int(12 * scale)}" y="{int(badge_h * 0.225)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_item_fs}px" fill="#94A3B8">· Pseudonymized</text>
+        <text x="{int(12 * scale)}" y="{int(badge_h * 0.265)}" font-family="'Segoe UI', sans-serif" font-size="{cloud_item_fs}px" fill="#94A3B8">· Bounded budget</text>
       </g>
 
       <!-- Return Path Box -->
-      <g transform="translate({int(14*scale)}, {badge_h - max(72, int(96*scale))})">
-        <rect width="{cloud_box_w - int(28*scale)}" height="{max(48, int(64*scale))}" rx="{max(6, int(8*scale))}" fill="#0A0F1D" stroke="#1F9D72" stroke-width="1.2" stroke-dasharray="3 3"/>
-        <text x="{int((cloud_box_w - 28*scale)/2)}" y="{max(20, int(27*scale))}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{ret_hdr_fs}px" font-weight="700" fill="#1F9D72">RETURN PATH ONLY</text>
-        <text x="{int((cloud_box_w - 28*scale)/2)}" y="{max(36, int(46*scale))}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{ret_sub_fs}px" font-weight="700" fill="#5AD2D0">TO LOCAL VERIFIER</text>
+      <g transform="translate({int(14 * scale)}, {badge_h - max(72, int(96 * scale))})">
+        <rect width="{cloud_box_w - int(28 * scale)}" height="{max(48, int(64 * scale))}" rx="{max(6, int(8 * scale))}" fill="#0A0F1D" stroke="#1F9D72" stroke-width="1.2" stroke-dasharray="3 3"/>
+        <text x="{int((cloud_box_w - 28 * scale) / 2)}" y="{max(20, int(27 * scale))}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{ret_hdr_fs}px" font-weight="700" fill="#1F9D72">RETURN PATH ONLY</text>
+        <text x="{int((cloud_box_w - 28 * scale) / 2)}" y="{max(36, int(46 * scale))}" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="{ret_sub_fs}px" font-weight="700" fill="#5AD2D0">TO LOCAL VERIFIER</text>
       </g>
     </g>
 
   </g>
 </svg>"""
     return svg
+
 
 def render_svg_to_png(svg_path, png_path, width, height):
     chrome_path = r"C:\Program Files\Google\Chrome\Application\chrome.exe"
@@ -1003,21 +1012,22 @@ def render_svg_to_png(svg_path, png_path, width, height):
         "--force-device-scale-factor=1",
         f"--window-size={width},{height}",
         f"--screenshot={os.path.abspath(png_path)}",
-        os.path.abspath(svg_path)
+        os.path.abspath(svg_path),
     ]
     subprocess.run(cmd, check=True)
 
+
 def main():
-    variants = [
-        ("banner", 1600, 900),
-        ("thumbnail", 1280, 720),
-        ("social", 1200, 630)
-    ]
+    variants = [("banner", 1600, 900), ("thumbnail", 1280, 720), ("social", 1200, 630)]
 
     concepts = [
         ("trust-voyage", get_concept_a_svg, "Concept A: Oceanic Depth & Calm Negative Space"),
-        ("evidence-ledger", get_concept_b_svg, "Concept B: Light Editorial Evidence Board & Traceability"),
-        ("bounded-reasoning", get_concept_c_svg, "Concept C: Dark Split-Boundary Campaign Graphic")
+        (
+            "evidence-ledger",
+            get_concept_b_svg,
+            "Concept B: Light Editorial Evidence Board & Traceability",
+        ),
+        ("bounded-reasoning", get_concept_c_svg, "Concept C: Dark Split-Boundary Campaign Graphic"),
     ]
 
     manifest = {
@@ -1033,46 +1043,42 @@ def main():
                 "cyan_accent": "#5AD2D0",
                 "emerald_verification": "#1F9D72",
                 "slate_primary": "#0F172A",
-                "slate_secondary": "#334155"
+                "slate_secondary": "#334155",
             },
             "typography": {
                 "primary": "Segoe UI, -apple-system, sans-serif",
-                "editorial_serif": "Georgia, serif"
+                "editorial_serif": "Georgia, serif",
             },
             "status_invariants": [
                 "Local core ready",
                 "Live cloud proof open",
-                "Cloud proof: pending"
-            ]
+                "Cloud proof: pending",
+            ],
         },
         "sources": [
             {
                 "file": "sources/nemofold-console-reference.png",
                 "format": "PNG",
-                "description": "Current product console and brand direction reference"
+                "description": "Current product console and brand direction reference",
             },
             {
                 "file": "sources/nemofold-trust-boundary-reference.svg",
                 "format": "SVG",
-                "description": "Accessible trust-boundary diagram and palette reference"
+                "description": "Accessible trust-boundary diagram and palette reference",
             },
             {
                 "file": "sources/trust-voyage-background.png",
                 "format": "PNG",
-                "description": "Text-free hero bitmap background for Concept A (Trust Voyage)"
-            }
+                "description": "Text-free hero bitmap background for Concept A (Trust Voyage)",
+            },
         ],
-        "concepts": []
+        "concepts": [],
     }
 
     print("Generating SVGs and rendering PNGs...")
 
     for c_id, svg_fn, c_desc in concepts:
-        c_entry = {
-            "id": c_id,
-            "title": c_desc,
-            "deliverables": []
-        }
+        c_entry = {"id": c_id, "title": c_desc, "deliverables": []}
         for v_name, w, h in variants:
             svg_filename = f"{c_id}-{v_name}.svg"
             png_filename = f"{c_id}-{v_name}.png"
@@ -1080,7 +1086,7 @@ def main():
             png_path = os.path.join(BASE_DIR, png_filename)
 
             # Generate SVG content
-            svg_content = svg_fn(w, h, v_name)
+            svg_content = normalize_svg(svg_fn(w, h, v_name))
             with open(svg_path, "w", encoding="utf-8") as f:
                 f.write(svg_content)
 
@@ -1094,24 +1100,24 @@ def main():
 
             print(f"Generated {png_filename}: {actual_w}x{actual_h} ({mode})")
 
-            c_entry["deliverables"].append({
-                "variant": v_name,
-                "svg": {
-                    "file": svg_filename,
-                    "format": "SVG",
-                    "viewBox": f"0 0 {w} {h}"
-                },
-                "png": {
-                    "file": png_filename,
-                    "format": "PNG",
-                    "width": actual_w,
-                    "height": actual_h,
-                    "mode": mode
-                },
-                "target_dimensions": f"{w}x{h}",
-                "actual_dimensions": f"{actual_w}x{actual_h}",
-                "status": "VERIFIED" if (actual_w == w and actual_h == h) else "DIMENSION_MISMATCH"
-            })
+            c_entry["deliverables"].append(
+                {
+                    "variant": v_name,
+                    "svg": {"file": svg_filename, "format": "SVG", "viewBox": f"0 0 {w} {h}"},
+                    "png": {
+                        "file": png_filename,
+                        "format": "PNG",
+                        "width": actual_w,
+                        "height": actual_h,
+                        "mode": mode,
+                    },
+                    "target_dimensions": f"{w}x{h}",
+                    "actual_dimensions": f"{actual_w}x{actual_h}",
+                    "status": "VERIFIED"
+                    if (actual_w == w and actual_h == h)
+                    else "DIMENSION_MISMATCH",
+                }
+            )
         manifest["concepts"].append(c_entry)
 
     # Write manifest.json
@@ -1119,6 +1125,7 @@ def main():
     with open(manifest_path, "w", encoding="utf-8") as f:
         json.dump(manifest, f, indent=2)
     print(f"Wrote {manifest_path}")
+
 
 if __name__ == "__main__":
     main()
