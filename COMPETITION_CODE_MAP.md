@@ -18,5 +18,7 @@ informed the product scope, but the current checkout was built from a new empty 
 repository. The first implementation snapshot is Git commit
 `2eaf011c4fb475028f2ac4428491027c7cd2fdb5`. The complete local workflow, recovery,
 document-extraction, privacy-package, and verification audit is commit
-`e8a221d0242cc6754dcc9fe9da27173970b89ccb`. Later live-integration revisions will be
-recorded here when they exist.
+`e8a221d0242cc6754dcc9fe9da27173970b89ccb`. The fail-closed Nebius Token Factory
+adapter, durable transfer-attempt receipt, strict live-result verifier, CLI contract,
+and adversarial tests are captured in commit
+`562d47a1519c412e95cc2969241aadc04924b175`.
