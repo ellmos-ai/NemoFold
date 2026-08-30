@@ -1,0 +1,225 @@
+{
+  "title": "NemoFold Jury Design Set",
+  "description": "Visual asset suite for NemoFold evidence-first document agent.",
+  "tagline": "Your files. Your rules. Your agent.",
+  "brand_direction": {
+    "palette": {
+      "deep_teal_dark": "#073B49",
+      "deep_teal_light": "#0B4A59",
+      "warm_ivory": "#F7F1E7",
+      "coral_accent": "#FF6B4A",
+      "cyan_accent": "#5AD2D0",
+      "emerald_verification": "#1F9D72",
+      "slate_primary": "#0F172A",
+      "slate_secondary": "#334155"
+    },
+    "typography": {
+      "primary": "Segoe UI, -apple-system, sans-serif",
+      "editorial_serif": "Georgia, serif"
+    },
+    "status_invariants": [
+      "Local core ready",
+      "Live cloud proof open",
+      "Cloud proof: pending"
+    ]
+  },
+  "sources": [
+    {
+      "file": "sources/nemofold-console-reference.png",
+      "format": "PNG",
+      "description": "Current product console and brand direction reference"
+    },
+    {
+      "file": "sources/nemofold-trust-boundary-reference.svg",
+      "format": "SVG",
+      "description": "Accessible trust-boundary diagram and palette reference"
+    },
+    {
+      "file": "sources/trust-voyage-background.png",
+      "format": "PNG",
+      "description": "Text-free hero bitmap background for Concept A (Trust Voyage)"
+    }
+  ],
+  "concepts": [
+    {
+      "id": "trust-voyage",
+      "title": "Concept A: Oceanic Depth & Calm Negative Space",
+      "deliverables": [
+        {
+          "variant": "banner",
+          "svg": {
+            "file": "trust-voyage-banner.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1600 900"
+          },
+          "png": {
+            "file": "trust-voyage-banner.png",
+            "format": "PNG",
+            "width": 1600,
+            "height": 900,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1600x900",
+          "actual_dimensions": "1600x900",
+          "status": "VERIFIED"
+        },
+        {
+          "variant": "thumbnail",
+          "svg": {
+            "file": "trust-voyage-thumbnail.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1280 720"
+          },
+          "png": {
+            "file": "trust-voyage-thumbnail.png",
+            "format": "PNG",
+            "width": 1280,
+            "height": 720,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1280x720",
+          "actual_dimensions": "1280x720",
+          "status": "VERIFIED"
+        },
+        {
+          "variant": "social",
+          "svg": {
+            "file": "trust-voyage-social.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1200 630"
+          },
+          "png": {
+            "file": "trust-voyage-social.png",
+            "format": "PNG",
+            "width": 1200,
+            "height": 630,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1200x630",
+          "actual_dimensions": "1200x630",
+          "status": "VERIFIED"
+        }
+      ]
+    },
+    {
+      "id": "evidence-ledger",
+      "title": "Concept B: Light Editorial Evidence Board & Traceability",
+      "deliverables": [
+        {
+          "variant": "banner",
+          "svg": {
+            "file": "evidence-ledger-banner.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1600 900"
+          },
+          "png": {
+            "file": "evidence-ledger-banner.png",
+            "format": "PNG",
+            "width": 1600,
+            "height": 900,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1600x900",
+          "actual_dimensions": "1600x900",
+          "status": "VERIFIED"
+        },
+        {
+          "variant": "thumbnail",
+          "svg": {
+            "file": "evidence-ledger-thumbnail.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1280 720"
+          },
+          "png": {
+            "file": "evidence-ledger-thumbnail.png",
+            "format": "PNG",
+            "width": 1280,
+            "height": 720,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1280x720",
+          "actual_dimensions": "1280x720",
+          "status": "VERIFIED"
+        },
+        {
+          "variant": "social",
+          "svg": {
+            "file": "evidence-ledger-social.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1200 630"
+          },
+          "png": {
+            "file": "evidence-ledger-social.png",
+            "format": "PNG",
+            "width": 1200,
+            "height": 630,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1200x630",
+          "actual_dimensions": "1200x630",
+          "status": "VERIFIED"
+        }
+      ]
+    },
+    {
+      "id": "bounded-reasoning",
+      "title": "Concept C: Dark Split-Boundary Campaign Graphic",
+      "deliverables": [
+        {
+          "variant": "banner",
+          "svg": {
+            "file": "bounded-reasoning-banner.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1600 900"
+          },
+          "png": {
+            "file": "bounded-reasoning-banner.png",
+            "format": "PNG",
+            "width": 1600,
+            "height": 900,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1600x900",
+          "actual_dimensions": "1600x900",
+          "status": "VERIFIED"
+        },
+        {
+          "variant": "thumbnail",
+          "svg": {
+            "file": "bounded-reasoning-thumbnail.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1280 720"
+          },
+          "png": {
+            "file": "bounded-reasoning-thumbnail.png",
+            "format": "PNG",
+            "width": 1280,
+            "height": 720,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1280x720",
+          "actual_dimensions": "1280x720",
+          "status": "VERIFIED"
+        },
+        {
+          "variant": "social",
+          "svg": {
+            "file": "bounded-reasoning-social.svg",
+            "format": "SVG",
+            "viewBox": "0 0 1200 630"
+          },
+          "png": {
+            "file": "bounded-reasoning-social.png",
+            "format": "PNG",
+            "width": 1200,
+            "height": 630,
+            "mode": "RGB"
+          },
+          "target_dimensions": "1200x630",
+          "actual_dimensions": "1200x630",
+          "status": "VERIFIED"
+        }
+      ]
+    }
+  ]
+}

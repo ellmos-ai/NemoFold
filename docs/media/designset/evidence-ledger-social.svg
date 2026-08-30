@@ -1,0 +1,182 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="NemoFold - Evidence Ledger">
+  <defs>
+    <!-- Background Grid Pattern -->
+    <pattern id="gridB_social" width="24" height="24" patternUnits="userSpaceOnUse">
+      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#E6DEC9" stroke-width="0.8"/>
+      <circle cx="0" cy="0" r="1.2" fill="#D5CABA"/>
+    </pattern>
+    <filter id="topShadowB_social" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="16" stdDeviation="20" flood-color="#073B49" flood-opacity="0.12"/>
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#0F172A" flood-opacity="0.06"/>
+    </filter>
+    <filter id="cardShadowB_social" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#0F172A" flood-opacity="0.08"/>
+    </filter>
+    <linearGradient id="coralGradB_social" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF6B4A"/>
+      <stop offset="100%" stop-color="#FA8C73"/>
+    </linearGradient>
+    <style>
+      .eb-text-b { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 11.5px; font-weight: 700; fill: #073B49; letter-spacing: 2px; text-transform: uppercase; }
+      .prod-text-b { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 36px; font-weight: 800; fill: #073B49; letter-spacing: -0.5px; }
+      .prod-sub-b { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 36px; font-weight: 800; fill: #FF6B4A; }
+      .hl-text-b { font-family: Georgia, 'Times New Roman', serif; font-size: 45px; font-weight: 700; fill: #0F172A; letter-spacing: -0.5px; line-height: 1.15; }
+      .sup-text-b { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 17.5px; font-weight: 400; fill: #334155; letter-spacing: 0.2px; }
+      .chip-text-b { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 13.5px; font-weight: 700; fill: #065F46; letter-spacing: 0.3px; }
+    </style>
+  </defs>
+
+  <!-- 1. Warm Ivory Canvas -->
+  <rect width="1200" height="630" fill="#F7F1E7"/>
+  <rect width="1200" height="630" fill="url(#gridB_social)"/>
+
+  <!-- Left/Top Brand Borders -->
+  <rect x="0" y="0" width="4" height="630" fill="#073B49"/>
+  <rect x="0" y="0" width="1200" height="3" fill="url(#coralGradB_social)"/>
+
+  <!-- 2. Left Column: Text & Brand -->
+  <!-- Eyebrow Pill -->
+  <g transform="translate(64, 55)">
+    <rect x="0" y="0" width="295" height="26" rx="6" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.2"/>
+    <circle cx="12" cy="13" r="3.5" fill="#FF6B4A"/>
+    <text x="24" y="17" class="eb-text-b">EVIDENCE-FIRST DOCUMENT AGENT</text>
+  </g>
+
+  <!-- Product Brand Mark & Name -->
+  <g transform="translate(64, 135)">
+    <!-- Origami Fold Icon in Dark / Coral -->
+    <g transform="scale(0.7124999999999999)">
+      <path d="M0,0 L24,-14 L42,6 L18,20 Z" fill="#073B49"/>
+      <path d="M18,20 L42,6 L36,36 L12,48 Z" fill="#FF6B4A"/>
+      <path d="M0,0 L18,20 L12,48 L-6,26 Z" fill="#1F9D72"/>
+    </g>
+    <text x="43" y="24" class="prod-text-b">Nemo<tspan class="prod-sub-b">Fold</tspan></text>
+  </g>
+
+  <!-- Headline -->
+  <text x="64" y="203" class="hl-text-b">Answers that point</text>
+  <text x="64" y="259" class="hl-text-b">back to the page.</text>
+
+  <!-- Supporting Copy -->
+  <text x="64" y="317" class="sup-text-b">Exact quotes. Source locations. Coverage you can inspect.</text>
+
+  <!-- Status Chip: Local core ready -->
+  <g transform="translate(64, 377)">
+    <rect x="0" y="0" width="185" height="36" rx="18" fill="#E8F8F0" stroke="#1F9D72" stroke-width="1.8"/>
+    <!-- Emerald Shield Icon -->
+    <circle cx="18" cy="18" r="7" fill="#1F9D72"/>
+    <path d="M15,18 L17,21 L21,15" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+    <text x="31" y="23" class="chip-text-b">Local core ready</text>
+  </g>
+
+  <!-- Safe Trust Bullet Highlights -->
+  <g transform="translate(64, 425)">
+    <g transform="translate(0, 0)">
+      <circle cx="6" cy="6" r="6" fill="#073B49"/>
+      <path d="M4,6 L6,8 L9,4" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="19" y="10" font-family="'Segoe UI', sans-serif" font-size="12px" font-weight="600" fill="#073B49">Multiple questions · Exact quotes · Source locations</text>
+    </g>
+    <g transform="translate(0, 28)">
+      <circle cx="6" cy="6" r="6" fill="#073B49"/>
+      <path d="M4,6 L6,8 L9,4" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="19" y="10" font-family="'Segoe UI', sans-serif" font-size="12px" font-weight="600" fill="#073B49">Coverage keeps unsupported and unreadable files visible</text>
+    </g>
+    <g transform="translate(0, 56)">
+      <circle cx="6" cy="6" r="6" fill="#073B49"/>
+      <path d="M4,6 L6,8 L9,4" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round"/>
+      <text x="19" y="10" font-family="'Segoe UI', sans-serif" font-size="12px" font-weight="600" fill="#073B49">Persistent inventory and local full-text index</text>
+    </g>
+  </g>
+
+  <!-- 3. Right Column: Layered Evidence Board -->
+  <g transform="translate(690, 60)">
+    
+    <!-- Card 1: Evidence & Citation Structural Contract (Simplified Social) -->
+    <g transform="translate(0, 0)" filter="url(#topShadowB_social)">
+      <rect width="460" height="250" rx="12" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.5"/>
+      
+      <!-- Card Header Bar -->
+      <rect width="460" height="38" rx="12" fill="#073B49"/>
+      <rect y="26" width="460" height="12" fill="#073B49"/>
+      
+      <text x="16" y="25" font-family="'Segoe UI', sans-serif" font-size="12px" font-weight="700" fill="#F7F1E7" letter-spacing="0.7px">EVIDENCE STRUCTURE &amp; CITATION CONTRACT</text>
+      
+      <!-- Field 1: QUESTION -->
+      <g transform="translate(14, 48)">
+        <rect width="432" height="34" rx="5" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
+        <rect x="8" y="7" width="72" height="20" rx="3" fill="#073B49"/>
+        <text x="44" y="21" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="700" fill="#F7F1E7" letter-spacing="0.4px">QUESTION</text>
+        <text x="86" y="21.5" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#0F172A">Document query scoped to explicitly approved folders</text>
+      </g>
+
+      <!-- Field 2: SELECTED SOURCE CHUNK -->
+      <g transform="translate(14, 88)">
+        <rect width="432" height="34" rx="5" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
+        <rect x="8" y="7" width="150" height="20" rx="3" fill="#0B4A59"/>
+        <text x="83" y="21" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="700" fill="#F7F1E7" letter-spacing="0.4px">SELECTED SOURCE CHUNK</text>
+        <text x="165" y="21.5" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#0F172A">Bounded context with character offsets</text>
+      </g>
+
+      <!-- Field 3: EXACT QUOTE + SOURCE LOCATION -->
+      <g transform="translate(14, 128)">
+        <rect width="432" height="70" rx="6" fill="#FAF8F5" stroke="#E2D7C3" stroke-width="1.2"/>
+        <rect x="0" y="0" width="4" height="70" fill="#FF6B4A" rx="2"/>
+        
+        <g transform="translate(10, 8)">
+          <rect width="190" height="18" rx="3" fill="#FF6B4A" fill-opacity="0.15" stroke="#FF6B4A" stroke-width="1"/>
+          <text x="95" y="13.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="800" fill="#C2410C" letter-spacing="0.3px">EXACT QUOTE + SOURCE LOCATION</text>
+        </g>
+        
+        <text x="10" y="42" font-family="Georgia, serif" font-size="11.5px" font-style="italic" fill="#0F172A">Verifiable passage pinned to source ID and line or page range</text>
+        <text x="10" y="59" font-family="'Segoe UI', sans-serif" font-size="10.5px" fill="#64748B">Every promoted claim keeps an exact quote and source locator</text>
+      </g>
+
+      <!-- Bottom Card 1 Footer -->
+      <g transform="translate(14, 206)">
+        <rect width="432" height="30" rx="5" fill="#E8F8F0" stroke="#1F9D72" stroke-width="1"/>
+        <circle cx="14" cy="15" r="4" fill="#1F9D72"/>
+        <text x="24" y="19" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="700" fill="#065F46" letter-spacing="0.3px">PERSISTENT LOCAL INDEX</text>
+        <text x="422" y="19" text-anchor="end" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="600" fill="#047857">CONFLICT HINTS STAY VISIBLE</text>
+      </g>
+    </g>
+
+    <!-- Card 2: Coverage Matrix & Report Contract (Simplified Social) -->
+    <g transform="translate(0, 262)" filter="url(#cardShadowB_social)">
+      <rect width="460" height="236" rx="12" fill="#FFFFFF" stroke="#D3C7B0" stroke-width="1.5"/>
+      
+      <!-- Ledger Header -->
+      <g transform="translate(14, 16)">
+        <text font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="800" fill="#073B49" letter-spacing="0.6px">COVERAGE MATRIX &amp; EXPORT CONTRACT</text>
+        <line x1="0" y1="10" x2="432" y2="10" stroke="#E2D7C3" stroke-width="1"/>
+      </g>
+
+      <!-- Item 1: COVERAGE -->
+      <g transform="translate(14, 36)">
+        <rect width="432" height="84" rx="6" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
+        
+        <g transform="translate(8, 7)">
+          <rect width="300" height="18" rx="3" fill="#073B49"/>
+          <text x="150" y="13.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="700" fill="#F7F1E7" letter-spacing="0.3px">COVERAGE: READ · CITED · UNSUPPORTED · UNREADABLE</text>
+        </g>
+        
+        <text x="8" y="40" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#0F172A">Auditable folder coverage accounting without silent omissions</text>
+        <text x="8" y="57" font-family="'Segoe UI', sans-serif" font-size="10.5px" fill="#64748B">Explicit classification for every scanned file in approved workspace</text>
+        <text x="8" y="74" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="600" fill="#1F9D72">✓ Run ledger and action journal stay local</text>
+      </g>
+
+      <!-- Item 2: REPORT CONTRACT -->
+      <g transform="translate(14, 128)">
+        <rect width="432" height="94" rx="6" fill="#F9F6F0" stroke="#E6DEC9" stroke-width="1"/>
+        
+        <g transform="translate(8, 7)">
+          <rect width="265" height="18" rx="3" fill="#0B4A59"/>
+          <text x="132.5" y="13.5" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="10px" font-weight="700" fill="#F7F1E7" letter-spacing="0.3px">REPORT CONTRACT → MD · TXT · PDF · DOCX · ODT</text>
+        </g>
+        
+        <text x="8" y="40" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="600" fill="#0F172A">Validated multi-format export with exact quotes and source locations</text>
+        <text x="8" y="58" font-family="'Segoe UI', sans-serif" font-size="10.5px" fill="#64748B">Structured outputs for reports, receipts, and run ledgers</text>
+        <text x="8" y="78" font-family="'Segoe UI', sans-serif" font-size="10.5px" font-weight="600" fill="#FF6B4A">⚡ Reversible file operations with safety gates</text>
+      </g>
+    </g>
+  </g>
+</svg>

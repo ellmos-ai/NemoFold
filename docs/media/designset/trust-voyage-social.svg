@@ -1,0 +1,135 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="NemoFold - Trust Voyage">
+  <defs>
+    <!-- Dark Scrim & Atmospheric Vignette -->
+    <linearGradient id="scrimA_social" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#031218" stop-opacity="0.98"/>
+      <stop offset="35%" stop-color="#041820" stop-opacity="0.94"/>
+      <stop offset="58%" stop-color="#072C37" stop-opacity="0.75"/>
+      <stop offset="82%" stop-color="#073B49" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#0B4A59" stop-opacity="0.10"/>
+    </linearGradient>
+    <radialGradient id="vignetteA_social" cx="50%" cy="50%" r="70%">
+      <stop offset="45%" stop-color="#000000" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#010A0E" stop-opacity="0.70"/>
+    </radialGradient>
+    <linearGradient id="cardGradA_social" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#073B49" stop-opacity="0.88"/>
+      <stop offset="100%" stop-color="#041E26" stop-opacity="0.94"/>
+    </linearGradient>
+    <linearGradient id="accentGradA_social" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#5AD2D0"/>
+      <stop offset="50%" stop-color="#1F9D72"/>
+      <stop offset="100%" stop-color="#FF6B4A"/>
+    </linearGradient>
+    <filter id="glowA_social" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="shadowCardA_social" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="22" flood-color="#000000" flood-opacity="0.6"/>
+    </filter>
+    <style>
+      .eb-text-a { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 11.5px; font-weight: 700; fill: #5AD2D0; letter-spacing: 2px; text-transform: uppercase; }
+      .prod-text-a { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 36px; font-weight: 800; fill: #F7F1E7; letter-spacing: -0.5px; }
+      .prod-sub-a { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 36px; font-weight: 800; fill: #5AD2D0; }
+      .hl-text-a { font-family: Georgia, 'Times New Roman', serif; font-size: 46px; font-weight: 700; fill: #F7F1E7; letter-spacing: -0.5px; line-height: 1.15; }
+      .sup-text-a { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 18px; font-weight: 400; fill: #C8E3E1; letter-spacing: 0.2px; }
+      .chip-text-a { font-family: 'Segoe UI', Arial, -apple-system, sans-serif; font-size: 13.5px; font-weight: 600; fill: #E6FAF8; letter-spacing: 0.3px; }
+      .card-title-a { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12.5px; font-weight: 700; fill: #F7F1E7; letter-spacing: 1px; }
+      .card-item-a { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: 400; fill: #B3D8D6; }
+    </style>
+  </defs>
+
+  <!-- 1. Hero Artwork Background -->
+  <image href="sources/trust-voyage-background.png" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice"/>
+
+  <!-- 2. Dark Scrim & Atmospheric Lighting -->
+  <rect width="1200" height="630" fill="url(#scrimA_social)"/>
+  <rect width="1200" height="630" fill="url(#vignetteA_social)"/>
+
+  <!-- Top Accent Ribbon -->
+  <rect x="0" y="0" width="1200" height="3" fill="url(#accentGradA_social)"/>
+
+  <!-- 3. Left Content Group -->
+  <!-- Eyebrow Capsule -->
+  <g transform="translate(64, 55)">
+    <rect x="0" y="0" width="345" height="26" rx="13" fill="#073B49" fill-opacity="0.85" stroke="#5AD2D0" stroke-width="1.2" stroke-opacity="0.7"/>
+    <circle cx="13" cy="13" r="3.5" fill="#5AD2D0"/>
+    <text x="25" y="17" class="eb-text-a">PRIVATE · PERSISTENT · EVIDENCE-FIRST</text>
+  </g>
+
+  <!-- Product Brand Mark & Name -->
+  <g transform="translate(64, 135)">
+    <!-- Origami Fold Geometric Icon -->
+    <g transform="scale(0.7124999999999999)">
+      <path d="M0,0 L24,-14 L42,6 L18,20 Z" fill="#FF6B4A"/>
+      <path d="M18,20 L42,6 L36,36 L12,48 Z" fill="#5AD2D0"/>
+      <path d="M0,0 L18,20 L12,48 L-6,26 Z" fill="#1F9D72"/>
+    </g>
+    <text x="43" y="24" class="prod-text-a">Nemo<tspan class="prod-sub-a">Fold</tspan></text>
+  </g>
+
+  <!-- Headline -->
+  <text x="64" y="203" class="hl-text-a">Your files. Your rules.</text>
+  <text x="64" y="259" class="hl-text-a">Your agent.</text>
+
+  <!-- Supporting Copy -->
+  <text x="64" y="317" class="sup-text-a">Local memory. Bounded reasoning. Verifiable results.</text>
+
+  <!-- Status Chip: Local core ready · Live cloud proof open -->
+  <g transform="translate(64, 377)">
+    <rect x="0" y="0" width="400" height="36" rx="18" fill="#073B49" fill-opacity="0.92" stroke="#1F9D72" stroke-width="1.8"/>
+    <!-- Emerald Status Indicator -->
+    <circle cx="18" cy="18" r="4.5" fill="#1F9D72" filter="url(#glowA_social)"/>
+    <circle cx="18" cy="18" r="3.5" fill="#1F9D72"/>
+    <text x="31" y="23" class="chip-text-a">Local core ready · Live cloud proof open</text>
+  </g>
+
+  <!-- 4. Right Hero Feature Matrix Card -->
+  <g transform="translate(720, 90)" filter="url(#shadowCardA_social)">
+    <!-- Main Card Body -->
+    <rect width="420" height="445" rx="13" fill="url(#cardGradA_social)" stroke="#5AD2D0" stroke-width="1.5" stroke-opacity="0.45"/>
+    
+    <!-- Inner Header Container -->
+    <rect x="0" y="0" width="420" height="48" rx="13" fill="#0B4A59" fill-opacity="0.75"/>
+    <rect x="0" y="34" width="420" height="14" fill="#0B4A59" fill-opacity="0.75"/>
+    
+    <!-- Header Content -->
+    <circle cx="25" cy="24" r="7" fill="#1F9D72"/>
+    <path d="M22,24 L24,27 L29,21" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round"/>
+    <text x="40" y="29" class="card-title-a">LOCAL-FIRST TRUST MATRIX</text>
+    
+    <!-- Row 1: Approved Boundary -->
+    <g transform="translate(16, 66)">
+      <rect width="387" height="97" rx="9" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
+      <circle cx="19" cy="48" r="9" fill="#073B49"/>
+      <text x="19" y="51" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="700" fill="#5AD2D0">1</text>
+      <text x="39" y="37" font-family="'Segoe UI', sans-serif" font-size="13px" font-weight="700" fill="#F7F1E7">Approved Folders Boundary</text>
+      <text x="39" y="68" class="card-item-a">Explicit local paths only · Unapproved transfer fails closed</text>
+    </g>
+
+    <!-- Row 2: Memory & Ledgers -->
+    <g transform="translate(16, 178)">
+      <rect width="387" height="97" rx="9" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
+      <circle cx="19" cy="48" r="9" fill="#073B49"/>
+      <text x="19" y="51" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="700" fill="#5AD2D0">2</text>
+      <text x="39" y="37" font-family="'Segoe UI', sans-serif" font-size="13px" font-weight="700" fill="#F7F1E7">Persistent Document Memory</text>
+      <text x="39" y="68" class="card-item-a">Deterministic index, content hashes &amp; action ledgers</text>
+    </g>
+
+    <!-- Row 3: Bounded & Verified -->
+    <g transform="translate(16, 289)">
+      <rect width="387" height="97" rx="9" fill="#041E26" fill-opacity="0.75" stroke="#073B49" stroke-width="1.2"/>
+      <circle cx="19" cy="48" r="9" fill="#073B49"/>
+      <text x="19" y="51" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="11.5px" font-weight="700" fill="#5AD2D0">3</text>
+      <text x="39" y="37" font-family="'Segoe UI', sans-serif" font-size="13px" font-weight="700" fill="#F7F1E7">Local Evidence Verifier</text>
+      <text x="39" y="68" class="card-item-a">Exact quotes &amp; citations verified before memory commit</text>
+    </g>
+
+    <!-- Bottom Badge Summary -->
+    <g transform="translate(16, 406)">
+      <rect width="387" height="30" rx="7" fill="#0B4A59" fill-opacity="0.5" stroke="#1F9D72" stroke-width="1.2" stroke-dasharray="5 3"/>
+      <text x="193" y="20" text-anchor="middle" font-family="'Segoe UI', sans-serif" font-size="11px" font-weight="700" fill="#5AD2D0">REVERSIBLE ACTIONS · AUDITABLE RUNS</text>
+    </g>
+  </g>
+</svg>

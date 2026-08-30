@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="500" viewBox="0 0 1400 500"
+     role="img" aria-labelledby="title description">
+  <title id="title">NemoFold trust boundary</title>
+  <desc id="description">Approved local files feed persistent local memory. A policy and privacy gate either blocks the request or sends a bounded pseudonymized package to NVIDIA Nemotron on Nebius. The structured answer and usage return to a local evidence verifier before updating memory.</desc>
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3"
+            orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L9,3 z" fill="#334155"/>
+    </marker>
+    <style>
+      .canvas { fill: #f8fafc; }
+      .heading { font: 700 28px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .zone { font: 700 17px "Segoe UI", Arial, sans-serif; fill: #475569; letter-spacing: 1px; }
+      .node-title { font: 700 20px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .node-copy { font: 16px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .edge-label { font: 600 15px "Segoe UI", Arial, sans-serif; fill: #334155; }
+      .edge { fill: none; stroke: #334155; stroke-width: 3; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect class="canvas" x="0" y="0" width="1400" height="500" rx="20"/>
+  <text class="heading" x="54" y="46">NemoFold: reasoning may travel; file authority stays local</text>
+
+  <line x1="920" y1="70" x2="920" y2="455" stroke="#64748b" stroke-width="2"
+        stroke-dasharray="9 8"/>
+  <text class="zone" x="54" y="82">LOCAL AUTHORITY</text>
+  <text class="zone" x="930" y="82">BOUNDED REASONING</text>
+
+  <rect x="54" y="125" width="220" height="112" rx="16" fill="#e8f1ff"
+        stroke="#1d4ed8" stroke-width="3"/>
+  <text class="node-title" x="78" y="164">Approved files</text>
+  <text class="node-copy" x="78" y="194">Originals and paths</text>
+  <text class="node-copy" x="78" y="218">never cross the gate</text>
+
+  <rect x="334" y="125" width="230" height="112" rx="16" fill="#e8f1ff"
+        stroke="#1d4ed8" stroke-width="3"/>
+  <text class="node-title" x="358" y="164">Persistent memory</text>
+  <text class="node-copy" x="358" y="194">Index, hashes, ledger</text>
+  <text class="node-copy" x="358" y="218">and action authority</text>
+
+  <rect x="624" y="125" width="220" height="112" rx="16" fill="#fff7d6"
+        stroke="#a16207" stroke-width="3"/>
+  <text class="node-title" x="648" y="164">Policy + privacy gate</text>
+  <text class="node-copy" x="648" y="194">Explicit scope, model</text>
+  <text class="node-copy" x="648" y="218">and bounded budget</text>
+
+  <rect x="972" y="125" width="330" height="112" rx="16" fill="#f2e9ff"
+        stroke="#6d28d9" stroke-width="3"/>
+  <text class="node-title" x="996" y="164">NVIDIA Nemotron on Nebius</text>
+  <text class="node-copy" x="996" y="194">Reasoning over selected,</text>
+  <text class="node-copy" x="996" y="218">pseudonymized context only</text>
+
+  <rect x="624" y="332" width="260" height="112" rx="16" fill="#e8f8f0"
+        stroke="#047857" stroke-width="3"/>
+  <text class="node-title" x="648" y="371">Evidence verifier</text>
+  <text class="node-copy" x="648" y="401">Checks schema, usage,</text>
+  <text class="node-copy" x="648" y="425">quotes and source IDs</text>
+
+  <rect x="334" y="332" width="230" height="112" rx="16" fill="#fdecec"
+        stroke="#b91c1c" stroke-width="3"/>
+  <text class="node-title" x="358" y="371">Fail closed</text>
+  <text class="node-copy" x="358" y="401">No approval means</text>
+  <text class="node-copy" x="358" y="425">no external transfer</text>
+
+  <path class="edge" d="M274 181 H326"/>
+  <path class="edge" d="M564 181 H616"/>
+  <path class="edge" d="M844 181 H964"/>
+  <rect x="850" y="137" width="142" height="26" rx="8" fill="#f8fafc"/>
+  <text class="edge-label" x="862" y="156">approved package</text>
+
+  <path class="edge" d="M1137 237 V280 Q1137 305 1112 305 H906 Q884 305 884 327"/>
+  <text class="edge-label" x="965" y="294">answer + usage</text>
+
+  <path class="edge" d="M800 237 V305 H449 V324"/>
+  <text class="edge-label" x="520" y="296">not approved</text>
+
+  <path class="edge" d="M624 421 H600 Q590 421 590 411 V276 Q590 260 574 260 H449 V245"/>
+  <text class="edge-label" x="397" y="285">verified result</text>
+</svg>
