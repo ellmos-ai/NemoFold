@@ -15,9 +15,9 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/lukisch/NemoFold"
-Repository = "https://github.com/lukisch/NemoFold"
-Issues = "https://github.com/lukisch/NemoFold/issues"
+Homepage = "https://github.com/ellmos-ai/NemoFold"
+Repository = "https://github.com/ellmos-ai/NemoFold"
+Issues = "https://github.com/ellmos-ai/NemoFold/issues"
 
 [project.optional-dependencies]
 dev = [

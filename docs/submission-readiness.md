@@ -24,8 +24,8 @@ submission should choose one primary track and keep the pitch focused.
 - Working project using Nebius Token Factory or Nebius AI Cloud and at least one NVIDIA
   open-source model: adapter ready and simulated locally; **real call OPEN and mandatory**.
 - Public repository with OSI license visible near the top and setup/Nebius/NVIDIA use in
-  the README: **DONE** at <https://github.com/lukisch/NemoFold>; first Linux/Windows
-  [hosted CI run](https://github.com/lukisch/NemoFold/actions/runs/33293608035) passed.
+  the README: **DONE** at <https://github.com/ellmos-ai/NemoFold>; first Linux/Windows
+  [hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/33293608035) passed.
   Final live-use documentation remains open until the real provider run.
 - Public working demo URL or test build: **OPEN**.
 - Public YouTube demo, no longer than three minutes, with audio explaining

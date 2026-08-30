@@ -43,7 +43,7 @@ files are outside the current formatting slice.
 
 ## Hosted repository acceptance
 
-- Public repository: <https://github.com/lukisch/NemoFold>
-- First hosted CI: [run 33293608035](https://github.com/lukisch/NemoFold/actions/runs/33293608035),
+- Public repository: <https://github.com/ellmos-ai/NemoFold>
+- First hosted CI: [run 33293608035](https://github.com/ellmos-ai/NemoFold/actions/runs/33293608035),
   pass on Ubuntu/Python 3.11, Ubuntu/Python 3.12, and Windows/Python 3.12
 - Accepted revision: `f3f47d700c3daa39f6dd38f5365fe59dc9507c02`

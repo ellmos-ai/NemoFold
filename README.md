@@ -1,6 +1,6 @@
 # NemoFold
 
-[![CI](https://github.com/lukisch/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/lukisch/NemoFold/actions/workflows/ci.yml)
+[![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
 [MIT License](LICENSE) · Python 3.11+ · Local-first
 
 NemoFold is a private, evidence-first document agent. It turns explicitly approved
