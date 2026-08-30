@@ -30,3 +30,5 @@ error readback, is captured in commit `718e57b5ee4516d22895fc9e99f376c13a9e9989`
 The evidence-gated three-minute narration, architecture bridge, capture contract, and
 cross-platform public-document guards are captured in commit
 `ac20494a15330a05e0b81076ee4c42f5380558d9`.
+The accessible, deterministic SVG export of the jury trust-boundary view is captured
+in commit `f718d8ade06a3fc0e33e3bd1689921052bff105c`.
