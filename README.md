@@ -139,6 +139,24 @@ and requires `--expose-network` before it will bind to a non-loopback address. P
 is the default safe path; action workflows additionally require the server-side
 `--approve-actions` gate before an apply request can succeed.
 
+### Run the capability-minimal synthetic demo
+
+Use the separate demo command when the console may be reachable by people who must not
+receive local file authority:
+
+```powershell
+$env:PYTHONPATH = "$PWD\src"
+python -m nemofold serve-demo --demo-root examples\synthetic-home
+```
+
+`serve-demo` accepts only five read-only workflows over the committed synthetic corpus.
+Input and output roots, workflow parameters, privacy mode, action mode, model access and
+budget are server-controlled. Every request receives an isolated temporary output area
+that is removed after the sanitized response is returned. The command exposes neither
+file-action nor external-model flags and still binds to loopback unless both a non-local
+host and `--expose-network` are supplied. It is a capability-minimal hosting surface,
+not proof of a Nebius, Nemotron or NemoClaw runtime call; `cloud_proof` remains false.
+
 ## Trust boundary
 
 - Original files, absolute paths, persistent index, policies, ledger, validation, and

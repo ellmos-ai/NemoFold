@@ -9,7 +9,7 @@ from urllib.request import Request, urlopen
 import pytest
 
 from nemofold.application import ExecutionConfig
-from nemofold.cli import build_parser
+from nemofold.cli import build_parser, main
 from nemofold.webapp import WebAppConfig, build_server
 
 
@@ -27,6 +27,29 @@ def running_server(tmp_path):
     host, port = server.server_address[:2]
     try:
         yield f"http://{host}:{port}"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+@contextmanager
+def running_public_demo(source_root):
+    server = build_server(
+        WebAppConfig(
+            base_dir=source_root.parent,
+            execution=ExecutionConfig(allowed_roots=(str(source_root),)),
+            public_demo=True,
+            demo_source_root=source_root,
+            max_parallel_jobs=1,
+        ),
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    try:
+        yield server, f"http://{host}:{port}"
     finally:
         server.shutdown()
         server.server_close()
@@ -55,9 +78,7 @@ def post_json(url: str, payload: dict, *, origin: str | None = None) -> dict:
 def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> None:
     documents = tmp_path / "documents"
     documents.mkdir()
-    (documents / "policy.txt").write_text(
-        "Coverage begins on 1 April 2026.", encoding="utf-8"
-    )
+    (documents / "policy.txt").write_text("Coverage begins on 1 April 2026.", encoding="utf-8")
     job = {
         "schema": "nemofold.job.v1",
         "workflow": "evidence_analyst",
@@ -99,7 +120,7 @@ def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
 
     assert "workflowDefaults" in script
     assert "target_roots: lines" in script
-    assert "evidence_level: \"offline\"" in script
+    assert 'evidence_level: "offline"' in script
 
 
 def test_web_console_rejects_cross_origin_posts(tmp_path) -> None:
@@ -128,8 +149,176 @@ def test_non_loopback_binding_requires_explicit_exposure(tmp_path) -> None:
 
 
 def test_web_console_action_gate_uses_the_shared_explicit_approval_name(tmp_path) -> None:
-    args = build_parser().parse_args(
-        ["serve", "--allow-root", str(tmp_path), "--approve-actions"]
-    )
+    args = build_parser().parse_args(["serve", "--allow-root", str(tmp_path), "--approve-actions"])
 
     assert args.approve_actions is True
+
+
+def public_demo_job(**overrides):
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "evidence_analyst",
+        "input_roots": ["demo://synthetic-home"],
+        "target_roots": [],
+        "output_dir": "demo://ephemeral",
+        "questions": ["When does coverage begin?"],
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "model_budget_usd": 0,
+        "parameters": {
+            "max_chunks": 8,
+            "formats": ["md", "txt"],
+            "conflict_scan": True,
+        },
+    }
+    job.update(overrides)
+    return job
+
+
+def test_public_demo_executes_only_synthetic_ephemeral_work(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "policy.txt").write_text("Coverage begins on 1 April 2026.", encoding="utf-8")
+
+    with running_public_demo(source_root) as (_, base_url):
+        status, _ = get_json(base_url + "/api/status")
+        result = post_json(
+            base_url + "/api/run",
+            {"job": public_demo_job()},
+        )
+
+    serialized = json.dumps(result)
+    assert status["mode"] == "public-synthetic-demo"
+    assert status["public_demo"] is True
+    assert status["read_only"] is True
+    assert status["synthetic_only"] is True
+    assert "smart_inbox" not in status["workflows"]
+    assert result["ok"] is True
+    assert result["report"]["status"] == "executed"
+    assert result["report_path"] is None
+    assert result["demo_constraints"] == {
+        "ephemeral_output": True,
+        "external_models_allowed": False,
+        "file_actions_allowed": False,
+        "synthetic_only": True,
+    }
+    assert str(tmp_path) not in serialized
+    assert "nemofold-public-demo-" not in serialized
+    assert result["report"]["run_id"].startswith("demo_")
+
+
+@pytest.mark.parametrize(
+    ("override", "error"),
+    [
+        ({"input_roots": ["C:/private"]}, "input_roots are server-controlled"),
+        ({"output_dir": "C:/private/output"}, "output_dir is server-controlled"),
+        ({"action_mode": "apply"}, "action_mode must be dry_run"),
+        ({"model_id": "nvidia/nemotron"}, "does not accept a model_id"),
+        ({"workflow": "smart_inbox"}, "workflow is unavailable"),
+    ],
+)
+def test_public_demo_rejects_authority_expansion(tmp_path, override, error) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "source.txt").write_text("Synthetic evidence.", encoding="utf-8")
+
+    with (
+        running_public_demo(source_root) as (_, base_url),
+        pytest.raises(HTTPError) as captured,
+    ):
+        post_json(base_url + "/api/run", {"job": public_demo_job(**override)})
+
+    assert captured.value.code == 400
+    assert error in json.load(captured.value)["detail"]
+
+
+def test_public_demo_rejects_external_and_action_capabilities(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+
+    with pytest.raises(ValueError, match="forbids external models"):
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(
+                allowed_roots=(str(source_root),),
+                external_models_allowed=True,
+                apply_actions_allowed=True,
+                max_external_cost_usd=1,
+            ),
+            public_demo=True,
+            demo_source_root=source_root,
+        )
+
+
+def test_public_demo_rejects_unknown_request_authority(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "source.txt").write_text("Synthetic evidence.", encoding="utf-8")
+
+    with (
+        running_public_demo(source_root) as (_, base_url),
+        pytest.raises(HTTPError) as captured,
+    ):
+        post_json(
+            base_url + "/api/run",
+            {"run_id": "must_not_be_silently_ignored", "job": public_demo_job()},
+        )
+
+    assert captured.value.code == 400
+    assert "unknown request fields: run_id" in json.load(captured.value)["detail"]
+
+
+def test_public_demo_bounds_the_operator_selected_corpus(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    for index in range(101):
+        (source_root / f"source-{index}.txt").write_text("x", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="bounded corpus limits"):
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(source_root),)),
+            public_demo=True,
+            demo_source_root=source_root,
+        )
+
+
+def test_public_demo_rejects_work_when_all_bounded_slots_are_busy(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "source.txt").write_text("Synthetic evidence.", encoding="utf-8")
+
+    with running_public_demo(source_root) as (server, base_url):
+        assert server.demo_slots.acquire(blocking=False) is True
+        try:
+            with pytest.raises(HTTPError) as captured:
+                post_json(base_url + "/api/run", {"job": public_demo_job()})
+        finally:
+            server.demo_slots.release()
+
+    assert captured.value.code == 429
+    assert json.load(captured.value)["error"] == "demo_busy"
+
+
+def test_public_demo_has_a_separate_capability_minimal_cli() -> None:
+    args = build_parser().parse_args(
+        ["serve-demo", "--demo-root", "examples/synthetic-home", "--max-parallel-jobs", "2"]
+    )
+
+    assert args.command == "serve-demo"
+    assert args.demo_root == "examples/synthetic-home"
+    assert args.max_parallel_jobs == 2
+    assert not hasattr(args, "approve_actions")
+    assert not hasattr(args, "allow_external_models")
+
+
+def test_public_demo_cli_rejects_a_symlinked_corpus_root(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    linked_root = tmp_path / "linked-home"
+    try:
+        linked_root.symlink_to(source_root, target_is_directory=True)
+    except OSError as exc:
+        pytest.skip(f"directory symlinks unavailable: {exc}")
+
+    assert main(["serve-demo", "--demo-root", str(linked_root)]) == 2

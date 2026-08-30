@@ -38,12 +38,16 @@ files are outside the current formatting slice.
 
 - Real Nebius Token Factory plus NVIDIA Nemotron run
 - Sanitized NemoClaw runtime proof
-- Public working demo and YouTube video
-- Final Devpost submission
+- Public deployment of the implemented synthetic-only demo mode
+- Acceptance of the linked YouTube video's content, audio, and three-minute limit
+- Final live-content readback of the already submitted Devpost project
 
 ## Hosted repository acceptance
 
 - Public repository: <https://github.com/ellmos-ai/NemoFold>
-- First hosted CI: [run 33293608035](https://github.com/ellmos-ai/NemoFold/actions/runs/33293608035),
+- Current hosted CI: [run 33313331087](https://github.com/ellmos-ai/NemoFold/actions/runs/33313331087),
   pass on Ubuntu/Python 3.11, Ubuntu/Python 3.12, and Windows/Python 3.12
-- Accepted revision: `f3f47d700c3daa39f6dd38f5365fe59dc9507c02`
+- Public baseline before the local synthetic-demo slice:
+  `c1d086a53a44f0e4403a6ad5621a32f43c1877c4`
+- Secret Scanning and Push Protection were re-enabled after the organization transfer;
+  Dependabot Security Updates and private vulnerability reporting remain enabled.

@@ -110,6 +110,15 @@ def build_parser() -> argparse.ArgumentParser:
     serve.add_argument("--max-external-cost-usd", type=float, default=0.0)
     serve.add_argument("--approve-actions", action="store_true")
     serve.add_argument("--expose-network", action="store_true")
+    serve_demo = commands.add_parser(
+        "serve-demo",
+        help="start the bounded synthetic-only public demo console",
+    )
+    serve_demo.add_argument("--demo-root", required=True)
+    serve_demo.add_argument("--host", default="127.0.0.1")
+    serve_demo.add_argument("--port", type=int, default=8765)
+    serve_demo.add_argument("--expose-network", action="store_true")
+    serve_demo.add_argument("--max-parallel-jobs", type=int, default=4)
     return parser
 
 
@@ -174,6 +183,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _undo_job_command(args)
     if args.command == "serve":
         return _serve_command(args)
+    if args.command == "serve-demo":
+        return _serve_demo_command(args)
     parser.print_help()
     return 0
 
@@ -401,6 +412,48 @@ def _serve_command(args: argparse.Namespace) -> int:
                 "status": "serving",
                 "url": f"http://{host}:{port}/",
                 "network_exposed": args.expose_network,
+                "cloud_proof": False,
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        flush=True,
+    )
+    try:
+        serve_forever(server)
+    except KeyboardInterrupt:
+        return 0
+    return 0
+
+
+def _serve_demo_command(args: argparse.Namespace) -> int:
+    demo_root = Path(args.demo_root)
+    try:
+        server = build_server(
+            WebAppConfig(
+                base_dir=demo_root.parent,
+                execution=ExecutionConfig(allowed_roots=(str(demo_root),)),
+                exposed_to_network=args.expose_network,
+                public_demo=True,
+                demo_source_root=demo_root,
+                max_parallel_jobs=args.max_parallel_jobs,
+            ),
+            host=args.host,
+            port=args.port,
+        )
+    except (OSError, PermissionError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
+        return 2
+    host_value, port = server.server_address[:2]
+    host = host_value.decode() if isinstance(host_value, bytes) else str(host_value)
+    print(
+        json.dumps(
+            {
+                "status": "serving",
+                "url": f"http://{host}:{port}/",
+                "network_exposed": args.expose_network,
+                "public_demo": True,
+                "synthetic_only": True,
                 "cloud_proof": False,
             },
             indent=2,

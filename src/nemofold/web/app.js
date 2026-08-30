@@ -1,5 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const lines = (value) => value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
+let publicDemo = false;
 const workflowDefaults = {
   evidence_analyst: {
     questions: ["When does the current policy begin?", "Which earlier wording changed?"],
@@ -78,12 +79,16 @@ async function execute(endpoint) {
   buttons.forEach((button) => { button.disabled = true; });
   const result = $("result");
   result.className = "result";
-  result.textContent = endpoint === "preview" ? "Building bounded preview…" : "Running local workflow…";
+  result.textContent = endpoint === "preview"
+    ? "Building bounded preview…"
+    : publicDemo ? "Running bounded synthetic demo…" : "Running local workflow…";
   try {
+    const request = {job: jobPayload()};
+    if (!publicDemo) request.run_id = $("runId").value.trim();
     const response = await fetch(`/api/${endpoint}`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({run_id: $("runId").value.trim(), job: jobPayload()})
+      body: JSON.stringify(request)
     });
     const data = await response.json();
     result.classList.toggle("error", !response.ok);
@@ -102,9 +107,30 @@ async function loadStatus() {
   try {
     const response = await fetch("/api/status");
     const status = await response.json();
+    publicDemo = status.public_demo === true;
+    if (publicDemo) {
+      const supported = new Set(status.workflows);
+      for (const option of [...$("workflow").options]) {
+        if (!supported.has(option.value)) option.remove();
+      }
+      $("inputRoots").value = "demo://synthetic-home";
+      $("targetRoots").value = "";
+      $("outputDir").value = "demo://ephemeral";
+      $("privacy").value = "local_only";
+      $("actionMode").value = "dry_run";
+      $("modelId").value = "";
+      $("budget").value = "0";
+      for (const id of ["inputRoots", "targetRoots", "outputDir", "modelId", "budget", "parameters"]) {
+        $(id).readOnly = true;
+      }
+      $("privacy").disabled = true;
+      $("actionMode").disabled = true;
+      $("runButton").textContent = "Run synthetic demo";
+      applyWorkflowDefaults();
+    }
     $("systemState").textContent = status.live_runtime_ready
       ? "Live runtime ready"
-      : "Local runtime ready · live proof open";
+      : publicDemo ? "Public synthetic demo · read-only" : "Local runtime ready · live proof open";
     $("systemState").classList.add(status.live_runtime_ready ? "ok" : "warn");
     $("cloudBadge").textContent = `Cloud proof: ${status.cloud_proof}`;
   } catch {

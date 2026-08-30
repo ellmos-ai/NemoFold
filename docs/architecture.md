@@ -97,3 +97,23 @@ contract used by the CLI and skill:
 This mapping makes the control boundary explicit: a click assembles a job-specific
 instruction, but it never silently supplies missing permission, model, budget, or action
 approval.
+
+## Public synthetic-demo boundary
+
+The normal console is an operator surface and can be given explicit local roots. It is
+therefore not the process used for an internet-facing demonstration. `serve-demo` starts
+the same UI and application service behind a smaller server contract:
+
+- only `evidence_analyst`, `folder_digest`, `bundle_export`, `version_resolver`, and
+  offline `platform_proof` are available;
+- the source is one server-selected synthetic fixture and the output is a new temporary
+  directory for each request;
+- root, target, parameter, privacy, action, model, budget, and resume fields must match
+  the public-demo sentinels and cannot expand authority;
+- the server generates the run identity, caps parallel work, removes the temporary
+  directory after each response, and replaces server paths with `demo://` identifiers;
+- the CLI for this surface exposes no external-model or file-action switch.
+
+This closes the technical hosting-preparation gap without pretending that a deployment
+URL exists. Hosting remains an outward action and the real Nebius/Nemotron path remains
+separately gated.

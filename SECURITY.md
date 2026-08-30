@@ -21,4 +21,7 @@ and a minimal synthetic reproduction. No real Nebius key or private corpus is ne
   journal.
 - External packages must pass the path, secret, schema, hash, and budget gates.
 - The web console is loopback-only unless network exposure is explicitly enabled.
+- The separate public demo mode reads only an operator-selected synthetic fixture,
+  forces local-only dry-run authority, removes model/action capabilities, caps parallel
+  work, uses per-request temporary output, and redacts host paths from responses.
 - Live cloud execution remains unproven until a sanitized runtime receipt validates.
