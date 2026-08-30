@@ -82,6 +82,16 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         parsed = urlparse(origin)
         return parsed.scheme in {"http", "https"} and parsed.netloc == self.headers.get("Host")
 
+    def _discard_bounded_request_body(self) -> None:
+        raw_length = self.headers.get("Content-Length")
+        if raw_length is None or not raw_length.isascii() or not raw_length.isdecimal():
+            return
+        length = int(raw_length)
+        if 0 < length <= MAX_REQUEST_BYTES:
+            # Draining an already declared, bounded body prevents Windows from
+            # resetting the connection before the 403 response can be read.
+            self.rfile.read(length)
+
     def _read_json(self) -> Any:
         content_type = self.headers.get_content_type()
         if content_type != "application/json":
@@ -129,6 +139,8 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler API
         if not self._same_origin():
+            self.close_connection = True
+            self._discard_bounded_request_body()
             self._error(HTTPStatus.FORBIDDEN, "origin_rejected", "cross-origin request")
             return
         path = urlparse(self.path).path

@@ -114,6 +114,7 @@ def test_web_console_rejects_cross_origin_posts(tmp_path) -> None:
         )
 
     assert captured.value.code == 403
+    assert json.load(captured.value)["error"] == "origin_rejected"
 
 
 def test_non_loopback_binding_requires_explicit_exposure(tmp_path) -> None:
