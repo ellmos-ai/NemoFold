@@ -9,6 +9,7 @@ from typing import Protocol
 from .contracts import (
     Claim,
     ClaimValidation,
+    GateDecision,
     JobEnvelope,
     RunReport,
     RunStatus,
@@ -59,6 +60,20 @@ class LocalAgentRuntime:
         run_id: str,
     ) -> RuntimeResult:
         decision = self.gate.evaluate(job)
+        runtime_reasons: list[str] = []
+        reasoner_is_external = bool(getattr(reasoner, "is_external", False))
+        if job.requires_external_model and not reasoner_is_external:
+            runtime_reasons.append("external_reasoner_required")
+        if not job.requires_external_model and reasoner_is_external:
+            runtime_reasons.append("external_reasoner_not_declared")
+        if runtime_reasons:
+            decision = GateDecision(
+                allowed=False,
+                reasons=decision.reasons + tuple(runtime_reasons),
+                allowed_fields=decision.allowed_fields,
+                recipient=decision.recipient,
+                max_cost_usd=decision.max_cost_usd,
+            )
         initial = RunReport(
             run_id=run_id,
             idempotency_key=job_idempotency_key(job),

@@ -15,6 +15,17 @@ nemoclaw <sandbox-name> skill install ./skills/nemofold/
 
 The current host-side job route is intentionally explicit:
 
+```powershell
+python -m nemofold package --job examples\jobs\nemoclaw-package.json `
+  --allow-root $PWD --run-id proof_1 --allow-external-models `
+  --max-external-cost-usd 1.0
+python -m nemofold verify-job run-reports\nemoclaw-package\nemoclaw-packages\proof_1
+```
+
+This only creates and validates a local package. Its output states
+`transfer_performed: false`; it does not contact Nebius or NemoClaw. Upload and sandbox
+execution are separate, human-controlled commands:
+
 ```bash
 nemoclaw <sandbox-name> upload ./job-package /sandbox/nemofold/jobs/<run-id>
 nemoclaw <sandbox-name> exec --workdir /sandbox/nemofold/app -- \

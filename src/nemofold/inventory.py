@@ -19,6 +19,7 @@ class InventoryResult:
     changed_source_ids: tuple[str, ...]
     unchanged_source_ids: tuple[str, ...]
     deleted_source_ids: tuple[str, ...]
+    roots: tuple[str, ...] = ()
 
     def hashes_by_source_id(self) -> dict[str, str]:
         return {record.source_id: record.sha256 for record in self.records}
@@ -46,19 +47,42 @@ def scan_root(
     if not resolved_root.is_dir():
         raise NotADirectoryError(resolved_root)
 
+    candidates = tuple(
+        (
+            path,
+            path.relative_to(resolved_root).as_posix(),
+            path.relative_to(resolved_root).as_posix(),
+        )
+        for path in sorted(
+            (path for path in resolved_root.rglob("*") if not path.is_dir()),
+            key=lambda path: path.relative_to(resolved_root).as_posix().casefold(),
+        )
+    )
+    return _scan_candidates(
+        candidates,
+        roots=(resolved_root,),
+        previous_hashes=previous_hashes,
+        root_label=str(resolved_root),
+    )
+
+
+def _scan_candidates(
+    candidates: tuple[tuple[Path, str, str], ...],
+    *,
+    roots: tuple[Path, ...],
+    previous_hashes: Mapping[str, str] | None,
+    root_label: str,
+) -> InventoryResult:
+    """Scan pre-labeled candidates as (path, display name, source namespace)."""
+
     previous = dict(previous_hashes or {})
     records: list[SourceRecord] = []
     new_ids: list[str] = []
     changed_ids: list[str] = []
     unchanged_ids: list[str] = []
 
-    candidates = sorted(
-        (path for path in resolved_root.rglob("*") if not path.is_dir()),
-        key=lambda path: path.relative_to(resolved_root).as_posix().casefold(),
-    )
-    for path in candidates:
-        display_name = path.relative_to(resolved_root).as_posix()
-        source_id = _stable_source_id(display_name)
+    for path, display_name, source_namespace in candidates:
+        source_id = _stable_source_id(source_namespace)
         mime_type = mimetypes.guess_type(path.name)[0] or "application/octet-stream"
         if path.is_symlink():
             digest = ""
@@ -102,10 +126,53 @@ def scan_root(
 
     current_ids = {record.source_id for record in records}
     return InventoryResult(
-        root=str(resolved_root),
+        root=root_label,
         records=tuple(records),
         new_source_ids=tuple(new_ids),
         changed_source_ids=tuple(changed_ids),
         unchanged_source_ids=tuple(unchanged_ids),
         deleted_source_ids=tuple(sorted(set(previous) - current_ids)),
+        roots=tuple(str(root) for root in roots),
+    )
+
+
+def scan_paths(
+    roots: tuple[str | Path, ...],
+    *,
+    previous_hashes: Mapping[str, str] | None = None,
+) -> InventoryResult:
+    if not roots:
+        raise ValueError("at least one input root is required")
+    resolved = tuple(Path(root).resolve() for root in roots)
+    if len(set(resolved)) != len(resolved):
+        raise ValueError("duplicate input roots are not allowed")
+    for index, first in enumerate(resolved):
+        if not first.exists():
+            raise FileNotFoundError(first)
+        for second in resolved[index + 1 :]:
+            if first.is_relative_to(second) or second.is_relative_to(first):
+                raise ValueError("overlapping input roots are not allowed")
+
+    multiple = len(resolved) > 1
+    candidates: list[tuple[Path, str, str]] = []
+    for index, root in enumerate(resolved):
+        if root.is_dir():
+            paths = sorted(
+                (path for path in root.rglob("*") if not path.is_dir()),
+                key=lambda path: path.relative_to(root).as_posix().casefold(),
+            )
+            for path in paths:
+                relative = path.relative_to(root).as_posix()
+                display = f"{root.name}/{relative}" if multiple else relative
+                candidates.append((path, display, f"root-{index}/{relative}"))
+        elif root.is_file():
+            candidates.append((root, root.name, f"root-{index}/{root.name}"))
+        else:
+            raise ValueError(f"unsupported input root: {root}")
+    ordered = tuple(sorted(candidates, key=lambda item: (item[1].casefold(), item[2])))
+    return _scan_candidates(
+        ordered,
+        roots=resolved,
+        previous_hashes=previous_hashes,
+        root_label=str(resolved[0]) if len(resolved) == 1 else "<multiple>",
     )

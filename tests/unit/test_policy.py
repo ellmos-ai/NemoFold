@@ -64,3 +64,31 @@ def test_external_model_requires_allow_once_and_positive_bounded_budget(tmp_path
     assert "external_budget_exceeds_limit" in cost_block.reasons
     assert allowed.allowed is True
     assert "path" not in allowed.allowed_fields
+
+
+def test_target_paths_and_apply_mode_require_explicit_approval(tmp_path) -> None:
+    approved = tmp_path / "approved"
+    outside = tmp_path / "outside"
+    approved.mkdir()
+    outside.mkdir()
+    job = JobEnvelope(
+        workflow="smart_inbox",
+        input_roots=(str(approved),),
+        target_roots=(str(outside),),
+        output_dir=str(approved / "out"),
+        action_mode=ActionMode.APPLY,
+    )
+
+    blocked = PolicyGate(PolicyConfig(allowed_roots=(str(approved),))).evaluate(job)
+    approved_job = replace(job, target_roots=(str(approved / "archive"),))
+    still_blocked = PolicyGate(PolicyConfig(allowed_roots=(str(approved),))).evaluate(
+        approved_job
+    )
+    allowed = PolicyGate(
+        PolicyConfig(allowed_roots=(str(approved),), apply_actions_allowed=True)
+    ).evaluate(approved_job)
+
+    assert "target_path_not_allowed" in blocked.reasons
+    assert "action_apply_not_approved" in blocked.reasons
+    assert still_blocked.reasons == ("action_apply_not_approved",)
+    assert allowed.allowed is True

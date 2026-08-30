@@ -20,6 +20,12 @@ class ContextReceipt:
                     "chunk_id": hit.chunk_id,
                     "source_id": hit.source_id,
                     "text": hit.text,
+                    "char_start": hit.char_start,
+                    "char_end": hit.char_end,
+                    "line_start": hit.line_start,
+                    "line_end": hit.line_end,
+                    "page_start": hit.page_start,
+                    "page_end": hit.page_end,
                 }
                 for hit in self.hits
             ],

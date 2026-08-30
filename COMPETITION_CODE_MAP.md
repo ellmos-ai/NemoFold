@@ -9,6 +9,8 @@ AI Hackathon after the submission window opened on 26 August 2026.
 | `skills/nemofold/` | NEW_CORE | NemoClaw-managed agent skill |
 | `tests/` | GENERATED_OR_TEST_DATA | Unit, integration, and end-to-end verification |
 | `examples/synthetic-home/` | GENERATED_OR_TEST_DATA | Synthetic, non-personal demo documents |
+| `examples/jobs/` | GENERATED_OR_TEST_DATA | Public strict-job examples |
+| `schemas/` | NEW_CORE | Machine-readable public job schema |
 | `docs/` | NEW_CORE | Public architecture and integration documentation |
 
 No pre-existing FolderHome source code is present in this repository. Historical ideas

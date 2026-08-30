@@ -15,6 +15,8 @@ def test_renderers_preserve_claim_and_source_identity(tmp_path) -> None:
                     page=2,
                 ),
             ),
+            uncertainty=0.25,
+            conflict_status="potential_conflict",
         ),
     )
     coverage = Coverage(
@@ -31,5 +33,7 @@ def test_renderers_preserve_claim_and_source_identity(tmp_path) -> None:
 
     assert "src_current" in markdown and "src_current" in text
     assert "src_old" in markdown and "src_old" in text
+    assert "potential_conflict" in markdown and "potential_conflict" in text
+    assert "0.250" in markdown and "0.250" in text
     assert record.path == str(tmp_path / "report.md")
     assert len(record.sha256) == 64

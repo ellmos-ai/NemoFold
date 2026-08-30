@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nemofold.local/schemas/nemofold-job-v1.schema.json",
+  "title": "NemoFold job",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "workflow", "input_roots", "output_dir"],
+  "properties": {
+    "schema": {"const": "nemofold.job.v1"},
+    "workflow": {
+      "enum": [
+        "smart_inbox",
+        "storage_policy",
+        "bundle_export",
+        "folder_digest",
+        "evidence_analyst",
+        "version_resolver",
+        "report_studio",
+        "platform_proof"
+      ]
+    },
+    "input_roots": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "target_roots": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "minLength": 1},
+      "default": []
+    },
+    "output_dir": {"type": "string", "minLength": 1},
+    "questions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1},
+      "default": []
+    },
+    "privacy_mode": {
+      "enum": ["local_only", "preview", "allow_once"],
+      "default": "local_only"
+    },
+    "action_mode": {"enum": ["dry_run", "apply"], "default": "dry_run"},
+    "model_id": {"type": ["string", "null"], "minLength": 1},
+    "model_budget_usd": {"type": "number", "minimum": 0, "default": 0},
+    "resume_run_id": {
+      "type": ["string", "null"],
+      "pattern": "^[A-Za-z0-9_-]+$"
+    },
+    "parameters": {"type": "object", "default": {}}
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "workflow": {"enum": ["evidence_analyst", "platform_proof"]}
+        },
+        "required": ["workflow"]
+      },
+      "then": {
+        "required": ["questions"],
+        "properties": {"questions": {"minItems": 1}}
+      }
+    }
+  ]
+}

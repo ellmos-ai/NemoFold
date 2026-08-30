@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field, is_dataclass
+from datetime import date, datetime
 from enum import Enum, StrEnum
 from typing import Any
 
@@ -38,7 +39,6 @@ class SourceRecord:
     def external_descriptor(self) -> dict[str, str]:
         """Return source metadata that cannot reveal its local absolute path."""
         return {
-            "display_name": self.display_name,
             "mime_type": self.mime_type,
             "sha256": self.sha256,
             "source_id": self.source_id,
@@ -52,6 +52,14 @@ class EvidenceLocator:
     page: int | None = None
     section: str | None = None
 
+    def __post_init__(self) -> None:
+        if not self.source_id.strip():
+            raise ValueError("evidence source_id must not be empty")
+        if not self.quote.strip():
+            raise ValueError("evidence quote must not be empty")
+        if self.page is not None and self.page < 1:
+            raise ValueError("evidence page must be positive")
+
 
 @dataclass(frozen=True, slots=True)
 class Claim:
@@ -59,6 +67,19 @@ class Claim:
     evidence: tuple[EvidenceLocator, ...] = ()
     uncertainty: float = 0.0
     conflict_status: str = "none"
+
+    def __post_init__(self) -> None:
+        if not self.statement.strip():
+            raise ValueError("claim statement must not be empty")
+        if not 0.0 <= self.uncertainty <= 1.0:
+            raise ValueError("claim uncertainty must be between 0 and 1")
+        if self.conflict_status not in {
+            "confirmed_conflict",
+            "none",
+            "potential_conflict",
+            "unverified",
+        }:
+            raise ValueError("claim conflict_status is invalid")
 
 
 @dataclass(frozen=True, slots=True)
@@ -101,6 +122,7 @@ class JobEnvelope:
     workflow: str
     input_roots: tuple[str, ...]
     output_dir: str
+    target_roots: tuple[str, ...] = ()
     questions: tuple[str, ...] = ()
     privacy_mode: PrivacyMode = PrivacyMode.LOCAL_ONLY
     action_mode: ActionMode = ActionMode.DRY_RUN
@@ -108,6 +130,8 @@ class JobEnvelope:
     model_budget_usd: float = 0.0
     sources: tuple[SourceRecord, ...] = ()
     response_schema: str = "nemofold.claims.v1"
+    resume_run_id: str | None = None
+    parameters: dict[str, Any] = field(default_factory=dict)
 
     @property
     def requires_external_model(self) -> bool:
@@ -115,7 +139,7 @@ class JobEnvelope:
 
     def to_external_payload(self) -> dict[str, Any]:
         """Build the only payload shape accepted by an external model adapter."""
-        payload = {
+        payload: dict[str, Any] = {
             "contract_version": CONTRACT_VERSION,
             "workflow": self.workflow,
             "questions": list(self.questions),
@@ -155,6 +179,8 @@ def to_primitive(value: Any) -> Any:
     """Convert nested contracts to JSON-safe builtins without losing enum values."""
     if isinstance(value, Enum):
         return value.value
+    if isinstance(value, (date, datetime)):
+        return value.isoformat()
     if is_dataclass(value) and not isinstance(value, type):
         return {key: to_primitive(item) for key, item in asdict(value).items()}
     if isinstance(value, dict):

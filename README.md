@@ -11,20 +11,38 @@ AI Hackathon. The local core is deliberately usable without a cloud account. Nem
 OpenShell, Nemotron, and Nebius integration will be marked as proven only after a real,
 sanitized runtime test exists.
 
-## Current scope
+## What is implemented
 
-- shared contracts for jobs, sources, evidence, gates, runs, artifacts, and undo
-- fail-closed path, privacy, model, and cost policies
-- idempotent run ledger and recovery state
-- local evidence and coverage validation
-- eight product workflows built on those shared cores
+| Workflow | Local result |
+|---|---|
+| Smart Inbox | Extension-based routing plan, all-or-nothing collision gate, journaled moves, resume and undo |
+| Naming, Format & Retention | Rule resolution, naming/retention checks, dry-run, reversible move/copy, and TXT/MD/RST conversion copies |
+| Universal Bundle | Deterministic text bundle, manifest, ZIP, hashes, and explicit unsupported/unreadable entries |
+| Continuous Folder Digest | Persistent inventory snapshots with new, changed, unchanged, and deleted source IDs |
+| Evidence Analyst | Persistent SQLite FTS index, multiple questions, exact quotes, source catalog, line/page locations, coverage and reports |
+| Version Resolver | Per-family resolution, explicit validity/date/version priority, named file-time fallback, and line comparison |
+| Report & Artifact Studio | A validated analysis contract rendered to Markdown, TXT, PDF, DOCX, and ODT |
+| NemoClaw Platform & Proof | Offline proof plus path-free, hashed, pseudonymized job packages; live runtime proof remains open |
 
-Implemented workflows: Smart Inbox; naming/format/retention policy; universal bundle;
-continuous digest; evidence analyst; version resolver; five-format report studio; and
-the shared platform proof.
+The shared cores are the runtime, policy/privacy gate, run ledger/recovery, evidence
+engine, and artifact export. Local extraction supports text-family files, JSON, CSV,
+HTML, PDF, DOCX, and ODT. Unsupported or unreadable files remain visible as coverage
+gaps.
 
-The first executable milestone is a synthetic offline demo. Public repository creation,
-cloud spend, uploads, and Devpost submission are separate human approval gates.
+Public repository creation, cloud spend, uploads, live NemoClaw/Nebius execution, and
+Devpost submission are separate human approval gates.
+
+## Install
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev]"
+.venv\Scripts\python -m nemofold --help
+```
+
+Every non-demo command consumes the same strict `nemofold.job.v1` JSON contract. See
+[`schemas/nemofold-job-v1.schema.json`](schemas/nemofold-job-v1.schema.json) and the
+[`examples/jobs`](examples/jobs) directory.
 
 ## Offline proof
 
@@ -43,6 +61,42 @@ python -m nemofold demo --input examples\synthetic-home --output run-reports\blo
 The normal demo creates a text/manifest/ZIP bundle, folder digest, context receipts,
 SQLite FTS index, Markdown/TXT/PDF/DOCX/ODT reports, and one run ledger. It moves and
 undoes a synthetic inbox file to prove reversibility.
+
+## Run a real local job
+
+```powershell
+$runId = "local_analysis_1"
+python -m nemofold preview --job examples\jobs\evidence-local.json `
+  --allow-root $PWD --run-id $runId
+python -m nemofold run --job examples\jobs\evidence-local.json `
+  --allow-root $PWD --run-id $runId
+python -m nemofold verify run-reports\evidence-local\ledger\$runId.json
+```
+
+`preview` does not run an external model or apply file actions. For an external-model
+job it writes the exact pseudonymized context package that would be eligible to leave
+the host and records `transfer_performed: false`. A later `run` still blocks unless a
+real external runtime adapter and the explicit privacy/model/cost gates are present.
+
+`nemofold package` turns an `allow_once` job into a hashed, path-free local NemoClaw
+directory and validates it immediately. It still performs no upload and records
+`transfer_performed: false`; see [NemoClaw integration](docs/nemoclaw-integration.md).
+
+Action jobs additionally require `--approve-actions`. A completed action run can be
+reversed with `nemofold undo <run-id> --output <dir> --allow-root <root>
+--approve-actions`. Failed or blocked jobs can be retried with `nemofold resume` while
+preserving the original job identity and journal.
+
+## Trust boundary
+
+- Original files, absolute paths, persistent index, policies, ledger, validation, and
+  actions stay local.
+- Only selected chunks, questions, artificial source IDs, schema and a bounded budget
+  can enter an external package.
+- The package validator rejects host paths, secrets, undeclared files, changed hashes,
+  symlinks, or residual sensitive patterns—even if a manifest was re-hashed.
+- `cloud_proof: true` is invalid without a live runtime-evidence record. The current
+  repository deliberately provides no such claim.
 
 ## Design and integration
 

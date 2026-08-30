@@ -1,0 +1,15 @@
+{
+  "schema": "nemofold.job.v1",
+  "workflow": "platform_proof",
+  "input_roots": ["../synthetic-home"],
+  "output_dir": "../../run-reports/nemoclaw-package",
+  "questions": ["When does the current policy begin?"],
+  "privacy_mode": "allow_once",
+  "action_mode": "dry_run",
+  "model_id": "nvidia/nemotron",
+  "model_budget_usd": 1.0,
+  "parameters": {
+    "max_chunks": 8,
+    "pseudonymize_terms": ["Synthetic Policyholder"]
+  }
+}

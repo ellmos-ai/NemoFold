@@ -9,6 +9,16 @@ from typing import Any
 
 from .contracts import ArtifactRecord, Coverage, GateDecision, RunReport, RunStatus, to_primitive
 
+RUN_ID_CHARACTERS = frozenset(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
+)
+
+
+def validate_run_id(run_id: str) -> str:
+    if not run_id or any(character not in RUN_ID_CHARACTERS for character in run_id):
+        raise ValueError("run_id must contain only letters, numbers, underscores, or hyphens")
+    return run_id
+
 
 class LedgerCollisionError(RuntimeError):
     pass
@@ -33,10 +43,7 @@ class RunLedger:
         self.root.mkdir(parents=True, exist_ok=True)
 
     def _path(self, run_id: str) -> Path:
-        allowed = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-"
-        if not run_id or any(character not in allowed for character in run_id):
-            raise ValueError("run_id must contain only letters, numbers, underscores, or hyphens")
-        return self.root / f"{run_id}.json"
+        return self.root / f"{validate_run_id(run_id)}.json"
 
     @staticmethod
     def _encode(report: RunReport) -> bytes:

@@ -2,7 +2,14 @@ from __future__ import annotations
 
 from datetime import UTC, date, datetime
 
-from nemofold.version_resolver import VersionCandidate, compare_versions, resolve_current
+import pytest
+
+from nemofold.version_resolver import (
+    VersionCandidate,
+    compare_versions,
+    infer_family_key,
+    resolve_current,
+)
 
 
 def candidate(
@@ -92,3 +99,22 @@ def test_version_comparison_reports_added_and_removed_lines() -> None:
 
     assert comparison.added_lines == ("Coverage: plus",)
     assert comparison.removed_lines == ("Coverage: basic",)
+
+
+def test_family_key_removes_version_and_date_tokens() -> None:
+    assert infer_family_key("Policy_v2_2026-03-01.txt") == "policy"
+    assert infer_family_key("Policy-v1-2025-03-01.md") == "policy"
+
+
+def test_file_time_fallback_can_be_disabled() -> None:
+    only_timestamp = candidate(
+        "src_timestamp",
+        file_time=datetime(2026, 1, 1, tzinfo=UTC),
+    )
+
+    with pytest.raises(ValueError, match="fallback is disabled"):
+        resolve_current(
+            (only_timestamp,),
+            as_of=date(2026, 8, 30),
+            fallback_to_file_time=False,
+        )

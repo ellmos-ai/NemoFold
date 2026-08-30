@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from .contracts import GateDecision, JobEnvelope, PrivacyMode
+from .contracts import ActionMode, GateDecision, JobEnvelope, PrivacyMode
 
 EXTERNAL_ALLOWED_FIELDS = (
     "contract_version",
@@ -12,6 +12,8 @@ EXTERNAL_ALLOWED_FIELDS = (
     "sources",
     "response_schema",
     "model",
+    "run_id",
+    "validation_command",
 )
 
 
@@ -20,6 +22,7 @@ class PolicyConfig:
     allowed_roots: tuple[str, ...]
     external_models_allowed: bool = False
     max_external_cost_usd: float = 0.0
+    apply_actions_allowed: bool = False
 
 
 class PolicyGate:
@@ -27,7 +30,7 @@ class PolicyGate:
         self.config = config
         self._allowed_roots = tuple(Path(root).resolve() for root in config.allowed_roots)
 
-    def _path_allowed(self, path: str) -> bool:
+    def path_allowed(self, path: str) -> bool:
         candidate = Path(path).resolve()
         return any(
             candidate == root or candidate.is_relative_to(root) for root in self._allowed_roots
@@ -36,10 +39,14 @@ class PolicyGate:
     def evaluate(self, job: JobEnvelope) -> GateDecision:
         reasons: list[str] = []
 
-        if not job.input_roots or any(not self._path_allowed(path) for path in job.input_roots):
+        if not job.input_roots or any(not self.path_allowed(path) for path in job.input_roots):
             reasons.append("input_path_not_allowed")
-        if not self._path_allowed(job.output_dir):
+        if not self.path_allowed(job.output_dir):
             reasons.append("output_path_not_allowed")
+        if any(not self.path_allowed(path) for path in job.target_roots):
+            reasons.append("target_path_not_allowed")
+        if job.action_mode is ActionMode.APPLY and not self.config.apply_actions_allowed:
+            reasons.append("action_apply_not_approved")
 
         recipient: str | None = None
         allowed_fields: tuple[str, ...] = ()

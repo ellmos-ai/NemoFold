@@ -1,0 +1,17 @@
+{
+  "schema": "nemofold.job.v1",
+  "workflow": "evidence_analyst",
+  "input_roots": ["../synthetic-home"],
+  "output_dir": "../../run-reports/evidence-local",
+  "questions": [
+    "When does the current policy begin?",
+    "Which earlier wording changed?"
+  ],
+  "privacy_mode": "local_only",
+  "action_mode": "dry_run",
+  "parameters": {
+    "max_chunks": 8,
+    "formats": ["md", "txt"],
+    "title": "Synthetic policy analysis"
+  }
+}

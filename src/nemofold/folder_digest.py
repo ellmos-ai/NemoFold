@@ -19,6 +19,7 @@ class DocumentCard:
 class FolderDigest:
     cards: tuple[DocumentCard, ...]
     changed_source_ids: tuple[str, ...]
+    deleted_source_ids: tuple[str, ...]
     gap_source_ids: tuple[str, ...]
     markdown: str
 
@@ -34,6 +35,7 @@ def build_digest(
     source_texts: Mapping[str, str],
     *,
     max_sentences: int = 3,
+    deleted_source_ids: Sequence[str] = (),
 ) -> FolderDigest:
     if max_sentences < 1:
         raise ValueError("max_sentences must be positive")
@@ -65,6 +67,10 @@ def build_digest(
     lines.extend(f"- {source_id}" for source_id in changed)
     if not changed:
         lines.append("- none")
+    lines.extend(("", "## Deleted since prior run", ""))
+    lines.extend(f"- {source_id}" for source_id in deleted_source_ids)
+    if not deleted_source_ids:
+        lines.append("- none")
     lines.extend(("", "## Coverage gaps", ""))
     lines.extend(f"- {source_id}" for source_id in gaps)
     if not gaps:
@@ -73,6 +79,7 @@ def build_digest(
     return FolderDigest(
         cards=tuple(cards),
         changed_source_ids=tuple(changed),
+        deleted_source_ids=tuple(deleted_source_ids),
         gap_source_ids=tuple(gaps),
         markdown="\n".join(lines),
     )

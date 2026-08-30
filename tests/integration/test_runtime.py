@@ -127,3 +127,30 @@ def test_runtime_fails_closed_on_unverifiable_claim(tmp_path) -> None:
 
     assert result.report.status is RunStatus.FAILED
     assert "unverified_claim:0" in result.report.errors
+
+
+def test_runtime_never_uses_a_local_reasoner_as_fake_external_execution(tmp_path) -> None:
+    job, source_texts = make_job_and_sources(tmp_path)
+    external_job = replace(
+        job,
+        model_id="nvidia/nemotron",
+        privacy_mode=PrivacyMode.ALLOW_ONCE,
+        model_budget_usd=1.0,
+    )
+    reasoner = FixedReasoner(ReasoningResult(claims=(), read_source_ids=()))
+    runtime = LocalAgentRuntime(
+        gate=PolicyGate(
+            PolicyConfig(
+                allowed_roots=job.input_roots,
+                external_models_allowed=True,
+                max_external_cost_usd=1.0,
+            )
+        ),
+        ledger=RunLedger(tmp_path / "ledger"),
+    )
+
+    result = runtime.execute(external_job, reasoner, source_texts, run_id="run_no_fake_cloud")
+
+    assert result.report.status is RunStatus.BLOCKED
+    assert result.report.errors == ("external_reasoner_required",)
+    assert reasoner.called is False

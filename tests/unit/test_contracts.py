@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 
 from nemofold.contracts import (
     ActionMode,
@@ -36,13 +37,13 @@ def test_external_payload_uses_source_ids_without_local_paths(tmp_path) -> None:
 
     assert payload["sources"] == [
         {
-            "display_name": "insurance/contract.pdf",
             "mime_type": "application/pdf",
             "sha256": "a" * 64,
             "source_id": "src_01",
         }
     ]
     assert str(tmp_path) not in encoded
+    assert "insurance/contract.pdf" not in encoded
     assert "input_roots" not in payload
     assert "output_dir" not in payload
 
@@ -61,3 +62,7 @@ def test_contract_serialization_is_json_safe_and_deterministic(tmp_path) -> None
 
     assert first == second
     assert '"privacy_mode": "local_only"' in first
+
+
+def test_contract_serialization_normalizes_dates() -> None:
+    assert to_primitive({"as_of": date(2026, 8, 30)}) == {"as_of": "2026-08-30"}

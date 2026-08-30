@@ -179,6 +179,8 @@ def run_full_offline_demo(
         statement=f"{current.display_name} is the current synthetic version.",
         evidence=(EvidenceLocator(source_id=current.source_id, quote=version_quote),),
     )
+    if runtime_result.report.coverage is None:
+        raise RuntimeError("offline demo runtime did not produce coverage")
     report_records = render_report_formats(
         ReportDocument(
             title="NemoFold offline demo",

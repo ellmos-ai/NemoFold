@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import pytest
+
 import nemofold.inventory as inventory_module
-from nemofold.inventory import scan_root
+from nemofold.inventory import scan_paths, scan_root
 
 
 def test_scan_is_deterministic_and_detects_changes_without_changing_source_id(tmp_path) -> None:
@@ -51,3 +53,36 @@ def test_scan_reports_deleted_and_unreadable_entries(tmp_path, monkeypatch) -> N
     assert current.deleted_source_ids == (gone_id,)
     assert current.records[0].extraction_status == "unreadable"
     assert current.records[0].sha256 == ""
+
+
+def test_scan_paths_accepts_files_and_keeps_same_relative_names_distinct(tmp_path) -> None:
+    first = tmp_path / "first"
+    second = tmp_path / "second"
+    first.mkdir()
+    second.mkdir()
+    (first / "same.txt").write_text("first", encoding="utf-8")
+    (second / "same.txt").write_text("second", encoding="utf-8")
+    standalone = tmp_path / "standalone.md"
+    standalone.write_text("third", encoding="utf-8")
+
+    result = scan_paths((first, second, standalone))
+
+    assert len(result.records) == 3
+    assert len({record.source_id for record in result.records}) == 3
+    assert {record.display_name for record in result.records} == {
+        "first/same.txt",
+        "second/same.txt",
+        "standalone.md",
+    }
+    assert result.roots == tuple(str(path.resolve()) for path in (first, second, standalone))
+
+
+def test_scan_paths_rejects_nested_or_duplicate_roots(tmp_path) -> None:
+    root = tmp_path / "root"
+    nested = root / "nested"
+    nested.mkdir(parents=True)
+
+    with pytest.raises(ValueError, match="overlap"):
+        scan_paths((root, nested))
+    with pytest.raises(ValueError, match="duplicate"):
+        scan_paths((root, root))

@@ -65,11 +65,20 @@ def plan_inbox(
                 )
             )
             continue
-        plans.append(preview_storage(source_path, route.target_dir, policy))
+        preview = preview_storage(source_path, route.target_dir, policy)
+        if preview.conversion_target is not None:
+            preview = replace(
+                preview,
+                allowed=False,
+                reasons=preview.reasons + ("smart_inbox_conversion_unsupported",),
+            )
+        else:
+            preview = replace(preview, operation="move", original_policy="move")
+        plans.append(preview)
     return tuple(plans)
 
 
-def _sha256(path: Path) -> str:
+def file_sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         while chunk := stream.read(1024 * 1024):
@@ -77,11 +86,20 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def move_action_id(plan: StoragePlan, *, sha256: str | None = None) -> str:
+    digest = sha256 or file_sha256(Path(plan.source))
+    return "move_" + hashlib.sha256(
+        f"{plan.operation}|{plan.source}|{plan.target}|{digest}".encode()
+    ).hexdigest()[:20]
+
+
 def apply_move(plan: StoragePlan, *, approved: bool) -> UndoReceipt:
     if not approved:
         raise PermissionError("move requires immediate human approval")
     if not plan.allowed:
         raise PermissionError(f"blocked storage plan: {', '.join(plan.reasons)}")
+    if plan.operation != "move":
+        raise ValueError("apply_move accepts only move operations")
     source = Path(plan.source)
     target = Path(plan.target)
     if not source.is_file():
@@ -91,10 +109,8 @@ def apply_move(plan: StoragePlan, *, approved: bool) -> UndoReceipt:
     if target.exists():
         raise FileExistsError(target)
 
-    digest = _sha256(source)
-    action_id = "move_" + hashlib.sha256(
-        f"{source}|{target}|{digest}".encode()
-    ).hexdigest()[:20]
+    digest = file_sha256(source)
+    action_id = move_action_id(plan, sha256=digest)
     source.replace(target)
     return UndoReceipt(
         action_id=action_id,
@@ -115,7 +131,7 @@ def undo_move(receipt: UndoReceipt, *, approved: bool) -> UndoReceipt:
         raise FileExistsError(target)
     if not source.is_file():
         raise FileNotFoundError(source)
-    if _sha256(source) != receipt.after.get("sha256"):
+    if file_sha256(source) != receipt.after.get("sha256"):
         raise RuntimeError("undo source changed after the original action")
     source.replace(target)
     return replace(receipt, status="undone")

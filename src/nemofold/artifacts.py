@@ -22,6 +22,13 @@ def render_markdown(title: str, claims: Sequence[Claim], coverage: Coverage) -> 
     lines = [f"# {title}", ""]
     for claim in claims:
         lines.extend((f"## {claim.statement}", ""))
+        lines.extend(
+            (
+                f"Conflict status: {claim.conflict_status}",
+                f"Uncertainty: {claim.uncertainty:.3f}",
+                "",
+            )
+        )
         if not claim.evidence:
             lines.extend(("Status: unverified; no source locator supplied.", ""))
         for locator in claim.evidence:
@@ -46,6 +53,8 @@ def render_text(title: str, claims: Sequence[Claim], coverage: Coverage) -> str:
     lines = [title, "=" * len(title), ""]
     for claim in claims:
         lines.append(claim.statement)
+        lines.append(f"  Conflict status: {claim.conflict_status}")
+        lines.append(f"  Uncertainty: {claim.uncertainty:.3f}")
         if not claim.evidence:
             lines.append("  Status: unverified; no source locator supplied.")
         for locator in claim.evidence:

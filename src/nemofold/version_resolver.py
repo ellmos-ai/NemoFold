@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import difflib
+import re
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import date, datetime
+from pathlib import Path
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,9 +53,18 @@ def resolve_current(
     candidates: Sequence[VersionCandidate],
     *,
     as_of: date,
+    fallback_to_file_time: bool = True,
 ) -> VersionResolution:
     if not candidates:
         raise ValueError("at least one version candidate is required")
+    if not fallback_to_file_time and not any(
+        candidate.issue_date is not None
+        or candidate.valid_from is not None
+        or candidate.valid_until is not None
+        or candidate.version_number is not None
+        for candidate in candidates
+    ):
+        raise ValueError("version evidence is missing and file-time fallback is disabled")
     ordered = tuple(sorted(candidates, key=lambda item: _rank(item, as_of), reverse=True))
     selected = ordered[0]
     selected_is_explicitly_valid = _validity_rank(selected, as_of) == 2
@@ -71,6 +82,18 @@ def resolve_current(
         basis=basis,
         used_file_time_fallback=basis == "file_time_fallback",
     )
+
+
+def infer_family_key(display_name: str) -> str:
+    stem = Path(display_name).stem.casefold()
+    without_dates = re.sub(r"(?<!\d)20\d{2}[-_.]\d{2}[-_.]\d{2}(?!\d)", " ", stem)
+    without_versions = re.sub(
+        r"(?i)(?:^|[-_.\s])v\d+(?:[-_.]\d+)*(?=$|[-_.\s])",
+        " ",
+        without_dates,
+    )
+    normalized = re.sub(r"[-_.\s]+", " ", without_versions).strip()
+    return normalized or stem
 
 
 def compare_versions(old_text: str, new_text: str) -> VersionComparison:
