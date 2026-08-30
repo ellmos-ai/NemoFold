@@ -6,7 +6,7 @@
   "questions": ["When does the current policy begin?"],
   "privacy_mode": "allow_once",
   "action_mode": "dry_run",
-  "model_id": "nvidia/nemotron",
+  "model_id": "nvidia/nemotron-3-super-120b-a12b",
   "model_budget_usd": 1.0,
   "parameters": {
     "max_chunks": 8,

@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import nemofold.cli as cli_module
 from nemofold.cli import main
 
 
@@ -397,3 +398,40 @@ def test_package_command_requires_positive_gate_and_never_claims_transfer(tmp_pa
     )
     assert gate["decision"]["allowed"] is True
     assert gate["transfer_performed"] is False
+
+
+def test_token_factory_cli_does_not_hide_a_transfer_after_validation_failure(
+    tmp_path, capsys, monkeypatch
+) -> None:
+    package = tmp_path / "package"
+    package.mkdir()
+
+    def transferred_then_failed(path, config, *, approve_live_transfer):
+        assert approve_live_transfer is True
+        result_path = Path(path) / "result.json"
+        result_path.write_text(
+            json.dumps({"transfer_performed": True}), encoding="utf-8"
+        )
+        raise RuntimeError("post-transfer validation failed")
+
+    monkeypatch.setenv("NEBIUS_API_KEY", "test-key")
+    monkeypatch.setattr(
+        cli_module, "run_token_factory_package", transferred_then_failed
+    )
+
+    exit_code = main(
+        [
+            "token-factory-run",
+            str(package),
+            "--approve-live-transfer",
+            "--input-price-usd-per-million",
+            "0.1",
+            "--output-price-usd-per-million",
+            "0.2",
+        ]
+    )
+    result = json.loads(capsys.readouterr().out)
+
+    assert exit_code == 2
+    assert result["status"] == "blocked"
+    assert result["transfer_performed"] is True

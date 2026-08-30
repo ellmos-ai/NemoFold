@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -14,6 +15,7 @@ from .contracts import CONTRACT_VERSION, GateDecision, JobEnvelope
 from .evidence_analyst import ContextReceipt
 
 PACKAGE_SCHEMA = "nemofold.nemoclaw-job.v1"
+TRANSFER_ATTEMPT_FILENAME = "transfer-attempt.json"
 ALLOWED_JOB_FIELDS = frozenset(
     {
         "contract_version",
@@ -151,6 +153,7 @@ def export_job_package(
             "context-receipts.json": _sha256(receipt_bytes),
             "privacy-receipt.json": _sha256(privacy_bytes),
         },
+        "expected_attempt": TRANSFER_ATTEMPT_FILENAME,
         "expected_result": "result.json",
     }
     manifest_bytes = _json_bytes(manifest)
@@ -194,6 +197,8 @@ def validate_job_package(path: str | Path) -> PackageValidation:
         errors.append("manifest_file_set_invalid")
     if manifest.get("expected_result") != "result.json":
         errors.append("expected_result_invalid")
+    if manifest.get("expected_attempt") != TRANSFER_ATTEMPT_FILENAME:
+        errors.append("expected_attempt_invalid")
     for filename, expected_hash in expected_files.items():
         if not isinstance(filename, str) or not isinstance(expected_hash, str):
             errors.append("manifest_file_entry_invalid")
@@ -209,7 +214,13 @@ def validate_job_package(path: str | Path) -> PackageValidation:
     except OSError:
         present_entries = ()
         errors.append("package_directory_unreadable")
+    expected_result = manifest.get("expected_result")
     declared_names = set(expected_files) | {"manifest.json"}
+    expected_attempt = manifest.get("expected_attempt")
+    if isinstance(expected_attempt, str):
+        declared_names.add(expected_attempt)
+    if isinstance(expected_result, str):
+        declared_names.add(expected_result)
     for entry in present_entries:
         if entry.name not in declared_names:
             errors.append(f"undeclared_entry:{entry.name}")
@@ -259,7 +270,12 @@ def validate_job_package(path: str | Path) -> PackageValidation:
         if not isinstance(model.get("id"), str) or not model["id"]:
             errors.append("model_id_invalid")
         cost = model.get("max_cost_usd")
-        if isinstance(cost, bool) or not isinstance(cost, (int, float)) or cost <= 0:
+        if (
+            isinstance(cost, bool)
+            or not isinstance(cost, (int, float))
+            or not math.isfinite(cost)
+            or cost <= 0
+        ):
             errors.append("model_budget_invalid")
     if job.get("validation_command") != ["python", "-m", "nemofold", "verify-job", "."]:
         errors.append("validation_command_invalid")

@@ -19,3 +19,26 @@ shapes, email addresses, IBANs, and remaining explicit sensitive terms.
 The package is a transport contract, not permission to transmit. Upload or execution
 requires a separate host-side gate. A preview package always records
 `transfer_performed: false`.
+
+Immediately before an approved request, the runner atomically creates the
+manifest-declared `transfer-attempt.json`. It binds the run, model, endpoint, request
+hash, and start time. A received response adds completion time, HTTP status, and
+response hash. Its presence blocks automatic retry even if the process ended before a
+result could be written.
+
+After a received response, the second additional regular file is the manifest-declared
+`result.json`. It uses `nemofold.live-result.v1` and contains:
+
+- the same run ID, response schema, provider, and model ID;
+- `transfer_performed`, `cloud_proof`, status, and explicit errors;
+- ordered answers whose citations are exact substrings of declared chunks;
+- provider usage and current price inputs used for the bounded cost calculation;
+- endpoint, timestamps, latency, environment metadata, and hashes of the sanitized
+  request, response, and provider log;
+- a sanitized request/response log without credentials or Authorization headers.
+
+`python -m nemofold verify-result <job-directory>` revalidates both the immutable input
+package, transfer attempt, and result. A provider failure may truthfully prove that a
+transfer occurred, but it must set `cloud_proof: false`. A transport failure without a
+response remains explicitly uncertain and requires manual reconciliation, never an
+automatic paid retry.

@@ -14,7 +14,7 @@ submission should choose one primary track and keep the pitch focused.
 
 | Criterion | Current evidence | Remaining acceptance gate |
 |---|---|---|
-| Technological implementation | One strict contract across web, CLI, and skill; eight workflows; persistent index; exact citations; reversible journal; privacy-package validator; automated suite | Real Nebius runtime call using an NVIDIA open-source Nemotron model, with sanitized request/response and usage evidence |
+| Technological implementation | One strict contract across web, CLI, and skill; eight workflows; persistent index; exact citations; reversible journal; privacy-package validator; fail-closed Token Factory adapter with result verifier; automated suite | Real Nebius runtime call using an NVIDIA open-source Nemotron model, with the generated sanitized request/response and usage evidence |
 | Design | Coherent Captain Nemo console, explicit trust boundary, workflow defaults, safe preview path, accessible text alternative | Hosted working demo URL and a final interaction pass on the public build |
 | Potential impact | Solves real folder-based knowledge and file-maintenance work; demonstrates coverage, conflicts, versioning, and undo | Short user acceptance session on a bounded real-world corpus and a recorded before/after result |
 | Quality of idea | Separates persistent local authority from optional cloud reasoning; measures evidence rather than merely generating prose | Show the live hybrid loop end to end within the video |
@@ -22,7 +22,7 @@ submission should choose one primary track and keep the pitch focused.
 ## Mandatory deliverables
 
 - Working project using Nebius Token Factory or Nebius AI Cloud and at least one NVIDIA
-  open-source model: **OPEN; mandatory**.
+  open-source model: adapter ready and simulated locally; **real call OPEN and mandatory**.
 - Public repository with OSI license visible near the top and setup/Nebius/NVIDIA use in
   the README: local repo ready; **public remote and final live-use documentation open**.
 - Public working demo URL or test build: **OPEN**.

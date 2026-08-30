@@ -1,0 +1,441 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import threading
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
+
+import pytest
+
+import nemofold.nebius_token_factory as token_factory_module
+from nemofold.contracts import ActionMode, JobEnvelope, PrivacyMode, SourceRecord
+from nemofold.document_index import SearchHit
+from nemofold.evidence_analyst import ContextReceipt
+from nemofold.live_result import json_sha256, validate_result_package
+from nemofold.nebius_token_factory import (
+    HTTPExchange,
+    TokenFactoryConfig,
+    run_token_factory_package,
+)
+from nemofold.nemoclaw_package import (
+    TRANSFER_ATTEMPT_FILENAME,
+    export_job_package,
+    validate_job_package,
+)
+from nemofold.policy import PolicyConfig, PolicyGate
+
+QUESTION = "When does coverage begin?"
+QUOTE = "Coverage begins in April."
+MODEL_ID = "nvidia/nemotron-3-super-120b-a12b"
+
+
+def make_package(tmp_path, *, budget: float = 1.0, model_id: str = MODEL_ID):
+    private = tmp_path / "private"
+    private.mkdir()
+    job = JobEnvelope(
+        workflow="evidence_analyst",
+        input_roots=(str(private),),
+        output_dir=str(private / "out"),
+        questions=(QUESTION,),
+        privacy_mode=PrivacyMode.ALLOW_ONCE,
+        action_mode=ActionMode.DRY_RUN,
+        model_id=model_id,
+        model_budget_usd=budget,
+        sources=(
+            SourceRecord(
+                source_id="src_a",
+                path=str(private / "private.txt"),
+                display_name="case/current.txt",
+                sha256="a" * 64,
+                mime_type="text/plain",
+            ),
+        ),
+    )
+    receipt = ContextReceipt(
+        question=QUESTION,
+        hits=(
+            SearchHit(
+                chunk_id="src_a:000000",
+                source_id="src_a",
+                text=QUOTE,
+                rank=-1.0,
+                char_end=len(QUOTE),
+                line_end=1,
+            ),
+        ),
+    )
+    decision = PolicyGate(
+        PolicyConfig(
+            allowed_roots=job.input_roots,
+            external_models_allowed=True,
+            max_external_cost_usd=budget,
+        )
+    ).evaluate(job)
+    return export_job_package(
+        job,
+        (receipt,),
+        decision,
+        tmp_path / "package",
+        run_id="live_run_001",
+    ).path
+
+
+def successful_body(*, quote: str = QUOTE) -> bytes:
+    output = {
+        "answers": [
+            {
+                "question": QUESTION,
+                "status": "answered",
+                "claims": [
+                    {
+                        "statement": "Coverage begins in April.",
+                        "uncertainty": 0.0,
+                        "conflict_status": "none",
+                        "evidence": [
+                            {
+                                "chunk_id": "src_a:000000",
+                                "source_id": "src_a",
+                                "quote": quote,
+                            }
+                        ],
+                    }
+                ],
+            }
+        ],
+        "read_source_ids": ["src_a"],
+    }
+    return json.dumps(
+        {
+            "choices": [
+                {
+                    "finish_reason": "stop",
+                    "message": {"content": json.dumps(output)},
+                }
+            ],
+            "usage": {
+                "prompt_tokens": 100,
+                "completion_tokens": 50,
+                "total_tokens": 150,
+            },
+        }
+    ).encode()
+
+
+@dataclass
+class RecordingTransport:
+    exchange: HTTPExchange = field(
+        default_factory=lambda: HTTPExchange(
+            status=200,
+            headers={"content-type": "application/json", "x-request-id": "req-test"},
+            body=successful_body(),
+        )
+    )
+    calls: list[dict[str, object]] = field(default_factory=list)
+
+    def post(self, url, *, headers, body, timeout_seconds):
+        self.calls.append(
+            {
+                "url": url,
+                "headers": headers,
+                "body": body,
+                "timeout_seconds": timeout_seconds,
+            }
+        )
+        return self.exchange
+
+
+def config(**overrides) -> TokenFactoryConfig:
+    values = {
+        "api_key": "test-secret-do-not-log",
+        "input_price_usd_per_million": 0.1,
+        "output_price_usd_per_million": 0.2,
+        "max_completion_tokens": 100,
+    }
+    values.update(overrides)
+    return TokenFactoryConfig(**values)
+
+
+def test_live_adapter_records_verifiable_proof_without_secret(tmp_path) -> None:
+    package = make_package(tmp_path)
+    transport = RecordingTransport()
+
+    result_path = run_token_factory_package(
+        package,
+        config(nemoclaw_version="0.1.0-test"),
+        approve_live_transfer=True,
+        transport=transport,
+    )
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    validation = validate_result_package(package)
+
+    assert len(transport.calls) == 1
+    assert transport.calls[0]["url"] == (
+        "https://api.tokenfactory.nebius.com/v1/chat/completions"
+    )
+    assert transport.calls[0]["headers"]["Authorization"] == (
+        "Bearer test-secret-do-not-log"
+    )
+    assert result["status"] == "executed"
+    assert result["transfer_performed"] is True
+    assert result["cloud_proof"] is True
+    assert result["runtime_evidence"]["execution_environment"] == "nemoclaw"
+    assert validation.valid is True
+    assert validate_job_package(package).valid is True
+    assert "test-secret-do-not-log" not in result_path.read_text(encoding="utf-8")
+
+    with pytest.raises(FileExistsError, match="duplicate paid request"):
+        run_token_factory_package(
+            package,
+            config(),
+            approve_live_transfer=True,
+            transport=transport,
+        )
+    assert len(transport.calls) == 1
+
+
+def test_adapter_blocks_without_approval_before_transport(tmp_path) -> None:
+    package = make_package(tmp_path)
+    transport = RecordingTransport()
+
+    with pytest.raises(PermissionError, match="explicit approval"):
+        run_token_factory_package(
+            package,
+            config(),
+            approve_live_transfer=False,
+            transport=transport,
+        )
+
+    assert transport.calls == []
+
+    costly = config(input_price_usd_per_million=100_000.0)
+    with pytest.raises(PermissionError, match="cost bound exceeds"):
+        run_token_factory_package(
+            package,
+            costly,
+            approve_live_transfer=True,
+            transport=transport,
+        )
+    assert transport.calls == []
+    assert not (package / "result.json").exists()
+
+
+def test_uncertain_transport_attempt_is_durable_and_blocks_retry(tmp_path) -> None:
+    package = make_package(tmp_path)
+
+    class UncertainTransport:
+        calls = 0
+
+        def post(self, url, *, headers, body, timeout_seconds):
+            self.calls += 1
+            raise OSError("connection ended without a response")
+
+    transport = UncertainTransport()
+    with pytest.raises(OSError, match="without a response"):
+        run_token_factory_package(
+            package,
+            config(),
+            approve_live_transfer=True,
+            transport=transport,
+        )
+
+    attempt_path = package / TRANSFER_ATTEMPT_FILENAME
+    attempt = json.loads(attempt_path.read_text(encoding="utf-8"))
+    assert attempt["status"] == "request_ready"
+    assert attempt["request_sha256"]
+    assert attempt["response_sha256"] is None
+    assert transport.calls == 1
+
+    with pytest.raises(FileExistsError, match="duplicate paid request"):
+        run_token_factory_package(
+            package,
+            config(),
+            approve_live_transfer=True,
+            transport=transport,
+        )
+    assert transport.calls == 1
+
+
+def test_adapter_rejects_unapproved_endpoint_and_excessive_cost_before_transport(
+    tmp_path,
+) -> None:
+    package = make_package(tmp_path)
+    transport = RecordingTransport()
+
+    with pytest.raises(ValueError, match="outside the approved Nebius endpoint"):
+        run_token_factory_package(
+            package,
+            config(base_url="https://example.org/v1"),
+            approve_live_transfer=True,
+            transport=transport,
+        )
+    assert transport.calls == []
+
+
+def test_adapter_rejects_non_finite_job_budget_before_transport(tmp_path) -> None:
+    package = make_package(tmp_path)
+    job_path = package / "job.json"
+    job = json.loads(job_path.read_text(encoding="utf-8"))
+    job["model"]["max_cost_usd"] = float("nan")
+    job_bytes = (json.dumps(job, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    job_path.write_bytes(job_bytes)
+    manifest_path = package / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    manifest["files"]["job.json"] = hashlib.sha256(job_bytes).hexdigest()
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    transport = RecordingTransport()
+
+    with pytest.raises(ValueError, match="model_budget_invalid"):
+        run_token_factory_package(
+            package,
+            config(),
+            approve_live_transfer=True,
+            transport=transport,
+        )
+
+    assert transport.calls == []
+    assert not (package / TRANSFER_ATTEMPT_FILENAME).exists()
+
+
+def test_parallel_starts_create_one_attempt_and_one_paid_request(
+    tmp_path, monkeypatch
+) -> None:
+    package = make_package(tmp_path)
+    transport = RecordingTransport()
+    real_load_package = token_factory_module._load_package
+    rendezvous = threading.Barrier(2)
+
+    def synchronized_load(path):
+        loaded = real_load_package(path)
+        rendezvous.wait(timeout=5)
+        return loaded
+
+    monkeypatch.setattr(token_factory_module, "_load_package", synchronized_load)
+
+    def invoke():
+        try:
+            return run_token_factory_package(
+                package,
+                config(),
+                approve_live_transfer=True,
+                transport=transport,
+            )
+        except Exception as exc:  # noqa: BLE001 - the result is asserted below
+            return exc
+
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        outcomes = list(executor.map(lambda _: invoke(), range(2)))
+
+    assert len(transport.calls) == 1
+    assert sum(isinstance(outcome, FileExistsError) for outcome in outcomes) == 1
+    assert sum(not isinstance(outcome, Exception) for outcome in outcomes) == 1
+
+
+def test_competition_adapter_rejects_a_non_nemotron_model_before_transport(
+    tmp_path,
+) -> None:
+    package = make_package(tmp_path, model_id="meta-llama/Llama-3.3-70B-Instruct")
+    transport = RecordingTransport()
+
+    with pytest.raises(PermissionError, match="NVIDIA Nemotron"):
+        run_token_factory_package(
+            package,
+            config(),
+            approve_live_transfer=True,
+            transport=transport,
+        )
+
+    assert transport.calls == []
+    assert not (package / TRANSFER_ATTEMPT_FILENAME).exists()
+
+
+def test_result_verifier_detects_rehashed_request_and_quote_tampering(tmp_path) -> None:
+    package = make_package(tmp_path)
+    result_path = run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=RecordingTransport(),
+    )
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+
+    result["provider_log"]["request"]["body"]["temperature"] = 0.5
+    result["runtime_evidence"]["request_sha256"] = json_sha256(
+        result["provider_log"]["request"]["body"]
+    )
+    result["runtime_evidence"]["verbatim_log_sha256"] = json_sha256(
+        result["provider_log"]
+    )
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+
+    request_validation = validate_result_package(package)
+    assert request_validation.valid is False
+    assert "provider_request_package_mismatch" in request_validation.errors
+
+    result["provider_log"]["request"]["body"]["temperature"] = 0
+    tampered_output = result["model_output"]
+    tampered_output["answers"][0]["claims"][0]["evidence"][0]["quote"] = "May"
+    result["provider_log"]["response"]["body"] = json.loads(
+        successful_body(quote="May")
+    )
+    result["runtime_evidence"]["request_sha256"] = json_sha256(
+        result["provider_log"]["request"]["body"]
+    )
+    result["runtime_evidence"]["response_sha256"] = json_sha256(
+        result["provider_log"]["response"]["body"]
+    )
+    result["runtime_evidence"]["verbatim_log_sha256"] = json_sha256(
+        result["provider_log"]
+    )
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+
+    quote_validation = validate_result_package(package)
+    assert quote_validation.valid is False
+    assert "locator_quote_invalid" in quote_validation.errors
+
+
+def test_result_verifier_binds_the_durable_transfer_attempt(tmp_path) -> None:
+    package = make_package(tmp_path)
+    run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=RecordingTransport(),
+    )
+    attempt_path = package / TRANSFER_ATTEMPT_FILENAME
+    attempt = json.loads(attempt_path.read_text(encoding="utf-8"))
+    attempt["endpoint_origin"] = "https://example.org"
+    attempt_path.write_text(json.dumps(attempt), encoding="utf-8")
+
+    validation = validate_result_package(package)
+
+    assert validation.valid is False
+    assert "transfer_attempt_endpoint_mismatch" in validation.errors
+
+
+def test_provider_failure_is_truthfully_recorded_but_not_cloud_proof(tmp_path) -> None:
+    package = make_package(tmp_path)
+    transport = RecordingTransport(
+        HTTPExchange(
+            status=500,
+            headers={"content-type": "application/json"},
+            body=json.dumps({"error": {"message": "temporary failure"}}).encode(),
+        )
+    )
+
+    result_path = run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=transport,
+    )
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    validation = validate_result_package(package)
+
+    assert result["status"] == "failed"
+    assert result["transfer_performed"] is True
+    assert result["cloud_proof"] is False
+    assert "provider_http_status:500" in result["errors"]
+    assert validation.valid is True

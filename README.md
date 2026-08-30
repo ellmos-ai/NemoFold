@@ -24,7 +24,7 @@ sanitized runtime test exists.
 | Evidence Analyst | Persistent SQLite FTS index, multiple questions, exact quotes, source catalog, line/page locations, coverage and reports |
 | Version Resolver | Per-family resolution, explicit validity/date/version priority, named file-time fallback, and line comparison |
 | Report & Artifact Studio | A validated analysis contract rendered to Markdown, TXT, PDF, DOCX, and ODT |
-| NemoClaw Platform & Proof | Offline proof plus path-free, hashed, pseudonymized job packages; live runtime proof remains open |
+| NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; the real competition run remains open |
 
 The shared cores are the runtime, policy/privacy gate, run ledger/recovery, evidence
 engine, and artifact export. Local extraction supports text-family files, JSON, CSV,
@@ -86,6 +86,33 @@ real external runtime adapter and the explicit privacy/model/cost gates are pres
 directory and validates it immediately. It still performs no upload and records
 `transfer_performed: false`; see [NemoClaw integration](docs/nemoclaw-integration.md).
 
+## Approved Nebius Token Factory run
+
+The live adapter is a separate, irreversible transfer gate. It accepts only the
+official Nebius Token Factory HTTPS origin, rejects redirects, checks a conservative
+cost ceiling before the request, reads the key only from `NEBIUS_API_KEY`, and refuses
+to repeat a package that already contains `result.json` or a durable transfer attempt.
+
+```powershell
+$env:NEBIUS_API_KEY = "<session-only-key>"
+python -m nemofold token-factory-run <package-directory> `
+  --approve-live-transfer `
+  --input-price-usd-per-million <current-input-rate> `
+  --output-price-usd-per-million <current-output-rate> `
+  --max-completion-tokens 1200
+python -m nemofold verify-result <package-directory>
+Remove-Item Env:\NEBIUS_API_KEY
+```
+
+The two rates are mandatory inputs because pricing can change; copy them from the
+current provider pricing at execution time. The sanitized `result.json` binds the
+exact request, response, usage, rate inputs, cost, endpoint, model, timestamps, and
+model output to the immutable local package. It contains no Authorization header or
+API key. A failed provider response records `transfer_performed: true` but never
+`cloud_proof: true`. If the connection ends without a response, the pre-request
+`transfer-attempt.json` remains in place, reports an uncertain transfer state, and
+blocks an unsafe automatic retry.
+
 Action jobs additionally require `--approve-actions`. A completed action run can be
 reversed with `nemofold undo <run-id> --output <dir> --allow-root <root>
 --approve-actions`. Failed or blocked jobs can be retried with `nemofold resume` while
@@ -112,8 +139,9 @@ is the default safe path; action workflows additionally require the server-side
   can enter an external package.
 - The package validator rejects host paths, secrets, undeclared files, changed hashes,
   symlinks, or residual sensitive patterns—even if a manifest was re-hashed.
-- `cloud_proof: true` is invalid without a live runtime-evidence record. The current
-  repository deliberately provides no such claim.
+- `cloud_proof: true` is invalid without a successful, schema-valid provider response
+  bound to runtime evidence. The repository contains the adapter and simulated tests,
+  but deliberately contains no claim that the pending real competition call succeeded.
 
 ## Design and integration
 

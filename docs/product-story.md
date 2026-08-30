@@ -51,8 +51,11 @@ Nebius-hosted runtime gives that isolated worker scalable inference without gran
 direct file-system authority.
 
 This architecture makes the cloud contribution both meaningful and bounded. The live
-adapter and its measured output are still an explicit acceptance gate; the current
-repository does not claim a completed transfer or `cloud_proof: true`.
+adapter now validates the immutable package, records an atomic transfer attempt, calls
+only the approved Token Factory origin, applies a conservative cost bound, and verifies
+the returned request/response, usage, schema, and exact quotes. The real competition
+call remains an explicit acceptance gate; the current repository does not claim a
+completed transfer or `cloud_proof: true`.
 
 ## Existing work declaration
 

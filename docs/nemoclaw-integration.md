@@ -23,8 +23,31 @@ python -m nemofold verify-job run-reports\nemoclaw-package\nemoclaw-packages\pro
 ```
 
 This only creates and validates a local package. Its output states
-`transfer_performed: false`; it does not contact Nebius or NemoClaw. Upload and sandbox
-execution are separate, human-controlled commands:
+`transfer_performed: false`; it does not contact Nebius or NemoClaw.
+
+The implemented Token Factory worker remains a separate, human-controlled step:
+
+```powershell
+$env:NEBIUS_API_KEY = "<session-only-key>"
+python -m nemofold token-factory-run <job-package> `
+  --approve-live-transfer `
+  --input-price-usd-per-million <current-input-rate> `
+  --output-price-usd-per-million <current-output-rate> `
+  --nemoclaw-version <captured-installed-version>
+python -m nemofold verify-result <job-package>
+Remove-Item Env:\NEBIUS_API_KEY
+```
+
+The approval flag, current provider rates, valid immutable package, official endpoint,
+and cost ceiling are all mandatory. The worker rejects redirects and duplicate
+attempt/result files. It atomically records `transfer-attempt.json` before network I/O,
+so a connection loss cannot silently authorize a duplicate paid request. The result
+verifier recomputes the exact request from the package, checks output quotes against
+supplied chunks, and binds the attempt plus sanitized request/response logs to hashes.
+Supplying `--nemoclaw-version` records environment metadata; it is not, by itself,
+evidence that NemoClaw executed the command.
+
+Uploading and sandbox execution are separate, human-controlled commands:
 
 ```bash
 nemoclaw <sandbox-name> upload ./job-package /sandbox/nemofold/jobs/<run-id>
@@ -32,10 +55,10 @@ nemoclaw <sandbox-name> exec --workdir /sandbox/nemofold/app -- \
   python -m nemofold verify-job /sandbox/nemofold/jobs/<run-id>
 ```
 
-The live spike must use the exact commands supported by the installed NemoClaw version,
-record `nemoclaw --version`, and preserve verbatim sanitized output. The application
-must reject an answer whose run ID, source IDs, schema, or evidence locators do not match
-the uploaded package.
+The live acceptance run must use the exact commands supported by the installed NemoClaw
+version, record `nemoclaw --version`, and preserve verbatim sanitized output alongside
+the validated result. The implemented verifier rejects an answer whose run ID, source
+IDs, schema, request, usage, cost, or evidence locators do not match the package.
 
 NVIDIA's current plugin guide describes OpenClaw plugins as version-matched code packages
 baked into a full custom runtime image. It also says that managed plugin lifecycle is not
@@ -46,3 +69,6 @@ Official references:
 - https://docs.nvidia.com/nemoclaw/latest/user-guide/openclaw/reference/commands
 - https://docs.nvidia.com/nemoclaw/latest/user-guide/openclaw/manage-sandboxes/state-and-backups/understand-sandbox-state
 - https://docs.nvidia.com/nemoclaw/user-guide/openclaw/manage-sandboxes/install-openclaw-plugins
+- https://docs.tokenfactory.nebius.com/api-reference/introduction
+- https://docs.tokenfactory.nebius.com/api-reference/inference/create-chat-completion
+- https://docs.tokenfactory.nebius.com/ai-models-inference/json

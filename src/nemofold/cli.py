@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from collections.abc import Sequence
 from dataclasses import replace
 from pathlib import Path
@@ -21,7 +22,9 @@ from .demo_pipeline import run_full_offline_demo
 from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
 from .ledger import RunLedger, validate_run_id
-from .nemoclaw_package import validate_job_package
+from .live_result import validate_result_package
+from .nebius_token_factory import TokenFactoryConfig, run_token_factory_package
+from .nemoclaw_package import TRANSFER_ATTEMPT_FILENAME, validate_job_package
 from .policy import PolicyConfig, PolicyGate
 from .report_verifier import verify_run_report
 from .runtime import LocalAgentRuntime
@@ -46,6 +49,22 @@ def build_parser() -> argparse.ArgumentParser:
     )
     verify_job = commands.add_parser("verify-job", help="validate a NemoClaw job package")
     verify_job.add_argument("path")
+    verify_result = commands.add_parser(
+        "verify-result", help="validate a live Token Factory result and its package"
+    )
+    verify_result.add_argument("path")
+    token_factory = commands.add_parser(
+        "token-factory-run",
+        help="execute one explicitly approved NemoClaw package on Nebius Token Factory",
+    )
+    token_factory.add_argument("path")
+    token_factory.add_argument("--approve-live-transfer", action="store_true")
+    token_factory.add_argument("--input-price-usd-per-million", type=float, required=True)
+    token_factory.add_argument("--output-price-usd-per-million", type=float, required=True)
+    token_factory.add_argument("--max-completion-tokens", type=int, default=1200)
+    token_factory.add_argument("--timeout-seconds", type=float, default=60.0)
+    token_factory.add_argument("--base-url", default="https://api.tokenfactory.nebius.com/v1")
+    token_factory.add_argument("--nemoclaw-version")
     package = commands.add_parser(
         "package", help="build a gated, local NemoClaw job package without uploading it"
     )
@@ -110,6 +129,23 @@ def main(argv: Sequence[str] | None = None) -> int:
             )
         )
         return 0 if validation.valid else 2
+    if args.command == "verify-result":
+        result_validation = validate_result_package(args.path)
+        print(
+            json.dumps(
+                {
+                    "valid": result_validation.valid,
+                    "run_id": result_validation.run_id,
+                    "status": result_validation.status,
+                    "errors": list(result_validation.errors),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0 if result_validation.valid else 2
+    if args.command == "token-factory-run":
+        return _token_factory_run_command(args)
     if args.command == "package":
         return _package_job_command(args)
     if args.command in {"preview", "run"}:
@@ -137,6 +173,83 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _serve_command(args)
     parser.print_help()
     return 0
+
+
+def _token_factory_run_command(args: argparse.Namespace) -> int:
+    api_key = os.environ.get("NEBIUS_API_KEY", "")
+    try:
+        result_path = run_token_factory_package(
+            args.path,
+            TokenFactoryConfig(
+                api_key=api_key,
+                input_price_usd_per_million=args.input_price_usd_per_million,
+                output_price_usd_per_million=args.output_price_usd_per_million,
+                max_completion_tokens=args.max_completion_tokens,
+                timeout_seconds=args.timeout_seconds,
+                base_url=args.base_url,
+                nemoclaw_version=args.nemoclaw_version,
+            ),
+            approve_live_transfer=args.approve_live_transfer,
+        )
+        payload = json.loads(result_path.read_text(encoding="utf-8"))
+        validation = validate_result_package(args.path)
+    except (FileExistsError, OSError, PermissionError, RuntimeError, ValueError) as exc:
+        result_path = Path(args.path) / "result.json"
+        attempt_path = Path(args.path) / TRANSFER_ATTEMPT_FILENAME
+        transfer_performed: bool | None = False
+        attempt_status = None
+        if attempt_path.is_file() and not attempt_path.is_symlink():
+            transfer_performed = None
+            try:
+                attempt = json.loads(attempt_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                attempt_status = "unreadable"
+            else:
+                if isinstance(attempt, dict):
+                    attempt_status = attempt.get("status")
+        if result_path.is_file() and not result_path.is_symlink():
+            try:
+                existing_result = json.loads(result_path.read_text(encoding="utf-8"))
+            except (OSError, json.JSONDecodeError):
+                pass
+            else:
+                if (
+                    isinstance(existing_result, dict)
+                    and existing_result.get("transfer_performed") is True
+                ):
+                    transfer_performed = True
+        print(
+            json.dumps(
+                {
+                    "status": "blocked",
+                    "errors": [str(exc)],
+                    "attempt_status": attempt_status,
+                    "transfer_performed": transfer_performed,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    runtime = payload.get("runtime_evidence", {})
+    print(
+        json.dumps(
+            {
+                "status": payload.get("status"),
+                "result_path": str(result_path),
+                "model_id": payload.get("model_id"),
+                "transfer_performed": payload.get("transfer_performed"),
+                "cloud_proof": payload.get("cloud_proof"),
+                "usage": payload.get("usage"),
+                "estimated_cost_usd": runtime.get("estimated_cost_usd"),
+                "result_valid": validation.valid,
+                "validation_errors": list(validation.errors),
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0 if validation.valid and payload.get("status") == "executed" else 2
 
 
 def _run_job_command(args: argparse.Namespace) -> int:

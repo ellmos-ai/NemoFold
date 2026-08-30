@@ -42,8 +42,10 @@ synthetic directory. Display the action journal and undo receipt, and undo the m
 
 Record a real, sanitized job crossing the approved privacy gate to the actual
 Nebius-hosted NVIDIA Nemotron runtime. Show the model identifier, bounded package,
-response receipt, latency or usage evidence, local citation validation, and the final
-run report with `transfer_performed: true` and `cloud_proof: true`.
+atomic transfer-attempt receipt, response receipt, latency or usage evidence, local
+citation validation, and the final result with `transfer_performed: true` and
+`cloud_proof: true`. Run `verify-job` before the call and `verify-result` afterward so
+the recording demonstrates both the outbound and inbound contract.
 
 Current state: **OPEN — do not simulate or narrate this as completed.**
 
