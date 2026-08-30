@@ -22,3 +22,6 @@ document-extraction, privacy-package, and verification audit is commit
 adapter, durable transfer-attempt receipt, strict live-result verifier, CLI contract,
 and adversarial tests are captured in commit
 `562d47a1519c412e95cc2969241aadc04924b175`.
+Runtime evidence declaration/proof separation, generic-report cloud-proof hardening,
+cross-platform CI, packaging checks, and the associated adversarial tests are captured
+in commit `c5dad72fbb744e9ef0218137f0f52bbbaf6b3e74`.
