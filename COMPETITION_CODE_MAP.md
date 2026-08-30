@@ -25,3 +25,8 @@ and adversarial tests are captured in commit
 Runtime evidence declaration/proof separation, generic-report cloud-proof hardening,
 cross-platform CI, packaging checks, and the associated adversarial tests are captured
 in commit `c5dad72fbb744e9ef0218137f0f52bbbaf6b3e74`.
+Reliable cross-origin rejection on Windows, including the bounded-body drain and JSON
+error readback, is captured in commit `718e57b5ee4516d22895fc9e99f376c13a9e9989`.
+The evidence-gated three-minute narration, architecture bridge, capture contract, and
+cross-platform public-document guards are captured in commit
+`ac20494a15330a05e0b81076ee4c42f5380558d9`.
