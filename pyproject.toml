@@ -14,6 +14,11 @@ dependencies = [
   "pypdf>=6,<7",
 ]
 
+[project.urls]
+Homepage = "https://github.com/lukisch/NemoFold"
+Repository = "https://github.com/lukisch/NemoFold"
+Issues = "https://github.com/lukisch/NemoFold/issues"
+
 [project.optional-dependencies]
 dev = [
   "build>=1.2",

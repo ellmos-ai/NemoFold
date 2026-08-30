@@ -190,9 +190,7 @@ def _prepare_inventory(job: JobEnvelope) -> tuple[JobEnvelope, InventoryResult]:
     previous_hashes = None
     since_run_id = job.parameters.get("since_run_id")
     if since_run_id is not None:
-        if not isinstance(since_run_id, str) or not re.fullmatch(
-            r"[A-Za-z0-9_-]+", since_run_id
-        ):
+        if not isinstance(since_run_id, str) or not re.fullmatch(r"[A-Za-z0-9_-]+", since_run_id):
             raise ValueError("since_run_id contains unsafe characters")
         previous_path = Path(job.output_dir) / "inventory" / f"{since_run_id}.json"
         try:
@@ -628,9 +626,7 @@ def _execute_evidence(
         else:
             unanswered.append(receipt.question)
 
-    cited_ids = {
-        locator.source_id for claim in claims for locator in claim.evidence
-    }
+    cited_ids = {locator.source_id for claim in claims for locator in claim.evidence}
     coverage = compute_coverage(
         all_source_ids=(record.source_id for record in inventory.records),
         read_source_ids=texts,
@@ -639,8 +635,7 @@ def _execute_evidence(
     source_labels = {record.source_id: record.display_name for record in inventory.records}
     receipt_record = write_text_artifact(
         Path(job.output_dir) / f"{run_id}.context-receipts.json",
-        json.dumps([receipt.to_payload() for receipt in receipts], indent=2, sort_keys=True)
-        + "\n",
+        json.dumps([receipt.to_payload() for receipt in receipts], indent=2, sort_keys=True) + "\n",
         "context-receipts",
     )
     analysis_payload = {
@@ -692,9 +687,7 @@ def _execute_evidence(
             claim.conflict_status == "potential_conflict" for claim in claims
         ),
         "analysis_mode": job.parameters.get("analysis_mode", "local_extractive"),
-        "citation_granularity": job.parameters.get(
-            "citation_granularity", "line_or_page"
-        ),
+        "citation_granularity": job.parameters.get("citation_granularity", "line_or_page"),
         "index_status": index_status,
         "pruned_source_ids": pruned_source_ids,
     }
@@ -802,16 +795,10 @@ def _execute_versions(
         candidate = VersionCandidate(
             source_id=record.source_id,
             display_name=record.display_name,
-            issue_date=_optional_iso_date(
-                overrides.get("issue_date"), field_name="issue_date"
-            )
+            issue_date=_optional_iso_date(overrides.get("issue_date"), field_name="issue_date")
             or _filename_issue_date(record.display_name),
-            valid_from=_optional_iso_date(
-                overrides.get("valid_from"), field_name="valid_from"
-            ),
-            valid_until=_optional_iso_date(
-                overrides.get("valid_until"), field_name="valid_until"
-            ),
+            valid_from=_optional_iso_date(overrides.get("valid_from"), field_name="valid_from"),
+            valid_until=_optional_iso_date(overrides.get("valid_until"), field_name="valid_until"),
             version_number=_optional_version(overrides.get("version_number"))
             or _filename_version(record.display_name),
             file_time=datetime.fromtimestamp(Path(record.path).stat().st_mtime, tz=UTC),
@@ -859,9 +846,7 @@ def _execute_versions(
         "families": family_payloads,
         "basis": first.basis if len(resolutions) == 1 else "per_family",
         "selected": to_primitive(first.selected) if len(resolutions) == 1 else None,
-        "ordered_source_ids": (
-            list(first.ordered_source_ids) if len(resolutions) == 1 else []
-        ),
+        "ordered_source_ids": (list(first.ordered_source_ids) if len(resolutions) == 1 else []),
         "comparison": family_payloads[0]["comparison"] if len(resolutions) == 1 else None,
     }
     artifact = write_text_artifact(
@@ -936,7 +921,8 @@ def _execute_report_studio(
     claims = tuple(
         _claim_from_payload(answer["claim"])
         for answer in answers
-        if isinstance(answer, dict) and answer.get("claim") is not None
+        if isinstance(answer, dict)
+        and answer.get("claim") is not None
         and answer.get("verified") is True
     )
     if any(
@@ -959,9 +945,7 @@ def _execute_report_studio(
     source_labels_value = payload.get("source_labels", {})
     if not isinstance(source_labels_value, dict):
         raise ValueError("analysis source labels are invalid")
-    cited_source_ids = {
-        locator.source_id for claim in claims for locator in claim.evidence
-    }
+    cited_source_ids = {locator.source_id for claim in claims for locator in claim.evidence}
     if not cited_source_ids.issubset(source_labels_value):
         raise ValueError("analysis claim references an unknown source label")
     if coverage.cited_sources != len(cited_source_ids):
@@ -975,8 +959,7 @@ def _execute_report_studio(
             claims=claims,
             coverage=coverage,
             source_labels=tuple(
-                (str(source_id), str(label))
-                for source_id, label in source_labels_value.items()
+                (str(source_id), str(label)) for source_id, label in source_labels_value.items()
             ),
         ),
         job.output_dir,
@@ -998,15 +981,11 @@ def _execute_report_studio(
 
 
 def _action_policy_set(job: JobEnvelope, *, default_original: str) -> PolicySet:
-    extensions = job.parameters.get(
-        "allowed_extensions", job.parameters.get("allowed_types", [])
-    )
+    extensions = job.parameters.get("allowed_extensions", job.parameters.get("allowed_types", []))
     if not isinstance(extensions, list) or any(not isinstance(item, str) for item in extensions):
         raise ValueError("allowed_extensions must be a list of strings")
     naming = job.parameters.get("naming_template", "{stem}{suffix}")
-    retention = job.parameters.get(
-        "retention_action", job.parameters.get("retention_rule", "keep")
-    )
+    retention = job.parameters.get("retention_action", job.parameters.get("retention_rule", "keep"))
     original = job.parameters.get("original_policy", default_original)
     conversion = job.parameters.get("conversion_target")
     if not all(isinstance(item, str) for item in (naming, retention, original)):
@@ -1170,8 +1149,6 @@ def _execute_storage_policy(
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     existing = _load_action_plans(job, run_id=run_id)
-    if existing is not None and job.action_mode is ActionMode.APPLY:
-        return _finalize_action_plans(job, inventory, existing, run_id=run_id)
     if len(job.target_roots) != 1:
         raise ValueError("storage_policy requires exactly one target root")
     target = Path(job.target_roots[0])
@@ -1182,6 +1159,10 @@ def _execute_storage_policy(
         preview_storage(record.path, target, policies.resolve(record.path))
         for record in inventory.records
     )
+    if existing is not None and job.action_mode is ActionMode.APPLY:
+        if existing != plans:
+            raise RuntimeError("stored action plan does not match the current approved plan")
+        return _finalize_action_plans(job, inventory, existing, run_id=run_id)
     return _finalize_action_plans(job, inventory, plans, run_id=run_id)
 
 
@@ -1192,8 +1173,6 @@ def _execute_smart_inbox(
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     existing = _load_action_plans(job, run_id=run_id)
-    if existing is not None and job.action_mode is ActionMode.APPLY:
-        return _finalize_action_plans(job, inventory, existing, run_id=run_id)
     routes_value = job.parameters.get("routes")
     if not isinstance(routes_value, list) or not routes_value:
         raise ValueError("smart_inbox requires at least one route")
@@ -1220,6 +1199,10 @@ def _execute_smart_inbox(
         rules=tuple(routes),
         policies=_action_policy_set(job, default_original="move"),
     )
+    if existing is not None and job.action_mode is ActionMode.APPLY:
+        if existing != plans:
+            raise RuntimeError("stored action plan does not match the current approved plan")
+        return _finalize_action_plans(job, inventory, existing, run_id=run_id)
     return _finalize_action_plans(job, inventory, plans, run_id=run_id)
 
 

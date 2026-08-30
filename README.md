@@ -1,5 +1,6 @@
 # NemoFold
 
+[![CI](https://github.com/lukisch/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/lukisch/NemoFold/actions/workflows/ci.yml)
 [MIT License](LICENSE) · Python 3.11+ · Local-first
 
 NemoFold is a private, evidence-first document agent. It turns explicitly approved
@@ -31,8 +32,8 @@ engine, and artifact export. Local extraction supports text-family files, JSON, 
 HTML, PDF, DOCX, and ODT. Unsupported or unreadable files remain visible as coverage
 gaps.
 
-Public repository creation, cloud spend, uploads, live NemoClaw/Nebius execution, and
-Devpost submission are separate human approval gates.
+Cloud spend, uploads, live NemoClaw/Nebius execution, and Devpost submission are
+separate human approval gates.
 
 ![NemoFold Captain Nemo console](docs/media/nemofold-console.png)
 
@@ -159,3 +160,6 @@ is the default safe path; action workflows additionally require the server-side
 - [Submission readiness](docs/submission-readiness.md)
 - [Competition code map](COMPETITION_CODE_MAP.md)
 - [Third-party software](THIRD_PARTY_LICENSES.md)
+- [Security policy](SECURITY.md)
+- [Contributing](CONTRIBUTING.md)
+- [Release gate](RELEASE_GATE.md)

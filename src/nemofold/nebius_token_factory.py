@@ -124,8 +124,7 @@ class UrllibTokenFactoryTransport:
             return HTTPExchange(
                 status=int(response.status),
                 headers={
-                    str(key).casefold(): str(value)
-                    for key, value in response.headers.items()
+                    str(key).casefold(): str(value) for key, value in response.headers.items()
                 },
                 body=content,
             )
@@ -168,9 +167,7 @@ def build_token_factory_request(
     )
 
 
-def maximum_estimated_cost_usd(
-    request_body: dict[str, Any], config: TokenFactoryConfig
-) -> float:
+def maximum_estimated_cost_usd(request_body: dict[str, Any], config: TokenFactoryConfig) -> float:
     conservative_input_token_bound = len(
         json.dumps(request_body, sort_keys=True, separators=(",", ":")).encode("utf-8")
     )
@@ -204,7 +201,22 @@ def _parse_response_body(raw: bytes) -> dict[str, Any]:
         decoded = raw.decode("utf-8", errors="replace")
         cleaned = pseudonymize_text(decoded[:32_768]).text
         return {"raw_text": cleaned, "raw_sha256": hashlib.sha256(raw).hexdigest()}
-    return value if isinstance(value, dict) else {"unexpected_json": value}
+    sanitized = _sanitize_provider_value(value)
+    return sanitized if isinstance(sanitized, dict) else {"unexpected_json": sanitized}
+
+
+def _sanitize_provider_value(value: Any) -> Any:
+    """Remove secret-like strings before provider-controlled data reaches durable logs."""
+    if isinstance(value, dict):
+        return {
+            pseudonymize_text(str(key)).text: _sanitize_provider_value(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_sanitize_provider_value(item) for item in value]
+    if isinstance(value, str):
+        return pseudonymize_text(value).text
+    return value
 
 
 def _usage(response_body: dict[str, Any]) -> tuple[dict[str, int], list[str]]:
@@ -343,7 +355,7 @@ def run_token_factory_package(
     if estimated_cost > budget:
         errors.append("actual_token_cost_exceeds_job_budget")
     safe_response_headers = {
-        key: value
+        key: pseudonymize_text(value).text
         for key, value in exchange.headers.items()
         if key.casefold() in {"content-type", "date", "x-request-id"}
     }
@@ -408,7 +420,5 @@ def run_token_factory_package(
     )
     result_validation = validate_result_package(package_path)
     if not result_validation.valid:
-        raise RuntimeError(
-            f"created live result is invalid: {', '.join(result_validation.errors)}"
-        )
+        raise RuntimeError(f"created live result is invalid: {', '.join(result_validation.errors)}")
     return result_path

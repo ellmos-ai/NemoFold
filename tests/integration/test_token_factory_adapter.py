@@ -170,12 +170,8 @@ def test_live_adapter_records_verifiable_proof_without_secret(tmp_path) -> None:
     validation = validate_result_package(package)
 
     assert len(transport.calls) == 1
-    assert transport.calls[0]["url"] == (
-        "https://api.tokenfactory.nebius.com/v1/chat/completions"
-    )
-    assert transport.calls[0]["headers"]["Authorization"] == (
-        "Bearer test-secret-do-not-log"
-    )
+    assert transport.calls[0]["url"] == ("https://api.tokenfactory.nebius.com/v1/chat/completions")
+    assert transport.calls[0]["headers"]["Authorization"] == ("Bearer test-secret-do-not-log")
     assert result["status"] == "executed"
     assert result["transfer_performed"] is True
     assert result["cloud_proof"] is True
@@ -194,6 +190,60 @@ def test_live_adapter_records_verifiable_proof_without_secret(tmp_path) -> None:
             transport=transport,
         )
     assert len(transport.calls) == 1
+
+
+def test_provider_echoed_secret_is_redacted_before_result_is_written(tmp_path) -> None:
+    package = make_package(tmp_path)
+    echoed_secret = "Bearer test-secret-do-not-log"
+    transport = RecordingTransport(
+        exchange=HTTPExchange(
+            status=400,
+            headers={"content-type": "application/json", "x-request-id": echoed_secret},
+            body=json.dumps({"error": echoed_secret, echoed_secret: "redacted key"}).encode(),
+        )
+    )
+
+    result_path = run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=transport,
+    )
+    result_text = result_path.read_text(encoding="utf-8")
+    result = json.loads(result_text)
+
+    assert echoed_secret not in result_text
+    assert result["provider_log"]["response"]["body"]["error"] == "<SECRET_001>"
+    assert result["provider_log"]["response"]["body"]["<SECRET_001>"] == "redacted key"
+    assert result["provider_log"]["response"]["headers"]["x-request-id"] == "<SECRET_001>"
+    assert validate_result_package(package).valid is True
+
+
+def test_non_json_provider_secret_is_redacted_before_result_is_written(tmp_path) -> None:
+    package = make_package(tmp_path)
+    echoed_secret = "Bearer test-secret-do-not-log"
+    transport = RecordingTransport(
+        exchange=HTTPExchange(
+            status=502,
+            headers={"content-type": "text/plain"},
+            body=f"upstream error: {echoed_secret}".encode(),
+        )
+    )
+
+    result_path = run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=transport,
+    )
+    result_text = result_path.read_text(encoding="utf-8")
+    result = json.loads(result_text)
+
+    assert echoed_secret not in result_text
+    assert result["provider_log"]["response"]["body"]["raw_text"] == (
+        "upstream error: <SECRET_001>"
+    )
+    assert validate_result_package(package).valid is True
 
 
 def test_adapter_blocks_without_approval_before_transport(tmp_path) -> None:
@@ -301,9 +351,7 @@ def test_adapter_rejects_non_finite_job_budget_before_transport(tmp_path) -> Non
     assert not (package / TRANSFER_ATTEMPT_FILENAME).exists()
 
 
-def test_parallel_starts_create_one_attempt_and_one_paid_request(
-    tmp_path, monkeypatch
-) -> None:
+def test_parallel_starts_create_one_attempt_and_one_paid_request(tmp_path, monkeypatch) -> None:
     package = make_package(tmp_path)
     transport = RecordingTransport()
     real_load_package = token_factory_module._load_package
@@ -367,9 +415,7 @@ def test_result_verifier_detects_rehashed_request_and_quote_tampering(tmp_path) 
     result["runtime_evidence"]["request_sha256"] = json_sha256(
         result["provider_log"]["request"]["body"]
     )
-    result["runtime_evidence"]["verbatim_log_sha256"] = json_sha256(
-        result["provider_log"]
-    )
+    result["runtime_evidence"]["verbatim_log_sha256"] = json_sha256(result["provider_log"])
     result_path.write_text(json.dumps(result), encoding="utf-8")
 
     request_validation = validate_result_package(package)
@@ -379,18 +425,14 @@ def test_result_verifier_detects_rehashed_request_and_quote_tampering(tmp_path) 
     result["provider_log"]["request"]["body"]["temperature"] = 0
     tampered_output = result["model_output"]
     tampered_output["answers"][0]["claims"][0]["evidence"][0]["quote"] = "May"
-    result["provider_log"]["response"]["body"] = json.loads(
-        successful_body(quote="May")
-    )
+    result["provider_log"]["response"]["body"] = json.loads(successful_body(quote="May"))
     result["runtime_evidence"]["request_sha256"] = json_sha256(
         result["provider_log"]["request"]["body"]
     )
     result["runtime_evidence"]["response_sha256"] = json_sha256(
         result["provider_log"]["response"]["body"]
     )
-    result["runtime_evidence"]["verbatim_log_sha256"] = json_sha256(
-        result["provider_log"]
-    )
+    result["runtime_evidence"]["verbatim_log_sha256"] = json_sha256(result["provider_log"])
     result_path.write_text(json.dumps(result), encoding="utf-8")
 
     quote_validation = validate_result_package(package)

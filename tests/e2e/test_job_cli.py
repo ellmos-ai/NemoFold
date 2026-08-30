@@ -42,9 +42,7 @@ def test_preview_run_and_verify_share_the_public_job_contract(tmp_path, capsys) 
     assert preview["source_count"] == 2
     assert not (tmp_path / "output" / "bundles" / "case_bundle.zip").exists()
 
-    run_exit = main(
-        ["run", "--job", str(job), "--allow-root", allow_root, "--run-id", "run_1"]
-    )
+    run_exit = main(["run", "--job", str(job), "--allow-root", allow_root, "--run-id", "run_1"])
     run = json.loads(capsys.readouterr().out)
     report_path = Path(run["report_path"])
 
@@ -290,6 +288,48 @@ def test_preview_of_apply_job_builds_plan_without_requiring_action_approval(
     assert (archive / "case.txt").is_file()
 
 
+def test_apply_rejects_a_tampered_preview_action_plan(tmp_path, capsys) -> None:
+    inbox = tmp_path / "inbox"
+    archive = tmp_path / "archive"
+    outside = tmp_path / "outside"
+    inbox.mkdir()
+    archive.mkdir()
+    outside.mkdir()
+    source = inbox / "case.txt"
+    source.write_text("case", encoding="utf-8")
+    job = tmp_path / "tampered-preview-action.json"
+    job.write_text(
+        json.dumps(
+            {
+                "schema": "nemofold.job.v1",
+                "workflow": "storage_policy",
+                "input_roots": ["inbox"],
+                "target_roots": ["archive"],
+                "output_dir": "output",
+                "questions": [],
+                "privacy_mode": "local_only",
+                "action_mode": "apply",
+                "parameters": {"allowed_extensions": [".txt"]},
+            }
+        ),
+        encoding="utf-8",
+    )
+    common = ["--job", str(job), "--allow-root", str(tmp_path), "--run-id", "tampered"]
+
+    assert main(["preview", *common]) == 0
+    capsys.readouterr()
+    plan_path = tmp_path / "output" / "tampered.action-plan.json"
+    plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    plan["plans"][0]["target"] = str(outside / "case.txt")
+    plan_path.write_text(json.dumps(plan), encoding="utf-8")
+
+    assert main(["run", *common, "--approve-actions"]) == 2
+    result = json.loads(capsys.readouterr().out)
+    assert result["status"] == "failed"
+    assert source.is_file()
+    assert not (outside / "case.txt").exists()
+
+
 def test_external_preview_is_pseudonymized_and_never_marks_a_transfer(tmp_path, capsys) -> None:
     documents = tmp_path / "documents"
     documents.mkdir()
@@ -330,9 +370,7 @@ def test_external_preview_is_pseudonymized_and_never_marks_a_transfer(tmp_path, 
     preview_path = tmp_path / "output" / "external_preview.external-preview.json"
     encoded = preview_path.read_text(encoding="utf-8")
     report = json.loads(
-        (tmp_path / "output" / "ledger" / "external_preview.json").read_text(
-            encoding="utf-8"
-        )
+        (tmp_path / "output" / "ledger" / "external_preview.json").read_text(encoding="utf-8")
     )
 
     assert exit_code == 0
@@ -380,10 +418,7 @@ def test_package_command_requires_positive_gate_and_never_claims_transfer(tmp_pa
 
     blocked_exit = main(base_args)
     blocked = json.loads(capsys.readouterr().out)
-    packaged_exit = main(
-        base_args
-        + ["--allow-external-models", "--max-external-cost-usd", "1.0"]
-    )
+    packaged_exit = main(base_args + ["--allow-external-models", "--max-external-cost-usd", "1.0"])
     packaged = json.loads(capsys.readouterr().out)
 
     assert blocked_exit == 2
@@ -409,15 +444,11 @@ def test_token_factory_cli_does_not_hide_a_transfer_after_validation_failure(
     def transferred_then_failed(path, config, *, approve_live_transfer):
         assert approve_live_transfer is True
         result_path = Path(path) / "result.json"
-        result_path.write_text(
-            json.dumps({"transfer_performed": True}), encoding="utf-8"
-        )
+        result_path.write_text(json.dumps({"transfer_performed": True}), encoding="utf-8")
         raise RuntimeError("post-transfer validation failed")
 
     monkeypatch.setenv("NEBIUS_API_KEY", "test-key")
-    monkeypatch.setattr(
-        cli_module, "run_token_factory_package", transferred_then_failed
-    )
+    monkeypatch.setattr(cli_module, "run_token_factory_package", transferred_then_failed)
 
     exit_code = main(
         [
