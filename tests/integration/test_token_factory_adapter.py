@@ -162,7 +162,7 @@ def test_live_adapter_records_verifiable_proof_without_secret(tmp_path) -> None:
 
     result_path = run_token_factory_package(
         package,
-        config(nemoclaw_version="0.1.0-test"),
+        config(declared_nemoclaw_version="0.1.0-test"),
         approve_live_transfer=True,
         transport=transport,
     )
@@ -179,7 +179,9 @@ def test_live_adapter_records_verifiable_proof_without_secret(tmp_path) -> None:
     assert result["status"] == "executed"
     assert result["transfer_performed"] is True
     assert result["cloud_proof"] is True
-    assert result["runtime_evidence"]["execution_environment"] == "nemoclaw"
+    assert result["runtime_evidence"]["declared_execution_environment"] == "nemoclaw"
+    assert result["runtime_evidence"]["declared_nemoclaw_version"] == "0.1.0-test"
+    assert result["runtime_evidence"]["nemoclaw_proof"] is False
     assert validation.valid is True
     assert validate_job_package(package).valid is True
     assert "test-secret-do-not-log" not in result_path.read_text(encoding="utf-8")
@@ -413,6 +415,54 @@ def test_result_verifier_binds_the_durable_transfer_attempt(tmp_path) -> None:
 
     assert validation.valid is False
     assert "transfer_attempt_endpoint_mismatch" in validation.errors
+
+
+@pytest.mark.parametrize(
+    "proof_value,remove_key",
+    [(True, False), ("false", False), (0, False), (None, True)],
+    ids=["true", "string-false", "integer-zero", "missing"],
+)
+def test_declared_nemoclaw_metadata_cannot_become_runtime_proof(
+    tmp_path, proof_value: object, remove_key: bool
+) -> None:
+    package = make_package(tmp_path)
+    result_path = run_token_factory_package(
+        package,
+        config(declared_nemoclaw_version="0.1.0-test"),
+        approve_live_transfer=True,
+        transport=RecordingTransport(),
+    )
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    if remove_key:
+        result["runtime_evidence"].pop("nemoclaw_proof")
+    else:
+        result["runtime_evidence"]["nemoclaw_proof"] = proof_value
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+
+    validation = validate_result_package(package)
+
+    assert validation.valid is False
+    assert "nemoclaw_proof_unverified" in validation.errors
+
+
+def test_result_verifier_labels_legacy_runtime_field_names(tmp_path) -> None:
+    package = make_package(tmp_path)
+    result_path = run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=RecordingTransport(),
+    )
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    result["runtime_evidence"]["execution_environment"] = result["runtime_evidence"].pop(
+        "declared_execution_environment"
+    )
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+
+    validation = validate_result_package(package)
+
+    assert validation.valid is False
+    assert "legacy_runtime_fields_present" in validation.errors
 
 
 def test_provider_failure_is_truthfully_recorded_but_not_cloud_proof(tmp_path) -> None:

@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 
+import pytest
+
 from nemofold.report_verifier import verify_run_report
 
 
@@ -78,7 +80,38 @@ def test_report_verifier_rejects_impossible_coverage_and_unsupported_cloud_claim
 
     assert result.valid is False
     assert "coverage_counts_invalid" in result.errors
-    assert "cloud_proof_evidence_missing" in result.errors
+    assert "cloud_proof_requires_verified_result_package" in result.errors
+
+
+def test_report_verifier_rejects_self_declared_live_runtime_metadata(tmp_path) -> None:
+    path, _ = write_report(
+        tmp_path,
+        metadata={
+            "cloud_proof": True,
+            "live_runtime_evidence": {
+                "nemoclaw_version": "self-declared",
+                "model_id": "self-declared",
+                "verbatim_log_sha256": "a" * 64,
+            },
+        },
+    )
+
+    result = verify_run_report(path)
+
+    assert result.valid is False
+    assert "cloud_proof_requires_verified_result_package" in result.errors
+
+
+@pytest.mark.parametrize("false_proof", [True, 1, 0, "true", "false", None])
+def test_report_verifier_rejects_every_explicit_non_false_cloud_claim(
+    tmp_path, false_proof: object
+) -> None:
+    path, _ = write_report(tmp_path, metadata={"cloud_proof": false_proof})
+
+    result = verify_run_report(path)
+
+    assert result.valid is False
+    assert "cloud_proof_requires_verified_result_package" in result.errors
 
 
 def test_report_verifier_rejects_artifacts_outside_the_run_root(tmp_path) -> None:

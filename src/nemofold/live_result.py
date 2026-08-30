@@ -411,17 +411,22 @@ def validate_result_package(path: str | Path) -> ResultValidation:
         usage_valid = False
 
     runtime = result.get("runtime_evidence")
+    if isinstance(runtime, dict) and (
+        "execution_environment" in runtime or "nemoclaw_version" in runtime
+    ):
+        errors.append("legacy_runtime_fields_present")
     runtime_fields = {
         "completed_at",
+        "declared_execution_environment",
+        "declared_nemoclaw_version",
         "endpoint_origin",
         "estimated_cost_usd",
-        "execution_environment",
         "input_price_usd_per_million",
         "latency_ms",
         "max_completion_tokens",
         "maximum_estimated_cost_usd",
         "model_id",
-        "nemoclaw_version",
+        "nemoclaw_proof",
         "output_price_usd_per_million",
         "provider",
         "request_sha256",
@@ -454,16 +459,18 @@ def validate_result_package(path: str | Path) -> ResultValidation:
     latency = runtime.get("latency_ms")
     if isinstance(latency, bool) or not isinstance(latency, int) or latency < 0:
         errors.append("runtime_latency_invalid")
-    environment = runtime.get("execution_environment")
-    nemoclaw_version = runtime.get("nemoclaw_version")
+    environment = runtime.get("declared_execution_environment")
+    nemoclaw_version = runtime.get("declared_nemoclaw_version")
     if environment not in {"direct", "nemoclaw"}:
-        errors.append("runtime_environment_invalid")
+        errors.append("declared_runtime_environment_invalid")
     if environment == "nemoclaw" and (
         not isinstance(nemoclaw_version, str) or not nemoclaw_version.strip()
     ):
-        errors.append("nemoclaw_version_missing")
+        errors.append("declared_nemoclaw_version_missing")
     if environment == "direct" and nemoclaw_version is not None:
-        errors.append("direct_runtime_has_nemoclaw_version")
+        errors.append("direct_runtime_has_declared_nemoclaw_version")
+    if runtime.get("nemoclaw_proof") is not False:
+        errors.append("nemoclaw_proof_unverified")
 
     numeric_fields = (
         "estimated_cost_usd",

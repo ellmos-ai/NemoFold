@@ -101,11 +101,11 @@ def verify_run_report(path: str | Path) -> ReportVerification:
     if not isinstance(metadata, dict):
         errors.append("metadata_invalid")
         metadata = {}
-    if metadata.get("cloud_proof") is True:
-        evidence = metadata.get("live_runtime_evidence")
-        required = {"nemoclaw_version", "model_id", "verbatim_log_sha256"}
-        if not isinstance(evidence, dict) or not required.issubset(evidence):
-            errors.append("cloud_proof_evidence_missing")
+    if "cloud_proof" in metadata and metadata["cloud_proof"] is not False:
+        # A generic run report is not a provider receipt. Live execution is proved
+        # only by the separately hashed result-package contract and its verifier.
+        # Free-form report metadata must therefore never upgrade itself to proof.
+        errors.append("cloud_proof_requires_verified_result_package")
 
     artifacts = payload.get("artifacts", [])
     if not isinstance(artifacts, list):

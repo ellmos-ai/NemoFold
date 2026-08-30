@@ -29,12 +29,21 @@ result could be written.
 After a received response, the second additional regular file is the manifest-declared
 `result.json`. It uses `nemofold.live-result.v1` and contains:
 
+Breaking pre-release contract change (2026-08-30): the former
+`execution_environment` and `nemoclaw_version` fields were renamed to
+`declared_execution_environment` and `declared_nemoclaw_version`, and
+`nemoclaw_proof: false` became mandatory. Legacy field names are rejected explicitly.
+Local `nemofold.live-result.v1` packages created before this change are pre-release
+artifacts and are intentionally invalid under the current verifier; no public v1
+contract has been released.
+
 - the same run ID, response schema, provider, and model ID;
 - `transfer_performed`, `cloud_proof`, status, and explicit errors;
 - ordered answers whose citations are exact substrings of declared chunks;
 - provider usage and current price inputs used for the bounded cost calculation;
-- endpoint, timestamps, latency, environment metadata, and hashes of the sanitized
-  request, response, and provider log;
+- endpoint, timestamps, latency, explicitly declared environment metadata,
+  `nemoclaw_proof: false`, and hashes of the sanitized request, response, and provider
+  log;
 - a sanitized request/response log without credentials or Authorization headers.
 
 `python -m nemofold verify-result <job-directory>` revalidates both the immutable input

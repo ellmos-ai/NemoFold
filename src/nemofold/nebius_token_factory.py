@@ -38,7 +38,7 @@ class TokenFactoryConfig:
     max_completion_tokens: int = 1200
     timeout_seconds: float = 60.0
     base_url: str = DEFAULT_BASE_URL
-    nemoclaw_version: str | None = None
+    declared_nemoclaw_version: str | None = None
 
     def __post_init__(self) -> None:
         if not self.api_key.strip():
@@ -64,8 +64,11 @@ class TokenFactoryConfig:
             or not 1 <= self.timeout_seconds <= 300
         ):
             raise ValueError("timeout must be between 1 and 300 seconds")
-        if self.nemoclaw_version is not None and not self.nemoclaw_version.strip():
-            raise ValueError("NemoClaw version must not be blank")
+        if (
+            self.declared_nemoclaw_version is not None
+            and not self.declared_nemoclaw_version.strip()
+        ):
+            raise ValueError("declared NemoClaw version must not be blank")
 
 
 @dataclass(frozen=True, slots=True)
@@ -377,8 +380,11 @@ def run_token_factory_package(
         "estimated_cost_usd": estimated_cost,
         "maximum_estimated_cost_usd": maximum_cost,
         "max_completion_tokens": config.max_completion_tokens,
-        "execution_environment": "nemoclaw" if config.nemoclaw_version else "direct",
-        "nemoclaw_version": config.nemoclaw_version,
+        "declared_execution_environment": (
+            "nemoclaw" if config.declared_nemoclaw_version else "direct"
+        ),
+        "declared_nemoclaw_version": config.declared_nemoclaw_version,
+        "nemoclaw_proof": False,
     }
     result = {
         "schema": RESULT_SCHEMA,

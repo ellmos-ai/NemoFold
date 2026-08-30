@@ -42,7 +42,11 @@ usage, costs, endpoint, and hashes before it can become evidence.
 
 The adapter and verifier are implemented and tested with simulated transports. The
 actual NemoClaw/Nebius acceptance run remains open, so repository demos still record
-`cloud_proof: false` unless a real successful result receipt exists.
+`cloud_proof: false` unless a real successful result receipt exists. A user-supplied
+NemoClaw version is stored only as declared metadata; `nemoclaw_proof` stays false until
+a separate, sanitized sandbox-runtime record exists.
+Likewise, generic run-report metadata can never promote itself to `cloud_proof: true`;
+only the dedicated, hashed provider result-package contract is accepted for that claim.
 
 The authoritative state is deterministic: job snapshots identify the request;
 inventory snapshots identify the source set; the persistent index is updated by hash

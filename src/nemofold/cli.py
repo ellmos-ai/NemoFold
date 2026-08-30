@@ -64,7 +64,10 @@ def build_parser() -> argparse.ArgumentParser:
     token_factory.add_argument("--max-completion-tokens", type=int, default=1200)
     token_factory.add_argument("--timeout-seconds", type=float, default=60.0)
     token_factory.add_argument("--base-url", default="https://api.tokenfactory.nebius.com/v1")
-    token_factory.add_argument("--nemoclaw-version")
+    token_factory.add_argument(
+        "--declared-nemoclaw-version",
+        help="optional runtime metadata; never treated as NemoClaw proof",
+    )
     package = commands.add_parser(
         "package", help="build a gated, local NemoClaw job package without uploading it"
     )
@@ -187,7 +190,7 @@ def _token_factory_run_command(args: argparse.Namespace) -> int:
                 max_completion_tokens=args.max_completion_tokens,
                 timeout_seconds=args.timeout_seconds,
                 base_url=args.base_url,
-                nemoclaw_version=args.nemoclaw_version,
+                declared_nemoclaw_version=args.declared_nemoclaw_version,
             ),
             approve_live_transfer=args.approve_live_transfer,
         )

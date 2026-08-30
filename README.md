@@ -99,7 +99,8 @@ python -m nemofold token-factory-run <package-directory> `
   --approve-live-transfer `
   --input-price-usd-per-million <current-input-rate> `
   --output-price-usd-per-million <current-output-rate> `
-  --max-completion-tokens 1200
+  --max-completion-tokens 1200 `
+  --declared-nemoclaw-version <captured-installed-version>
 python -m nemofold verify-result <package-directory>
 Remove-Item Env:\NEBIUS_API_KEY
 ```
@@ -112,6 +113,12 @@ API key. A failed provider response records `transfer_performed: true` but never
 `cloud_proof: true`. If the connection ends without a response, the pre-request
 `transfer-attempt.json` remains in place, reports an uncertain transfer state, and
 blocks an unsafe automatic retry.
+
+The optional declared NemoClaw version is metadata only. The result records
+`nemoclaw_proof: false`; only a separately captured, sanitized runtime log from the
+actual sandbox may support a NemoClaw execution claim.
+The earlier pre-release option `--nemoclaw-version` was intentionally removed because
+its name implied proof; scripts must use `--declared-nemoclaw-version` instead.
 
 Action jobs additionally require `--approve-actions`. A completed action run can be
 reversed with `nemofold undo <run-id> --output <dir> --allow-root <root>

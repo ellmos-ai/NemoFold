@@ -33,7 +33,7 @@ python -m nemofold token-factory-run <job-package> `
   --approve-live-transfer `
   --input-price-usd-per-million <current-input-rate> `
   --output-price-usd-per-million <current-output-rate> `
-  --nemoclaw-version <captured-installed-version>
+  --declared-nemoclaw-version <captured-installed-version>
 python -m nemofold verify-result <job-package>
 Remove-Item Env:\NEBIUS_API_KEY
 ```
@@ -44,8 +44,9 @@ attempt/result files. It atomically records `transfer-attempt.json` before netwo
 so a connection loss cannot silently authorize a duplicate paid request. The result
 verifier recomputes the exact request from the package, checks output quotes against
 supplied chunks, and binds the attempt plus sanitized request/response logs to hashes.
-Supplying `--nemoclaw-version` records environment metadata; it is not, by itself,
-evidence that NemoClaw executed the command.
+Supplying `--declared-nemoclaw-version` records self-declared environment metadata. The
+result always keeps `nemoclaw_proof: false`; the value is not, by itself, evidence that
+NemoClaw executed the command.
 
 Uploading and sandbox execution are separate, human-controlled commands:
 
