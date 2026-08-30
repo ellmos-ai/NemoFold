@@ -37,3 +37,6 @@ their manifest are captured in commit
 `3e2cc158c07bb6a6f3a98d91042e9525637d9dfa`.
 Whitespace-normalized, rerunnable design-asset output is captured in commit
 `18fea5dba56dd5f5d9bc40206f494f8803644ec9`.
+The public-release security hardening, provider-response redaction, stored action-plan
+revalidation, governance documents, and 132-test local acceptance are captured in
+commit `f3f47d700c3daa39f6dd38f5365fe59dc9507c02`.

@@ -36,8 +36,14 @@ files are outside the current formatting slice.
 
 ## External evidence still open
 
-- First hosted GitHub Actions readback
 - Real Nebius Token Factory plus NVIDIA Nemotron run
 - Sanitized NemoClaw runtime proof
 - Public working demo and YouTube video
 - Final Devpost submission
+
+## Hosted repository acceptance
+
+- Public repository: <https://github.com/lukisch/NemoFold>
+- First hosted CI: [run 33293608035](https://github.com/lukisch/NemoFold/actions/runs/33293608035),
+  pass on Ubuntu/Python 3.11, Ubuntu/Python 3.12, and Windows/Python 3.12
+- Accepted revision: `f3f47d700c3daa39f6dd38f5365fe59dc9507c02`

@@ -14,7 +14,7 @@ submission should choose one primary track and keep the pitch focused.
 
 | Criterion | Current evidence | Remaining acceptance gate |
 |---|---|---|
-| Technological implementation | One strict contract across web, CLI, and skill; eight workflows; persistent index; exact citations; reversible journal; privacy-package validator; fail-closed Token Factory adapter with result verifier; separate cloud/NemoClaw proof states; automated suite and cross-platform CI definition | Real Nebius runtime call using an NVIDIA open-source Nemotron model, with the generated sanitized request/response and usage evidence; first hosted CI readback after publication |
+| Technological implementation | One strict contract across web, CLI, and skill; eight workflows; persistent index; exact citations; reversible journal; privacy-package validator; fail-closed Token Factory adapter with result verifier; separate cloud/NemoClaw proof states; 132 local tests; hosted CI green on Ubuntu/Python 3.11, Ubuntu/Python 3.12, and Windows/Python 3.12 | Real Nebius runtime call using an NVIDIA open-source Nemotron model, with the generated sanitized request/response and usage evidence |
 | Design | Coherent Captain Nemo console, explicit trust boundary, workflow defaults, safe preview path, accessible text alternative | Hosted working demo URL and a final interaction pass on the public build |
 | Potential impact | Solves real folder-based knowledge and file-maintenance work; demonstrates coverage, conflicts, versioning, and undo | Short user acceptance session on a bounded real-world corpus and a recorded before/after result |
 | Quality of idea | Separates persistent local authority from optional cloud reasoning; measures evidence rather than merely generating prose | Show the live hybrid loop end to end within the video |
@@ -24,8 +24,9 @@ submission should choose one primary track and keep the pitch focused.
 - Working project using Nebius Token Factory or Nebius AI Cloud and at least one NVIDIA
   open-source model: adapter ready and simulated locally; **real call OPEN and mandatory**.
 - Public repository with OSI license visible near the top and setup/Nebius/NVIDIA use in
-  the README: local repo and Linux/Windows CI workflow ready; **public remote, first
-  hosted CI readback, and final live-use documentation open**.
+  the README: **DONE** at <https://github.com/lukisch/NemoFold>; first Linux/Windows
+  [hosted CI run](https://github.com/lukisch/NemoFold/actions/runs/33293608035) passed.
+  Final live-use documentation remains open until the real provider run.
 - Public working demo URL or test build: **OPEN**.
 - Public YouTube demo, no longer than three minutes, with audio explaining
   Nebius and Nemotron use: script ready; **recording and upload open**.
