@@ -1,5 +1,7 @@
 # NemoFold
 
+[MIT License](LICENSE) · Python 3.11+ · Local-first
+
 NemoFold is a private, evidence-first document agent. It turns explicitly approved
 folders into a persistent working memory, keeps claims traceable to source locations,
 and makes file actions reversible.
@@ -31,6 +33,8 @@ gaps.
 
 Public repository creation, cloud spend, uploads, live NemoClaw/Nebius execution, and
 Devpost submission are separate human approval gates.
+
+![NemoFold Captain Nemo console](docs/media/nemofold-console.png)
 
 ## Install
 
@@ -87,6 +91,19 @@ reversed with `nemofold undo <run-id> --output <dir> --allow-root <root>
 --approve-actions`. Failed or blocked jobs can be retried with `nemofold resume` while
 preserving the original job identity and journal.
 
+## Open the local web console
+
+```powershell
+$env:PYTHONPATH = "$PWD\src"
+python -m nemofold serve --allow-root $PWD --base-dir $PWD
+```
+
+Open `http://127.0.0.1:8765`. The console uses the same strict job parser and
+application service as the CLI. It starts on loopback only, rejects cross-origin POSTs,
+and requires `--expose-network` before it will bind to a non-loopback address. Preview
+is the default safe path; action workflows additionally require the server-side
+`--approve-actions` gate before an apply request can succeed.
+
 ## Trust boundary
 
 - Original files, absolute paths, persistent index, policies, ledger, validation, and
@@ -102,5 +119,8 @@ preserving the original job identity and journal.
 
 - [Architecture](docs/architecture.md)
 - [NemoClaw integration](docs/nemoclaw-integration.md)
+- [Product story](docs/product-story.md)
+- [Three-minute jury demo](docs/jury-demo.md)
+- [Submission readiness](docs/submission-readiness.md)
 - [Competition code map](COMPETITION_CODE_MAP.md)
 - [Third-party software](THIRD_PARTY_LICENSES.md)

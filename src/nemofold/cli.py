@@ -25,6 +25,7 @@ from .nemoclaw_package import validate_job_package
 from .policy import PolicyConfig, PolicyGate
 from .report_verifier import verify_run_report
 from .runtime import LocalAgentRuntime
+from .webapp import WebAppConfig, build_server, serve_forever
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -78,6 +79,15 @@ def build_parser() -> argparse.ArgumentParser:
     undo.add_argument("--output", required=True)
     undo.add_argument("--allow-root", action="append", required=True)
     undo.add_argument("--approve-actions", action="store_true")
+    serve = commands.add_parser("serve", help="start the local NemoFold product console")
+    serve.add_argument("--allow-root", action="append", required=True)
+    serve.add_argument("--base-dir", default=".")
+    serve.add_argument("--host", default="127.0.0.1")
+    serve.add_argument("--port", type=int, default=8765)
+    serve.add_argument("--allow-external-models", action="store_true")
+    serve.add_argument("--max-external-cost-usd", type=float, default=0.0)
+    serve.add_argument("--approve-actions", action="store_true")
+    serve.add_argument("--expose-network", action="store_true")
     return parser
 
 
@@ -123,6 +133,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _resume_job_command(args)
     if args.command == "undo":
         return _undo_job_command(args)
+    if args.command == "serve":
+        return _serve_command(args)
     parser.print_help()
     return 0
 
@@ -244,6 +256,47 @@ def _undo_job_command(args: argparse.Namespace) -> int:
         return 2
     _print_job_result(result)
     return 0 if result.report.status is RunStatus.EXECUTED else 2
+
+
+def _serve_command(args: argparse.Namespace) -> int:
+    try:
+        server = build_server(
+            WebAppConfig(
+                base_dir=Path(args.base_dir),
+                execution=ExecutionConfig(
+                    allowed_roots=tuple(args.allow_root),
+                    external_models_allowed=args.allow_external_models,
+                    max_external_cost_usd=args.max_external_cost_usd,
+                    apply_actions_allowed=args.approve_actions,
+                ),
+                exposed_to_network=args.expose_network,
+            ),
+            host=args.host,
+            port=args.port,
+        )
+    except (OSError, PermissionError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
+        return 2
+    host_value, port = server.server_address[:2]
+    host = host_value.decode() if isinstance(host_value, bytes) else str(host_value)
+    print(
+        json.dumps(
+            {
+                "status": "serving",
+                "url": f"http://{host}:{port}/",
+                "network_exposed": args.expose_network,
+                "cloud_proof": False,
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        flush=True,
+    )
+    try:
+        serve_forever(server)
+    except KeyboardInterrupt:
+        return 0
+    return 0
 
 
 def _run_demo(args: argparse.Namespace) -> int:

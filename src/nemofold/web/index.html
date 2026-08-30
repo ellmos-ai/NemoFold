@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NemoFold — Private document agent</title>
+  <link rel="stylesheet" href="/assets/app.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <header class="hero">
+    <nav><span class="mark">NF</span><span>NemoFold</span><span class="nav-note">Captain Nemo console</span></nav>
+    <div class="hero-grid">
+      <section>
+        <p class="eyebrow">Private · persistent · evidence-first</p>
+        <h1>Your files.<br>Your rules.<br><em>Your agent.</em></h1>
+        <p class="lede">Turn approved folders into traceable working memory. Keep originals, paths, policy, index and audit local. Release only a bounded, pseudonymized context package when you explicitly choose to.</p>
+        <div class="badges"><span>Local core ready</span><span>Verified suite</span><span id="cloudBadge">Cloud proof: false</span></div>
+      </section>
+      <aside class="sonar" aria-label="Trust boundary visualization">
+        <div class="ring ring-a"></div><div class="ring ring-b"></div><div class="ring ring-c"></div>
+        <div class="sweep"></div><div class="contact local">Local files</div><div class="contact gate">Policy gate</div><div class="contact cloud">Nemotron</div>
+      </aside>
+    </div>
+  </header>
+
+  <main>
+    <section class="panel console" aria-labelledby="consoleTitle">
+      <div class="section-head"><div><p class="eyebrow">Same contract as CLI and skill</p><h2 id="consoleTitle">Run a bounded job</h2></div><div id="systemState" class="state">Checking local runtime…</div></div>
+      <form id="jobForm">
+        <div class="form-grid">
+          <label>Workflow<select id="workflow"><option>evidence_analyst</option><option>folder_digest</option><option>bundle_export</option><option>version_resolver</option><option>report_studio</option><option>platform_proof</option><option>storage_policy</option><option>smart_inbox</option></select></label>
+          <label>Run ID<input id="runId" autocomplete="off"></label>
+          <label class="wide">Approved input roots <span>one per line</span><textarea id="inputRoots" rows="2">examples/synthetic-home</textarea></label>
+          <label class="wide">Approved target roots <span>one per line · required only for action workflows</span><textarea id="targetRoots" rows="2" placeholder="examples/synthetic-home/archive"></textarea></label>
+          <label class="wide">Output directory<input id="outputDir" value="run-reports/web-console"></label>
+          <label class="wide">Questions <span>one per line</span><textarea id="questions" rows="3">When does the current policy begin?
+Which earlier wording changed?</textarea></label>
+          <label>Privacy<select id="privacy"><option>local_only</option><option>preview</option><option>allow_once</option></select></label>
+          <label>Action mode<select id="actionMode"><option>dry_run</option><option>apply</option></select></label>
+          <label>Model ID <span>optional</span><input id="modelId" placeholder="nvidia/nemotron"></label>
+          <label>Maximum model cost USD<input id="budget" type="number" min="0" step="0.01" value="0"></label>
+          <label class="wide">Workflow parameters <span>strict JSON</span><textarea id="parameters" rows="4">{"max_chunks": 8, "formats": ["md", "txt"], "conflict_scan": true}</textarea></label>
+        </div>
+        <p id="workflowHint" class="form-hint">Evidence Analyst searches the approved inputs and reports exact source locations, conflicts and coverage.</p>
+        <div class="actions"><button type="button" id="previewButton" class="secondary">Preview exact scope</button><button type="submit">Run locally</button></div>
+      </form>
+      <div id="result" class="result" aria-live="polite"><p>No job has run in this browser session.</p></div>
+    </section>
+
+    <section class="architecture" aria-labelledby="architectureTitle">
+      <div class="section-head"><div><p class="eyebrow">Controlled agent loop</p><h2 id="architectureTitle">Reasoning may travel. Authority does not.</h2></div></div>
+      <div class="flow" role="img" aria-label="Approved folders flow through local inventory and privacy gate. Only selected pseudonymized chunks may reach the isolated Nemotron worker. Returned claims are validated locally before reports or reversible actions.">
+        <div class="node"><b>1</b><strong>Approved folders</strong><span>Originals and paths</span></div><i>→</i>
+        <div class="node"><b>2</b><strong>Local memory</strong><span>Hash inventory + FTS</span></div><i>→</i>
+        <div class="node accent"><b>3</b><strong>Privacy gate</strong><span>Receipt + budget</span></div><i>⇄</i>
+        <div class="node remote"><b>4</b><strong>Nemotron worker</strong><span>Selected chunks only</span></div><i>→</i>
+        <div class="node"><b>5</b><strong>Local validator</strong><span>Quotes + coverage + undo</span></div>
+      </div>
+      <p class="text-alt">Text alternative: approved local files are inventoried and indexed locally. A privacy gate may prepare selected pseudonymized chunks for an isolated Nemotron worker. Every returned claim is checked against local sources before any report or reversible action is accepted.</p>
+    </section>
+
+    <section class="usecases" aria-labelledby="usecasesTitle">
+      <div class="section-head"><div><p class="eyebrow">One core, eight practical chains</p><h2 id="usecasesTitle">A personal AI that works where the files are</h2></div></div>
+      <div class="cards">
+        <article><span>01</span><h3>Smart Inbox</h3><p>Route new files with a full-batch preflight and reversible journal.</p></article>
+        <article><span>02</span><h3>Storage Policies</h3><p>Name, retain, move, copy and convert text without silent deletion.</p></article>
+        <article><span>03</span><h3>Bundle Export</h3><p>Create deterministic bundles with hashes and visible omissions.</p></article>
+        <article><span>04</span><h3>Folder Digest</h3><p>Track what is new, changed, stable or deleted between runs.</p></article>
+        <article><span>05</span><h3>Evidence Analyst</h3><p>Answer many questions with exact quotes, locations and gaps.</p></article>
+        <article><span>06</span><h3>Version Resolver</h3><p>Choose the valid document per family, not merely the newest file.</p></article>
+        <article><span>07</span><h3>Artifact Studio</h3><p>Render verified claims consistently across five document formats.</p></article>
+        <article><span>08</span><h3>Platform Proof</h3><p>Separate offline evidence, package readiness and live cloud proof.</p></article>
+      </div>
+    </section>
+  </main>
+  <footer><span>NemoFold 0.1</span><span>Local-first by construction</span><span>Live Nebius proof remains an explicit gate</span></footer>
+</body>
+</html>

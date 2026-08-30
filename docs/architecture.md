@@ -5,10 +5,10 @@ offline; NemoClaw and Nemotron are adapters behind explicit privacy and cost gat
 
 ```mermaid
 flowchart LR
-    U[Person] --> CLI[CLI / skill]
-    CLI --> JOB[Strict job contract]
-    JOB --> CLI
-    CLI --> APP[Application service]
+    U[Person] --> SURFACE[Web console / CLI / skill]
+    SURFACE --> JOB[Strict job contract]
+    JOB --> SURFACE
+    SURFACE --> APP[Application service]
     APP --> POLICY[Policy and privacy gate]
     APP --> LEDGER[Run ledger, resume and verification]
     APP --> MODULES[Eight use-case modules]
@@ -28,11 +28,12 @@ flowchart LR
     JOURNAL --> AUDIT
 ```
 
-Text alternative: a person calls one application service through the CLI or the
-NemoFold skill. The service invokes eight modules. Local policy, ledger, evidence,
-index, files, and export components remain authoritative. Only an already approved job
-package can cross the NemoClaw adapter into an OpenShell sandbox and on to Nemotron.
-The answer returns to the local evidence engine before it can become a report.
+Text alternative: a person calls one application service through the local web
+console, CLI, or NemoFold skill. Every surface uses the same strict job contract. The
+service invokes eight modules. Local policy, ledger, evidence, index, files, and export
+components remain authoritative. Only an already approved job package can cross the
+NemoClaw adapter into an OpenShell sandbox and on to Nemotron. The answer returns to
+the local evidence engine before it can become a report.
 
 The external nodes are design commitments, not yet live evidence. The offline demo
 therefore records `cloud_proof: false`.

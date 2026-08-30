@@ -171,14 +171,7 @@ def _resolve_paths(values: tuple[str, ...], base: Path) -> tuple[str, ...]:
     )
 
 
-def load_job_file(path: str | Path) -> LoadedJob:
-    source_path = Path(path).resolve()
-    try:
-        payload = json.loads(source_path.read_text(encoding="utf-8"))
-    except OSError as exc:
-        raise JobFileError(f"job file cannot be read: {exc}") from exc
-    except json.JSONDecodeError as exc:
-        raise JobFileError(f"job file is not valid JSON: {exc}") from exc
+def parse_job_payload(payload: Any, *, base_dir: str | Path) -> JobEnvelope:
     if not isinstance(payload, dict):
         raise JobFileError("job file root must be an object")
 
@@ -200,7 +193,7 @@ def load_job_file(path: str | Path) -> LoadedJob:
     output_dir = payload.get("output_dir")
     if not isinstance(output_dir, str) or not output_dir.strip():
         raise JobFileError("output_dir must be a non-empty path")
-    base = source_path.parent
+    base = Path(base_dir).resolve()
     resolved_output = Path(output_dir)
     if not resolved_output.is_absolute():
         resolved_output = base / resolved_output
@@ -247,7 +240,21 @@ def load_job_file(path: str | Path) -> LoadedJob:
         validate_workflow_parameters(job)
     except ValueError as exc:
         raise JobFileError(str(exc)) from exc
-    return LoadedJob(job=job, source_path=source_path)
+    return job
+
+
+def load_job_file(path: str | Path) -> LoadedJob:
+    source_path = Path(path).resolve()
+    try:
+        payload = json.loads(source_path.read_text(encoding="utf-8"))
+    except OSError as exc:
+        raise JobFileError(f"job file cannot be read: {exc}") from exc
+    except json.JSONDecodeError as exc:
+        raise JobFileError(f"job file is not valid JSON: {exc}") from exc
+    return LoadedJob(
+        job=parse_job_payload(payload, base_dir=source_path.parent),
+        source_path=source_path,
+    )
 
 
 def job_snapshot_payload(job: JobEnvelope) -> dict[str, Any]:
