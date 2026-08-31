@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import asdict, dataclass, field, is_dataclass
 from datetime import date, datetime
 from enum import Enum, StrEnum
@@ -132,6 +133,15 @@ class JobEnvelope:
     response_schema: str = "nemofold.claims.v1"
     resume_run_id: str | None = None
     parameters: dict[str, Any] = field(default_factory=dict)
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.model_budget_usd, bool)
+            or not isinstance(self.model_budget_usd, (int, float))
+            or not math.isfinite(self.model_budget_usd)
+            or self.model_budget_usd < 0
+        ):
+            raise ValueError("model_budget_usd must be a finite non-negative number")
 
     @property
     def requires_external_model(self) -> bool:

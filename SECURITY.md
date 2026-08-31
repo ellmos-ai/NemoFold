@@ -20,8 +20,18 @@ and a minimal synthetic reproduction. No real Nebius key or private corpus is ne
 - File actions require an explicit apply gate, a deterministic plan, and a reversible
   journal.
 - External packages must pass the path, secret, schema, hash, and budget gates.
+- Generic provider calls receive only pseudonymized selected chunks. Local HTTP
+  providers are restricted to loopback; API keys are environment-only; subscription
+  CLI bridges run in temporary read-only sessions without inherited provider API keys.
+- Model budgets and server-side cost limits must be finite, non-negative values;
+  `NaN`, infinity, booleans, and negative values fail before provider execution.
+- CLI, HTTP, and MCP share the same root, privacy, transfer, quote, and action gates.
+  The HTTP provider route is loopback-only; network-exposed servers and the public
+  demo expose none of the generic provider surface.
 - The web console is loopback-only unless network exposure is explicitly enabled.
 - The separate public demo mode reads only an operator-selected synthetic fixture,
   forces local-only dry-run authority, removes model/action capabilities, caps parallel
   work, uses per-request temporary output, and redacts host paths from responses.
-- Live cloud execution remains unproven until a sanitized runtime receipt validates.
+- Generic provider execution can produce a validated quote-bound receipt but never a
+  competition proof. Live Nebius/Nemotron execution remains unproven until the dedicated
+  sanitized runtime receipt validates.

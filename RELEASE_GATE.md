@@ -5,13 +5,13 @@ Gate date: 2026-08-31
 ## Local acceptance
 
 - `python -m ruff check src tests`: pass
-- `python -m mypy src`: pass for 30 source files
-- `python -m pytest -q`: 149 passed, one Windows privilege-dependent symlink test skipped
+- `python -m mypy src`: pass for 33 source files
+- `python -m pytest -q`: 182 passed, one Windows privilege-dependent symlink test skipped
 - `python -m compileall -q src tests`: pass
 - `node --check src/nemofold/web/app.js`: pass
 - `python -m build`: source and wheel distributions built
 - `git diff --check`: pass
-- Focused format check for changed source and tests: pass
+- Ruff format check for all 13 changed Python source and test files: pass
 - Local Token Factory preflight over the immutable synthetic package: pass with
   `network_called=false`, `transfer_performed=false`, and `cloud_proof=false`; API key,
   current provider prices, explicit user approval, model-catalog readback, and the real
@@ -24,11 +24,24 @@ Gate date: 2026-08-31
   the container was not built locally because Docker is not installed on this workstation.
 - Evidence-console UI: focused HTTP/UI tests pass; every job-contract ID is present and
   unique; the seven-stage evidence chain has explicit wrapping and responsive breakpoints.
+- Provider-neutral evidence analysis: Ollama, LM Studio, Codex CLI, Claude Code, OpenAI,
+  and Anthropic share one path/transfer/pseudonymization/schema/quote-validation core
+  behind CLI, loopback HTTP, and MCP. The network-exposed HTTP mode and public demo both
+  disable the provider route.
+- Official MCP SDK stdio acceptance: a real client initialization, tool listing, and
+  `nemofold_anonymize` call pass. The installed server was read back as enabled in Codex
+  and connected in Claude Code, with filesystem authority limited to this repository.
+- No live or paid provider request was made. Ollama is installed but no Ollama or LM
+  Studio listener was running during acceptance; provider transports were tested with
+  deterministic fake HTTP and process boundaries.
 - Local Chrome readback at 1920x1080 and 1440x1200 confirms the authority ledger, job
   console and all seven evidence-chain labels remain bounded.
 - Claude Fable 5 completion review found no blocking issue. Its actionable authority,
   response-contract, contrast, focus, ARIA and breakpoint findings were applied and
-  locally re-tested; no additional Fable pass was used.
+  locally re-tested. A separate autonomous provider/MCP review was attempted with full
+  repository read/write authority on 2026-08-31, but Claude stopped with HTTP 429 at the
+  monthly spend limit before producing a review result; no source file was changed by
+  that incomplete attempt, and no Fable pass is claimed for this provider slice.
 
 The repository-wide format check is not asserted because 21 unchanged pre-existing
 files are outside the current formatting slice.
@@ -54,6 +67,8 @@ files are outside the current formatting slice.
 ## External evidence still open
 
 - Real Nebius Token Factory plus NVIDIA Nemotron run
+- Live acceptance against Ollama, LM Studio, Codex, Claude, OpenAI, or Anthropic; the
+  adapters and protocol boundaries are tested without making a provider request
 - Sanitized NemoClaw runtime proof
 - Public deployment of the implemented synthetic-only demo mode
 - User acceptance and upload of the checked local 73.07-second Andrew v3 video draft;
@@ -66,6 +81,8 @@ files are outside the current formatting slice.
 - Public repository: <https://github.com/ellmos-ai/NemoFold>
 - Current hosted CI: [run 33313331087](https://github.com/ellmos-ai/NemoFold/actions/runs/33313331087),
   pass on Ubuntu/Python 3.11, Ubuntu/Python 3.12, and Windows/Python 3.12
+- That hosted run covers the current public baseline, not the still-local provider/MCP
+  slice. A fresh hosted result must be read back after an explicitly approved push.
 - Public baseline before the local synthetic-demo slice:
   `c1d086a53a44f0e4403a6ad5621a32f43c1877c4`
 - Secret Scanning and Push Protection were re-enabled after the organization transfer;

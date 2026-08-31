@@ -11,6 +11,7 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Lukas Geiger" }]
 dependencies = [
+  "mcp>=1.27,<2",
   "pypdf>=6,<7",
 ]
 
@@ -29,6 +30,7 @@ dev = [
 
 [project.scripts]
 nemofold = "nemofold.cli:main"
+nemofold-mcp = "nemofold.mcp_server:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/nemofold"]

@@ -30,6 +30,8 @@ from .nebius_token_factory import (
 )
 from .nemoclaw_package import TRANSFER_ATTEMPT_FILENAME, validate_job_package
 from .policy import PolicyConfig, PolicyGate
+from .provider_analysis import analyze_with_provider
+from .providers import PROVIDER_DESCRIPTORS, provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
 from .runtime import LocalAgentRuntime
 from .webapp import WebAppConfig, build_server, serve_forever
@@ -62,9 +64,7 @@ def build_parser() -> argparse.ArgumentParser:
         help="check a Token Factory package and cost bound without network access",
     )
     token_factory_preflight.add_argument("path")
-    token_factory_preflight.add_argument(
-        "--input-price-usd-per-million", type=float, required=True
-    )
+    token_factory_preflight.add_argument("--input-price-usd-per-million", type=float, required=True)
     token_factory_preflight.add_argument(
         "--output-price-usd-per-million", type=float, required=True
     )
@@ -139,6 +139,33 @@ def build_parser() -> argparse.ArgumentParser:
     serve_demo.add_argument("--port", type=int, default=8765)
     serve_demo.add_argument("--expose-network", action="store_true")
     serve_demo.add_argument("--max-parallel-jobs", type=int, default=4)
+    providers = commands.add_parser(
+        "providers",
+        help="list the provider-neutral model adapters and their transfer classes",
+    )
+    providers.set_defaults(command="providers")
+    provider_run = commands.add_parser(
+        "analyze-provider",
+        help="run an anonymized evidence job through a selected model provider",
+    )
+    provider_run.add_argument("--job", required=True)
+    provider_run.add_argument("--allow-root", action="append", required=True)
+    provider_run.add_argument("--run-id", required=True)
+    provider_run.add_argument("--provider", choices=tuple(PROVIDER_DESCRIPTORS), required=True)
+    provider_run.add_argument("--model", required=True)
+    provider_run.add_argument("--base-url")
+    provider_run.add_argument("--max-output-tokens", type=int, default=1200)
+    provider_run.add_argument("--timeout-seconds", type=float, default=60.0)
+    provider_run.add_argument("--executable")
+    provider_run.add_argument("--allow-external-models", action="store_true")
+    provider_run.add_argument("--approve-external-transfer", action="store_true")
+    provider_run.add_argument("--max-external-cost-usd", type=float, default=0.0)
+    mcp = commands.add_parser("mcp", help="start the bounded NemoFold MCP server over stdio")
+    mcp.add_argument("--allow-root", action="append", required=True)
+    mcp.add_argument("--base-dir", default=".")
+    mcp.add_argument("--allow-external-models", action="store_true")
+    mcp.add_argument("--max-external-cost-usd", type=float, default=0.0)
+    mcp.add_argument("--approve-actions", action="store_true")
     return parser
 
 
@@ -207,6 +234,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _serve_command(args)
     if args.command == "serve-demo":
         return _serve_demo_command(args)
+    if args.command == "providers":
+        print(json.dumps({"providers": provider_capabilities()}, indent=2, sort_keys=True))
+        return 0
+    if args.command == "analyze-provider":
+        return _provider_analysis_command(args)
+    if args.command == "mcp":
+        return _mcp_command(args)
     parser.print_help()
     return 0
 
@@ -378,6 +412,79 @@ def _package_job_command(args: argparse.Namespace) -> int:
             sort_keys=True,
         )
     )
+    return 0
+
+
+def _provider_analysis_command(args: argparse.Namespace) -> int:
+    try:
+        loaded = load_job_file(args.job)
+        provider = provider_config_from_mapping(
+            {
+                "provider_id": args.provider,
+                "model": args.model,
+                "base_url": args.base_url,
+                "max_output_tokens": args.max_output_tokens,
+                "timeout_seconds": args.timeout_seconds,
+                "executable": args.executable,
+            },
+            allow_runtime_overrides=True,
+        )
+        result = analyze_with_provider(
+            loaded.job,
+            ExecutionConfig(
+                allowed_roots=tuple(args.allow_root),
+                external_models_allowed=args.allow_external_models,
+                max_external_cost_usd=args.max_external_cost_usd,
+            ),
+            provider,
+            run_id=args.run_id,
+            approve_external_transfer=args.approve_external_transfer,
+        )
+    except (JobFileError, OSError, RuntimeError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
+        return 2
+    report = result.report
+    print(
+        json.dumps(
+            {
+                "run_id": report.run_id,
+                "workflow": report.workflow,
+                "status": report.status.value,
+                "errors": list(report.errors),
+                "provider": report.metadata.get("provider"),
+                "transfer_performed": report.metadata.get("transfer_performed"),
+                "provider_execution_proof": bool(
+                    report.metadata.get("provider_execution_proof", False)
+                ),
+                "competition_proof": False,
+                "cloud_proof": False,
+                "report_path": str(result.report_path) if result.report_path else None,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0 if report.status is RunStatus.EXECUTED else 2
+
+
+def _mcp_command(args: argparse.Namespace) -> int:
+    from .mcp_server import MCPServerConfig, run_stdio_server
+
+    try:
+        run_stdio_server(
+            MCPServerConfig(
+                base_dir=Path(args.base_dir),
+                execution=ExecutionConfig(
+                    allowed_roots=tuple(args.allow_root),
+                    external_models_allowed=args.allow_external_models,
+                    max_external_cost_usd=args.max_external_cost_usd,
+                    apply_actions_allowed=args.approve_actions,
+                ),
+            )
+        )
+    except (ImportError, OSError, PermissionError, RuntimeError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
+        return 2
     return 0
 
 

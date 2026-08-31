@@ -30,9 +30,10 @@ gekennzeichnet, wenn ein echter, bereinigter Laufzeitnachweis vorliegt.
 | NemoClaw Platform & Proof | Pfadfreie, gehashte Auftragspakete mit Fail-closed-Adapter für die Nebius Token Factory und unabhängig prüfbarem Ergebnisbeleg; der echte Wettbewerbslauf ist weiterhin offen |
 
 Die gemeinsamen Kerne sind Laufzeit, Policy-/Privacy-Gate, Laufjournal und
-Wiederherstellung, Evidenz-Engine und Artefaktexport. Die lokale Extraktion unterstützt
-Textdateien, JSON, CSV, HTML, PDF, DOCX und ODT. Nicht unterstützte oder unlesbare
-Dateien bleiben als sichtbare Abdeckungslücken erhalten.
+Wiederherstellung, Evidenz-Engine, providerneutraler Adapterkern, MCP-Oberfläche und
+Artefaktexport. Die lokale Extraktion unterstützt Textdateien, JSON, CSV, HTML, PDF,
+DOCX und ODT. Nicht unterstützte oder unlesbare Dateien bleiben als sichtbare
+Abdeckungslücken erhalten.
 
 Cloud-Kosten, Uploads, echte NemoClaw-/Nebius-Ausführung und weitere Änderungen an
 Devpost bleiben getrennte menschliche Freigabegates.
@@ -93,6 +94,35 @@ keine ausdrücklichen Datenschutz-, Modell- und Kostengates vorhanden sind.
 lokales NemoClaw-Verzeichnis und validiert es sofort. Es führt weiterhin keinen Upload
 aus und protokolliert `transfer_performed: false`; siehe
 [NemoClaw-Integration](docs/nemoclaw-integration.md).
+
+## Jedes unterstützte Modell über denselben Evidenzkern nutzen
+
+NemoFold kann ausschließlich den lokal ausgewählten und pseudonymisierten
+Evidenzkontext an Ollama, LM Studio, eine persönliche Codex-/Claude-Code-CLI oder die
+offiziellen OpenAI-/Anthropic-APIs übergeben. Aussagen werden nur angenommen, wenn
+jedes Zitat im ausgehenden Kontext der zugehörigen Frage vorkommt. Die Providerwahl ist
+Laufzeitkonfiguration und verändert den strikten Auftragsvertrag nicht.
+
+```powershell
+python -m nemofold providers
+python -m nemofold analyze-provider --job examples\jobs\evidence-local.json `
+  --allow-root $PWD --run-id ollama_1 --provider ollama --model qwen3
+```
+
+Derselbe Dienst ist über `POST /api/provider-analyze` und den stdio-MCP-Server
+verfügbar:
+
+```powershell
+codex mcp add nemofold -- python -m nemofold mcp --base-dir $PWD --allow-root $PWD
+claude mcp add --scope user nemofold -- python -m nemofold mcp `
+  --base-dir $PWD --allow-root $PWD
+```
+
+Lokale Provider sind auf Loopback beschränkt. Externe Adapter verlangen `allow_once`,
+ein serverseitiges Gate für externe Modelle und eine Freigabe je Übertragung. Schlüssel
+werden nur aus Umgebungsvariablen gelesen. Generische Providerbelege werden niemals
+zum Nebius-Wettbewerbsnachweis; dafür bleibt ausschließlich der nächste Abschnitt
+zuständig. Siehe [Provideradapter, lokale API und MCP](docs/providers-and-mcp.md).
 
 ## Freigegebener Lauf über die Nebius Token Factory
 
@@ -204,6 +234,7 @@ Oberfläche, kein Nachweis für einen Nebius-, Nemotron- oder NemoClaw-Lauf;
 
 - [Ausrichtung der Evidence-Console-Oberfläche](docs/design-direction.md)
 - [Architektur](docs/architecture.md)
+- [Provideradapter, lokale API und MCP](docs/providers-and-mcp.md)
 - [Fähigkeitsminimale Demo-Bereitstellung](docs/deployment.md)
 - [NemoClaw-Integration](docs/nemoclaw-integration.md)
 - [Produktgeschichte](docs/product-story.md)

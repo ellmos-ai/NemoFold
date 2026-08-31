@@ -15,6 +15,8 @@ from . import __version__
 from .application import ExecutionConfig, preview_job, run_job
 from .contracts import RunStatus, to_primitive
 from .job_io import ALLOWED_FIELDS, SUPPORTED_WORKFLOWS, JobFileError, parse_job_payload
+from .provider_analysis import analyze_with_provider
+from .providers import provider_capabilities, provider_config_from_mapping
 
 MAX_REQUEST_BYTES = 512 * 1024
 WEB_ROOT = Path(__file__).with_name("web")
@@ -24,6 +26,8 @@ CORE_NAMES = (
     "run_ledger_recovery",
     "evidence_engine",
     "artifact_export",
+    "provider_adapter_core",
+    "mcp_surface",
 )
 PUBLIC_DEMO_INPUT = "demo://synthetic-home"
 PUBLIC_DEMO_OUTPUT = "demo://ephemeral"
@@ -188,6 +192,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/status":
             public_demo = self.server.app_config.public_demo
+            provider_surface_enabled = not (
+                public_demo or self.server.app_config.exposed_to_network
+            )
             self._json(
                 {
                     "ok": True,
@@ -196,6 +203,8 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "cloud_proof": False,
                     "transfer_performed": False,
                     "live_runtime_ready": False,
+                    "provider_surface_enabled": provider_surface_enabled,
+                    "provider_runtime_ready": False,
                     "network_exposed": self.server.app_config.exposed_to_network,
                     "public_demo": public_demo,
                     "read_only": public_demo,
@@ -204,6 +213,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                         PUBLIC_DEMO_WORKFLOWS if public_demo else SUPPORTED_WORKFLOWS
                     ),
                     "cores": list(CORE_NAMES),
+                    "providers": provider_capabilities() if provider_surface_enabled else [],
                 }
             )
             return
@@ -216,10 +226,13 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self._error(HTTPStatus.FORBIDDEN, "origin_rejected", "cross-origin request")
             return
         path = urlparse(self.path).path
-        if path not in {"/api/preview", "/api/run"}:
+        if path not in {"/api/preview", "/api/run", "/api/provider-analyze"}:
             self._error(HTTPStatus.NOT_FOUND, "not_found", path)
             return
         if self.server.app_config.public_demo:
+            if path == "/api/provider-analyze":
+                self._error(HTTPStatus.NOT_FOUND, "not_found", path)
+                return
             if not self.server.demo_slots.acquire(blocking=False):
                 self._error(
                     HTTPStatus.TOO_MANY_REQUESTS,
@@ -231,6 +244,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 self._handle_public_demo(path)
             finally:
                 self.server.demo_slots.release()
+            return
+        if path == "/api/provider-analyze":
+            self._handle_provider_analysis()
             return
         try:
             payload = self._read_json()
@@ -257,6 +273,57 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             if report.status in {RunStatus.PLANNED, RunStatus.EXECUTED}
             else HTTPStatus.CONFLICT
         )
+        self._json(
+            {
+                "ok": status is HTTPStatus.OK,
+                "report": to_primitive(report),
+                "report_path": str(result.report_path) if result.report_path else None,
+            },
+            status,
+        )
+
+    def _handle_provider_analysis(self) -> None:
+        if self.server.app_config.exposed_to_network:
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "provider_surface_loopback_only",
+                "provider analysis is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            unknown = sorted(
+                set(payload) - {"run_id", "job", "provider", "approve_external_transfer"}
+            )
+            if unknown:
+                raise ValueError(f"unknown request fields: {', '.join(unknown)}")
+            run_id = payload.get("run_id")
+            if not isinstance(run_id, str):
+                raise ValueError("run_id must be a string")
+            provider_value = payload.get("provider")
+            if not isinstance(provider_value, dict):
+                raise ValueError("provider must be an object")
+            approval = payload.get("approve_external_transfer", False)
+            if not isinstance(approval, bool):
+                raise ValueError("approve_external_transfer must be a boolean")
+            job = parse_job_payload(
+                payload.get("job"),
+                base_dir=self.server.app_config.base_dir,
+            )
+            result = analyze_with_provider(
+                job,
+                self.server.app_config.execution,
+                provider_config_from_mapping(provider_value),
+                run_id=run_id,
+                approve_external_transfer=approval,
+            )
+        except (JobFileError, json.JSONDecodeError, OSError, RuntimeError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "provider_job_rejected", str(exc))
+            return
+        report = result.report
+        status = HTTPStatus.OK if report.status is RunStatus.EXECUTED else HTTPStatus.CONFLICT
         self._json(
             {
                 "ok": status is HTTPStatus.OK,

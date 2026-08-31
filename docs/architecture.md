@@ -5,7 +5,7 @@ offline; NemoClaw and Nemotron are adapters behind explicit privacy and cost gat
 
 ```mermaid
 flowchart LR
-    U[Person] --> SURFACE[Web console / CLI / skill]
+    U[Person] --> SURFACE[Web console / CLI / MCP / skill]
     SURFACE --> JOB[Strict job contract]
     JOB --> SURFACE
     SURFACE --> APP[Application service]
@@ -19,6 +19,15 @@ flowchart LR
     FILES --> LOCAL[(Approved local folders)]
     EVIDENCE --> INDEX[(Local FTS index)]
     FILES --> JOURNAL[Atomic action journal and undo]
+    POLICY --> SAFE[Selected and pseudonymized context]
+    SAFE --> PROVIDERS[Provider-neutral adapter core]
+    PROVIDERS --> LOCALMODEL[Ollama / LM Studio on loopback]
+    PROVIDERS --> CLIBRIDGE[Personal Codex / Claude Code bridge]
+    PROVIDERS --> APIS[OpenAI / Anthropic APIs]
+    LOCALMODEL --> GENERIC[Quote validation and generic execution receipt]
+    CLIBRIDGE --> GENERIC
+    APIS --> GENERIC
+    GENERIC --> EVIDENCE
     POLICY --> PACKAGE[Hashed, pseudonymized job package]
     PACKAGE --> ATTEMPT[Durable transfer attempt]
     ATTEMPT --> ADAPTER[Fail-closed Token Factory adapter]
@@ -32,21 +41,25 @@ flowchart LR
 ```
 
 Text alternative: a person calls one application service through the local web
-console, CLI, or NemoFold skill. Every surface uses the same strict job contract. The
-service invokes eight modules. Local policy, ledger, evidence, index, files, and export
-components remain authoritative. Only an already approved job package can cross the
-NemoClaw package route into an OpenShell sandbox and on to Nemotron. Immediately before
-network I/O, an atomic attempt receipt makes a duplicate paid retry fail closed. The
-answer returns through a verifier that recomputes the request and checks exact quotes,
-usage, costs, endpoint, and hashes before it can become evidence.
+console, CLI, MCP server, or NemoFold skill. Every surface uses the same strict job
+contract. The service invokes eight modules. Local policy, ledger, evidence, index,
+files, and export components remain authoritative. The generic adapter route can call
+loopback models, personal CLI bridges, or official provider APIs, but accepts a result
+only after every quote matches the pseudonymized context supplied for that question.
+These runs produce generic execution receipts only. Separately, an already approved
+job package can cross the NemoClaw package route into an OpenShell sandbox and on to
+Nemotron. Immediately before that network I/O, an atomic attempt receipt makes a
+duplicate paid retry fail closed. The answer returns through a competition verifier
+that recomputes the request and checks exact quotes, usage, costs, endpoint, and hashes.
 
 The adapter and verifier are implemented and tested with simulated transports. The
 actual NemoClaw/Nebius acceptance run remains open, so repository demos still record
 `cloud_proof: false` unless a real successful result receipt exists. A user-supplied
 NemoClaw version is stored only as declared metadata; `nemoclaw_proof` stays false until
 a separate, sanitized sandbox-runtime record exists.
-Likewise, generic run-report metadata can never promote itself to `cloud_proof: true`;
-only the dedicated, hashed provider result-package contract is accepted for that claim.
+Likewise, generic provider metadata can never promote itself to `cloud_proof: true` or
+`competition_proof: true`; only the dedicated, hashed Nebius result-package contract
+is accepted for that claim.
 
 The authoritative state is deterministic: job snapshots identify the request;
 inventory snapshots identify the source set; the persistent index is updated by hash
@@ -56,7 +69,8 @@ also prevent an uncertain network failure from becoming an automatic second requ
 External language-model output cannot directly mutate any authoritative layer.
 
 See [NemoClaw integration](nemoclaw-integration.md) for the supported skill route and
-the separate runtime-plugin route.
+the separate runtime-plugin route. See [Provider adapters, local API, and MCP](providers-and-mcp.md)
+for the generic execution route and client configuration.
 
 ## Diagram choice and source
 

@@ -4,6 +4,11 @@ All notable changes to NemoFold are documented here.
 
 ## Unreleased
 
+- Add one provider-neutral analysis core shared by CLI, loopback HTTP API, and MCP,
+  with Ollama, LM Studio, Codex CLI, Claude Code, OpenAI, and Anthropic adapters.
+- Keep generic provider execution receipts explicitly separate from the dedicated
+  Nebius/Nemotron competition-proof path.
+- Reject non-finite job budgets and server cost limits across every model gate.
 - Add a provider-neutral, non-root OCI/Docker package for the capability-minimal
   synthetic demo, with a bounded deployment contract and health-check evidence gate.
 

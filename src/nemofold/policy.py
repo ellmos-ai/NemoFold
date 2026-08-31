@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -23,6 +24,15 @@ class PolicyConfig:
     external_models_allowed: bool = False
     max_external_cost_usd: float = 0.0
     apply_actions_allowed: bool = False
+
+    def __post_init__(self) -> None:
+        if (
+            isinstance(self.max_external_cost_usd, bool)
+            or not isinstance(self.max_external_cost_usd, (int, float))
+            or not math.isfinite(self.max_external_cost_usd)
+            or self.max_external_cost_usd < 0
+        ):
+            raise ValueError("max_external_cost_usd must be a finite non-negative number")
 
 
 class PolicyGate:
