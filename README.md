@@ -246,6 +246,7 @@ not proof of a Nebius, Nemotron or NemoClaw runtime call; `cloud_proof` remains 
 - [Capability-minimal demo deployment](docs/deployment.md)
 - [NemoClaw integration](docs/nemoclaw-integration.md)
 - [Product story](docs/product-story.md)
+- [Document Services roadmap](docs/document-services-roadmap.md)
 - [Three-minute jury demo](docs/jury-demo.md)
 - [Jury design set and Nautilus brand kit](docs/media/designset/README.md)
 - [Submission readiness](docs/submission-readiness.md)

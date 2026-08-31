@@ -242,6 +242,7 @@ Oberfläche, kein Nachweis für einen Nebius-, Nemotron- oder NemoClaw-Lauf;
 - [Fähigkeitsminimale Demo-Bereitstellung](docs/deployment.md)
 - [NemoClaw-Integration](docs/nemoclaw-integration.md)
 - [Produktgeschichte](docs/product-story.md)
+- [Roadmap der Dokumentendienste](docs/document-services-roadmap.md)
 - [Dreiminütige Jury-Demo](docs/jury-demo.md)
 - [Jury-Designset und Nautilus-Markenkit](docs/media/designset/README.md)
 - [Einreichungsbereitschaft](docs/submission-readiness.md)

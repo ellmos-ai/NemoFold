@@ -54,6 +54,16 @@ The browser console, CLI, and skill all submit the same `nemofold.job.v1` contra
 the same application service. That makes a visual demo useful without creating a
 second, less safe implementation path.
 
+## Document Services roadmap
+
+The document theme continues beyond the twelve active contracts. Planned services
+include source-grounded synopses, bilingual document synchronization, richer Office and
+email ingest, OCR, whole-document redaction, chunk/RAG export, dossiers and recurring
+reports, controlled templates, document QA and revision handling, PDF forms, duplicate
+review, and verified format-conversion packages. They are cataloged with reuse sources
+and activation gates in [the Document Services roadmap](document-services-roadmap.md).
+Their source modules are candidates, not claims of completed NemoFold integration.
+
 ## Why Nemotron and Nebius matter
 
 The local core is intentionally useful on its own: inventory, extraction, indexing,
