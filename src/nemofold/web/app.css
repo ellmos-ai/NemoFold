@@ -132,7 +132,7 @@ body[data-page="analysis"] .porthole-life{display:block}
 .porthole-life .m3{right:47%;bottom:-10px;animation:nf-rise 44s linear 15s infinite}
 .porthole-life .m4{right:22%;bottom:-10px;animation:nf-rise 59s linear 23s infinite}
 .porthole-life .m5{right:40%;bottom:-10px;animation:nf-rise 33s linear 30s infinite}
-@keyframes nf-rise{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(-26px,-52vh,0)}100%{transform:translate3d(6px,-104vh,0)}}
+@keyframes nf-rise{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(-26px,-235px,0)}100%{transform:translate3d(6px,-470px,0)}}
 @keyframes nf-swim{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-150vw,-40px,0)}}
 @keyframes nf-glow{0%,84%,100%{opacity:.2}92%{opacity:.62}}
 @media(prefers-reduced-motion:reduce){.porthole-life .drifter,.porthole-life .mote{animation:none!important}.porthole-life .lantern{right:22%}.porthole-life .jelly-a{bottom:22%}.porthole-life .jelly-b{bottom:44%}.porthole-life .mote{bottom:auto;top:40%}}
@@ -143,3 +143,6 @@ body[data-page="connections"] .connection-summary>div,body[data-page="connection
 body[data-page="connections"] .connection-title{border-bottom-color:#1c7f86}
 body[data-page="connections"] .section-title .kicker{color:#12727a}
 @media(max-width:680px){.glance-head{grid-template-columns:1fr}.glance-controls input{width:100%}.glance-controls label{width:100%}.glance-tiles .tile{border-right:0;border-bottom:1px solid var(--line)}.task-card{border-left:1px solid var(--line-dark)}}
+.command-bridge{margin-top:44px}
+body[data-page="governance"] .scope-rail{display:none}
+body[data-page="governance"] .workspace-grid{grid-template-columns:minmax(0,1fr)}

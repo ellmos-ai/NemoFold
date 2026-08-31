@@ -243,12 +243,20 @@ Hosting für andere Personen läuft über `serve-demo`. Preview ist der standard
 sichere Pfad; Aktionsworkflows benötigen zusätzlich das serverseitige Gate
 `--approve-actions`, bevor eine Apply-Anfrage erfolgreich sein kann.
 
-Übersicht und Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt Sprüngen
-innerhalb einer langen Seite: `/document-center`, `/analysis`, `/routines`, `/artifacts`
-und `/connections`. Jede Arbeitsseite zeigt nur die fachlich passenden Workflows.
-Artifact Studio öffnet unmittelbar den verifizierten Artefaktkatalog; Connections ist
-eine reine Statusseite und trennt konfigurierte Adapter, ausgeführte Providerläufe,
-Transfers und Cloud-Nachweise sichtbar voneinander.
+Übersicht und sechs Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt
+Sprüngen innerhalb einer langen Seite: `/document-center`, `/analysis`, `/routines`,
+`/artifacts`, `/connections` und `/governance`. Jeder Bereich beginnt mit dem, was dort
+lebt, statt mit dem Jobformular: Das Document Center zählt den freigegebenen Korpus,
+Folder Routines liest die letzten Routineläufe, und jeder Bereich bietet Aufgabenkarten,
+die den Vertrag darunter vorbereiten. Die Command Bridge unter `/governance` zeigt die
+Autorität, mit der dieser Server gestartet wurde — Gates für Dateiaktionen, externe
+Modelle und Netzexposition, freigegebene Roots, Budgetgrenze und vertraglich erfasste
+Workflows — und beherbergt die Storage Policies. Gates werden dort gelesen, nicht
+erteilt: Ein geschlossenes Gate verlangt weiterhin einen Neustart mit dem passenden
+Flag. Jede Arbeitsseite zeigt nur die fachlich passenden Workflows. Artifact Studio
+öffnet unmittelbar den verifizierten Artefaktkatalog; Connections ist eine reine
+Statusseite und trennt konfigurierte Adapter, ausgeführte Providerläufe, Transfers und
+Cloud-Nachweise sichtbar voneinander.
 
 Das Analysis Lab verbindet deterministische Bundle-Vorbereitung, Datenschutz-Preflight,
 Evidence Analyst, wiederverwendbare Prompt-Sammlungen und persistente Research Notebooks.

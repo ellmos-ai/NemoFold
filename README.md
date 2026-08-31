@@ -235,9 +235,15 @@ hosting for other people goes through `serve-demo`. Preview is the default safe 
 action workflows additionally require the server-side `--approve-actions` gate before
 an apply request can succeed.
 
-The overview and five work areas use distinct, bookmarkable routes instead of in-page
-scroll jumps: `/document-center`, `/analysis`, `/routines`, `/artifacts`, and
-`/connections`. Each work page exposes only its relevant workflow choices. Analysis Lab
+The overview and six work areas use distinct, bookmarkable routes instead of in-page
+scroll jumps: `/document-center`, `/analysis`, `/routines`, `/artifacts`,
+`/connections`, and `/governance`. Each area opens with what lives there rather than
+with the job form: Document Center counts the approved corpus, Folder Routines reads the
+last routine ledgers, and every area offers task cards that prepare the contract below.
+The Command Bridge at `/governance` renders the authority this server was started with —
+the file-action, external-model and network gates, approved roots, budget ceiling and
+contracted workflows — and holds Storage Policies. Gates are read there, never granted
+there: a closed gate still requires a restart with the matching flag. Analysis Lab
 combines deterministic bundle preparation, privacy preflight, Evidence Analyst, reusable
 prompt sets, and persistent
 Research Notebooks. Artifact Studio opens executed or blocked ledgers and verifies every

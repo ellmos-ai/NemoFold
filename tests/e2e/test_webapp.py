@@ -264,6 +264,12 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert 'body[data-page="analysis"]' in stylesheet
     assert ".route-workflows" in stylesheet
     assert ".connection-registry" in stylesheet
+    assert ".command-bridge" in stylesheet
+    assert ".task-card" in stylesheet
+    assert ".home-glance,.task-cards,.echo-check" in stylesheet
+    assert ".form-grid>*{min-width:0}" in stylesheet
+    assert 'body[data-page="governance"]' in stylesheet
+    assert "@media(prefers-reduced-motion:reduce){.porthole-life" in stylesheet
 
 
 def test_web_console_rejects_cross_origin_posts(tmp_path) -> None:
