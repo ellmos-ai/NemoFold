@@ -57,30 +57,10 @@
       <div class="briefing-copy">
         <p class="kicker">CASE FILE / NF-01</p>
         <h1 id="briefingTitle">Know what your documents prove.</h1>
-        <p class="lede">NemoFold turns approved folders into traceable working memory. Originals, paths, policy and audit stay local. Only an explicitly bounded context package may cross the gate.</p>
+        <p class="lede">NemoFold turns approved folders into traceable working memory.</p>
       </div>
-      <dl class="boundary-ledger" aria-label="Current product truth">
-        <div><dt>Core</dt><dd>Local and testable</dd></div>
-        <div><dt>Actions</dt><dd>Dry-run by default</dd></div>
-        <div><dt>Cloud</dt><dd id="cloudBadge">Cloud proof: false</dd></div>
-      </dl>
     </section>
 
-    <section class="evidence-chain" aria-labelledby="chainTitle" data-page-section="overview">
-      <div class="chain-label">
-        <p class="kicker">EVIDENCE CHAIN</p>
-        <h2 id="chainTitle">Every claim keeps its route home.</h2>
-      </div>
-      <ol role="list">
-        <li><b>01</b><span>ORIGIN<small>approved source</small></span></li>
-        <li><b>02</b><span>PATH<small>exact location</small></span></li>
-        <li><b>03</b><span>INDEX<small>local memory</small></span></li>
-        <li><b>04</b><span>POLICY<small>scope and budget</small></span></li>
-        <li><b>05</b><span>CLAIM<small>bounded reasoning</small></span></li>
-        <li><b>06</b><span>AUDIT<small>quote and coverage</small></span></li>
-        <li><b>07</b><span>ACTION<small>explicit authority</small></span></li>
-      </ol>
-    </section>
 
     <nav class="product-areas" aria-label="NemoFold work areas" data-page-section="overview">
       <a href="/document-center"><span>START</span><b>Document Center</b><small>Inbox · cleanup · mail cases · drafts</small><em>Open area →</em></a>
@@ -564,20 +544,53 @@ Which earlier wording changed?</textarea></label>
       </div>
     </section>
 
-    <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle" data-page-section="overview">
-      <div class="section-title">
-        <p class="kicker">PRODUCT MAP</p>
-        <h2 id="registerTitle">Six work areas. Twelve technical contracts.</h2>
+    <section class="ships-chart" data-page-section="overview" data-open="false">
+      <button type="button" id="chartToggle" class="chart-band" data-collapse="chartDetail" data-animated="true" aria-expanded="false" aria-controls="chartDetail">
+        <span class="chart-legend">
+          <span class="kicker">THE SHIP'S CHART</span>
+          <b>Unfold the chart — boundaries, evidence chain and every contract</b>
+        </span>
+        <span class="chart-fold" aria-hidden="true"><i class="chevron"></i></span>
+      </button>
+      <div id="chartDetail" class="chart-detail" hidden>
+        <div class="chart-inner">
+          <dl class="boundary-ledger" aria-label="Current product truth">
+            <div><dt>Core</dt><dd>Local and testable</dd></div>
+            <div><dt>Actions</dt><dd>Dry-run by default</dd></div>
+            <div><dt>Cloud</dt><dd id="cloudBadge">Cloud proof: false</dd></div>
+          </dl>
+        <section class="evidence-chain" aria-labelledby="chainTitle">
+          <div class="chain-label">
+            <p class="kicker">EVIDENCE CHAIN</p>
+            <h2 id="chainTitle">Every claim keeps its route home.</h2>
+          </div>
+          <ol role="list">
+            <li><b>01</b><span>ORIGIN<small>approved source</small></span></li>
+            <li><b>02</b><span>PATH<small>exact location</small></span></li>
+            <li><b>03</b><span>INDEX<small>local memory</small></span></li>
+            <li><b>04</b><span>POLICY<small>scope and budget</small></span></li>
+            <li><b>05</b><span>CLAIM<small>bounded reasoning</small></span></li>
+            <li><b>06</b><span>AUDIT<small>quote and coverage</small></span></li>
+            <li><b>07</b><span>ACTION<small>explicit authority</small></span></li>
+          </ol>
+        </section>
+        <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle">
+          <div class="section-title">
+            <p class="kicker">PRODUCT MAP</p>
+            <h2 id="registerTitle">Six work areas. Twelve technical contracts.</h2>
+          </div>
+          <div class="register-table" role="list">
+            <a href="/document-center" role="listitem"><span>01 / START</span><h3>Document Center</h3><p>Intake plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · cleanup_rules · mail_to_case · controlled_email</b></a>
+            <a href="/analysis" role="listitem"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst</b></a>
+            <a href="/routines" role="listitem"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck folders, resolve valid document versions and compare source-grounded contact responsibilities.</p><b>folder_digest · version_resolver · contact_monitor</b></a>
+            <a href="/artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
+            <a href="/connections" role="listitem"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
+            <a href="/governance" role="listitem"><span>06 / BRIDGE</span><h3>Command Bridge</h3><p>Read the authority this server was started with and set controlled routing and retention policy.</p><b>storage_policy · gates are read, not granted</b></a>
+          </div>
+          <p class="text-alt"><b>ROADMAP:</b> UC10 remains the separate design track. Planned Document Services include synopses, bilingual sync, rich ingest and OCR, document redaction, RAG export, dossiers, templates, QA, forms, duplicate review and verified conversions; none are presented as active before their own acceptance gate.</p>
+        </section>
+        </div>
       </div>
-      <div class="register-table" role="list">
-        <a href="/document-center" role="listitem"><span>01 / START</span><h3>Document Center</h3><p>Intake plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · cleanup_rules · mail_to_case · controlled_email</b></a>
-        <a href="/analysis" role="listitem"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst</b></a>
-        <a href="/routines" role="listitem"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck folders, resolve valid document versions and compare source-grounded contact responsibilities.</p><b>folder_digest · version_resolver · contact_monitor</b></a>
-        <a href="/artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
-        <a href="/connections" role="listitem"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
-        <a href="/governance" role="listitem"><span>06 / BRIDGE</span><h3>Command Bridge</h3><p>Read the authority this server was started with and set controlled routing and retention policy.</p><b>storage_policy · gates are read, not granted</b></a>
-      </div>
-      <p class="text-alt"><b>ROADMAP:</b> UC10 remains the separate design track. Planned Document Services include synopses, bilingual sync, rich ingest and OCR, document redaction, RAG export, dossiers, templates, QA, forms, duplicate review and verified conversions; none are presented as active before their own acceptance gate.</p>
     </section>
   </main>
   <button type="button" id="engineHandle" class="engine-handle" aria-expanded="false" aria-controls="engineRoom">

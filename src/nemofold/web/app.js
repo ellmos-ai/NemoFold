@@ -555,12 +555,35 @@ function setEngineDrawer(open, {moveFocus = true} = {}) {
   }
 }
 
+const reducedMotionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+
 function toggleCollapse(button) {
   const panel = $(button.getAttribute("aria-controls"));
   if (!panel) return;
   const expanded = button.getAttribute("aria-expanded") === "true";
   button.setAttribute("aria-expanded", expanded ? "false" : "true");
-  panel.hidden = expanded;
+  if (button.dataset.animated !== "true") {
+    panel.hidden = expanded;
+    return;
+  }
+  // The hidden attribute keeps the closed panel out of the tab order, but a
+  // display:none box cannot be transitioned. So opening reveals first and
+  // animates on the next frame, and closing hides only once the fold is done.
+  const container = panel.parentElement;
+  if (!expanded) {
+    panel.hidden = false;
+    if (reducedMotionQuery?.matches) container.dataset.open = "true";
+    else requestAnimationFrame(() => { container.dataset.open = "true"; });
+    return;
+  }
+  container.dataset.open = "false";
+  if (reducedMotionQuery?.matches) {
+    panel.hidden = true;
+    return;
+  }
+  globalThis.setTimeout(() => {
+    if (container.dataset.open !== "true") panel.hidden = true;
+  }, 420);
 }
 
 function prepareWorkflow(workflow) {

@@ -245,7 +245,11 @@ sichere Pfad; Aktionsworkflows benötigen zusätzlich das serverseitige Gate
 
 Übersicht und sechs Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt
 Sprüngen innerhalb einer langen Seite: `/document-center`, `/analysis`, `/routines`,
-`/artifacts`, `/connections` und `/governance`. Jeder Bereich beginnt mit dem, was dort
+`/artifacts`, `/connections` und `/governance`. Die Übersicht selbst bleibt bewusst
+karg — eine Überschrift, ein Satz und die sechs Bereichskarten — und faltet
+Grenz-Kacheln, Evidenzkette, Vertragsregister und Roadmap hinter eine alte Seekarte,
+die sich per Klick oder Enter aufklappt. Nichts wird entfernt; die Dokumentation
+verschmutzt nur nicht mehr die Oberfläche. Jeder Bereich beginnt mit dem, was dort
 lebt, statt mit dem Jobformular: Das Document Center zählt den freigegebenen Korpus,
 Folder Routines liest die letzten Routineläufe, und jeder Bereich bietet Aufgabenkarten,
 die den Vertrag darunter vorbereiten. Die Command Bridge unter `/governance` zeigt die

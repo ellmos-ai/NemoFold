@@ -231,3 +231,26 @@ body[data-page="analysis"] .porthole-life{display:block}
 .porthole-life .lantern{transform:translate(-185px,0)}
 .porthole-life .mote{transform:translate(0,-55px)}
 }
+.ships-chart{margin-top:34px;border:1px solid var(--line-dark);background:var(--white);box-shadow:0 2px 0 rgba(9,47,59,.08)}
+.chart-band{position:relative;display:flex;width:100%;min-height:250px;align-items:flex-end;justify-content:space-between;gap:20px;border:0;background-image:url('/assets/theme-chart.jpg');background-position:center 42%;background-size:cover;padding:22px 24px;color:#2b1d0e;cursor:pointer;text-align:left}
+.chart-band:before{content:"";position:absolute;inset:0;background:linear-gradient(0deg,rgba(246,236,214,.94) 0%,rgba(246,236,214,.55) 34%,rgba(246,236,214,.08) 72%)}
+.chart-band>*{position:relative}
+.chart-legend{display:flex;min-width:0;flex-direction:column;gap:7px}
+.chart-band .kicker{margin:0;color:#7a5a24}
+.chart-band b{font:400 clamp(19px,2.4vw,27px)/1.15 var(--serif);letter-spacing:-.01em}
+.chart-band .chevron{width:13px;height:13px;flex:0 0 auto;align-self:center;border-right:2px solid #7a5a24;border-bottom:2px solid #7a5a24;transform:rotate(45deg) translate(-3px,-3px);transition:transform .3s ease}
+.chart-band[aria-expanded="true"] .chevron{transform:rotate(225deg) translate(-3px,-3px)}
+.chart-band:hover:before{background:linear-gradient(0deg,rgba(246,236,214,.9) 0%,rgba(246,236,214,.48) 36%,rgba(246,236,214,.04) 74%)}
+.chart-detail{display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .4s ease,opacity .32s ease}
+.chart-detail[hidden]{display:none}
+.chart-inner{overflow:hidden;min-height:0}
+.ships-chart[data-open="true"] .chart-detail{grid-template-rows:1fr;opacity:1}
+.chart-inner>*{padding:0 24px}
+.chart-inner>:first-child{padding-top:24px}
+.chart-inner>:last-child{padding-bottom:28px}
+.chart-inner .boundary-ledger{margin:0}
+.chart-inner .evidence-chain,.chart-inner .workflow-register{margin-top:30px}
+@media(max-width:680px){.chart-band{min-height:180px;padding:16px}.chart-inner>*{padding:0 16px}}
+@media(prefers-reduced-motion:reduce){.chart-detail,.chart-band .chevron{transition:none}}
+.chart-fold{display:flex;width:42px;height:42px;flex:0 0 auto;align-self:center;align-items:center;justify-content:center;border:1px solid #a4823c;border-radius:50%;background:rgba(248,240,220,.93);box-shadow:0 1px 4px rgba(43,29,14,.28)}
+.chart-band:hover .chart-fold{background:#fdf7e6}

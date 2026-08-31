@@ -237,8 +237,12 @@ an apply request can succeed.
 
 The overview and six work areas use distinct, bookmarkable routes instead of in-page
 scroll jumps: `/document-center`, `/analysis`, `/routines`, `/artifacts`,
-`/connections`, and `/governance`. Each area opens with what lives there rather than
-with the job form: Document Center counts the approved corpus, Folder Routines reads the
+`/connections`, and `/governance`. The overview itself stays deliberately bare — one
+headline, one sentence and the six area cards — and folds the boundary tiles, the
+evidence chain, the contract register and the roadmap behind an antique ship's chart
+that unfolds on click or Enter. Nothing is removed; documentation simply stops
+crowding the surface. Each area opens with what lives there rather than with the job
+form: Document Center counts the approved corpus, Folder Routines reads the
 last routine ledgers, and every area offers task cards that prepare the contract below.
 The Command Bridge at `/governance` renders the authority this server was started with —
 the file-action, external-model and network gates, approved roots, budget ceiling and

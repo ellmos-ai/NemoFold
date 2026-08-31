@@ -984,3 +984,41 @@ def test_drawer_is_a_modal_overlay_only_on_narrow_viewports(tmp_path) -> None:
     # Escape closes and focus returns to whatever opened the drawer.
     assert 'event.key === "Escape"' in script
     assert "engineReturnFocus" in script
+
+
+def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        with urlopen(base_url + "/", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.css", timeout=5) as response:  # noqa: S310
+            stylesheet = response.read().decode()
+
+    # The chart itself is the control, and it starts folded.
+    assert 'id="chartToggle"' in html
+    assert 'data-collapse="chartDetail"' in html
+    assert 'aria-controls="chartDetail"' in html
+    assert '<div id="chartDetail" class="chart-detail" hidden>' in html
+    assert 'data-open="false"' in html
+    assert "THE SHIP'S CHART" in html
+    assert "url('/assets/theme-chart.jpg')" in stylesheet
+
+    # Everything explanatory still exists - it moved, it was not deleted.
+    folded_away = html.split('id="chartDetail"', 1)[1]
+    for marker in (
+        "Cloud proof: false",
+        "EVIDENCE CHAIN",
+        "ORIGIN",
+        "ACTION",
+        "PRODUCT MAP",
+        "Six work areas. Twelve technical contracts.",
+        "ROADMAP:",
+    ):
+        assert marker in folded_away, marker
+    # The hero keeps one sentence and the area cards stay in the open.
+    assert (
+        '<p class="lede">NemoFold turns approved folders into traceable working memory.</p>'
+        in html
+    )
+    hero_and_cards = html.split('id="chartDetail"', 1)[0]
+    assert 'class="product-areas"' in hero_and_cards
+    assert "Command Bridge" in hero_and_cards
