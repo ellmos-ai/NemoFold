@@ -157,6 +157,12 @@ akzeptiert nur den offiziellen HTTPS-Ursprung der Nebius Token Factory, lehnt
 Weiterleitungen ab, prüft vor der Anfrage eine konservative Kostengrenze, liest den
 Schlüssel ausschließlich aus `NEBIUS_API_KEY` und verweigert die Wiederholung eines
 Pakets, das bereits `result.json` oder einen dauerhaften Übertragungsversuch enthält.
+Nach dem Kostengate und vor jedem Beleg bestätigt er die exakte Modell-ID gegen den
+Live-Katalog `/v1/models`. Dieser Aufruf ist ein autorisierter Metadatenabruf ohne
+Auftragsinhalt; eine zurückgezogene oder vertippte Modell-ID bricht deshalb ohne Beleg
+ab und lässt das Paket vollständig lauffähig. Ein bestätigter Katalog schreibt
+`model_catalog_checked: true` ins Ergebnis, und der Verifizierer weist ein Ergebnis
+zurück, das etwas anderes behauptet.
 
 ```powershell
 $env:NEBIUS_API_KEY = "<session-only-key>"
@@ -198,12 +204,16 @@ Nemotron-Modell, die JSON-Anfrage, die vom Aufrufer gelieferten aktuellen Preise
 konservativen Maximalkosten, das Auftragsbudget, die Schutzregeln gegen Doppelläufe und
 das Vorhandensein eines Sitzungsschlüssels. Seine Ausgabe hält `network_called`,
 `transfer_performed` und `cloud_proof` stets auf false; ein erfolgreicher Preflight ist
-Bereitschaft, kein Ausführungsnachweis und keine Transferfreigabe.
+Bereitschaft, kein Ausführungsnachweis und keine Transferfreigabe. Er meldet deshalb
+`model_catalog_checked: false`: Den Katalog bestätigt `token-factory-run` als einziger
+Befehl, der das Netz berühren darf.
 
-Die Anfrage nutzt den dokumentierten `json_object`-Antwortmodus der Token Factory.
-NemoFold fügt sein vollständiges Ausgabeschema in die begrenzte Nutzer-Nutzlast ein
-und validiert das zurückgegebene Objekt lokal. Damit hängt der Evidenzvertrag nicht von
-modellspezifischer serverseitiger JSON-Schema-Erzwingung ab.
+Die Anfrage nutzt den dokumentierten `json_object`-Antwortmodus der Token Factory und
+überträgt ausschließlich dokumentierte Chat-Completion-Parameter, denn ein einziges
+undokumentiertes Feld, das der Endpunkt ablehnt, würde den einen freigegebenen Lauf für
+einen HTTP 400 verbrauchen. NemoFold fügt sein vollständiges Ausgabeschema in die
+begrenzte Nutzer-Nutzlast ein und validiert das zurückgegebene Objekt lokal. Damit hängt
+der Evidenzvertrag nicht von modellspezifischer serverseitiger JSON-Schema-Erzwingung ab.
 
 Die optional angegebene NemoClaw-Version ist nur Metadatum. Das Ergebnis protokolliert
 `nemoclaw_proof: false`; nur ein separat erfasster, bereinigter Laufzeit-Log aus der

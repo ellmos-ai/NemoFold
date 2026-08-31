@@ -88,6 +88,14 @@ class TokenFactoryTransport(Protocol):
         timeout_seconds: float,
     ) -> HTTPExchange: ...
 
+    def get(
+        self,
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout_seconds: float,
+    ) -> HTTPExchange: ...
+
 
 class _RejectRedirects(HTTPRedirectHandler):
     def redirect_request(
@@ -111,7 +119,21 @@ class UrllibTokenFactoryTransport:
         body: bytes,
         timeout_seconds: float,
     ) -> HTTPExchange:
-        request = Request(url, data=body, headers=headers, method="POST")
+        return self._send(
+            Request(url, data=body, headers=headers, method="POST"),
+            timeout_seconds,
+        )
+
+    def get(
+        self,
+        url: str,
+        *,
+        headers: dict[str, str],
+        timeout_seconds: float,
+    ) -> HTTPExchange:
+        return self._send(Request(url, headers=headers, method="GET"), timeout_seconds)
+
+    def _send(self, request: Request, timeout_seconds: float) -> HTTPExchange:
         opener = build_opener(_RejectRedirects())
         try:
             response = opener.open(request, timeout=timeout_seconds)  # noqa: S310
@@ -146,6 +168,73 @@ def token_factory_endpoint(base_url: str) -> tuple[str, str]:
         raise ValueError("Token Factory base URL is outside the approved Nebius endpoint scope")
     origin = f"https://{hostname}"
     return f"{origin}/v1/chat/completions", origin
+
+
+def token_factory_model_catalog_endpoint(base_url: str) -> str:
+    """Return the models endpoint of the same approved origin as the chat endpoint."""
+    _, origin = token_factory_endpoint(base_url)
+    return f"{origin}/v1/models"
+
+
+def _model_catalog_ids(body: bytes) -> frozenset[str]:
+    payload = json.loads(body)
+    entries = payload.get("data") if isinstance(payload, dict) else None
+    if not isinstance(entries, list):
+        raise ValueError("model catalog payload has no data list")
+    identifiers = {
+        entry["id"]
+        for entry in entries
+        if isinstance(entry, dict) and isinstance(entry.get("id"), str)
+    }
+    if not identifiers:
+        raise ValueError("model catalog listed no usable model identifiers")
+    return frozenset(identifiers)
+
+
+def confirm_model_is_offered(
+    model_id: str,
+    config: TokenFactoryConfig,
+    *,
+    transport: TokenFactoryTransport,
+) -> str:
+    """Confirm the exact model ID against the live catalog before any job content moves.
+
+    This runs before the durable transfer attempt on purpose. It is an authorized
+    metadata read that carries no job content, so every failure here can abort
+    without leaving a receipt and without spending the single approved run.
+    """
+    endpoint = token_factory_model_catalog_endpoint(config.base_url)
+    try:
+        exchange = transport.get(
+            endpoint,
+            headers={
+                "Accept": "application/json",
+                "Authorization": f"Bearer {config.api_key}",
+                "User-Agent": "NemoFold/0.1",
+            },
+            timeout_seconds=config.timeout_seconds,
+        )
+    except OSError as exc:
+        raise RuntimeError(
+            f"model catalog check failed before any job content was sent: {type(exc).__name__}"
+        ) from exc
+    if exchange.status != 200:
+        raise RuntimeError(
+            "model catalog request returned HTTP "
+            f"{exchange.status}; no job content was sent and no receipt was written"
+        )
+    try:
+        offered = _model_catalog_ids(exchange.body)
+    except (UnicodeDecodeError, ValueError, json.JSONDecodeError) as exc:
+        raise RuntimeError(
+            "model catalog response was unreadable; no job content was sent"
+        ) from exc
+    if model_id not in offered:
+        raise PermissionError(
+            f"model {model_id!r} is not offered by the Token Factory catalog; "
+            "no job content was sent and the package stays reusable"
+        )
+    return endpoint
 
 
 def _load_package(path: Path) -> tuple[dict[str, Any], list[Any]]:
@@ -387,6 +476,10 @@ def run_token_factory_package(
     ):
         raise PermissionError("conservative Token Factory cost bound exceeds the job budget")
     endpoint, origin = token_factory_endpoint(config.base_url)
+    active_transport = transport or UrllibTokenFactoryTransport()
+    # Metadata-only catalog read. It must stay ahead of the durable attempt so a
+    # wrong or retired model ID costs nothing and leaves the package reusable.
+    confirm_model_is_offered(model_id, config, transport=active_transport)
     request_bytes = (
         json.dumps(request_body, sort_keys=True, separators=(",", ":")) + "\n"
     ).encode()
@@ -405,7 +498,7 @@ def run_token_factory_package(
     }
     _create_transfer_attempt(attempt_path, attempt)
     monotonic_start = time.monotonic()
-    exchange = (transport or UrllibTokenFactoryTransport()).post(
+    exchange = active_transport.post(
         endpoint,
         headers={
             "Accept": "application/json",
@@ -472,6 +565,7 @@ def run_token_factory_package(
         "provider": "nebius-token-factory",
         "endpoint_origin": origin,
         "model_id": model_id,
+        "model_catalog_checked": True,
         "started_at": started.isoformat(),
         "completed_at": completed.isoformat(),
         "latency_ms": latency_ms,

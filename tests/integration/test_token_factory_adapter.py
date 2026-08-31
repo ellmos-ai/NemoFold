@@ -123,6 +123,21 @@ def successful_body(*, quote: str = QUOTE) -> bytes:
     ).encode()
 
 
+def catalog_body(*model_ids: str) -> bytes:
+    listed = model_ids or (MODEL_ID,)
+    return json.dumps(
+        {"object": "list", "data": [{"id": item, "object": "model"} for item in listed]}
+    ).encode()
+
+
+def catalog_exchange(*model_ids: str, status: int = 200) -> HTTPExchange:
+    return HTTPExchange(
+        status=status,
+        headers={"content-type": "application/json"},
+        body=catalog_body(*model_ids),
+    )
+
+
 @dataclass
 class RecordingTransport:
     exchange: HTTPExchange = field(
@@ -132,7 +147,9 @@ class RecordingTransport:
             body=successful_body(),
         )
     )
+    catalog: HTTPExchange = field(default_factory=catalog_exchange)
     calls: list[dict[str, object]] = field(default_factory=list)
+    catalog_calls: list[dict[str, object]] = field(default_factory=list)
 
     def post(self, url, *, headers, body, timeout_seconds):
         self.calls.append(
@@ -144,6 +161,12 @@ class RecordingTransport:
             }
         )
         return self.exchange
+
+    def get(self, url, *, headers, timeout_seconds):
+        self.catalog_calls.append(
+            {"url": url, "headers": headers, "timeout_seconds": timeout_seconds}
+        )
+        return self.catalog
 
 
 def config(**overrides) -> TokenFactoryConfig:
@@ -339,6 +362,9 @@ def test_uncertain_transport_attempt_is_durable_and_blocks_retry(tmp_path) -> No
         def post(self, url, *, headers, body, timeout_seconds):
             self.calls += 1
             raise OSError("connection ended without a response")
+
+        def get(self, url, *, headers, timeout_seconds):
+            return catalog_exchange()
 
     transport = UncertainTransport()
     with pytest.raises(OSError, match="without a response"):
@@ -589,3 +615,149 @@ def test_provider_failure_is_truthfully_recorded_but_not_cloud_proof(tmp_path) -
     assert result["cloud_proof"] is False
     assert "provider_http_status:500" in result["errors"]
     assert validation.valid is True
+
+
+def test_request_carries_only_documented_chat_completion_parameters(tmp_path) -> None:
+    package = make_package(tmp_path)
+    transport = RecordingTransport()
+
+    run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=transport,
+    )
+
+    request = json.loads(transport.calls[0]["body"])
+
+    assert "store" not in request
+    assert set(request) == {
+        "max_completion_tokens",
+        "messages",
+        "model",
+        "n",
+        "response_format",
+        "stream",
+        "temperature",
+    }
+
+
+def test_model_catalog_is_confirmed_before_job_content_and_before_the_receipt(
+    tmp_path,
+) -> None:
+    package = make_package(tmp_path)
+    attempt_path = package / TRANSFER_ATTEMPT_FILENAME
+    observed: list[str] = []
+
+    class OrderedTransport(RecordingTransport):
+        def get(self, url, *, headers, timeout_seconds):
+            observed.append("catalog_after_receipt" if attempt_path.exists() else "catalog")
+            return super().get(url, headers=headers, timeout_seconds=timeout_seconds)
+
+        def post(self, url, *, headers, body, timeout_seconds):
+            observed.append("chat")
+            return super().post(url, headers=headers, body=body, timeout_seconds=timeout_seconds)
+
+    transport = OrderedTransport()
+    result_path = run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=transport,
+    )
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+
+    assert observed == ["catalog", "chat"]
+    assert len(transport.catalog_calls) == 1
+    assert transport.catalog_calls[0]["url"] == "https://api.tokenfactory.nebius.com/v1/models"
+    assert transport.catalog_calls[0]["headers"]["Authorization"] == (
+        "Bearer test-secret-do-not-log"
+    )
+    assert result["runtime_evidence"]["model_catalog_checked"] is True
+    assert validate_result_package(package).valid is True
+
+
+def test_result_claiming_an_unchecked_catalog_is_rejected(tmp_path) -> None:
+    package = make_package(tmp_path)
+    result_path = run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=RecordingTransport(),
+    )
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    result["runtime_evidence"]["model_catalog_checked"] = False
+    result_path.write_text(json.dumps(result), encoding="utf-8")
+
+    validation = validate_result_package(package)
+
+    assert validation.valid is False
+    assert "model_catalog_unverified" in validation.errors
+
+
+def test_model_missing_from_the_catalog_leaves_the_package_reusable(tmp_path) -> None:
+    package = make_package(tmp_path)
+    transport = RecordingTransport(catalog=catalog_exchange("nvidia/nemotron-other-model"))
+
+    with pytest.raises(PermissionError, match="not offered by the Token Factory catalog"):
+        run_token_factory_package(
+            package,
+            config(),
+            approve_live_transfer=True,
+            transport=transport,
+        )
+
+    assert transport.calls == []
+    assert not (package / TRANSFER_ATTEMPT_FILENAME).exists()
+    assert not (package / "result.json").exists()
+
+    retry = RecordingTransport()
+    result_path = run_token_factory_package(
+        package,
+        config(),
+        approve_live_transfer=True,
+        transport=retry,
+    )
+
+    assert json.loads(result_path.read_text(encoding="utf-8"))["status"] == "executed"
+    assert len(retry.calls) == 1
+
+
+@pytest.mark.parametrize(
+    "catalog_failure",
+    [
+        pytest.param(OSError("catalog connection refused"), id="network-error"),
+        pytest.param(catalog_exchange(status=401), id="unauthorized"),
+        pytest.param(
+            HTTPExchange(status=200, headers={}, body=b"<html>not json</html>"),
+            id="unreadable-body",
+        ),
+        pytest.param(
+            HTTPExchange(status=200, headers={}, body=json.dumps({"data": []}).encode()),
+            id="empty-catalog",
+        ),
+    ],
+)
+def test_catalog_failure_aborts_without_a_receipt(tmp_path, catalog_failure) -> None:
+    package = make_package(tmp_path)
+
+    class FailingCatalogTransport(RecordingTransport):
+        def get(self, url, *, headers, timeout_seconds):
+            self.catalog_calls.append({"url": url})
+            if isinstance(catalog_failure, OSError):
+                raise catalog_failure
+            return catalog_failure
+
+    transport = FailingCatalogTransport()
+    with pytest.raises(RuntimeError, match="catalog"):
+        run_token_factory_package(
+            package,
+            config(),
+            approve_live_transfer=True,
+            transport=transport,
+        )
+
+    assert len(transport.catalog_calls) == 1
+    assert transport.calls == []
+    assert not (package / TRANSFER_ATTEMPT_FILENAME).exists()
+    assert not (package / "result.json").exists()

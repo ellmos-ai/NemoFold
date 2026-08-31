@@ -123,6 +123,9 @@ def expected_token_factory_request(
         "context_receipts": receipts,
         "output_schema": MODEL_OUTPUT_SCHEMA,
     }
+    # Only fields the Token Factory chat-completion reference documents are sent.
+    # A single approved run cannot be repeated, so an extra parameter that the
+    # endpoint happens to reject would spend that one attempt on an HTTP 400.
     return {
         "model": model["id"],
         "messages": [
@@ -132,7 +135,6 @@ def expected_token_factory_request(
                 "content": json.dumps(task, sort_keys=True, separators=(",", ":")),
             },
         ],
-        "store": False,
         "max_completion_tokens": max_completion_tokens,
         "temperature": 0,
         "n": 1,
@@ -428,6 +430,7 @@ def validate_result_package(path: str | Path) -> ResultValidation:
         "latency_ms",
         "max_completion_tokens",
         "maximum_estimated_cost_usd",
+        "model_catalog_checked",
         "model_id",
         "nemoclaw_proof",
         "output_price_usd_per_million",
@@ -474,6 +477,10 @@ def validate_result_package(path: str | Path) -> ResultValidation:
         errors.append("direct_runtime_has_declared_nemoclaw_version")
     if runtime.get("nemoclaw_proof") is not False:
         errors.append("nemoclaw_proof_unverified")
+    # The adapter refuses to send job content before the model catalog confirmed
+    # the exact model ID, so a stored result that claims otherwise is not ours.
+    if runtime.get("model_catalog_checked") is not True:
+        errors.append("model_catalog_unverified")
 
     numeric_fields = (
         "estimated_cost_usd",

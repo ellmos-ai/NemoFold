@@ -153,6 +153,12 @@ The live adapter is a separate, irreversible transfer gate. It accepts only the
 official Nebius Token Factory HTTPS origin, rejects redirects, checks a conservative
 cost ceiling before the request, reads the key only from `NEBIUS_API_KEY`, and refuses
 to repeat a package that already contains `result.json` or a durable transfer attempt.
+After the cost gate and before it writes any receipt, it confirms the exact model ID
+against the live `/v1/models` catalog. That call is an authorized metadata read; it
+carries no job content, so a retired or mistyped model ID aborts without a receipt and
+leaves the package fully runnable. A confirmed catalog records
+`model_catalog_checked: true` in the result, and the verifier rejects a result that
+claims otherwise.
 
 ```powershell
 $env:NEBIUS_API_KEY = "<session-only-key>"
@@ -191,12 +197,16 @@ It validates the immutable package, endpoint, explicit Nemotron model, JSON requ
 current caller-supplied prices, conservative maximum cost, job budget, duplicate-run
 guards, and whether a session key is present. Its output always keeps
 `network_called`, `transfer_performed`, and `cloud_proof` false; a pass is readiness,
-not execution evidence and not transfer approval.
+not execution evidence and not transfer approval. It therefore reports
+`model_catalog_checked: false`: the catalog is confirmed by `token-factory-run`, which
+is the only command allowed to touch the network.
 
-The request uses Token Factory's documented `json_object` response mode. NemoFold
-includes its complete output schema inside the bounded user payload and validates the
-returned object locally. It therefore does not depend on model-specific server-side
-JSON-schema enforcement to protect the evidence contract.
+The request uses Token Factory's documented `json_object` response mode and carries
+only documented chat-completion parameters, because one undocumented field that the
+endpoint rejects would spend the single approved run on an HTTP 400. NemoFold includes
+its complete output schema inside the bounded user payload and validates the returned
+object locally. It therefore does not depend on model-specific server-side JSON-schema
+enforcement to protect the evidence contract.
 
 The optional declared NemoClaw version is metadata only. The result records
 `nemoclaw_proof: false`; only a separately captured, sanitized runtime log from the
