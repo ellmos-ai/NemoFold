@@ -27,6 +27,7 @@ WORKFLOW_ORDER = {
     "cleanup_rules": 30,
     "mail_to_case": 40,
     "folder_digest": 50,
+    "daily_arrivals": 55,
     "version_resolver": 60,
     "contact_monitor": 70,
     "bundle_export": 80,
@@ -61,6 +62,7 @@ WORKFLOW_TITLES = {
     "document_registry": "Document Registry",
     "fact_distill": "Fact Distill",
     "synopsis_merge": "Synopsis Merge",
+    "daily_arrivals": "Daily Arrivals",
     "platform_proof": "Platform Proof",
 }
 
@@ -101,9 +103,9 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "folder_digest": (
         "überblick", "ueberblick", "digest", "geändert", "geaendert", "changed",
         "snapshot", "bestandsaufnahme", "was ist neu", "what changed",
-        # "tagesbericht" belongs here, not with report_studio: a daily list of new
-        # files with a short summary is exactly what the digest produces.
-        "tagesbericht", "neue files", "neue dateien", "new files", "dazugekommen",
+        # A daily list of new files is daily_arrivals now, which reports each
+        # arrival's size, content and owner; the digest keeps the broader
+        # new/changed/unchanged/deleted picture.
     ),
     "version_resolver": (
         "version", "fassung", "neuesten stand", "neueste stand", "aktuellste",
@@ -115,6 +117,10 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "report_studio": (
         "bericht", "report", "pdf", "docx", "odt", "ausdruck",
+    ),
+    "daily_arrivals": (
+        "tagesbericht", "neue files", "neue dateien", "new files", "dazugekommen",
+        "was ist angekommen", "neu im ordner", "eingang pruefen", "eingang prüfen",
     ),
     "synopsis_merge": (
         "synopse", "synopsis", "zusammenführ", "zusammenfuehr", "zusammenfassen zu einem",
@@ -239,14 +245,15 @@ ROADMAP_SERVICES = (
         keywords=("einsteller", "hochgeladen von", "wer hat hochgeladen", "uploader",
                   "eingestellt von"),
         reason=(
-            "Folder Digest records the file name, a short summary and the change state, "
-            "but not the account that placed a file. Ownership attribution is a planned "
-            "extension, and a guessed author would be worse than none."
+            "Daily Arrivals names the owning account wherever the platform can answer - on "
+            "Linux and macOS it does. On Windows the standard library cannot, and NemoFold "
+            "does not shell out to another program to find out, so the field stays empty "
+            "with the reason attached rather than being guessed."
         ),
-        alternative_workflows=("folder_digest",),
+        alternative_workflows=("daily_arrivals",),
         approximation=(
-            "Today's approximation: the daily digest names every new file with its short "
-            "content and its hash, which identifies the file even without an author."
+            "Today's approximation: the arrivals report names every new file with its size, "
+            "time and short content, and states per run whether the owner could be read."
         ),
     ),
     RoadmapService(
@@ -390,6 +397,11 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
         questions.append("Which exact questions should be asked of the sources?")
     elif workflow == "smart_inbox":
         questions.append("Which target folder should the sorted files move into?")
+    elif workflow == "daily_arrivals":
+        questions.append(
+            "Which earlier run should this compare against? Without a named snapshot every "
+            "file counts as new."
+        )
     elif workflow == "document_registry":
         questions.append(
             "Which columns should the table carry, or which template fits "
@@ -454,6 +466,11 @@ def _why(workflow: str) -> str:
             "Surfaces who the sources say is responsible, with quotes, so a recipient is "
             "chosen from evidence rather than memory."
         ),
+        "daily_arrivals": (
+            "Compares the folder against a snapshot you name and reports every new file "
+            "with its size, time and a short readable content, naming the owner where the "
+            "platform can and the reason where it cannot."
+        ),
         "synopsis_merge": (
             "Folds the approved documents into one synopsis, keeps the source and line "
             "behind every paragraph, and shows disagreeing labels as conflict blocks "
@@ -496,6 +513,8 @@ def _parameters_for(workflow: str, text: str) -> dict[str, Any]:
     if workflow == "evidence_analyst":
         return {"analysis_mode": "local_extractive", "max_chunks": 64}
     wants_pdf = _mentions(text.casefold(), "pdf")
+    if workflow == "daily_arrivals":
+        return {"summary_length": 3, "export_task_snippet": True, "formats": ["md"]}
     if workflow == "synopsis_merge":
         return {"formats": ["pdf", "md"] if wants_pdf else ["md"]}
     if workflow == "fact_distill":

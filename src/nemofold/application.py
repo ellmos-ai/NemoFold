@@ -28,6 +28,12 @@ from .contracts import (
     RunStatus,
     to_primitive,
 )
+from .daily_arrivals import (
+    OWNER_NOTES,
+    arrivals_markdown,
+    build_arrivals,
+    windows_task_xml,
+)
 from .document_extract import extract_document_text
 from .document_index import DocumentIndex, SearchHit
 from .document_registry import (
@@ -1763,6 +1769,92 @@ def _execute_synopsis_merge(
     )
 
 
+def _execute_daily_arrivals(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Report the files that arrived since the last snapshot of this folder."""
+    texts = _read_text_sources(inventory)
+    title = job.parameters.get("title") or "Daily arrivals"
+    if not isinstance(title, str) or not title.strip():
+        raise ValueError("title must be a non-empty string")
+    report = build_arrivals(
+        tuple(
+            (record.source_id, record.display_name, record.path)
+            for record in inventory.records
+        ),
+        texts,
+        inventory.new_source_ids,
+        max_sentences=int(job.parameters.get("summary_length", 3)),
+    )
+    output = Path(job.output_dir)
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(
+            output / f"{run_id}.arrivals.md",
+            arrivals_markdown(report, title=title, output_dir=str(output)),
+            "daily-arrivals",
+        )
+    ]
+    if job.parameters.get("export_task_snippet", True):
+        # A file the user installs. NemoFold never registers a scheduled task.
+        artifacts.append(
+            write_text_artifact(
+                output / f"{run_id}.daily-task.xml",
+                windows_task_xml(
+                    job_path=str(output / f"{run_id}.job.json"),
+                    run_at=str(job.parameters.get("task_run_at", "07:00:00")),
+                ),
+                "scheduled-task-template",
+            )
+        )
+    claims = tuple(
+        Claim(
+            statement=(
+                f"{arrival.display_name} arrived ({arrival.size_bytes} bytes, "
+                f"modified {arrival.modified or 'unreadable'})"
+                + (f", owner {arrival.owner}" if arrival.owner else "")
+            ),
+            evidence=(
+                EvidenceLocator(
+                    source_id=arrival.source_id,
+                    quote=arrival.summary or arrival.display_name,
+                ),
+            ),
+        )
+        for arrival in report.arrivals
+    )
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=texts,
+        cited_source_ids={arrival.source_id for arrival in report.arrivals},
+    )
+    formats = tuple(job.parameters.get("formats", ["md"]))
+    if claims:
+        artifacts.extend(
+            render_report_formats(
+                ReportDocument(title=title, claims=claims, coverage=coverage),
+                output,
+                basename=f"{run_id}_arrivals",
+                formats=formats,
+            )
+        )
+    return (
+        ("inventory_scanned", "arrivals_compared", "standing_routine_documented"),
+        tuple(artifacts),
+        coverage,
+        {
+            "arrivals": report.count,
+            "owner_status": report.owner_status,
+            "owner_note": OWNER_NOTES.get(report.owner_status, ""),
+            "new_source_ids": list(inventory.new_source_ids),
+            "task_snippet_exported": bool(job.parameters.get("export_task_snippet", True)),
+            "task_installed_by_nemofold": False,
+        },
+    )
+
+
 def _dispatch_workflow(
     job: JobEnvelope,
     inventory: InventoryResult,
@@ -1786,6 +1878,8 @@ def _dispatch_workflow(
         return _execute_fact_distill(job, inventory, run_id=run_id)
     if job.workflow == "synopsis_merge":
         return _execute_synopsis_merge(job, inventory, run_id=run_id)
+    if job.workflow == "daily_arrivals":
+        return _execute_daily_arrivals(job, inventory, run_id=run_id)
     if job.workflow == "platform_proof":
         return _execute_evidence(job, inventory, run_id=run_id, platform_proof=True)
     if job.workflow == "storage_policy":

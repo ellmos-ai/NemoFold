@@ -203,14 +203,21 @@ def test_facts_request_ends_in_a_real_pdf_report(tmp_path) -> None:
 def test_daily_report_request_names_the_missing_uploader_field(tmp_path) -> None:
     plan = plan_voyage(DAILY_REQUEST, input_roots=(str(tmp_path),))
 
-    # File name and short content are what Folder Digest already produces.
-    assert [step.workflow for step in plan.steps] == ["folder_digest"]
+    # Wave 1 activated daily_arrivals, which reports name, size, time and a
+    # short content per new file, so this runs on the active path.
+    assert [step.workflow for step in plan.steps] == ["daily_arrivals"]
+    assert plan.steps[0].job["parameters"]["summary_length"] == 3
+    assert any(
+        "Which earlier run should this compare against?" in question
+        for question in plan.steps[0].questions_to_user
+    )
 
+    # The owner field is the one part that stays platform-dependent, and the
+    # answer says exactly where it works instead of calling it unavailable.
     uploader = next(item for item in plan.unavailable if item.key == "uploader_attribution")
-    assert "not the account that placed a file" in uploader.reason
-    assert "planned extension" in uploader.reason
-    assert "guessed author would be worse than none" in uploader.reason
-    assert uploader.alternative_workflows == ("folder_digest",)
+    assert "on Linux and macOS it does" in uploader.reason
+    assert "does not shell out to another program" in uploader.reason
+    assert uploader.alternative_workflows == ("daily_arrivals",)
 
     # "jeden Tag" is a repetition request and gets the two honest answers.
     assert plan.recurring is not None
@@ -233,9 +240,10 @@ def test_telegram_request_prepares_a_draft_and_refuses_the_channel(tmp_path) -> 
 
 
 def test_checking_a_folder_is_not_mistaken_for_an_evidence_analysis(tmp_path) -> None:
-    # "prüfe" alone is too generic to mean an evidence run; the digest answers it.
+    # "prüfe" alone is too generic to mean an evidence run. Since wave 1 the
+    # more specific daily_arrivals answers it, not the broader digest.
     plan = plan_voyage("Prüfe neue Files im Ordner", input_roots=(str(tmp_path),))
-    assert [step.workflow for step in plan.steps] == ["folder_digest"]
+    assert [step.workflow for step in plan.steps] == ["daily_arrivals"]
 
     # The specific evidence words still route to the analyst.
     analysis = plan_voyage("prüfe die verträge auf widersprüche", input_roots=(str(tmp_path),))

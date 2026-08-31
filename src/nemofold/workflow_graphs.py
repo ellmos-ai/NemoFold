@@ -35,6 +35,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Show connection and proof status while keeping local readiness, provider execution, "
         "Nebius competition evidence, and NemoClaw runtime evidence explicitly separate."
     ),
+    "daily_arrivals": (
+        "Compare a folder against a named snapshot and report each new file with its size, "
+        "time, short content and owner, stating plainly where the platform cannot name one."
+    ),
     "synopsis_merge": (
         "Merge several approved documents into one synopsis, keep the source and line behind "
         "every paragraph, and show disagreeing labels as conflict blocks instead of choosing."
@@ -130,6 +134,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("nebius", "Nebius", "competition proof"),
         ("nemoclaw", "NemoClaw", "runtime proof"),
         ("report", "Status ledger", "no inferred proof"),
+    ),
+    "daily_arrivals": (
+        ("operation", "Inventory", "approved corpus"),
+        ("gate", "Baseline", "named snapshot"),
+        ("operation", "Arrivals", "name + size + content"),
+        ("operation", "Owner", "or the reason why not"),
+        ("operation", "Routine", "task file you install"),
     ),
     "synopsis_merge": (
         ("operation", "Inventory", "approved corpus"),

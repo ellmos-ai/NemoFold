@@ -29,6 +29,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "document_registry",
         "fact_distill",
         "synopsis_merge",
+        "daily_arrivals",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -118,6 +119,19 @@ WORKFLOW_PARAMETER_FIELDS = {
     ),
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
     "synopsis_merge": frozenset({"formats", "title"}),
+    "daily_arrivals": frozenset(
+        {
+            "export_task_snippet",
+            "formats",
+            # The baseline is named explicitly, exactly as folder_digest does it:
+            # "new since some snapshot the caller picked" is a fact, "new since
+            # whatever ran last" would be a guess about the caller's intent.
+            "since_run_id",
+            "summary_length",
+            "task_run_at",
+            "title",
+        }
+    ),
     "fact_distill": frozenset(
         {"dedupe_scope", "focus_terms", "formats", "max_facts_per_source", "title"}
     ),
@@ -244,6 +258,17 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
         choice("citation_granularity", {"line_or_page"})
         if job.parameters.get("analysis_mode") == "nemotron" and not job.model_id:
             raise ValueError("nemotron analysis_mode requires model_id")
+    elif job.workflow == "daily_arrivals":
+        length = job.parameters.get("summary_length", 3)
+        if isinstance(length, bool) or not isinstance(length, int) or not 1 <= length <= 20:
+            raise ValueError("summary_length must be between 1 and 20")
+        if "export_task_snippet" in job.parameters and not isinstance(
+            job.parameters["export_task_snippet"], bool
+        ):
+            raise ValueError("export_task_snippet must be a boolean")
+        run_at = job.parameters.get("task_run_at", "07:00:00")
+        if not isinstance(run_at, str) or not re.fullmatch(r"\d{2}:\d{2}:\d{2}", run_at):
+            raise ValueError("task_run_at must look like HH:MM:SS")
     elif job.workflow == "fact_distill":
         choice("dedupe_scope", {"exact", "normalized"})
         focus = job.parameters.get("focus_terms", [])
