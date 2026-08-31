@@ -195,3 +195,24 @@ body[data-engine-room="open"]{overflow:hidden}
 body[data-engine-room="open"] .engine-handle{display:none}
 }
 @media(prefers-reduced-motion:reduce){.engine-drawer{transition:none}}
+.drawer-group{margin:14px 0 0;border:1px solid var(--line-dark);background:var(--white)}
+.console .instrument-anchor{border-bottom:0;background:linear-gradient(180deg,#f2f0e7,#e8e6dc);color:var(--deep)}
+.console .instrument-anchor:hover{background:#e4e8e1}
+.console .instrument-anchor[aria-expanded="true"]{border-bottom:1px solid var(--line)}
+.console .instrument-anchor .instrument-icon{color:var(--sea)}
+.console .collapse-panel{padding:15px 16px 17px}
+.console .collapse-panel.form-grid{display:grid}
+.console .collapse-panel.form-grid[hidden]{display:none}
+fieldset .drawer-group+.drawer-group{margin-top:10px}
+#previewButton .instrument-icon{margin-right:8px;vertical-align:-4px}
+.actions button{display:inline-flex;align-items:center}
+.card-open{display:inline-flex;align-items:center;gap:8px}
+.instrument-icon.wheel{transition:transform .5s ease}
+.engine-handle:hover .wheel,.card-open:hover .wheel,.drawer-close:hover .wheel{transform:rotate(72deg)}
+.instrument-icon.radar{animation:nf-sweep 7s linear infinite}
+#previewButton:hover .stethoscope{color:var(--signal)}
+.instrument-icon.stethoscope{transition:color .3s ease}
+.instrument-anchor[aria-expanded="true"] .instrument-icon{color:var(--cyan);filter:drop-shadow(0 0 3px rgba(120,209,202,.55))}
+.console .instrument-anchor[aria-expanded="true"] .instrument-icon{color:var(--sea);filter:none}
+@keyframes nf-sweep{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.instrument-icon.radar{animation:none}.instrument-icon.wheel{transition:none}}

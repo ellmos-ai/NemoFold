@@ -23,9 +23,15 @@
       <circle cx="16" cy="16" r="12.5"/><circle cx="16" cy="16" r="7.5"/><circle cx="16" cy="16" r="2"/>
       <path class="radar-needle" d="M16 16 26 9"/>
     </symbol>
+    <symbol id="icon-dial" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="11.5"/>
+      <path d="M16 16 22 10.5"/><path d="M6.5 16h2M23.5 16h2M16 6.5v2"/>
+    </symbol>
     <symbol id="icon-lifebuoy" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="12.5" stroke="#d9705a" stroke-width="3.4"/>
       <circle cx="16" cy="16" r="12.5"/><circle cx="16" cy="16" r="5.5"/>
-      <path class="buoy-band" d="M16 3.5v7M16 21.5v7M3.5 16h7M21.5 16h7"/>
+      <path d="M16 3.5v7M16 21.5v7M3.5 16h7M21.5 16h7" stroke="#f6f2e6" stroke-width="3.4"/>
+      <path d="M16 3.5v7M16 21.5v7M3.5 16h7M21.5 16h7"/>
     </symbol>
   </svg>
   <header class="masthead">
@@ -265,20 +271,9 @@
           <fieldset>
             <legend>01 · Mission</legend>
             <div class="form-grid">
-              <div id="draftInbox" class="draft-inbox wide">
-                <label>Prepared job inbox <span>from CLI, MCP or local API</span><select id="draftSelect"><option value="">No prepared drafts loaded</option></select></label>
-                <button type="button" id="draftRefresh" class="secondary">Refresh inbox</button>
-                <button type="button" id="draftLoad" disabled>Load for review</button>
-                <small id="draftState">Drafts never retain external-transfer or file-action approval.</small>
-              </div>
               <div class="workflow-choice">
                 <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>platform_proof</option></select></label>
                 <p id="workflowHint" class="selection-description">Smart Inbox is the Document Center entry point. Storage Policies are its controlled routing and retention settings.</p>
-              </div>
-              <div class="run-id-control">
-                <label class="run-id-toggle"><input id="customRunId" type="checkbox"> Use a custom Run ID</label>
-                <input id="runId" autocomplete="off" disabled placeholder="Assigned automatically on each request">
-                <small id="runIdState">No request assigned yet.</small>
               </div>
               <div class="prompt-field wide">
                 <label>Questions or prompts <span>one task per line · all entries are processed</span><textarea id="questions" rows="4">When does the current policy begin?
@@ -297,6 +292,26 @@ Which earlier wording changed?</textarea></label>
                 <div id="workflowMap" class="workflow-map" role="list" aria-label="Selected workflow steps"></div>
               </section>
             </div>
+            <div class="drawer-group">
+              <button type="button" class="instrument-anchor" data-collapse="grpRunIdentity" aria-expanded="false" aria-controls="grpRunIdentity">
+                <svg class="instrument-icon dial" aria-hidden="true"><use href="#icon-dial"></use></svg>
+                <span>Run identity &amp; prepared jobs</span>
+                <i class="chevron" aria-hidden="true"></i>
+              </button>
+              <div id="grpRunIdentity" class="collapse-panel form-grid" hidden>
+              <div id="draftInbox" class="draft-inbox wide">
+                <label>Prepared job inbox <span>from CLI, MCP or local API</span><select id="draftSelect"><option value="">No prepared drafts loaded</option></select></label>
+                <button type="button" id="draftRefresh" class="secondary">Refresh inbox</button>
+                <button type="button" id="draftLoad" disabled>Load for review</button>
+                <small id="draftState">Drafts never retain external-transfer or file-action approval.</small>
+              </div>
+              <div class="run-id-control">
+                <label class="run-id-toggle"><input id="customRunId" type="checkbox"> Use a custom Run ID</label>
+                <input id="runId" autocomplete="off" disabled placeholder="Assigned automatically on each request">
+                <small id="runIdState">No request assigned yet.</small>
+              </div>
+              </div>
+            </div>
           </fieldset>
           <fieldset>
             <legend>02 · Bounded territory</legend>
@@ -305,6 +320,14 @@ Which earlier wording changed?</textarea></label>
                 <label>Approved input roots <span>one per line</span><textarea id="inputRoots" rows="2">examples/synthetic-home</textarea></label>
                 <button type="button" class="path-add secondary" data-folder-target="inputRoots">+ Add source folder</button>
               </div>
+            </div>
+            <div class="drawer-group">
+              <button type="button" class="instrument-anchor" data-collapse="grpOutputs" aria-expanded="false" aria-controls="grpOutputs">
+                <svg class="instrument-icon dial" aria-hidden="true"><use href="#icon-dial"></use></svg>
+                <span>Target folders &amp; output location</span>
+                <i class="chevron" aria-hidden="true"></i>
+              </button>
+              <div id="grpOutputs" class="collapse-panel form-grid" hidden>
               <div class="path-field wide">
                 <label>Approved target roots <span>one per line · required only for action workflows</span><textarea id="targetRoots" rows="2" placeholder="examples/synthetic-home/archive"></textarea></label>
                 <button type="button" class="path-add secondary" data-folder-target="targetRoots">+ Add target folder</button>
@@ -313,11 +336,18 @@ Which earlier wording changed?</textarea></label>
                 <label>Output directory<input id="outputDir" value="run-reports/web-console"></label>
                 <button type="button" class="path-add secondary" data-folder-target="outputDir">Choose output folder</button>
               </div>
+              </div>
             </div>
           </fieldset>
           <fieldset>
             <legend>03 · Authority and budget</legend>
-            <div class="form-grid">
+            <div class="drawer-group">
+              <button type="button" class="instrument-anchor" data-collapse="grpAuthority" aria-expanded="false" aria-controls="grpAuthority">
+                <svg class="instrument-icon dial" aria-hidden="true"><use href="#icon-dial"></use></svg>
+                <span>Privacy, action mode, model &amp; budget</span>
+                <i class="chevron" aria-hidden="true"></i>
+              </button>
+              <div id="grpAuthority" class="collapse-panel form-grid" hidden>
               <label>Privacy<select id="privacy"><option>local_only</option><option>preview</option><option>allow_once</option></select></label>
               <label>Action mode<select id="actionMode"><option>dry_run</option><option>apply</option></select></label>
               <label>Model ID <span>optional</span><input id="modelId" placeholder="nvidia/nemotron-3-super-120b-a12b"></label>
@@ -332,11 +362,18 @@ Which earlier wording changed?</textarea></label>
               </label>
               <label class="wide">Workflow parameters <span>strict JSON</span><textarea id="parameters" rows="4">{"classification_policy": "suffix_routes", "routes": [{"suffixes": [".txt", ".md"], "target_root": 0}], "allowed_extensions": [".txt", ".md"], "original_policy": "move"}</textarea></label>
               <p class="scale-note wide">The approved corpus is indexed locally without a demo-size cap. <code>max_chunks</code> controls relevant evidence per task, not total files. Large-corpus mode raises the evidence window while retaining an explicit resource ceiling.</p>
+              </div>
             </div>
           </fieldset>
           <fieldset id="providerFieldset" class="provider-fieldset">
             <legend>04 · Reasoning worker</legend>
-            <div class="form-grid">
+            <div class="drawer-group">
+              <button type="button" class="instrument-anchor" data-collapse="grpProvider" aria-expanded="false" aria-controls="grpProvider">
+                <svg class="instrument-icon dial" aria-hidden="true"><use href="#icon-dial"></use></svg>
+                <span>Reasoning worker &amp; transfer approval</span>
+                <i class="chevron" aria-hidden="true"></i>
+              </button>
+              <div id="grpProvider" class="collapse-panel form-grid" hidden>
               <label>Execution route
                 <select id="executionMode">
                   <option value="local-core">NemoFold local engine</option>
@@ -365,6 +402,7 @@ Which earlier wording changed?</textarea></label>
                 <input id="externalApproval" type="checkbox">
                 <span><b>Approve this external transfer once</b>The selected, pseudonymized evidence package may be sent to the named provider. Ambient folder access and file authority remain local.</span>
               </label>
+              </div>
             </div>
             <p id="providerHint" class="form-hint">Use Preview first to inspect the exact source scope. Provider runtime health is established only by a real bounded run.</p>
           </fieldset>
@@ -383,7 +421,7 @@ Which earlier wording changed?</textarea></label>
             </dl>
             <p id="privacyMessage">Preview prepares the selected context locally and reports replacement categories without exposing original values.</p>
           </section>
-          <div class="actions"><button type="button" id="previewButton" class="secondary">Preview exact scope</button><button type="submit" id="runButton">Run locally</button></div>
+          <div class="actions"><button type="button" id="previewButton" class="secondary"><svg class="instrument-icon stethoscope" aria-hidden="true"><use href="#icon-stethoscope"></use></svg>Diagnose exact scope</button><button type="submit" id="runButton">Run locally</button></div>
         </form>
         <section class="result-block" aria-labelledby="resultTitle">
           <div class="result-label"><span>RUN DOSSIER</span><h3 id="resultTitle">Evidence output</h3></div>

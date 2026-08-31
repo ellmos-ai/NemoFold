@@ -918,3 +918,27 @@ def test_engine_room_is_a_drawer_rather_than_a_permanent_page_footer(tmp_path) -
     assert "setEngineDrawer" in script
     assert "toggleCollapse" in script
     assert '.engine-drawer[data-open="true"]{visibility:visible;transform:none}' in stylesheet
+
+
+def test_engine_room_opens_with_the_central_controls_only(tmp_path) -> None:
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/analysis", timeout=5) as response,  # noqa: S310
+    ):
+        html = response.read().decode()
+
+    # Central controls stay outside every collapse panel.
+    for control in ('id="workflow"', 'id="questions"', 'id="inputRoots"', 'id="previewButton"'):
+        assert control in html
+    # Secondary blocks start collapsed behind an instrument anchor.
+    for group in ("grpRunIdentity", "grpOutputs", "grpAuthority", "grpProvider", "scopeLedger"):
+        assert f'data-collapse="{group}"' in html
+        assert f'id="{group}"' in html
+        assert f'aria-controls="{group}"' in html
+    assert html.count('aria-expanded="false"') >= 5
+    assert html.count("collapse-panel") >= 5
+    assert 'id="grpAuthority" class="collapse-panel form-grid" hidden' in html
+    assert 'id="draftInbox"' in html.split('id="grpRunIdentity"', 1)[1]
+    assert 'id="runId"' in html.split('id="grpRunIdentity"', 1)[1]
+    assert 'id="outputDir"' in html.split('id="grpOutputs"', 1)[1]
+    assert "Diagnose exact scope" in html
