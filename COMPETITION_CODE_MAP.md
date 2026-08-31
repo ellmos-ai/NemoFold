@@ -40,3 +40,8 @@ Whitespace-normalized, rerunnable design-asset output is captured in commit
 The public-release security hardening, provider-response redaction, stored action-plan
 revalidation, governance documents, and 132-test local acceptance are captured in
 commit `f3f47d700c3daa39f6dd38f5365fe59dc9507c02`.
+The provider-neutral evidence core, Ollama and LM Studio adapters, personal Codex and
+Claude Code bridges, official OpenAI and Anthropic API adapters, shared CLI/loopback
+HTTP/MCP surfaces, finite budget gates, quote-bound receipts, and 182-test local
+acceptance are captured in commit
+`9cc9d4380725a5f707517cc28b6a5ed8a3d9dfc2`.
