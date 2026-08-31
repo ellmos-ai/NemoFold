@@ -31,6 +31,10 @@ sanitized runtime test exists.
 | Version Resolver | Per-family resolution, explicit validity/date/version priority, named file-time fallback, and line comparison |
 | Contact Monitor | Source-quoted contact and responsibility candidates, named snapshot comparison, and no automatic deletion |
 | Report & Artifact Studio | A validated analysis contract rendered to Markdown, TXT, PDF, DOCX, and ODT |
+| Document Registry | Declared columns extracted from every approved document into one table; each filled cell keeps its source and line, an unanswered cell stays empty, exported as JSON, CSV and the full report family |
+| Fact Distill | Quotable sentences per source with repeated statements struck from the findings and every struck occurrence kept visible in its own appendix |
+| Synopsis Merge | Section-wise merge of several documents with a source anchor per paragraph and disagreeing labels shown as conflict blocks instead of a silent choice |
+| Daily Arrivals | Comparison against a named snapshot with name, size, time and short content per new file, the owner where the platform can name one, and a task file you install yourself |
 | NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; the real competition run remains open |
 
 The Analysis Lab also includes the local **Research Notebook** workspace. It keeps an

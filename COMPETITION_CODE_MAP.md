@@ -13,6 +13,13 @@ AI Hackathon after the submission window opened on 26 August 2026.
 | `schemas/` | NEW_CORE | Machine-readable public job schema |
 | `docs/` | NEW_CORE | Public architecture and integration documentation |
 
+Document Services wave 1 - the `document_registry`, `fact_distill`, `synopsis_merge`
+and `daily_arrivals` workflows with their modules, contracts, console cards and
+Captain's Desk intents - is classified NEW_CORE. The ellmos and BACH document-analysis
+sources on this machine were read as prior art for the shape of the problem; no code
+was copied from them, and each workflow was written against NemoFold's own job
+contract, evidence and coverage machinery.
+
 No pre-existing FolderHome source code is present in this repository. Historical ideas
 informed the product scope, but the current checkout was built from a new empty Git
 repository. The first implementation snapshot is Git commit
