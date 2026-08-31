@@ -556,6 +556,167 @@ function setEngineDrawer(open, {moveFocus = true} = {}) {
 }
 
 const reducedMotionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
+let wizardSurfaceEnabled = false;
+let lastVoyageRequest = null;
+
+function pageForWorkflow(workflow) {
+  const match = Object.entries(pageConfiguration)
+    .find(([, configuration]) => configuration.workflows.includes(workflow));
+  return match ? match[0] : "document";
+}
+
+function routeForPage(page) {
+  for (const [path, name] of pageByPath) if (name === page) return path;
+  return "/document-center";
+}
+
+function deskLine(parent, tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  parent.append(node);
+  return node;
+}
+
+function renderVoyagePlan(plan) {
+  const answer = $("deskAnswer");
+  answer.textContent = "";
+  lastVoyageRequest = plan.request_text;
+
+  for (const note of plan.notes || []) deskLine(answer, "p", "desk-note", note);
+
+  if (plan.steps?.length) {
+    const heading = deskLine(answer, "p", "kicker", "PREPARED VOYAGE");
+    heading.id = "voyageHeading";
+    const list = deskLine(answer, "div", "voyage-steps");
+    list.setAttribute("role", "list");
+    for (const step of plan.steps) {
+      const card = deskLine(list, "article", "voyage-step");
+      card.setAttribute("role", "listitem");
+      deskLine(card, "span", "voyage-order", `STEP ${step.order} · ${step.workflow}`);
+      deskLine(card, "b", null, step.title);
+      deskLine(card, "p", null, step.why);
+      if (step.reads_previous_step) {
+        deskLine(card, "small", "voyage-handoff", "Reads the previous step's output.");
+      }
+      if (step.questions_to_user?.length) {
+        deskLine(card, "span", "voyage-open-label", "STILL OPEN");
+        const open = deskLine(card, "ul", "voyage-open");
+        for (const question of step.questions_to_user) deskLine(open, "li", null, question);
+      }
+    }
+  }
+
+  for (const item of plan.unavailable || []) {
+    const block = deskLine(answer, "div", "voyage-unavailable");
+    deskLine(block, "span", null, `NOT ACTIVE · ${item.label}`);
+    deskLine(block, "p", null, item.reason);
+    deskLine(block, "p", "voyage-approximation", item.approximation);
+  }
+
+  if (plan.recurring?.requested) {
+    const block = deskLine(answer, "div", "voyage-recurring");
+    deskLine(block, "span", null, "REPETITION");
+    deskLine(block, "p", null, plan.recurring.message);
+    const options = deskLine(block, "ul", null);
+    for (const option of plan.recurring.options) deskLine(options, "li", null, option);
+  }
+
+  if (plan.steps?.length) {
+    const actions = deskLine(answer, "div", "voyage-actions");
+    const prepare = document.createElement("button");
+    prepare.type = "button";
+    prepare.id = "deskPrepare";
+    prepare.className = "card-open";
+    prepare.append(instrumentIcon("wheel"), "Prepare voyage");
+    prepare.addEventListener("click", prepareVoyage);
+    actions.append(prepare);
+    deskLine(
+      actions,
+      "small",
+      null,
+      "Preparing writes drafts into the job inbox. It runs nothing and sends nothing."
+    );
+  }
+}
+
+async function askTheCaptain(event) {
+  event?.preventDefault();
+  const answer = $("deskAnswer");
+  if (!wizardSurfaceEnabled) {
+    answer.textContent = "";
+    deskLine(
+      answer,
+      "p",
+      "desk-note",
+      "The captain's desk is a loopback-only surface and stays closed on this server."
+    );
+    return;
+  }
+  const text = $("deskRequest").value.trim();
+  if (!text) {
+    answer.textContent = "";
+    deskLine(answer, "p", "desk-note", "Write one sentence about what you need.");
+    return;
+  }
+  answer.textContent = "";
+  deskLine(answer, "p", "desk-note", "Charting…");
+  try {
+    const response = await fetch("/api/wizard", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({text, context: {input_roots: lines($("deskRoots").value)}})
+    });
+    const plan = await response.json();
+    if (!response.ok || plan.ok !== true) {
+      throw new Error(plan.detail || plan.error || `request failed (${response.status})`);
+    }
+    renderVoyagePlan(plan);
+  } catch (error) {
+    answer.textContent = "";
+    deskLine(answer, "p", "desk-note", `No plan: ${error.message}`);
+  }
+}
+
+async function prepareVoyage() {
+  const answer = $("deskAnswer");
+  const button = $("deskPrepare");
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch("/api/wizard-prepare", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        text: lastVoyageRequest || $("deskRequest").value.trim(),
+        context: {input_roots: lines($("deskRoots").value)}
+      })
+    });
+    const result = await response.json();
+    if (!response.ok || result.prepared !== true) {
+      throw new Error(result.detail || result.error || `request failed (${response.status})`);
+    }
+    const receipt = deskLine(answer, "div", "voyage-receipt");
+    deskLine(receipt, "span", null, `${result.drafts.length} DRAFTS PREPARED`);
+    const list = deskLine(receipt, "ul", null);
+    for (const draft of result.drafts) deskLine(list, "li", null, draft.name);
+    const first = result.drafts[0];
+    const page = pageForWorkflow(first.workflow);
+    const link = deskLine(receipt, "a", "voyage-link", "Open the engine room →");
+    link.href = `${routeForPage(page)}?workflow=${encodeURIComponent(first.workflow)}`;
+    deskLine(
+      receipt,
+      "small",
+      null,
+      "They wait in the prepared job inbox. Nothing has run and no approval was stored."
+    );
+    receipt.scrollIntoView({behavior: reducedMotionQuery?.matches ? "auto" : "smooth",
+      block: "nearest"});
+  } catch (error) {
+    deskLine(answer, "p", "desk-note", `Not prepared: ${error.message}`);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
 
 function toggleCollapse(button) {
   const panel = $(button.getAttribute("aria-controls"));
@@ -1635,6 +1796,7 @@ async function loadStatus() {
     artifactSurfaceEnabled = status.artifact_surface_enabled === true;
     draftSurfaceEnabled = status.draft_surface_enabled === true;
     notebookSurfaceEnabled = status.notebook_surface_enabled === true;
+    wizardSurfaceEnabled = status.wizard_surface_enabled === true;
     configureProviders(status);
     renderConnectionStatus(status);
     renderCommandBridge(status);
@@ -1667,6 +1829,9 @@ async function loadStatus() {
       }
     }
     renderTaskCards();
+    if ($("deskRoots") && !$("deskRoots").value.trim()) {
+      $("deskRoots").value = lines($("inputRoots").value)[0] || "";
+    }
     await loadDraftInbox();
     await loadResearchNotebooks();
     await loadArtifacts();
@@ -1705,6 +1870,7 @@ if (requestedWorkflow && pageConfiguration[currentPage].workflows.includes(reque
 }
 $("runId").value = "";
 $("workflow").addEventListener("change", () => { applyWorkflowDefaults(); renderTaskCards(); });
+if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
 if ($("homeGlanceLook")) $("homeGlanceLook").addEventListener("click", loadHomeGlance);
 if ($("echoCheckRun")) $("echoCheckRun").addEventListener("click", loadEcho);
 $("executionMode").addEventListener("change", () => { resetPrivacyCenter(); updateProviderPanel(); });

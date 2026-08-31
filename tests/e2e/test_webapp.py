@@ -1117,3 +1117,60 @@ def test_captains_desk_is_closed_on_a_network_exposed_server(tmp_path) -> None:
 
     assert refused.value.code == 403
     assert json.load(refused.value)["error"] == "wizard_surface_loopback_only"
+
+
+def test_captains_desk_is_served_on_the_overview_only(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        pages = {}
+        for route in ("/", "/document-center"):
+            with urlopen(base_url + route, timeout=5) as response:  # noqa: S310
+                pages[route] = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    overview = pages["/"]
+    assert 'id="captainsDesk"' in overview
+    assert 'data-page-section="overview"' in overview
+    assert 'id="deskRequest"' in overview
+    assert 'id="deskRoots"' in overview
+    assert 'aria-live="polite"' in overview
+    assert "ASK THE CAPTAIN" in overview
+    # One desk, one place: the markup is shared, the section is overview-scoped.
+    assert 'id="captainsDesk"' in pages["/document-center"]
+    assert 'data-page-section="overview"' in pages["/document-center"]
+    # The desk states its limit in the surface itself, not only in the docs.
+    assert "It plans only: nothing is executed" in overview
+    for symbol in ("askTheCaptain", "prepareVoyage", "renderVoyagePlan", "wizardSurfaceEnabled"):
+        assert symbol in script
+
+
+def test_wizard_prepare_answers_when_the_draft_inbox_is_out_of_scope(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    # Allow only the source folder, so the draft inbox itself is out of scope.
+    server = build_server(
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(documents),)),
+        ),
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    try:
+        with pytest.raises(HTTPError) as refused:
+            post_json(
+                f"http://{host}:{port}/api/wizard-prepare",
+                {"text": "schreib eine mail als entwurf", "context": {"input_roots": []}},
+            )
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+    # A refusal must arrive as an answer, never as a dropped connection.
+    assert refused.value.code == 400
+    body = json.load(refused.value)
+    assert body["error"] == "wizard_draft_rejected"
+    assert "allow roots" in body["detail"]

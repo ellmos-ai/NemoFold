@@ -254,3 +254,43 @@ body[data-page="analysis"] .porthole-life{display:block}
 @media(prefers-reduced-motion:reduce){.chart-detail,.chart-band .chevron{transition:none}}
 .chart-fold{display:flex;width:42px;height:42px;flex:0 0 auto;align-self:center;align-items:center;justify-content:center;border:1px solid #a4823c;border-radius:50%;background:rgba(248,240,220,.93);box-shadow:0 1px 4px rgba(43,29,14,.28)}
 .chart-band:hover .chart-fold{background:#fdf7e6}
+.captains-desk{margin-top:30px;border:1px solid #14414c;background:linear-gradient(165deg,#0a2731,#06202a 62%);color:#eef3f0;padding:26px 26px 24px}
+.desk-head .kicker{margin:0;color:var(--cyan)}
+.desk-head h2{margin:7px 0 0;font:400 clamp(24px,3.1vw,34px)/1.05 var(--serif);color:#f7f3e7;letter-spacing:-.02em}
+.desk-head>p{max-width:760px;margin:11px 0 0;color:#b9d0ce;font-size:13px;line-height:1.55}
+.desk-form{margin-top:20px}
+.desk-request{display:flex;min-width:0;flex-direction:column;gap:6px;color:var(--cyan);font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.desk-request textarea{width:100%;min-width:0;border:1px solid #2c5f6b;background:rgba(4,22,29,.72);padding:12px 13px;color:#f2f6f3;font:13px/1.5 var(--mono);resize:vertical}
+.desk-request textarea::placeholder{color:#6f8f92}
+.desk-controls{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-top:13px}
+.desk-controls label{display:flex;min-width:0;flex:1 1 260px;flex-direction:column;gap:5px;color:var(--cyan);font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.desk-controls label span{color:#8fb0b1;font-weight:400;letter-spacing:0;text-transform:none}
+.desk-controls input{min-width:0;border:1px solid #2c5f6b;background:rgba(4,22,29,.72);padding:9px 11px;color:#f2f6f3;font:11px var(--mono)}
+#deskPlan{border:1px solid var(--cyan);background:var(--cyan);color:#06202a;font-weight:800}
+#deskPlan:hover{background:#8fe0d8}
+.desk-answer:empty{display:none}
+.desk-answer{margin-top:20px;border-top:1px solid rgba(120,209,202,.25);padding-top:18px}
+.desk-note{margin:0 0 10px;color:#c6dcd9;font:11px/1.55 var(--mono)}
+.desk-answer .kicker{margin:0 0 9px;color:var(--cyan)}
+.voyage-steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));gap:12px}
+.voyage-step{min-width:0;border:1px solid #2c5f6b;background:rgba(6,32,42,.72);padding:14px 15px}
+.voyage-order{color:#8fb0b1;font:800 8px var(--mono);letter-spacing:.1em;overflow-wrap:anywhere}
+.voyage-step b{display:block;margin-top:6px;font:400 18px var(--serif);color:#f7f3e7}
+.voyage-step p{margin:7px 0 0;color:#c6dcd9;font-size:12px;line-height:1.5}
+.voyage-handoff{display:block;margin-top:7px;color:var(--cyan);font:9px var(--mono)}
+.voyage-open-label{display:block;margin-top:11px;color:#e8c98f;font:800 8px var(--mono);letter-spacing:.1em}
+.voyage-open{margin:5px 0 0;padding-left:16px;color:#dbe8e5;font:11px/1.5 var(--mono)}
+.voyage-unavailable,.voyage-recurring,.voyage-receipt{margin-top:14px;border-left:3px solid var(--signal);background:rgba(6,32,42,.6);padding:12px 14px}
+.voyage-recurring{border-left-color:#e8c98f}.voyage-receipt{border-left-color:var(--cyan)}
+.voyage-unavailable>span,.voyage-recurring>span,.voyage-receipt>span{color:#f0b39c;font:800 9px var(--mono);letter-spacing:.1em}
+.voyage-recurring>span{color:#e8c98f}.voyage-receipt>span{color:var(--cyan)}
+.voyage-unavailable p,.voyage-recurring p{margin:7px 0 0;color:#d6e6e3;font-size:12px;line-height:1.5}
+.voyage-approximation{color:#a7c6c3!important;font-style:italic}
+.voyage-recurring ul,.voyage-receipt ul{margin:8px 0 0;padding-left:17px;color:#d6e6e3;font-size:12px;line-height:1.55}
+.voyage-actions{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:16px}
+.voyage-actions small{color:#9fbcba;font:10px var(--mono)}
+#deskPrepare{border:1px solid #8a6b3c;background:rgba(9,38,47,.9);color:#f3e7d0}
+#deskPrepare:hover{background:#123a46}
+.voyage-link{display:inline-block;margin-top:9px;color:var(--cyan);font:800 10px var(--mono);letter-spacing:.06em}
+.voyage-receipt small{display:block;margin-top:8px;color:#9fbcba;font:10px/1.5 var(--mono)}
+@media(max-width:600px){.captains-desk{padding:20px 16px}.voyage-steps{grid-template-columns:minmax(0,1fr)}.desk-controls #deskPlan{width:100%}}

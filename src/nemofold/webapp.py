@@ -695,9 +695,11 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "this request produced no runnable step",
             )
             return
-        store = self._draft_store()
         drafts: list[dict[str, object]] = []
         try:
+            # Constructing the store can already refuse - a server whose allow
+            # roots exclude the draft inbox must answer, not drop the connection.
+            store = self._draft_store()
             for step in plan.steps:
                 saved = store.save(
                     step.job,

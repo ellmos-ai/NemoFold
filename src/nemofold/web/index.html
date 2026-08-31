@@ -62,6 +62,26 @@
     </section>
 
 
+    <section id="captainsDesk" class="captains-desk" aria-labelledby="captainsDeskTitle" data-page-section="overview">
+      <div class="desk-head">
+        <p class="kicker">ASK THE CAPTAIN</p>
+        <h2 id="captainsDeskTitle">Say what you need. The desk prepares the work.</h2>
+        <p>The desk reads one plain sentence and prepares a chain of job drafts for you to check and run. It plans only: nothing is executed, nothing is sent, and every draft stays dry-run and local until you open it.</p>
+      </div>
+      <form id="deskForm" class="desk-form">
+        <label class="desk-request">Your request
+          <textarea id="deskRequest" rows="2" maxlength="2000" placeholder="Unfall mit Hyundai und schreib mir eine mail an zuständigen versicherungsberater füge bild ein als entwurf"></textarea>
+        </label>
+        <div class="desk-controls">
+          <label>Approved folder <span>the root every step may read</span>
+            <input id="deskRoots" autocomplete="off" placeholder="examples/synthetic-home">
+          </label>
+          <button type="submit" id="deskPlan">Chart the voyage</button>
+        </div>
+      </form>
+      <div id="deskAnswer" class="desk-answer" role="status" aria-live="polite"></div>
+    </section>
+
     <nav class="product-areas" aria-label="NemoFold work areas" data-page-section="overview">
       <a href="/document-center"><span>START</span><b>Document Center</b><small>Inbox · cleanup · mail cases · drafts</small><em>Open area →</em></a>
       <a href="/analysis"><span>ANALYZE</span><b>Analysis Lab</b><small>Bundle Export → Evidence Analyst</small><em>Open area →</em></a>
