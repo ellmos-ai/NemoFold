@@ -57,6 +57,10 @@ STATIC_ROUTES: dict[str, tuple[Path, str]] = {
         WEB_ROOT / "assets/theme-governance.jpg",
         "image/jpeg",
     ),
+    "/assets/theme-chart.jpg": (
+        WEB_ROOT / "assets/theme-chart.jpg",
+        "image/jpeg",
+    ),
 }
 CORE_NAMES = (
     "agent_runtime",

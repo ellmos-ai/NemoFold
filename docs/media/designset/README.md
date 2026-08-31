@@ -232,3 +232,9 @@ operator-written scene briefs, curated by the operator, resized to 1672x941, and
 shipped as optimized JPEGs in `src/nemofold/web/assets/`. No text is rendered inside
 the artwork; all figures are fictional crew. The Document Center scene keeps the
 existing `trust-voyage-background.png`.
+
+`sources/nautical-chart.png` and `sources/nautical-chart-alt.png` (2026-09-01, decision
+D-025): two text-light antique sea-chart masters generated via the Gemini image
+pipeline from an operator brief, curated by the operator; the teal variant ships as
+`web/assets/theme-chart.jpg` and fronts the collapsible overview chart. Any lettering
+inside the artwork is generic scrawl without product claims or real place names.
