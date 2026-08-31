@@ -138,25 +138,32 @@ $env:NEBIUS_API_KEY = "<session-only-key>"
 python -m nemofold token-factory-preflight <package-directory> `
   --input-price-usd-per-million <current-input-rate> `
   --output-price-usd-per-million <current-output-rate> `
-  --max-completion-tokens 1200
+  --max-completion-tokens 8192
 python -m nemofold token-factory-run <package-directory> `
   --approve-live-transfer `
   --input-price-usd-per-million <current-input-rate> `
   --output-price-usd-per-million <current-output-rate> `
-  --max-completion-tokens 1200 `
+  --max-completion-tokens 8192 `
   --declared-nemoclaw-version <captured-installed-version>
 python -m nemofold verify-result <package-directory>
 Remove-Item Env:\NEBIUS_API_KEY
 ```
 
 The two rates are mandatory inputs because pricing can change; copy them from the
-current provider pricing at execution time. The sanitized `result.json` binds the
-exact request, response, usage, rate inputs, cost, endpoint, model, timestamps, and
+current provider pricing at execution time. Reasoning models spend completion
+tokens on thinking before the JSON answer, so keep `--max-completion-tokens`
+generous; the conservative cost gate still checks the resulting ceiling against the
+job budget before any request. The sanitized `result.json` binds the exact request,
+the sanitized response (`response_sha256` is computed over the sanitized body, never
+over raw provider bytes), usage, rate inputs, cost, endpoint, model, timestamps, and
 model output to the immutable local package. It contains no Authorization header or
 API key. A failed provider response records `transfer_performed: true` but never
 `cloud_proof: true`. If the connection ends without a response, the pre-request
 `transfer-attempt.json` remains in place, reports an uncertain transfer state, and
-blocks an unsafe automatic retry.
+blocks an unsafe automatic retry. Recovery after any burned attempt is deliberate,
+not destructive: build a fresh immutable package with `nemofold package` under a new
+`run_id` and run that. Existing receipts are never deleted, so the failed attempt
+stays auditable while the new package remains runnable.
 
 `token-factory-preflight` performs no network request and writes no transfer receipt.
 It validates the immutable package, endpoint, explicit Nemotron model, JSON request,
@@ -203,7 +210,8 @@ scroll jumps: `/document-center`, `/analysis`, `/routines`, `/artifacts`, and
 combines deterministic bundle preparation, privacy preflight, Evidence Analyst, reusable
 prompt sets, and persistent
 Research Notebooks. Artifact Studio opens executed or blocked ledgers and verifies every
-recorded artifact hash. Document Center also contains explainable Cleanup Rules,
+recorded artifact hash. Connections is a pure status page that keeps configured
+adapters, executed provider runs, transfers, and cloud proof visibly separate. Document Center also contains explainable Cleanup Rules,
 read-only Mail-to-Case intake, and Controlled Email drafts; Folder Routines includes the
 source-grounded Contact Monitor. A model can prepare the same settings for browser review
 through `draft-save`, MCP, or the loopback draft API; approvals are always reset.

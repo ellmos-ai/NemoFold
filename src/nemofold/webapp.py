@@ -162,6 +162,9 @@ class NemoFoldHTTPServer(ThreadingHTTPServer):
 
 
 class NemoFoldRequestHandler(BaseHTTPRequestHandler):
+    # Bound every socket read/write so a slow client cannot hold a worker
+    # thread (and a bounded demo slot) open indefinitely.
+    timeout = 30
     server: NemoFoldHTTPServer
     server_version = "NemoFold/0.1"
 
@@ -215,6 +218,13 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             # Draining an already declared, bounded body prevents Windows from
             # resetting the connection before the 403 response can be read.
             self.rfile.read(length)
+
+    def _reject_before_body_read(self, status: HTTPStatus, code: str, detail: str) -> None:
+        # A rejection sent while the declared request body is still unread can
+        # reset the connection on Windows before the client reads the response;
+        # drain the bounded body first so the error stays readable.
+        self._discard_bounded_request_body()
+        self._error(status, code, detail)
 
     def _read_json(self) -> Any:
         content_type = self.headers.get_content_type()
@@ -321,7 +331,22 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         self._error(HTTPStatus.NOT_FOUND, "not_found", path)
 
+    def _host_is_trusted(self) -> bool:
+        # The Origin/Host comparison alone is spoofable through DNS rebinding:
+        # a hostile domain resolving to 127.0.0.1 presents matching headers.
+        # On a loopback-only server the Host authority must itself be local.
+        if self.server.app_config.exposed_to_network:
+            return True
+        host = self.headers.get("Host", "")
+        hostname = urlparse(f"//{host}").hostname or ""
+        return hostname in {"127.0.0.1", "localhost", "::1"}
+
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler API
+        if not self._host_is_trusted():
+            self.close_connection = True
+            self._discard_bounded_request_body()
+            self._error(HTTPStatus.FORBIDDEN, "host_rejected", "non-local Host header")
+            return
         if not self._same_origin():
             self.close_connection = True
             self._discard_bounded_request_body()
@@ -436,7 +461,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_provider_analysis(self) -> None:
         if self.server.app_config.exposed_to_network:
-            self._error(
+            self._reject_before_body_read(
                 HTTPStatus.FORBIDDEN,
                 "provider_surface_loopback_only",
                 "provider analysis is disabled when the HTTP server is network-exposed",
@@ -485,7 +510,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_provider_preview(self) -> None:
         if self.server.app_config.exposed_to_network:
-            self._error(
+            self._reject_before_body_read(
                 HTTPStatus.FORBIDDEN,
                 "provider_surface_loopback_only",
                 "provider preview is disabled when the HTTP server is network-exposed",
@@ -519,7 +544,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_folder_browser(self) -> None:
         if self.server.app_config.exposed_to_network:
-            self._error(
+            self._reject_before_body_read(
                 HTTPStatus.FORBIDDEN,
                 "folder_picker_loopback_only",
                 "folder browsing is disabled when the HTTP server is network-exposed",
@@ -546,7 +571,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_artifact_catalog(self) -> None:
         if self.server.app_config.exposed_to_network:
-            self._error(
+            self._reject_before_body_read(
                 HTTPStatus.FORBIDDEN,
                 "artifact_surface_loopback_only",
                 "artifact browsing is disabled when the HTTP server is network-exposed",
@@ -611,7 +636,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_draft_save(self) -> None:
         if not self._draft_surface_available():
-            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/drafts")
+            self._reject_before_body_read(HTTPStatus.NOT_FOUND, "not_found", "/api/drafts")
             return
         try:
             payload = self._read_json()
@@ -666,7 +691,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_notebook_save(self) -> None:
         if not self._draft_surface_available():
-            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/notebooks")
+            self._reject_before_body_read(HTTPStatus.NOT_FOUND, "not_found", "/api/notebooks")
             return
         try:
             payload = self._read_json()
@@ -680,7 +705,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
 
     def _handle_notebook_run_link(self) -> None:
         if not self._draft_surface_available():
-            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/notebook-run")
+            self._reject_before_body_read(HTTPStatus.NOT_FOUND, "not_found", "/api/notebook-run")
             return
         try:
             payload = self._read_json()
@@ -925,7 +950,7 @@ def _artifact_catalog(config: WebAppConfig, output_dir: str) -> dict[str, object
         payload = _load_ledger(ledger)
         if payload is None:
             continue
-        verification = verify_run_report(ledger)
+        verification = verify_run_report(ledger, allowed_roots=(output,))
         artifacts: list[dict[str, object]] = []
         records = payload.get("artifacts")
         for record in records if isinstance(records, list) else []:
@@ -983,7 +1008,7 @@ def _registered_artifact_path(config: WebAppConfig, output_dir: str, value: str)
     for ledger in _ledger_paths(output):
         if candidate == ledger:
             return candidate
-        if not verify_run_report(ledger).valid:
+        if not verify_run_report(ledger, allowed_roots=(output,)).valid:
             continue
         payload = _load_ledger(ledger)
         records = payload.get("artifacts") if payload is not None else None

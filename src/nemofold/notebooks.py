@@ -206,7 +206,7 @@ class ResearchNotebookStore:
         value = json.loads(ledger.read_text(encoding="utf-8"))
         if not isinstance(value, dict) or value.get("run_id") != run_id:
             raise ValueError("run ledger does not match the requested run")
-        verification = verify_run_report(ledger)
+        verification = verify_run_report(ledger, allowed_roots=self.allowed_roots)
         run = {
             "run_id": run_id,
             "workflow": value.get("workflow"),

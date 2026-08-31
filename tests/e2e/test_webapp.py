@@ -704,3 +704,24 @@ def test_every_registered_static_route_resolves_inside_the_package() -> None:
         assert filename.is_file(), f"{route} points at a missing file: {filename.name}"
         assert WEB_ROOT in filename.parents
         assert content_type
+
+
+def test_loopback_server_rejects_non_local_host_header(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        request = Request(
+            base_url + "/api/preview",
+            data=json.dumps({"job": {}}).encode(),
+            headers={"Content-Type": "application/json", "Host": "evil.example:8765"},
+            method="POST",
+        )
+        with pytest.raises(HTTPError) as captured:
+            urlopen(request, timeout=5)  # noqa: S310 - loopback test server
+
+    assert captured.value.code == 403
+    assert json.load(captured.value)["error"] == "host_rejected"
+
+
+def test_request_handler_bounds_socket_reads_with_a_timeout() -> None:
+    from nemofold.webapp import NemoFoldRequestHandler
+
+    assert NemoFoldRequestHandler.timeout == 30

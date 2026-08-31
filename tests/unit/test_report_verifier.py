@@ -127,3 +127,17 @@ def test_report_verifier_rejects_artifacts_outside_the_run_root(tmp_path) -> Non
 
     assert result.valid is False
     assert "artifact_outside_run_root:outside.md" in result.errors
+
+
+def test_report_verifier_refuses_artifacts_beyond_the_allowed_roots(tmp_path) -> None:
+    path, _ = write_report(tmp_path)
+
+    unrestricted = verify_run_report(path)
+    covering = verify_run_report(path, allowed_roots=[tmp_path])
+    bounded = verify_run_report(path, allowed_roots=[tmp_path / "ledger"])
+
+    assert unrestricted.valid is True
+    assert covering.valid is True
+    assert bounded.valid is False
+    assert "artifact_outside_allow_roots:report.md" in bounded.errors
+    assert bounded.checked_artifacts == 0

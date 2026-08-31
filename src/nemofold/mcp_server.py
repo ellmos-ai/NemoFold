@@ -139,7 +139,10 @@ class NemoFoldMCPService:
     def verify_report(self, report_path: str) -> dict[str, Any]:
         if not isinstance(report_path, str) or not self.path_gate.path_allowed(report_path):
             raise PermissionError("report_path is outside the MCP allow roots")
-        result = verify_run_report(report_path)
+        result = verify_run_report(
+            report_path,
+            allowed_roots=self.config.execution.allowed_roots,
+        )
         return {
             "valid": result.valid,
             "run_id": result.run_id,

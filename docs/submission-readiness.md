@@ -25,9 +25,12 @@ submission should choose one primary track and keep the pitch focused.
 - Working project using Nebius Token Factory or Nebius AI Cloud and at least one NVIDIA
   open-source model: adapter ready and simulated locally; **real call OPEN and mandatory**.
 - Public repository with OSI license visible near the top and setup/Nebius/NVIDIA use in
-  the README: **DONE** at <https://github.com/ellmos-ai/NemoFold>; current Linux/Windows
-  [hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/33313331087) passed.
-  Final live-use documentation remains open until the real provider run.
+  the README: **DONE** at <https://github.com/ellmos-ai/NemoFold>; the earlier public
+  eight-workflow commit has a green Linux/Windows
+  [hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/33313331087).
+  Hosted CI for the current twelve-workflow commit stays open until the next
+  authorized push; final live-use documentation remains open until the real
+  provider run.
 - Public working demo URL or test build: capability-minimal synthetic hosting mode and
   a provider-neutral, non-root OCI/Docker definition are implemented locally; the image
   contract is statically tested, but no local Docker client was available for a container

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -56,8 +57,16 @@ def _coverage_valid(value: Any) -> bool:
     )
 
 
-def verify_run_report(path: str | Path) -> ReportVerification:
+def verify_run_report(
+    path: str | Path,
+    allowed_roots: Sequence[str | Path] | None = None,
+) -> ReportVerification:
     report_path = Path(path).resolve()
+    roots = (
+        tuple(Path(root).resolve() for root in allowed_roots)
+        if allowed_roots is not None
+        else None
+    )
     try:
         payload = json.loads(report_path.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -128,6 +137,14 @@ def verify_run_report(path: str | Path) -> ReportVerification:
         seen_paths.add(artifact)
         if not artifact.is_relative_to(run_root):
             errors.append(f"artifact_outside_run_root:{label}")
+            continue
+        if roots is not None and not any(
+            artifact == root or artifact.is_relative_to(root) for root in roots
+        ):
+            # Refuse before touching the filesystem: a run root derived from the
+            # report path must not become an existence oracle beyond the caller's
+            # approved boundary.
+            errors.append(f"artifact_outside_allow_roots:{label}")
             continue
         if not artifact.is_file() or artifact.is_symlink():
             errors.append(f"artifact_missing:{label}")

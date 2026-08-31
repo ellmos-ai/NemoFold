@@ -141,12 +141,12 @@ $env:NEBIUS_API_KEY = "<session-only-key>"
 python -m nemofold token-factory-preflight <package-directory> `
   --input-price-usd-per-million <current-input-rate> `
   --output-price-usd-per-million <current-output-rate> `
-  --max-completion-tokens 1200
+  --max-completion-tokens 8192
 python -m nemofold token-factory-run <package-directory> `
   --approve-live-transfer `
   --input-price-usd-per-million <current-input-rate> `
   --output-price-usd-per-million <current-output-rate> `
-  --max-completion-tokens 1200 `
+  --max-completion-tokens 8192 `
   --declared-nemoclaw-version <captured-installed-version>
 python -m nemofold verify-result <package-directory>
 Remove-Item Env:\NEBIUS_API_KEY
@@ -154,13 +154,21 @@ Remove-Item Env:\NEBIUS_API_KEY
 
 Die beiden Preise sind Pflichtangaben, weil sich Preise ändern können. Sie müssen zum
 Ausführungszeitpunkt aus der aktuellen Preisliste des Anbieters übernommen werden. Die
-bereinigte `result.json` bindet die genaue Anfrage und Antwort, Nutzung, Preisangaben,
-Kosten, Endpunkt, Modell, Zeitstempel und Modellausgabe an das unveränderliche lokale
-Paket. Sie enthält weder Authorization-Header noch API-Schlüssel. Eine fehlgeschlagene
+Reasoning-Modelle verbrauchen vor der JSON-Antwort Completion-Tokens für das Denken;
+`--max-completion-tokens` deshalb großzügig wählen — das konservative Kostengate prüft
+die resultierende Obergrenze weiterhin vor jeder Anfrage gegen das Job-Budget. Die
+bereinigte `result.json` bindet die genaue Anfrage, die bereinigte Antwort
+(`response_sha256` wird über den bereinigten Antwortkörper berechnet, nie über rohe
+Anbieter-Bytes), Nutzung, Preisangaben, Kosten, Endpunkt, Modell, Zeitstempel und
+Modellausgabe an das unveränderliche lokale Paket. Sie enthält weder Authorization-Header noch API-Schlüssel. Eine fehlgeschlagene
 Anbieterantwort protokolliert `transfer_performed: true`, aber niemals
 `cloud_proof: true`. Bricht die Verbindung ohne Antwort ab, bleibt die vor der Anfrage
 geschriebene `transfer-attempt.json` erhalten, meldet einen unklaren Übertragungsstand
-und blockiert eine unsichere automatische Wiederholung.
+und blockiert eine unsichere automatische Wiederholung. Die Wiederaufnahme nach einem
+verbrauchten Versuch ist bewusst, nicht destruktiv: Mit `nemofold package` ein frisches
+unveränderliches Paket unter neuer `run_id` bauen und dieses ausführen. Vorhandene
+Belege werden nie gelöscht — der gescheiterte Versuch bleibt prüfbar, das neue Paket
+lauffähig.
 
 `token-factory-preflight` führt keine Netzwerkanfrage aus und schreibt keinen
 Übertragungsbeleg. Es validiert das unveränderliche Paket, den Endpunkt, das explizite
