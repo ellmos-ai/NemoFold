@@ -190,9 +190,12 @@ python -m nemofold serve --allow-root $PWD --base-dir $PWD
 
 Open `http://127.0.0.1:8765`. The console uses the same strict job parser and
 application service as the CLI. It starts on loopback only, rejects cross-origin POSTs,
-and requires `--expose-network` before it will bind to a non-loopback address. Preview
-is the default safe path; action workflows additionally require the server-side
-`--approve-actions` gate before an apply request can succeed.
+and requires `--expose-network` before it will bind to a non-loopback address. Even
+then the authority-bearing surfaces stay loopback-only: a network-exposed server
+refuses job preview and execution, exactly like drafts, artifacts, and providers;
+hosting for other people goes through `serve-demo`. Preview is the default safe path;
+action workflows additionally require the server-side `--approve-actions` gate before
+an apply request can succeed.
 
 The overview and five work areas use distinct, bookmarkable routes instead of in-page
 scroll jumps: `/document-center`, `/analysis`, `/routines`, `/artifacts`, and

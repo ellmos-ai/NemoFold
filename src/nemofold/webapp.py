@@ -24,6 +24,35 @@ from .workflow_graphs import workflow_graphs
 
 MAX_REQUEST_BYTES = 512 * 1024
 WEB_ROOT = Path(__file__).with_name("web")
+
+# Every static route must resolve inside the package so the console keeps its
+# visual identity for any base-dir and for wheel installs; the uncompressed
+# theme masters stay in docs/media/designset/sources/. A packaging test walks
+# this table and fails when a registered file is missing from the checkout.
+STATIC_ROUTES: dict[str, tuple[Path, str]] = {
+    "/assets/app.css": (WEB_ROOT / "app.css", "text/css; charset=utf-8"),
+    "/assets/app.js": (WEB_ROOT / "app.js", "text/javascript; charset=utf-8"),
+    "/assets/theme-document-center.jpg": (
+        WEB_ROOT / "assets/theme-document-center.jpg",
+        "image/jpeg",
+    ),
+    "/assets/theme-analysis-lab.jpg": (
+        WEB_ROOT / "assets/theme-analysis-lab.jpg",
+        "image/jpeg",
+    ),
+    "/assets/theme-folder-routines.jpg": (
+        WEB_ROOT / "assets/theme-folder-routines.jpg",
+        "image/jpeg",
+    ),
+    "/assets/theme-artifact-studio.jpg": (
+        WEB_ROOT / "assets/theme-artifact-studio.jpg",
+        "image/jpeg",
+    ),
+    "/assets/theme-connections.jpg": (
+        WEB_ROOT / "assets/theme-connections.jpg",
+        "image/jpeg",
+    ),
+}
 CORE_NAMES = (
     "agent_runtime",
     "policy_privacy_gate",
@@ -211,33 +240,6 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/artifacts": "artifacts",
             "/connections": "connections",
         }
-        static = {
-            "/assets/app.css": (WEB_ROOT / "app.css", "text/css; charset=utf-8"),
-            "/assets/app.js": (WEB_ROOT / "app.js", "text/javascript; charset=utf-8"),
-            # Theme scenes ship inside the package so the console keeps its
-            # visual identity for any base-dir and for wheel installs. The
-            # uncompressed masters stay in docs/media/designset/sources/.
-            "/assets/theme-document-center.jpg": (
-                WEB_ROOT / "assets/theme-document-center.jpg",
-                "image/jpeg",
-            ),
-            "/assets/theme-analysis-lab.jpg": (
-                WEB_ROOT / "assets/theme-analysis-lab.jpg",
-                "image/jpeg",
-            ),
-            "/assets/theme-folder-routines.jpg": (
-                WEB_ROOT / "assets/theme-folder-routines.jpg",
-                "image/jpeg",
-            ),
-            "/assets/theme-artifact-studio.jpg": (
-                WEB_ROOT / "assets/theme-artifact-studio.jpg",
-                "image/jpeg",
-            ),
-            "/assets/theme-connections.jpg": (
-                WEB_ROOT / "assets/theme-connections.jpg",
-                "image/jpeg",
-            ),
-        }
         if page_path in page_routes:
             try:
                 page = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
@@ -255,12 +257,12 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             )
             self._write(page.encode("utf-8"), "text/html; charset=utf-8")
             return
-        if path in static:
-            filename, content_type = static[path]
+        if path in STATIC_ROUTES:
+            filename, content_type = STATIC_ROUTES[path]
             try:
                 data = filename.read_bytes()
             except OSError:
-                self._error(HTTPStatus.INTERNAL_SERVER_ERROR, "asset_missing", str(filename))
+                self._error(HTTPStatus.INTERNAL_SERVER_ERROR, "asset_missing", filename.name)
                 return
             self._write(data, content_type)
             return
@@ -367,6 +369,17 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 self._handle_public_demo(path)
             finally:
                 self.server.demo_slots.release()
+            return
+        if self.server.app_config.exposed_to_network and path in {"/api/preview", "/api/run"}:
+            # Every other authority-bearing surface disables itself when the
+            # server is network-exposed; job preview/execution must not be the
+            # one unauthenticated exception. Hosting goes through serve-demo.
+            self._discard_bounded_request_body()
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "job_surface_loopback_only",
+                "job preview and execution are disabled when the HTTP server is network-exposed",
+            )
             return
         if path == "/api/provider-analyze":
             self._handle_provider_analysis()

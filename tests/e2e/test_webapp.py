@@ -693,3 +693,14 @@ def test_theme_scene_assets_ship_with_the_package(tmp_path) -> None:
             with urlopen(url, timeout=5) as response:  # noqa: S310 - loopback test server
                 assert response.headers["Content-Type"] == "image/jpeg"
                 assert len(response.read()) > 10_000
+
+
+def test_every_registered_static_route_resolves_inside_the_package() -> None:
+    from nemofold.webapp import STATIC_ROUTES, WEB_ROOT
+
+    assert STATIC_ROUTES
+    for route, (filename, content_type) in STATIC_ROUTES.items():
+        assert route.startswith("/assets/")
+        assert filename.is_file(), f"{route} points at a missing file: {filename.name}"
+        assert WEB_ROOT in filename.parents
+        assert content_type

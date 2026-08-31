@@ -298,3 +298,22 @@ def test_network_exposed_http_server_disables_provider_surface(tmp_path) -> None
     assert status["provider_runtime_ready"] is False
     assert status["external_models_allowed"] is False
     assert status["providers"] == []
+
+
+def test_network_exposed_http_server_disables_job_preview_and_run(tmp_path) -> None:
+    job_path = write_job(tmp_path)
+    job = json.loads(job_path.read_text(encoding="utf-8"))
+
+    with running_network_exposed_server(tmp_path) as base_url:
+        for endpoint in ("/api/preview", "/api/run"):
+            request = Request(
+                base_url + endpoint,
+                data=json.dumps({"run_id": "network_job", "job": job}).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with pytest.raises(HTTPError) as caught:
+                urlopen(request, timeout=5)  # noqa: S310
+            assert caught.value.code == 403
+            payload = json.load(caught.value)
+            assert payload["error"] == "job_surface_loopback_only"

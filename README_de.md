@@ -197,8 +197,11 @@ python -m nemofold serve --allow-root $PWD --base-dir $PWD
 Öffne `http://127.0.0.1:8765`. Die Konsole verwendet denselben strikten Auftragsparser
 und Anwendungsdienst wie die CLI. Sie bindet nur an Loopback, lehnt Cross-Origin-POSTs
 ab und verlangt `--expose-network`, bevor sie eine Nicht-Loopback-Adresse verwendet.
-Preview ist der standardmäßige sichere Pfad; Aktionsworkflows benötigen zusätzlich das
-serverseitige Gate `--approve-actions`, bevor eine Apply-Anfrage erfolgreich sein kann.
+Auch dann bleiben die autoritätstragenden Flächen Loopback-only: Ein netzexponierter
+Server lehnt Job-Preview und -Ausführung ab, genau wie Drafts, Artifacts und Provider;
+Hosting für andere Personen läuft über `serve-demo`. Preview ist der standardmäßige
+sichere Pfad; Aktionsworkflows benötigen zusätzlich das serverseitige Gate
+`--approve-actions`, bevor eine Apply-Anfrage erfolgreich sein kann.
 
 Übersicht und Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt Sprüngen
 innerhalb einer langen Seite: `/document-center`, `/analysis`, `/routines`, `/artifacts`
