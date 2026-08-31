@@ -87,11 +87,17 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "evidence_analyst": (
         "analysier", "analyze", "analyse", "beleg", "evidence", "zitat", "quote",
-        "was steht", "widerspruch", "conflict", "frage an", "beantworte", "prüf", "pruef",
+        # "widerspr" is the common stem of Widerspruch, Widersprüche and
+        # widersprechen; the umlaut in the plural breaks a full-word match.
+        "was steht", "widerspr", "conflict", "frage an", "beantworte",
+        "destillier", "distil", "fakten", "facts", "extrahier", "extract",
     ),
     "folder_digest": (
         "überblick", "ueberblick", "digest", "geändert", "geaendert", "changed",
         "snapshot", "bestandsaufnahme", "was ist neu", "what changed",
+        # "tagesbericht" belongs here, not with report_studio: a daily list of new
+        # files with a short summary is exactly what the digest produces.
+        "tagesbericht", "neue files", "neue dateien", "new files", "dazugekommen",
     ),
     "version_resolver": (
         "version", "fassung", "neuesten stand", "neueste stand", "aktuellste",
@@ -113,6 +119,7 @@ RECURRENCE_KEYWORDS = (
     "regelmäßig", "regelmässig", "regelmaessig", "immer wenn", "jedes mal", "täglich",
     "taeglich", "wöchentlich", "woechentlich", "monatlich", "laufend", "automatisch",
     "recurring", "regularly", "daily", "weekly", "monthly", "every time", "schedule",
+    "jeden tag", "jede woche", "jeden monat", "tagesbericht",
 )
 
 
@@ -186,12 +193,46 @@ ROADMAP_SERVICES = (
     RoadmapService(
         key="duplicate_review",
         label="Duplicate review",
-        keywords=("duplikat", "dublette", "doppelte datei", "duplicate"),
+        keywords=("duplikat", "dublette", "doppelte datei", "duplicate", "doppelt",
+                  "mehrfach vorkommend"),
         reason="Duplicate review is a planned Document Service.",
         alternative_workflows=("folder_digest",),
         approximation=(
             "Today's approximation: a Folder Digest lists every file with its hash, so "
             "identical files become visible without an automatic merge."
+        ),
+    ),
+    RoadmapService(
+        key="chat_delivery",
+        label="Delivery through a chat service",
+        keywords=("telegram", "whatsapp", "signal-nachricht", "slack", "messenger",
+                  "per chat"),
+        reason=(
+            "NemoFold has no chat delivery. Sending through Telegram or any other "
+            "messenger would need its own proven adapter, the same way email delivery "
+            "does; announcing it before that adapter exists would be a claim, not a "
+            "feature."
+        ),
+        alternative_workflows=("controlled_email",),
+        approximation=(
+            "Today's approximation: the finding is prepared as a Controlled Email draft "
+            "with its approval digest, and you forward it from the app you already use."
+        ),
+    ),
+    RoadmapService(
+        key="uploader_attribution",
+        label="Who put the file there",
+        keywords=("einsteller", "hochgeladen von", "wer hat hochgeladen", "uploader",
+                  "eingestellt von"),
+        reason=(
+            "Folder Digest records the file name, a short summary and the change state, "
+            "but not the account that placed a file. Ownership attribution is a planned "
+            "extension, and a guessed author would be worse than none."
+        ),
+        alternative_workflows=("folder_digest",),
+        approximation=(
+            "Today's approximation: the daily digest names every new file with its short "
+            "content and its hash, which identifies the file even without an author."
         ),
     ),
     RoadmapService(
@@ -223,6 +264,8 @@ SEND_KEYWORDS = ("versend", "verschick", "abschick", "senden", "sende ", "send "
                  "deliver", "raussschick", "rausschick")
 ATTACHMENT_KEYWORDS = ("bild", "foto", "anhang", "attachment", "image", "photo", "beilage",
                        "screenshot")
+OUTPUT_LOCATION_KEYWORDS = ("desktop", "schreibtisch", "arbeitsplatz", "downloads",
+                            "dokumente ordner")
 
 
 @dataclass(frozen=True, slots=True)
@@ -337,6 +380,14 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
         questions.append(
             "Which earlier snapshot should the contacts be compared against, if any?"
         )
+    if workflow in {"report_studio", "bundle_export"} and any(
+        _mentions(text, keyword) for keyword in OUTPUT_LOCATION_KEYWORDS
+    ):
+        questions.append(
+            "Which approved folder should receive the file? A desktop or downloads folder "
+            "works only once it is one of the approved roots; NemoFold never writes "
+            "outside them."
+        )
     return tuple(questions)
 
 
@@ -407,6 +458,11 @@ def _parameters_for(workflow: str, text: str) -> dict[str, Any]:
         return {"digest_depth": "full"}
     if workflow == "evidence_analyst":
         return {"analysis_mode": "local_extractive", "max_chunks": 64}
+    if workflow == "report_studio":
+        # report_studio really renders PDF (report_studio.SUPPORTED_FORMATS), so a
+        # request for a PDF is answered with the format, not with an apology.
+        wants_pdf = _mentions(text.casefold(), "pdf")
+        return {"formats": ["pdf", "md"] if wants_pdf else ["md"], "include_coverage": True}
     return {}
 
 

@@ -152,3 +152,83 @@ def test_plan_serializes_with_its_honest_flags(tmp_path) -> None:
     assert payload["cloud_proof"] is False
     assert payload["matched"] is True
     assert all(step["job"]["action_mode"] == "dry_run" for step in payload["steps"])
+
+
+# Three further requests the user wrote himself (D-027), kept verbatim.
+FACTS_REQUEST = (
+    "Destilliere alle Fakten aus diesem Ordner, doppelt Vorkommendes streiche, "
+    "Bericht als PDF auf meinem Desktop"
+)
+DAILY_REQUEST = (
+    "Prüfe neue Files im Ordner, jeden Tag Tagesbericht mit Dateinamen, Kurzinhalt, "
+    "Einsteller-Benutzer"
+)
+TELEGRAM_REQUEST = (
+    "Finde den Kontakt zu meiner Auslandskrankenversicherung und schreib sie mir in Telegram"
+)
+
+
+def test_facts_request_ends_in_a_real_pdf_report(tmp_path) -> None:
+    plan = plan_voyage(FACTS_REQUEST, input_roots=(str(tmp_path),))
+
+    workflows = [step.workflow for step in plan.steps]
+    assert workflows == ["folder_digest", "evidence_analyst", "report_studio"]
+
+    report = plan.steps[-1]
+    # report_studio genuinely renders PDF, so the request is answered with the
+    # format rather than with a roadmap apology.
+    assert report.job["parameters"]["formats"] == ["pdf", "md"]
+    assert report.reads_previous_step is True
+    assert report.job["input_roots"] == [plan.steps[1].job["output_dir"]]
+
+    # A desktop is a location outside the approved roots until it is approved.
+    location = " ".join(report.questions_to_user)
+    assert "approved folder should receive the file" in location
+    assert "never writes outside them" in location
+
+    # Deduplication itself is a planned service and is named as one.
+    duplicates = next(item for item in plan.unavailable if item.key == "duplicate_review")
+    assert "planned Document Service" in duplicates.reason
+    assert duplicates.alternative_workflows == ("folder_digest",)
+
+
+def test_daily_report_request_names_the_missing_uploader_field(tmp_path) -> None:
+    plan = plan_voyage(DAILY_REQUEST, input_roots=(str(tmp_path),))
+
+    # File name and short content are what Folder Digest already produces.
+    assert [step.workflow for step in plan.steps] == ["folder_digest"]
+
+    uploader = next(item for item in plan.unavailable if item.key == "uploader_attribution")
+    assert "not the account that placed a file" in uploader.reason
+    assert "planned extension" in uploader.reason
+    assert "guessed author would be worse than none" in uploader.reason
+    assert uploader.alternative_workflows == ("folder_digest",)
+
+    # "jeden Tag" is a repetition request and gets the two honest answers.
+    assert plan.recurring is not None
+    assert len(plan.recurring.options) == 2
+    assert "no scheduler of its own" in plan.recurring.message
+
+
+def test_telegram_request_prepares_a_draft_and_refuses_the_channel(tmp_path) -> None:
+    plan = plan_voyage(TELEGRAM_REQUEST, input_roots=(str(tmp_path),))
+
+    workflows = [step.workflow for step in plan.steps]
+    assert "contact_monitor" in workflows
+    assert workflows[-1] == "controlled_email"
+
+    chat = next(item for item in plan.unavailable if item.key == "chat_delivery")
+    assert "no chat delivery" in chat.reason
+    assert "would be a claim, not a feature" in chat.reason
+    assert chat.alternative_workflows == ("controlled_email",)
+    assert "forward it from the app you already use" in chat.approximation
+
+
+def test_checking_a_folder_is_not_mistaken_for_an_evidence_analysis(tmp_path) -> None:
+    # "prüfe" alone is too generic to mean an evidence run; the digest answers it.
+    plan = plan_voyage("Prüfe neue Files im Ordner", input_roots=(str(tmp_path),))
+    assert [step.workflow for step in plan.steps] == ["folder_digest"]
+
+    # The specific evidence words still route to the analyst.
+    analysis = plan_voyage("prüfe die verträge auf widersprüche", input_roots=(str(tmp_path),))
+    assert "evidence_analyst" in [step.workflow for step in analysis.steps]
