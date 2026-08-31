@@ -25,8 +25,9 @@ All notable changes to NemoFold are documented here.
 - Evidence-console product UI with a visible authority ledger, bounded evidence chain,
   structured run dossier, responsive overflow rules, and accessible focus/contrast states.
 - Synchronized German README with language navigation and identical command examples.
-- Deterministic YouTube caption/export packet for the local Andrew v3 review render,
-  while preserving the no-burn-in and no-upload approval boundary.
+- Deterministic YouTube caption/export packet for the local Andrew v4 review render,
+  showing the routed Analysis workspace while preserving the no-burn-in and no-upload
+  approval boundary.
 
 ## 0.1.0 - 2026-08-30
 

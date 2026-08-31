@@ -207,6 +207,21 @@ Artifact Studio öffnet unmittelbar den verifizierten Artefaktkatalog; Connectio
 eine reine Statusseite und trennt konfigurierte Adapter, ausgeführte Providerläufe,
 Transfers und Cloud-Nachweise sichtbar voneinander.
 
+Das Analysis Lab verbindet deterministische Bundle-Vorbereitung, Datenschutz-Preflight,
+Evidence Analyst, wiederverwendbare Prompt-Sammlungen und persistente Research Notebooks.
+Artifact Studio öffnet ausgeführte oder blockierte Ledger und prüft jeden erfassten
+Artefakthash. Das Document Center enthält außerdem erklärbare Cleanup Rules,
+schreibgeschützten Mail-to-Case-Ingest und kontrollierte E-Mail-Entwürfe; Folder Routines
+umfasst den quellengebundenen Contact Monitor. Ein Modell kann dieselben Einstellungen
+über `draft-save`, MCP oder die Loopback-Draft-API zur Browserprüfung vorbereiten;
+Freigaben werden dabei immer zurückgesetzt.
+
+Controlled Email behauptet in der Standardlaufzeit keinen Netzwerkversand. Der Workflow
+schreibt den genauen Entwurf und Freigabedigest und blockiert eine Sendeanforderung, bis
+derselbe Digest bestätigt wurde und ein separat belegter serverseitiger Mailadapter
+existiert. Mail-to-Case akzeptiert freigegebene lokale `.eml`-Dateien; es verbindet sich
+nicht still mit einem Postfach.
+
 ### Fähigkeitsminimale synthetische Demo starten
 
 Nutze den getrennten Demo-Befehl, wenn Personen die Konsole erreichen könnten, die
