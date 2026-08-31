@@ -51,6 +51,7 @@ from .report_studio import ReportDocument, render_report_formats
 from .runtime import job_idempotency_key
 from .smart_inbox import RoutingRule, plan_inbox
 from .storage_policy import PolicyRule, PolicySet, StoragePlan, preview_storage
+from .synopsis_merge import merge_synopsis, synopsis_markdown
 from .version_resolver import (
     VersionCandidate,
     compare_versions,
@@ -1665,6 +1666,103 @@ def _execute_fact_distill(
     )
 
 
+def _execute_synopsis_merge(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Merge the approved sources into one synopsis, conflicts kept visible."""
+    texts = _read_text_sources(inventory)
+    title = job.parameters.get("title") or "Synopsis"
+    if not isinstance(title, str) or not title.strip():
+        raise ValueError("title must be a non-empty string")
+    synopsis = merge_synopsis(
+        tuple(record.source_id for record in inventory.records), texts
+    )
+    output = Path(job.output_dir)
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(
+            output / f"{run_id}.synopsis.md",
+            synopsis_markdown(synopsis, title=title),
+            "synopsis",
+        )
+    ]
+
+    claims: list[Claim] = []
+    for conflict in synopsis.conflicts:
+        # A disagreement is a claim with a conflict status, not a hidden merge.
+        claims.append(
+            Claim(
+                statement=(
+                    f"{conflict.section} · {conflict.label}: sources disagree ("
+                    + " | ".join(item.value for item in conflict.values)
+                    + ")"
+                ),
+                evidence=tuple(
+                    EvidenceLocator(
+                        source_id=item.source_id,
+                        quote=f"{conflict.label}: {item.value}",
+                        section=f"line {item.line}",
+                    )
+                    for item in conflict.values
+                ),
+                uncertainty=0.5,
+                conflict_status="confirmed_conflict",
+            )
+        )
+    for section in synopsis.sections:
+        for paragraph in section.paragraphs:
+            claims.append(
+                Claim(
+                    statement=f"{section.title}: {paragraph.text}",
+                    evidence=(
+                        EvidenceLocator(
+                            source_id=paragraph.source_id,
+                            quote=paragraph.text,
+                            section=f"line {paragraph.line}",
+                        ),
+                    ),
+                )
+            )
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=texts,
+        cited_source_ids=synopsis.source_ids,
+    )
+    formats = tuple(job.parameters.get("formats", ["md"]))
+    if claims:
+        artifacts.extend(
+            render_report_formats(
+                ReportDocument(
+                    title=title,
+                    claims=tuple(claims),
+                    coverage=coverage,
+                    source_labels=tuple(
+                        (record.source_id, record.display_name)
+                        for record in inventory.records
+                        if record.source_id in set(synopsis.source_ids)
+                    ),
+                ),
+                output,
+                basename=f"{run_id}_synopsis",
+                formats=formats,
+            )
+        )
+    return (
+        ("inventory_scanned", "sections_merged", "conflicts_marked", "coverage_recorded"),
+        tuple(artifacts),
+        coverage,
+        {
+            "sections": [section.title for section in synopsis.sections],
+            "paragraphs": synopsis.paragraph_count,
+            "conflicts": len(synopsis.conflicts),
+            "conflict_labels": [item.label for item in synopsis.conflicts],
+            "merged_source_ids": list(synopsis.source_ids),
+        },
+    )
+
+
 def _dispatch_workflow(
     job: JobEnvelope,
     inventory: InventoryResult,
@@ -1686,6 +1784,8 @@ def _dispatch_workflow(
         return _execute_document_registry(job, inventory, run_id=run_id)
     if job.workflow == "fact_distill":
         return _execute_fact_distill(job, inventory, run_id=run_id)
+    if job.workflow == "synopsis_merge":
+        return _execute_synopsis_merge(job, inventory, run_id=run_id)
     if job.workflow == "platform_proof":
         return _execute_evidence(job, inventory, run_id=run_id, platform_proof=True)
     if job.workflow == "storage_policy":

@@ -28,6 +28,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "platform_proof",
         "document_registry",
         "fact_distill",
+        "synopsis_merge",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -116,6 +117,7 @@ WORKFLOW_PARAMETER_FIELDS = {
         {"as_of", "fallback_to_file_time", "family_hint", "validity_fields"}
     ),
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
+    "synopsis_merge": frozenset({"formats", "title"}),
     "fact_distill": frozenset(
         {"dedupe_scope", "focus_terms", "formats", "max_facts_per_source", "title"}
     ),

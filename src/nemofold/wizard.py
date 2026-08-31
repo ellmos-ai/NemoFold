@@ -32,6 +32,7 @@ WORKFLOW_ORDER = {
     "bundle_export": 80,
     "evidence_analyst": 90,
     "fact_distill": 92,
+    "synopsis_merge": 94,
     "document_registry": 95,
     "report_studio": 100,
     "controlled_email": 110,
@@ -59,6 +60,7 @@ WORKFLOW_TITLES = {
     "report_studio": "Report Studio",
     "document_registry": "Document Registry",
     "fact_distill": "Fact Distill",
+    "synopsis_merge": "Synopsis Merge",
     "platform_proof": "Platform Proof",
 }
 
@@ -113,6 +115,11 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "report_studio": (
         "bericht", "report", "pdf", "docx", "odt", "ausdruck",
+    ),
+    "synopsis_merge": (
+        "synopse", "synopsis", "zusammenführ", "zusammenfuehr", "zusammenfassen zu einem",
+        "merge", "vergleiche die dokumente", "gegenüberstell", "gegenueberstell",
+        "in ein dokument",
     ),
     "fact_distill": (
         "destillier", "distil", "fakten", "facts", "dubletten streichen",
@@ -191,17 +198,6 @@ ROADMAP_SERVICES = (
         approximation=(
             "Today's approximation: the privacy gate replaces sensitive strings in what "
             "leaves the host; the original file stays untouched and unredacted."
-        ),
-    ),
-    RoadmapService(
-        key="synopsis",
-        label="Document synopses",
-        keywords=("synopse", "synopsis", "kurzfassung"),
-        reason="Synopses are a planned Document Service with their own acceptance gate.",
-        alternative_workflows=("evidence_analyst",),
-        approximation=(
-            "Today's approximation: ask Evidence Analyst the questions a synopsis would "
-            "answer and read the quoted findings with their sources."
         ),
     ),
     RoadmapService(
@@ -404,7 +400,8 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
             "Which earlier snapshot should the contacts be compared against, if any?"
         )
     if workflow in {
-        "report_studio", "bundle_export", "fact_distill", "document_registry"
+        "report_studio", "bundle_export", "fact_distill", "document_registry",
+        "synopsis_merge",
     } and any(
         _mentions(text, keyword) for keyword in OUTPUT_LOCATION_KEYWORDS
     ):
@@ -457,6 +454,11 @@ def _why(workflow: str) -> str:
             "Surfaces who the sources say is responsible, with quotes, so a recipient is "
             "chosen from evidence rather than memory."
         ),
+        "synopsis_merge": (
+            "Folds the approved documents into one synopsis, keeps the source and line "
+            "behind every paragraph, and shows disagreeing labels as conflict blocks "
+            "instead of choosing a winner."
+        ),
         "fact_distill": (
             "Lifts quotable facts out of every approved source and strikes repeated "
             "statements from the findings, listing each struck occurrence with the "
@@ -494,6 +496,8 @@ def _parameters_for(workflow: str, text: str) -> dict[str, Any]:
     if workflow == "evidence_analyst":
         return {"analysis_mode": "local_extractive", "max_chunks": 64}
     wants_pdf = _mentions(text.casefold(), "pdf")
+    if workflow == "synopsis_merge":
+        return {"formats": ["pdf", "md"] if wants_pdf else ["md"]}
     if workflow == "fact_distill":
         return {
             "dedupe_scope": "normalized",
@@ -598,7 +602,7 @@ def plan_voyage(
             )
         )
 
-    self_exporting = workflows & {"fact_distill", "document_registry"}
+    self_exporting = workflows & {"fact_distill", "document_registry", "synopsis_merge"}
     if self_exporting and "report_studio" in workflows and "evidence_analyst" not in workflows:
         # report_studio renders one verified analysis JSON, which these two do
         # not produce - and they already write every requested format themselves.

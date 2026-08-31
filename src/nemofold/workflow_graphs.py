@@ -35,6 +35,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Show connection and proof status while keeping local readiness, provider execution, "
         "Nebius competition evidence, and NemoClaw runtime evidence explicitly separate."
     ),
+    "synopsis_merge": (
+        "Merge several approved documents into one synopsis, keep the source and line behind "
+        "every paragraph, and show disagreeing labels as conflict blocks instead of choosing."
+    ),
     "fact_distill": (
         "Distil quotable facts from every approved source, strike duplicate statements from "
         "the findings, and keep each struck occurrence visible with the statement it repeats."
@@ -126,6 +130,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("nebius", "Nebius", "competition proof"),
         ("nemoclaw", "NemoClaw", "runtime proof"),
         ("report", "Status ledger", "no inferred proof"),
+    ),
+    "synopsis_merge": (
+        ("operation", "Inventory", "approved corpus"),
+        ("operation", "Sections", "heading-wise"),
+        ("operation", "Merge", "anchor per paragraph"),
+        ("gate", "Conflicts", "both readings kept"),
+        ("operation", "Export", "selected formats"),
     ),
     "fact_distill": (
         ("operation", "Inventory", "approved corpus"),
