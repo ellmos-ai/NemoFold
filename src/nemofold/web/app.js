@@ -2076,27 +2076,24 @@ async function copySpecialist(presetId) {
 
 async function openLibraryEntry(voyageId) {
   try {
-    const listed = await fetch("/api/voyages");
-    const payload = await listed.json();
-    if (!listed.ok) throw new Error(payload.detail || payload.error || "library unavailable");
-    const known = (payload.voyages || []).find((item) => item.voyage_id === voyageId);
-    if (!known) throw new Error("this voyage is no longer in the library");
-    // The edit endpoint returns the current step list without changing anything,
-    // so an unrecognised request is the cheapest honest way to read the detail.
-    const probe = await fetch("/api/voyage-edit", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({voyage_id: voyageId, text: "zeige die schritte"})
-    });
-    const detail = await probe.json();
+    const response = await fetch(`/api/voyage?id=${encodeURIComponent(voyageId)}`);
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    const voyage = payload.voyage;
     openVoyage = {
-      voyage_id: voyageId,
-      name: known.name,
-      description: known.description,
-      overrides_links: known.overrides_links === true,
-      authority_reason: known.authority_reason || "",
-      workflows: detail.before || known.workflows,
-      steps: detail.steps_after || []
+      voyage_id: voyage.voyage_id,
+      name: voyage.name,
+      description: voyage.description || "",
+      overrides_links: voyage.model_authority === "chain_wins",
+      authority_reason: voyage.authority_reason || "",
+      rights: voyage.rights || null,
+      policy_refs: voyage.policy_refs || [],
+      tags: voyage.tags || [],
+      schedule: voyage.schedule || null,
+      workflows: voyage.steps.map((step) => step.workflow),
+      steps: voyage.steps
     };
     renderVoyageDetail();
   } catch (error) {

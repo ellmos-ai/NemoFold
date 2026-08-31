@@ -32,5 +32,9 @@
       "reads_previous_output": true,
       "workflow": "evidence_analyst"
     }
+  ],
+  "tags": [
+    "document-analysis",
+    "reporting"
   ]
 }

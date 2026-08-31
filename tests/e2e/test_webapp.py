@@ -1396,3 +1396,41 @@ def test_the_wizard_offers_to_keep_an_unfulfillable_plan_as_a_reservation(tmp_pa
     assert "becomes runnable once that instrument exists" in plan["reservation"]["note"]
     # A plan that needs nothing new is not turned into a reservation.
     assert simple["reservation"]["suggested"] is False
+
+
+def test_one_saved_voyage_is_read_through_its_own_endpoint(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "police.txt").write_text("Beitrag: 148 Euro", encoding="utf-8")
+
+    with running_server(tmp_path) as base_url:
+        copied = post_json(
+            base_url + "/api/voyage-preset",
+            {
+                "preset_id": "preset_daily_arrivals",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+            },
+        )
+        voyage_id = copied["voyage"]["voyage_id"]
+        detail, _ = get_json(base_url + f"/api/voyage?id={voyage_id}")
+        with pytest.raises(HTTPError) as refused:
+            get_json(base_url + "/api/voyage?id=voyage_does_not_exist")
+
+    assert detail["voyage"]["voyage_id"] == voyage_id
+    assert [step["workflow"] for step in detail["voyage"]["steps"]] == ["daily_arrivals"]
+    # The room and the routine travel with the copy.
+    assert detail["voyage"]["tags"] == ["folder-watch", "scheduled"]
+    assert detail["voyage"]["schedule"]["cadence"] == "daily"
+    assert refused.value.code == 400
+
+
+def test_the_voyage_read_endpoint_is_absent_in_the_public_demo(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "note.txt").write_text("x", encoding="utf-8")
+
+    with running_public_demo(source_root) as (_, base_url), pytest.raises(HTTPError) as refused:
+        get_json(base_url + "/api/voyage?id=voyage_x")
+
+    assert refused.value.code == 404

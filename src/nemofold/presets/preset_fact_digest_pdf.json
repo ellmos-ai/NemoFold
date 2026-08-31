@@ -16,5 +16,9 @@
       "questions": [],
       "workflow": "fact_distill"
     }
+  ],
+  "tags": [
+    "document-analysis",
+    "reporting"
   ]
 }

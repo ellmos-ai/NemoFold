@@ -2,6 +2,11 @@
   "description": "Compare a folder against a snapshot you name and report every new file with size, time and a short content, plus a task file you install yourself.",
   "name": "Daily arrivals report",
   "preset_id": "preset_daily_arrivals",
+  "schedule": {
+    "at": "07:00",
+    "cadence": "daily",
+    "note": "Install the exported task file yourself; NemoFold registers nothing."
+  },
   "schema": "nemofold.voyage-preset.v1",
   "steps": [
     {
@@ -17,5 +22,8 @@
       "questions": [],
       "workflow": "daily_arrivals"
     }
+  ],
+  "tags": [
+    "folder-watch"
   ]
 }

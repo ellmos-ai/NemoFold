@@ -18,5 +18,9 @@
       "questions": [],
       "workflow": "document_registry"
     }
+  ],
+  "tags": [
+    "document-analysis",
+    "folder-watch"
   ]
 }

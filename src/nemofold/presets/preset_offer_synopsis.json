@@ -15,5 +15,8 @@
       "questions": [],
       "workflow": "synopsis_merge"
     }
+  ],
+  "tags": [
+    "document-analysis"
   ]
 }

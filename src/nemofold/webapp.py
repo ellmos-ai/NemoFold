@@ -367,6 +367,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/voyages":
             self._handle_voyage_list()
             return
+        if path == "/api/voyage":
+            self._handle_voyage_load(parse_qs(parsed_path.query, keep_blank_values=True))
+            return
         if path == "/api/notebook":
             self._handle_notebook_load(parse_qs(parsed_path.query, keep_blank_values=True))
             return
@@ -869,6 +872,27 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self._error(HTTPStatus.BAD_REQUEST, "voyage_list_rejected", str(exc))
             return
         self._json({"ok": True, "voyages": list(voyages)})
+
+    def _handle_voyage_load(self, query: dict[str, list[str]]) -> None:
+        """Read one saved voyage.
+
+        The library detail used to be read by sending the edit planner a request
+        it would not recognise - it worked and wrote nothing, but a read that
+        pretends to be an edit is a bad thing to leave in a product about
+        traceability. This is the plain read, shaped like its two siblings
+        /api/draft and /api/notebook rather than as a path parameter.
+        """
+        if not self._voyage_surface_available():
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/voyage")
+            return
+        try:
+            if set(query) != {"id"} or len(query["id"]) != 1:
+                raise ValueError("one voyage id is required")
+            voyage = self._voyage_store().load(query["id"][0])
+        except (OSError, PermissionError, ValueError, json.JSONDecodeError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "voyage_load_rejected", str(exc))
+            return
+        self._json({"ok": True, "voyage": voyage})
 
     def _handle_voyage_run(self) -> None:
         if self._reject_closed_voyage_surface():

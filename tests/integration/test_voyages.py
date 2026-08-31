@@ -428,3 +428,178 @@ def test_rights_and_policy_references_default_to_nothing(tmp_path) -> None:
 def test_the_new_fields_refuse_unusable_values(tmp_path, field, value, message) -> None:
     with pytest.raises(ValueError, match=message):
         _store(tmp_path).save(_voyage(tmp_path, **{field: value}))
+
+
+# --------------------------------------------------------------------------- #
+# Tags and schedules: how a use case finds its room
+# --------------------------------------------------------------------------- #
+
+
+def test_tags_are_normalised_and_sorted(tmp_path) -> None:
+    saved = _store(tmp_path).save(
+        _voyage(tmp_path, tags=["Reporting", "document-analysis", "reporting"])
+    )
+
+    assert saved["tags"] == ["document-analysis", "reporting"]
+
+
+def test_a_schedule_derives_the_scheduled_tag(tmp_path) -> None:
+    saved = _store(tmp_path).save(
+        _voyage(
+            tmp_path,
+            tags=["folder-watch"],
+            schedule={"cadence": "daily", "at": "07:00"},
+        )
+    )
+
+    assert saved["tags"] == ["folder-watch", "scheduled"]
+    assert saved["schedule"]["cadence"] == "daily"
+    # The stored object says it for itself: a saved routine is an intention.
+    assert saved["schedule"]["installed_by_nemofold"] is False
+
+
+def test_the_scheduled_tag_cannot_be_claimed_by_hand(tmp_path) -> None:
+    with pytest.raises(ValueError, match="derived from the schedule field"):
+        _store(tmp_path).save(_voyage(tmp_path, tags=["scheduled"]))
+
+
+@pytest.mark.parametrize(
+    ("schedule", "message"),
+    [
+        ({"cadence": "hourly", "at": "07:00"}, "daily, weekly or monthly"),
+        ({"cadence": "daily", "at": "25:00"}, "24-hour"),
+        ({"cadence": "daily", "at": "7:00"}, "24-hour"),
+        ({"cadence": "daily", "every": 2}, "cadence, at and note"),
+    ],
+)
+def test_a_schedule_refuses_unusable_values(tmp_path, schedule, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        _store(tmp_path).save(_voyage(tmp_path, schedule=schedule))
+
+
+def test_dropping_the_schedule_drops_the_derived_tag(tmp_path) -> None:
+    store = _store(tmp_path)
+    saved = store.save(
+        _voyage(tmp_path, tags=["folder-watch"], schedule={"cadence": "daily", "at": "07:00"})
+    )
+
+    cleared = store.save(_voyage(tmp_path, voyage_id=saved["voyage_id"], schedule=None))
+
+    assert cleared["tags"] == ["folder-watch"]
+    assert cleared["schedule"] is None
+
+
+# --------------------------------------------------------------------------- #
+# A partial update must not erase what it did not mention
+# --------------------------------------------------------------------------- #
+
+
+def test_reordering_steps_keeps_the_fields_the_request_omitted(tmp_path) -> None:
+    store = _store(tmp_path)
+    saved = store.save(
+        _voyage(
+            tmp_path,
+            source="preset",
+            tags=["document-analysis"],
+            schedule={"cadence": "weekly", "at": "18:30"},
+            rights="send_with_confirmation",
+            policy_refs=["gdpr_basic"],
+        )
+    )
+
+    # What the browser sends when someone only moves a step: id, name, steps.
+    updated = store.save(
+        {
+            "voyage_id": saved["voyage_id"],
+            "name": saved["name"],
+            "steps": [dict(step) for step in saved["steps"]],
+        }
+    )
+
+    assert updated["tags"] == ["document-analysis", "scheduled"]
+    assert updated["schedule"]["at"] == "18:30"
+    assert updated["rights"] == "send_with_confirmation"
+    assert updated["policy_refs"] == ["gdpr_basic"]
+    assert updated["source"] == "preset"
+    assert updated["description"] == saved["description"]
+    assert updated["created_at"] == saved["created_at"]
+
+
+def test_a_reservation_stays_a_reservation_across_a_partial_save(tmp_path) -> None:
+    store = _store(tmp_path)
+    saved = store.save(
+        _voyage(tmp_path, status="pending_capability", missing_capability="chat_delivery")
+    )
+
+    updated = store.save(
+        {"voyage_id": saved["voyage_id"], "name": "Neuer Name", "steps": saved["steps"]}
+    )
+
+    assert updated["status"] == "pending_capability"
+    assert updated["missing_capability"] == "chat_delivery"
+
+
+def test_an_unchanged_external_chain_authority_needs_no_new_confirmation(tmp_path) -> None:
+    store = _store(tmp_path)
+    saved = store.save(
+        _voyage(
+            tmp_path,
+            model_authority="chain_wins",
+            model_pref={"preferred": {"provider": "openai", "model": "gpt-5.4"}},
+            confirm_external_authority=True,
+        )
+    )
+
+    # Re-saving the same setting is not setting it, so it asks nobody again.
+    updated = store.save(
+        {"voyage_id": saved["voyage_id"], "name": saved["name"], "steps": saved["steps"]}
+    )
+
+    assert updated["model_authority"] == "chain_wins"
+    assert updated["model_pref"]["preferred"]["provider"] == "openai"
+
+
+def test_changing_to_a_different_external_chain_model_asks_again(tmp_path) -> None:
+    store = _store(tmp_path)
+    saved = store.save(
+        _voyage(
+            tmp_path,
+            model_authority="chain_wins",
+            model_pref={"preferred": {"provider": "openai", "model": "gpt-5.4"}},
+            confirm_external_authority=True,
+        )
+    )
+
+    with pytest.raises(ValueError, match="confirmed at set time"):
+        store.save(
+            {
+                "voyage_id": saved["voyage_id"],
+                "name": saved["name"],
+                "steps": saved["steps"],
+                "model_pref": {"preferred": {"provider": "openai", "model": "gpt-5.5"}},
+            }
+        )
+
+
+def test_a_copied_specialist_keeps_the_room_it_belongs_to(tmp_path) -> None:
+    store = _store(tmp_path)
+    documents = tmp_path / "documents"
+    documents.mkdir(exist_ok=True)
+
+    copied = store.copy_preset(
+        "preset_daily_arrivals",
+        input_roots=(str(documents),),
+        output_dir=str(tmp_path / "out"),
+    )
+
+    assert "folder-watch" in copied["tags"]
+    assert "scheduled" in copied["tags"]
+    assert copied["schedule"]["cadence"] == "daily"
+
+
+def test_every_shipped_specialist_carries_at_least_one_tag() -> None:
+    listed = load_presets()
+
+    assert listed
+    for preset in listed:
+        assert preset.get("tags"), preset["preset_id"]

@@ -45,10 +45,15 @@ STATUS_RUNNABLE = "runnable"
 STATUS_PENDING = "pending_capability"
 VOYAGE_STATUSES = frozenset({STATUS_RUNNABLE, STATUS_PENDING})
 MAX_POLICY_REFS = 20
+MAX_TAGS = 12
+SCHEDULE_TAG = "scheduled"
+SCHEDULE_CADENCES = ("daily", "weekly", "monthly")
 PRESET_ROOT = Path(__file__).with_name("presets")
 
 _VOYAGE_ID = re.compile(r"voyage_[A-Za-z0-9_-]+")
 _PRESET_ID = re.compile(r"preset_[a-z0-9_]+")
+_TAG = re.compile(r"[a-z0-9][a-z0-9-]{0,39}")
+_CLOCK = re.compile(r"([01][0-9]|2[0-3]):[0-5][0-9]")
 
 
 def _text(value: Any, field: str, *, maximum: int, required: bool = True) -> str:
@@ -124,6 +129,69 @@ def validate_policy_refs(value, field: str) -> list[str]:
     if len(set(refs)) != len(refs):
         raise ValueError(f"{field} must not repeat a policy name")
     return refs
+
+
+def validate_schedule(value: Any) -> dict[str, Any] | None:
+    """Check a declared standing routine.
+
+    A schedule is a stated intention, not a running timer. NemoFold registers
+    nothing with the operating system and starts nothing on its own; the field
+    records when a person means to run this voyage, so the library can show it
+    as a routine and so an exported task file can carry the right time.
+    """
+    if value is None:
+        return None
+    # installed_by_nemofold is derived, never taken from the request; accepting
+    # the key lets a stored schedule pass back through validation unchanged.
+    if not isinstance(value, dict) or set(value) - {
+        "cadence",
+        "at",
+        "note",
+        "installed_by_nemofold",
+    }:
+        raise ValueError("schedule may only carry cadence, at and note")
+    cadence = value.get("cadence")
+    if cadence not in SCHEDULE_CADENCES:
+        raise ValueError("schedule cadence must be daily, weekly or monthly")
+    at = _text(value.get("at", "07:00"), "schedule at", maximum=5)
+    if not _CLOCK.fullmatch(at):
+        raise ValueError("schedule at must be a 24-hour HH:MM time")
+    return {
+        "cadence": cadence,
+        "at": at,
+        "note": _text(value.get("note", ""), "schedule note", maximum=400, required=False),
+        # Said in the stored object itself, so no reader of the file can mistake
+        # a saved schedule for something NemoFold installed or will fire.
+        "installed_by_nemofold": False,
+    }
+
+
+def validate_tags(value: Any, *, scheduled: bool) -> list[str]:
+    """Check the thematic tags and derive the reserved scheduled tag.
+
+    Tags are how a use case finds its room, so they are free-form on purpose -
+    except `scheduled`, which is derived from the schedule field. A tag that
+    claims a property the object does not have would send a voyage to a room it
+    does not belong in, so setting it by hand is refused.
+    """
+    raw = [] if value is None else value
+    if not isinstance(raw, list) or len(raw) > MAX_TAGS:
+        raise ValueError(f"tags must be a list of at most {MAX_TAGS} names")
+    tags: list[str] = []
+    for item in raw:
+        tag = _text(item, "tag", maximum=40).lower()
+        if not _TAG.fullmatch(tag):
+            raise ValueError("a tag must be lowercase letters, digits or hyphens")
+        if tag == SCHEDULE_TAG and not scheduled:
+            raise ValueError(
+                "the scheduled tag is derived from the schedule field and cannot be set "
+                "by hand: give the voyage a schedule instead"
+            )
+        if tag not in tags:
+            tags.append(tag)
+    if scheduled and SCHEDULE_TAG not in tags:
+        tags.append(SCHEDULE_TAG)
+    return sorted(tags)
 
 
 def validate_chain_model_pref(value):
@@ -224,7 +292,7 @@ class VoyageStore:
         allowed = {
             "voyage_id", "name", "description", "steps", "source", "status",
             "missing_capability", "model_pref", "model_authority", "authority_reason",
-            "confirm_external_authority", "rights", "policy_refs",
+            "confirm_external_authority", "rights", "policy_refs", "tags", "schedule",
         }
         unknown = sorted(set(value) - allowed)
         if unknown:
@@ -237,11 +305,30 @@ class VoyageStore:
             previous = self.load(voyage_id)
         else:
             voyage_id = f"voyage_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}_{uuid4().hex[:8]}"
-        status = value.get("status", STATUS_RUNNABLE)
+
+        def kept(field: str, default: Any) -> Any:
+            """Return a field from the request, or from the stored voyage.
+
+            A client that reorders two steps sends steps and a name. Falling back
+            to the type default there would quietly strip the tags, the schedule,
+            the reservation status and the outbound rights - silent erasure by
+            omission. Clearing a field stays possible by sending it as null.
+            """
+            if field in value:
+                return value[field]
+            if previous is not None and field in previous:
+                return previous[field]
+            return default
+
+        status = kept("status", STATUS_RUNNABLE)
         if status not in VOYAGE_STATUSES:
             raise ValueError("status must be runnable or pending_capability")
+        # The reservation reason only exists while the reservation does, so it is
+        # inherited only while the status stays pending. Freeing a voyage by
+        # sending status=runnable must not drag the old reason along.
         missing = _text(
-            value.get("missing_capability", ""),
+            (kept("missing_capability", "") if status == STATUS_PENDING
+             else value.get("missing_capability", "")) or "",
             "missing_capability",
             maximum=200,
             required=False,
@@ -263,38 +350,51 @@ class VoyageStore:
             _step(item, index, base_dir=self.base_dir, gate=self.gate)
             for index, item in enumerate(raw_steps, start=1)
         ]
-        source = value.get("source", "manual")
+        source = kept("source", "manual")
         if source not in VOYAGE_SOURCES:
             raise ValueError("voyage source must be wizard, manual or preset")
-        authority = value.get("model_authority", AUTHORITY_LINKS_WIN)
+        authority = kept("model_authority", AUTHORITY_LINKS_WIN)
         if authority not in MODEL_AUTHORITIES:
             raise ValueError("model_authority must be links_win or chain_wins")
-        chain_pref = validate_chain_model_pref(value.get("model_pref"))
+        chain_pref = validate_chain_model_pref(kept("model_pref", None))
         reason = _text(
-            value.get("authority_reason", ""),
+            kept("authority_reason", "") or "",
             "authority_reason",
             maximum=500,
             required=False,
         )
         # chain_wins overrides settings a person made on the links, so an external
-        # chain model is confirmed when it is set, not only when it runs.
+        # chain model is confirmed when it is set, not only when it runs. "At set
+        # time" is meant literally: an unchanged setting was already confirmed, so
+        # re-saving a step order must not demand a confirmation nobody is giving.
+        newly_set = previous is None or (
+            previous.get("model_authority"),
+            previous.get("model_pref"),
+        ) != (authority, chain_pref)
         if (
             authority == AUTHORITY_CHAIN_WINS
             and isinstance(chain_pref, dict)
             and is_external(chain_pref.get("preferred"))
+            and newly_set
             and value.get("confirm_external_authority") is not True
         ):
             raise ValueError(
                 "a chain that overrides its links with an external model must be "
                 "confirmed at set time: pass confirm_external_authority"
             )
+        schedule = validate_schedule(kept("schedule", None))
+        raw_tags = kept("tags", None)
+        if "tags" not in value and schedule is None and isinstance(raw_tags, list):
+            # The derived tag is inherited with the rest, so dropping the schedule
+            # has to drop it too. Sending it by hand is still refused.
+            raw_tags = [tag for tag in raw_tags if tag != SCHEDULE_TAG]
         now = datetime.now(UTC).isoformat()
         payload = {
             "schema": VOYAGE_SCHEMA,
             "voyage_id": voyage_id,
             "name": _text(value.get("name"), "name", maximum=120),
             "description": _text(
-                value.get("description", ""), "description", maximum=2000, required=False
+                kept("description", "") or "", "description", maximum=2000, required=False
             ),
             "created_at": previous["created_at"] if previous else now,
             "updated_at": now,
@@ -304,8 +404,10 @@ class VoyageStore:
             "model_pref": chain_pref,
             "model_authority": authority,
             "authority_reason": reason,
-            "rights": validate_rights(value.get("rights"), "rights"),
-            "policy_refs": validate_policy_refs(value.get("policy_refs"), "policy_refs"),
+            "rights": validate_rights(kept("rights", None), "rights"),
+            "policy_refs": validate_policy_refs(kept("policy_refs", None), "policy_refs"),
+            "schedule": schedule,
+            "tags": validate_tags(raw_tags, scheduled=schedule is not None),
             "steps": steps,
             "approval_state": {
                 "external_transfer": False,
@@ -363,6 +465,8 @@ class VoyageStore:
                             "authority_reason": value.get("authority_reason", ""),
                             "overrides_links": value.get("model_authority")
                             == AUTHORITY_CHAIN_WINS,
+                            "tags": list(value.get("tags") or []),
+                            "schedule": value.get("schedule"),
                             "step_count": len(value["steps"]),
                             "workflows": [step["workflow"] for step in value["steps"]],
                             "editable": True,
@@ -383,6 +487,10 @@ class VoyageStore:
                 "model_authority": AUTHORITY_LINKS_WIN,
                 "authority_reason": "",
                 "overrides_links": False,
+                "tags": validate_tags(
+                    preset.get("tags"), scheduled=preset.get("schedule") is not None
+                ),
+                "schedule": validate_schedule(preset.get("schedule")),
                 "step_count": len(preset["steps"]),
                 "workflows": [step["workflow"] for step in preset["steps"]],
                 "editable": False,
@@ -441,5 +549,11 @@ class VoyageStore:
                 "description": preset["description"],
                 "steps": steps,
                 "source": "preset",
+                # The room a specialist belongs in travels with the copy, so a
+                # freshly copied use case is not homeless until someone tags it.
+                "tags": [
+                    tag for tag in preset.get("tags", []) if tag != SCHEDULE_TAG
+                ],
+                "schedule": preset.get("schedule"),
             }
         )
