@@ -269,7 +269,10 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert ".home-glance,.task-cards,.echo-check" in stylesheet
     assert ".form-grid>*{min-width:0}" in stylesheet
     assert 'body[data-page="governance"]' in stylesheet
-    assert "@media(prefers-reduced-motion:reduce){.porthole-life" in stylesheet
+    # Pin the effect, not its formatting: the porthole must have a branch that
+    # stops every drifter and mote when the reader asked for reduced motion.
+    assert "@media(prefers-reduced-motion:reduce)" in stylesheet
+    assert ".porthole-life .drifter,.porthole-life .mote{animation:none}" in stylesheet
     # Narrow viewports must collapse the tile, instrument and card grids to one
     # column; two cramped columns were still readable but clipped their captions.
     assert "@media(max-width:600px){" in stylesheet
@@ -942,3 +945,22 @@ def test_engine_room_opens_with_the_central_controls_only(tmp_path) -> None:
     assert 'id="runId"' in html.split('id="grpRunIdentity"', 1)[1]
     assert 'id="outputDir"' in html.split('id="grpOutputs"', 1)[1]
     assert "Diagnose exact scope" in html
+
+
+def test_porthole_is_one_svg_and_explainers_start_collapsed(tmp_path) -> None:
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/analysis", timeout=5) as response,  # noqa: S310
+    ):
+        html = response.read().decode()
+
+    # One SVG overlay carries every creature; the loose mote divs are gone.
+    assert '<svg class="porthole-life"' in html
+    assert '<i class="mote' not in html
+    assert html.count('class="drifter') == 3
+    assert html.count('class="mote') == 5
+    # Explainer sections start collapsed behind a lifebuoy anchor.
+    for group in ("trustBoundaryDetail", "bridgeDoctrine"):
+        assert f'data-collapse="{group}"' in html
+        assert f'<div id="{group}" class="collapse-panel" hidden>' in html
+    assert 'class="instrument-icon radar"' in html

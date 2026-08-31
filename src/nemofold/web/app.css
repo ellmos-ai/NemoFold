@@ -118,24 +118,10 @@ body[data-page="governance"] [data-page-section]:not([data-page-section~="govern
 .echo-row b{font:11px var(--mono);font-weight:700;overflow-wrap:anywhere}
 .echo-row span{color:var(--muted);font:9px var(--mono);overflow-wrap:anywhere}
 .echo-list p{margin:0;padding:13px 14px;color:var(--muted);font:11px/1.5 var(--mono)}
-.porthole-life{position:absolute;z-index:2;display:none;inset:0;overflow:hidden;pointer-events:none}
-body[data-page="analysis"] .porthole-life{display:block}
-.porthole-life .drifter{position:absolute;fill:none;stroke:var(--cyan);stroke-width:1.2;opacity:.24}
-.porthole-life .drifter ellipse{fill:rgba(120,209,202,.1)}
-.porthole-life .jelly-a{right:9%;bottom:-70px;width:44px;animation:nf-rise 46s linear infinite,nf-glow 17s ease-in-out infinite}
-.porthole-life .jelly-b{right:27%;bottom:-70px;width:30px;animation:nf-rise 61s linear 9s infinite,nf-glow 23s ease-in-out 4s infinite}
-.porthole-life .lantern{right:-80px;top:38%;width:56px;animation:nf-swim 54s linear 6s infinite,nf-glow 13s ease-in-out infinite}
-.porthole-life .lantern .lamp{fill:var(--cyan);stroke:none;opacity:.8}
-.porthole-life .mote{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--cyan);opacity:.3}
-.porthole-life .m1{right:16%;bottom:-10px;animation:nf-rise 38s linear infinite}
-.porthole-life .m2{right:33%;bottom:-10px;animation:nf-rise 52s linear 7s infinite}
-.porthole-life .m3{right:47%;bottom:-10px;animation:nf-rise 44s linear 15s infinite}
-.porthole-life .m4{right:22%;bottom:-10px;animation:nf-rise 59s linear 23s infinite}
-.porthole-life .m5{right:40%;bottom:-10px;animation:nf-rise 33s linear 30s infinite}
-@keyframes nf-rise{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(-26px,-235px,0)}100%{transform:translate3d(6px,-470px,0)}}
-@keyframes nf-swim{0%{transform:translate3d(0,0,0)}100%{transform:translate3d(-150vw,-40px,0)}}
-@keyframes nf-glow{0%,84%,100%{opacity:.2}92%{opacity:.62}}
-@media(prefers-reduced-motion:reduce){.porthole-life .drifter,.porthole-life .mote{animation:none!important}.porthole-life .lantern{right:22%}.porthole-life .jelly-a{bottom:22%}.porthole-life .jelly-b{bottom:44%}.porthole-life .mote{bottom:auto;top:40%}}
+body[data-page="analysis"] 
+100%{transform:translate3d(6px,-470px,0)}}
+}
+}
 body[data-page="artifacts"] .artifact-gallery>article{position:relative;margin-left:6px;border-left:1px solid #8a6b3c;background:linear-gradient(97deg,#fbf6ea,var(--white) 34%)}
 body[data-page="artifacts"] .artifact-gallery>article:before{content:"";position:absolute;top:0;bottom:0;left:-6px;width:6px;background:repeating-linear-gradient(180deg,#8a6b3c 0 9px,#9c7c4c 9px 18px)}
 body[data-page="connections"]{--paper:#eef2f2}
@@ -216,3 +202,32 @@ fieldset .drawer-group+.drawer-group{margin-top:10px}
 .console .instrument-anchor[aria-expanded="true"] .instrument-icon{color:var(--sea);filter:none}
 @keyframes nf-sweep{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.instrument-icon.radar{animation:none}.instrument-icon.wheel{transition:none}}
+.porthole-life{position:absolute;z-index:2;display:none;inset:0;width:100%;height:100%;pointer-events:none}
+body[data-page="analysis"] .porthole-life{display:block}
+.porthole-life .drifter{fill:none;stroke:var(--cyan);stroke-width:1.2;opacity:.24}
+.porthole-life .drifter ellipse{fill:rgba(120,209,202,.1)}
+.porthole-life .lantern .lamp{fill:var(--cyan);stroke:none;opacity:.8}
+.porthole-life .mote{fill:var(--cyan);opacity:.3}
+.porthole-life .jelly-a{animation:nf-rise 46s linear infinite,nf-glow 17s ease-in-out infinite}
+.porthole-life .jelly-b{animation:nf-rise 61s linear 9s infinite,nf-glow 23s ease-in-out 4s infinite}
+.porthole-life .lantern{animation:nf-swim 54s linear 6s infinite,nf-glow 13s ease-in-out infinite}
+.porthole-life .m1{animation:nf-rise 38s linear infinite}
+.porthole-life .m2{animation:nf-rise 52s linear 7s infinite}
+.porthole-life .m3{animation:nf-rise 44s linear 15s infinite}
+.porthole-life .m4{animation:nf-rise 59s linear 23s infinite}
+.porthole-life .m5{animation:nf-rise 33s linear 30s infinite}
+@keyframes nf-rise{0%{transform:translate(0,0)}50%{transform:translate(-7px,-58px)}100%{transform:translate(2px,-116px)}}
+@keyframes nf-swim{to{transform:translate(-500px,-9px)}}
+@keyframes nf-glow{0%,84%,100%{opacity:.2}92%{opacity:.62}}
+.section-anchor{margin-top:14px;border:1px solid var(--line-dark);background:linear-gradient(180deg,#f2f0e7,#e8e6dc);color:var(--deep)}
+.section-anchor:hover{background:#e4e8e1}
+.section-anchor .instrument-icon{color:#d9705a}
+.echo-check .kicker{display:flex;align-items:center;gap:8px}
+.echo-check .kicker .instrument-icon{color:var(--sea)}
+@media(prefers-reduced-motion:reduce){
+.porthole-life .drifter,.porthole-life .mote{animation:none}
+.porthole-life .jelly-a{transform:translate(-6px,-48px)}
+.porthole-life .jelly-b{transform:translate(0,-72px)}
+.porthole-life .lantern{transform:translate(-185px,0)}
+.porthole-life .mote{transform:translate(0,-55px)}
+}

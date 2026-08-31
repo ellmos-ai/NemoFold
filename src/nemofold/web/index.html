@@ -98,12 +98,25 @@
         <p id="voyageSceneText">Your protected home on board: intake, cleanup, local mail cases and controlled drafts remain inspectable before anything moves or leaves the Nautilus.</p>
         <small id="voyageRoadmap">ACTIVE · inbox + policy + cleanup + mail cases + controlled drafts</small>
       </div>
-      <div class="porthole-life" aria-hidden="true">
-        <svg class="drifter jelly-a" viewBox="0 0 40 60" role="presentation"><ellipse cx="20" cy="20" rx="14" ry="12"/><path d="M8 22c2 12 4 20 3 30M14 24c1 13 0 22-2 30M20 25c0 14 1 22 1 31M26 24c-1 13 0 22 2 30M32 22c-2 12-4 20-3 30"/></svg>
-        <svg class="drifter jelly-b" viewBox="0 0 40 60" role="presentation"><ellipse cx="20" cy="18" rx="11" ry="9"/><path d="M11 20c1 11 3 18 2 27M17 21c0 12 0 19-1 27M23 21c0 12 0 19 1 27M29 20c-1 11-3 18-2 27"/></svg>
-        <svg class="drifter lantern" viewBox="0 0 60 34" role="presentation"><path d="M6 17c9-12 30-15 44-3 4 3 4 5 0 8-14 12-35 9-44-3Z"/><circle class="lamp" cx="16" cy="14" r="3"/><path d="M50 10c5 3 5 9 0 12"/></svg>
-        <i class="mote m1"></i><i class="mote m2"></i><i class="mote m3"></i><i class="mote m4"></i><i class="mote m5"></i>
-      </div>
+      <svg class="porthole-life" viewBox="0 0 400 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+        <g transform="translate(330 108)"><g class="drifter jelly-a"><g transform="scale(0.42)">
+          <ellipse cx="0" cy="0" rx="15" ry="12"/>
+          <path d="M-12 3c2 12 4 20 3 30M-6 5c1 13 0 22-2 30M0 6c0 14 1 22 1 31M6 5c-1 13 0 22 2 30M12 3c-2 12-4 20-3 30"/>
+        </g></g></g>
+        <g transform="translate(250 108)"><g class="drifter jelly-b"><g transform="scale(0.42)">
+          <ellipse cx="0" cy="0" rx="10" ry="8"/>
+          <path d="M-8 2c1 11 3 18 2 27M-3 3c0 12 0 19-1 27M3 3c0 12 0 19 1 27M8 2c-1 11-3 18-2 27"/>
+        </g></g></g>
+        <g transform="translate(432 46)"><g class="drifter lantern"><g transform="scale(0.42)">
+          <path d="M-26 0c9-12 30-15 44-3 4 3 4 5 0 8-14 12-35 9-44-5Z"/>
+          <circle class="lamp" cx="-16" cy="-3" r="3"/><path d="M18-4c5 3 5 9 0 12"/>
+        </g></g></g>
+        <g transform="translate(300 106)"><circle class="mote m1" r="0.9"/></g>
+        <g transform="translate(210 106)"><circle class="mote m2" r="0.9"/></g>
+        <g transform="translate(150 106)"><circle class="mote m3" r="0.9"/></g>
+        <g transform="translate(270 106)"><circle class="mote m4" r="0.9"/></g>
+        <g transform="translate(180 106)"><circle class="mote m5" r="0.9"/></g>
+      </svg>
     </section>
 
     <section id="homeGlance" class="home-glance" aria-labelledby="homeGlanceTitle" data-page-section="document">
@@ -141,7 +154,7 @@
     <section id="echoCheck" class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="routines">
       <div class="glance-head">
         <div>
-          <p class="kicker">ECHO SOUNDING</p>
+          <p class="kicker"><svg class="instrument-icon radar" aria-hidden="true"><use href="#icon-radar"></use></svg>ECHO SOUNDING</p>
           <h2 id="echoCheckTitle">What came back from the last pings.</h2>
         </div>
         <div class="glance-controls">
@@ -209,6 +222,12 @@
         </dl>
       </div>
       <div id="bridgeRoots" class="bridge-roots" aria-live="polite"><p>Reading approved roots…</p></div>
+      <button type="button" class="instrument-anchor section-anchor" data-collapse="bridgeDoctrine" aria-expanded="false" aria-controls="bridgeDoctrine">
+        <svg class="instrument-icon lifebuoy" aria-hidden="true"><use href="#icon-lifebuoy"></use></svg>
+        <span>Authority before inference</span>
+        <i class="chevron" aria-hidden="true"></i>
+      </button>
+      <div id="bridgeDoctrine" class="collapse-panel" hidden>
       <div class="bridge-doctrine">
         <p class="kicker">AUTHORITY BEFORE INFERENCE</p>
         <p>NemoFold accepts a strict job contract. A run can read only approved roots and can write only to the declared output location and, for action workflows, approved target roots. Remote reasoning is a worker: it receives selected chunks, never ambient folder authority.</p>
@@ -218,6 +237,7 @@
           <li><span>03</span><div><b>Execute</b><small>local by default</small></div></li>
           <li><span>04</span><div><b>Verify</b><small>quotes, gaps, journal</small></div></li>
         </ol>
+      </div>
       </div>
     </section>
 
@@ -523,6 +543,12 @@ Which earlier wording changed?</textarea></label>
         <p class="kicker">CONTROLLED AGENT LOOP</p>
         <h2 id="boundaryTitle">Reasoning may travel. Authority does not.</h2>
       </div>
+      <button type="button" class="instrument-anchor section-anchor" data-collapse="trustBoundaryDetail" aria-expanded="false" aria-controls="trustBoundaryDetail">
+        <svg class="instrument-icon lifebuoy" aria-hidden="true"><use href="#icon-lifebuoy"></use></svg>
+        <span>How the controlled agent loop works</span>
+        <i class="chevron" aria-hidden="true"></i>
+      </button>
+      <div id="trustBoundaryDetail" class="collapse-panel" hidden>
       <div class="boundary-map" role="img" aria-label="Approved folders are inventoried locally. The policy gate may release selected pseudonymized chunks to a Nemotron worker. Returned claims are validated locally before reports or reversible actions.">
         <div class="zone local-zone">
           <span class="zone-label">LOCAL TRUST ZONE</span>
@@ -535,6 +561,7 @@ Which earlier wording changed?</textarea></label>
         <div class="return-line"><span>validated return</span><b>quotes · coverage · report · undo journal</b></div>
       </div>
       <p class="text-alt">Text alternative: approved local files are inventoried and indexed locally. A privacy gate may prepare selected pseudonymized chunks for an isolated Nemotron worker. Every returned claim is checked against local sources before any report or reversible action is accepted.</p>
+      </div>
     </section>
 
     <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle" data-page-section="overview">
