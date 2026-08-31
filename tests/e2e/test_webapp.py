@@ -270,6 +270,13 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert ".form-grid>*{min-width:0}" in stylesheet
     assert 'body[data-page="governance"]' in stylesheet
     assert "@media(prefers-reduced-motion:reduce){.porthole-life" in stylesheet
+    # Narrow viewports must collapse the tile, instrument and card grids to one
+    # column; two cramped columns were still readable but clipped their captions.
+    assert "@media(max-width:600px){" in stylesheet
+    assert (
+        ".glance-tiles,.bridge-panel,.task-card-list,.bridge-doctrine ol,.bridge-gauges"
+        "{grid-template-columns:minmax(0,1fr)}"
+    ) in stylesheet
 
 
 def test_web_console_rejects_cross_origin_posts(tmp_path) -> None:

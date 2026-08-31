@@ -146,3 +146,17 @@ body[data-page="connections"] .section-title .kicker{color:#12727a}
 .command-bridge{margin-top:44px}
 body[data-page="governance"] .scope-rail{display:none}
 body[data-page="governance"] .workspace-grid{grid-template-columns:minmax(0,1fr)}
+.glance-tiles{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+.bridge-panel{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
+.task-card-list{grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+@media(max-width:600px){
+.glance-tiles,.bridge-panel,.task-card-list,.bridge-doctrine ol,.bridge-gauges{grid-template-columns:minmax(0,1fr)}
+.glance-tiles .tile{border-right:0;border-bottom:1px solid var(--line)}
+.glance-tiles .tile:last-child{border-bottom:0}
+.instrument{border-right:0}
+.task-card{border-left:1px solid var(--line-dark)}
+.glance-list>div,.bridge-roots>div{grid-template-columns:minmax(0,1fr)}
+.glance-list span{white-space:normal}
+.glance-controls input{width:100%}
+.voyage-copy{max-width:100%}
+}
