@@ -21,6 +21,7 @@ from .notebooks import ResearchNotebookStore
 from .provider_analysis import analyze_with_provider, preview_provider_context
 from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
+from .voyages import VoyageStore
 from .wizard import DEFAULT_OUTPUT_DIR, plan_to_primitive, plan_voyage
 from .workflow_graphs import workflow_graphs
 
@@ -316,6 +317,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "draft_surface_enabled": provider_surface_enabled,
                     "notebook_surface_enabled": provider_surface_enabled,
                     "wizard_surface_enabled": provider_surface_enabled,
+                    "voyage_surface_enabled": provider_surface_enabled,
                     "external_models_allowed": (
                         self.server.app_config.execution.external_models_allowed
                         if provider_surface_enabled
@@ -360,6 +362,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/notebooks":
             self._handle_notebook_list()
             return
+        if path == "/api/voyages":
+            self._handle_voyage_list()
+            return
         if path == "/api/notebook":
             self._handle_notebook_load(parse_qs(parsed_path.query, keep_blank_values=True))
             return
@@ -403,6 +408,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/notebook-run",
             "/api/wizard",
             "/api/wizard-prepare",
+            "/api/voyages",
+            "/api/voyage-preset",
+            "/api/voyage-delete",
         }:
             self._discard_bounded_request_body()
             self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -419,6 +427,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/notebook-run",
                 "/api/wizard",
                 "/api/wizard-prepare",
+                "/api/voyages",
+                "/api/voyage-preset",
+                "/api/voyage-delete",
             }:
                 self._discard_bounded_request_body()
                 self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -475,6 +486,15 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path in {"/api/wizard", "/api/wizard-prepare"}:
             self._handle_wizard(prepare=path == "/api/wizard-prepare")
+            return
+        if path == "/api/voyages":
+            self._handle_voyage_save()
+            return
+        if path == "/api/voyage-preset":
+            self._handle_voyage_preset()
+            return
+        if path == "/api/voyage-delete":
+            self._handle_voyage_delete()
             return
         try:
             payload = self._read_json()
@@ -723,6 +743,104 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         result["prepared"] = True
         result["drafts"] = drafts
         self._json(result)
+
+    def _voyage_store(self) -> VoyageStore:
+        return VoyageStore(
+            self.server.app_config.base_dir,
+            self.server.app_config.execution.allowed_roots,
+        )
+
+    def _voyage_surface_available(self) -> bool:
+        return not (
+            self.server.app_config.public_demo or self.server.app_config.exposed_to_network
+        )
+
+    def _reject_closed_voyage_surface(self) -> bool:
+        if self._voyage_surface_available():
+            return False
+        self._reject_before_body_read(
+            HTTPStatus.FORBIDDEN,
+            "voyage_surface_loopback_only",
+            "the use-case library is disabled when the HTTP server is network-exposed",
+        )
+        return True
+
+    def _handle_voyage_save(self) -> None:
+        if self._reject_closed_voyage_surface():
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            voyage = self._voyage_store().save(payload)
+        except (JobFileError, OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "voyage_rejected", str(exc))
+            return
+        self._json({"ok": True, "voyage": voyage})
+
+    def _handle_voyage_preset(self) -> None:
+        if self._reject_closed_voyage_surface():
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            unknown = sorted(set(payload) - {"preset_id", "input_roots", "output_dir", "name"})
+            if unknown:
+                raise ValueError(f"unknown request fields: {', '.join(unknown)}")
+            preset_id = payload.get("preset_id")
+            if not isinstance(preset_id, str):
+                raise ValueError("preset_id must be a string")
+            roots = payload.get("input_roots") or []
+            if not isinstance(roots, list) or any(not isinstance(item, str) for item in roots):
+                raise ValueError("input_roots must be a list of strings")
+            output_dir = payload.get("output_dir", DEFAULT_OUTPUT_DIR)
+            if not isinstance(output_dir, str) or not output_dir.strip():
+                raise ValueError("output_dir must be a non-empty string")
+            name = payload.get("name")
+            if name is not None and not isinstance(name, str):
+                raise ValueError("name must be a string")
+            voyage = self._voyage_store().copy_preset(
+                preset_id,
+                input_roots=tuple(roots),
+                output_dir=output_dir,
+                name=name,
+            )
+        except (JobFileError, OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "voyage_preset_rejected", str(exc))
+            return
+        self._json({"ok": True, "voyage": voyage})
+
+    def _handle_voyage_delete(self) -> None:
+        if self._reject_closed_voyage_surface():
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict) or set(payload) - {"voyage_id"}:
+                raise ValueError("request body must carry only voyage_id")
+            voyage_id = payload.get("voyage_id")
+            if not isinstance(voyage_id, str):
+                raise ValueError("voyage_id must be a string")
+            self._voyage_store().delete(voyage_id)
+        except (OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "voyage_delete_rejected", str(exc))
+            return
+        self._json({"ok": True, "deleted": True})
+
+    def _handle_voyage_list(self) -> None:
+        if not self._voyage_surface_available():
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "voyage_surface_loopback_only",
+                "the use-case library is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            voyages = self._voyage_store().list()
+        except (OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "voyage_list_rejected", str(exc))
+            return
+        self._json({"ok": True, "voyages": list(voyages)})
 
     def _handle_artifact_catalog(self) -> None:
         if self.server.app_config.exposed_to_network:

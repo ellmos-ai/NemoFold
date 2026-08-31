@@ -1,0 +1,35 @@
+{
+  "description": "Build one deterministic bundle of the approved folder, then answer your questions against it with exact quotes and export the result.",
+  "name": "Topic bundle with evidence PDF",
+  "preset_id": "preset_topic_bundle_pdf",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "The bundle output becomes the input of the analysis step.",
+      "parameters": {
+        "bundle_format": "text",
+        "bundle_name": "topic_bundle",
+        "include_manifest": true,
+        "order": "display_name",
+        "recursive": true
+      },
+      "questions": [],
+      "workflow": "bundle_export"
+    },
+    {
+      "note": "Replace the question with the ones your case actually asks.",
+      "parameters": {
+        "analysis_mode": "local_extractive",
+        "formats": [
+          "pdf",
+          "md"
+        ],
+        "max_chunks": 64
+      },
+      "questions": [
+        "Which claims do the approved sources support?"
+      ],
+      "workflow": "evidence_analyst"
+    }
+  ]
+}

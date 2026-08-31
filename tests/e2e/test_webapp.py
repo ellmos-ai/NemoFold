@@ -1178,3 +1178,59 @@ def test_wizard_prepare_answers_when_the_draft_inbox_is_out_of_scope(tmp_path) -
     body = json.load(refused.value)
     assert body["error"] == "wizard_draft_rejected"
     assert "allow roots" in body["detail"]
+
+
+def test_use_case_library_lists_presets_and_copies_one(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "police.txt").write_text("Beitrag: 148 Euro", encoding="utf-8")
+
+    with running_server(tmp_path) as base_url:
+        status, _ = get_json(base_url + "/api/status")
+        listed, _ = get_json(base_url + "/api/voyages")
+        copied = post_json(
+            base_url + "/api/voyage-preset",
+            {
+                "preset_id": "preset_fact_digest_pdf",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+                "name": "Meine Faktenlage",
+            },
+        )
+        after, _ = get_json(base_url + "/api/voyages")
+        deleted = post_json(
+            base_url + "/api/voyage-delete", {"voyage_id": copied["voyage"]["voyage_id"]}
+        )
+
+    assert status["voyage_surface_enabled"] is True
+    # Shipped specialists are visible from the first listing and read-only.
+    shipped = [item for item in listed["voyages"] if item["source"] == "preset"]
+    assert shipped and all(item["editable"] is False for item in shipped)
+    assert all(item["voyage_id"].startswith("preset_") for item in shipped)
+
+    assert copied["voyage"]["name"] == "Meine Faktenlage"
+    assert copied["voyage"]["steps"][0]["job"]["action_mode"] == "dry_run"
+    assert any(item["editable"] for item in after["voyages"])
+    assert deleted["deleted"] is True
+
+
+def test_use_case_library_refuses_to_delete_a_shipped_specialist(tmp_path) -> None:
+    with running_server(tmp_path) as base_url, pytest.raises(HTTPError) as refused:
+        post_json(base_url + "/api/voyage-delete", {"voyage_id": "preset_fact_digest_pdf"})
+
+    assert refused.value.code == 400
+    assert "read-only sources" in json.load(refused.value)["detail"]
+
+
+def test_use_case_library_is_absent_in_the_public_demo(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "note.txt").write_text("x", encoding="utf-8")
+
+    with running_public_demo(source_root) as (_, base_url):
+        status, _ = get_json(base_url + "/api/status")
+        with pytest.raises(HTTPError) as refused:
+            post_json(base_url + "/api/voyages", {"name": "x", "steps": []})
+
+    assert status["voyage_surface_enabled"] is False
+    assert refused.value.code == 404

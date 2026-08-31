@@ -26,8 +26,19 @@ def test_mcp_server_exposes_one_bounded_tool_surface(tmp_path) -> None:
         "nemofold_analyze_with_provider",
         "nemofold_save_draft",
         "nemofold_list_drafts",
+        "nemofold_list_voyages",
+        "nemofold_copy_voyage_preset",
         "nemofold_verify_report",
     }
+    # The surface stays bounded and self-describing: capabilities must name the
+    # same tools the server actually exposes.
+    service = NemoFoldMCPService(
+        MCPServerConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        )
+    )
+    assert set(service.capabilities()["tools"]) == {tool.name for tool in tools}
 
 
 def test_mcp_anonymizer_is_local_bounded_and_keeps_no_reverse_map(tmp_path) -> None:

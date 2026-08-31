@@ -1,0 +1,20 @@
+{
+  "description": "Distil the quotable facts out of one folder, strike repeated statements and export findings and the struck-duplicates appendix as PDF and Markdown.",
+  "name": "Fact digest as PDF",
+  "preset_id": "preset_fact_digest_pdf",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "Add focus_terms to narrow the distillation to one topic.",
+      "parameters": {
+        "dedupe_scope": "normalized",
+        "formats": [
+          "pdf",
+          "md"
+        ]
+      },
+      "questions": [],
+      "workflow": "fact_distill"
+    }
+  ]
+}

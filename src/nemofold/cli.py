@@ -35,6 +35,7 @@ from .provider_analysis import analyze_with_provider
 from .providers import PROVIDER_DESCRIPTORS, provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
 from .runtime import LocalAgentRuntime
+from .voyages import VoyageStore
 from .webapp import WebAppConfig, build_server, serve_forever
 
 
@@ -176,6 +177,20 @@ def build_parser() -> argparse.ArgumentParser:
     draft_list = commands.add_parser("draft-list", help="list jobs waiting for browser review")
     draft_list.add_argument("--allow-root", action="append", required=True)
     draft_list.add_argument("--base-dir", default=".")
+    voyage_list = commands.add_parser(
+        "voyages", help="list the use-case library, shipped specialists included"
+    )
+    voyage_list.add_argument("--allow-root", action="append", required=True)
+    voyage_list.add_argument("--base-dir", default=".")
+    voyage_copy = commands.add_parser(
+        "voyage-copy", help="copy a shipped specialist into your own use-case library"
+    )
+    voyage_copy.add_argument("preset_id")
+    voyage_copy.add_argument("--allow-root", action="append", required=True)
+    voyage_copy.add_argument("--input-root", action="append", required=True)
+    voyage_copy.add_argument("--output-dir", default="run-reports/web-console")
+    voyage_copy.add_argument("--name")
+    voyage_copy.add_argument("--base-dir", default=".")
     mcp = commands.add_parser("mcp", help="start the bounded NemoFold MCP server over stdio")
     mcp.add_argument("--allow-root", action="append", required=True)
     mcp.add_argument("--base-dir", default=".")
@@ -257,6 +272,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _provider_analysis_command(args)
     if args.command in {"draft-save", "draft-list"}:
         return _draft_command(args)
+    if args.command in {"voyages", "voyage-copy"}:
+        return _voyage_command(args)
     if args.command == "mcp":
         return _mcp_command(args)
     parser.print_help()
@@ -512,6 +529,29 @@ def _draft_command(args: argparse.Namespace) -> int:
                     name=args.name,
                     source="cli",
                 )
+            }
+    except (JobFileError, OSError, PermissionError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
+        return 2
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
+
+
+def _voyage_command(args: argparse.Namespace) -> int:
+    """List the library, or copy one shipped specialist into it. Never runs a step."""
+    try:
+        store = VoyageStore(Path(args.base_dir), tuple(args.allow_root))
+        if args.command == "voyages":
+            payload: dict[str, object] = {"voyages": list(store.list())}
+        else:
+            payload = {
+                "voyage": store.copy_preset(
+                    args.preset_id,
+                    input_roots=tuple(args.input_root),
+                    output_dir=args.output_dir,
+                    name=args.name,
+                ),
+                "executed": False,
             }
     except (JobFileError, OSError, PermissionError, ValueError) as exc:
         print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))

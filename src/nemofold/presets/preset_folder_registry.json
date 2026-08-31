@@ -1,0 +1,22 @@
+{
+  "description": "Turn a folder into one table with a source anchor in every filled cell. The recurring-costs columns are a starting point; edit them for your case.",
+  "name": "Registry table from a folder",
+  "preset_id": "preset_folder_registry",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "Swap column_template for an explicit columns list to fit your documents.",
+      "parameters": {
+        "column_template": "recurring_costs",
+        "due_column": "Nächste Fälligkeit",
+        "due_within_days": 30,
+        "formats": [
+          "md",
+          "pdf"
+        ]
+      },
+      "questions": [],
+      "workflow": "document_registry"
+    }
+  ]
+}

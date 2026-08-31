@@ -1,0 +1,21 @@
+{
+  "description": "Compare a folder against a snapshot you name and report every new file with size, time and a short content, plus a task file you install yourself.",
+  "name": "Daily arrivals report",
+  "preset_id": "preset_daily_arrivals",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "Set since_run_id to the run you want to compare against.",
+      "parameters": {
+        "export_task_snippet": true,
+        "formats": [
+          "md"
+        ],
+        "summary_length": 3,
+        "task_run_at": "07:00:00"
+      },
+      "questions": [],
+      "workflow": "daily_arrivals"
+    }
+  ]
+}

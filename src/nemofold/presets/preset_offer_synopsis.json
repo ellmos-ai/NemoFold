@@ -1,0 +1,19 @@
+{
+  "description": "Fold several documents into one synopsis with a source anchor per paragraph and every disagreement shown as a conflict block.",
+  "name": "Compare offers into one synopsis",
+  "preset_id": "preset_offer_synopsis",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "Works best when the documents share section headings.",
+      "parameters": {
+        "formats": [
+          "pdf",
+          "md"
+        ]
+      },
+      "questions": [],
+      "workflow": "synopsis_merge"
+    }
+  ]
+}

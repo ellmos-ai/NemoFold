@@ -17,6 +17,7 @@ from .policy import PolicyConfig, PolicyGate
 from .provider_analysis import analyze_with_provider
 from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
+from .voyages import VoyageStore
 
 MAX_ANONYMIZE_CHARS = 2 * 1024 * 1024
 
@@ -59,6 +60,8 @@ class NemoFoldMCPService:
                 "nemofold_analyze_with_provider",
                 "nemofold_save_draft",
                 "nemofold_list_drafts",
+                "nemofold_list_voyages",
+                "nemofold_copy_voyage_preset",
                 "nemofold_verify_report",
             ],
             "allowed_root_count": len(self.config.execution.allowed_roots),
@@ -135,6 +138,26 @@ class NemoFoldMCPService:
 
     def list_drafts(self) -> dict[str, Any]:
         return {"drafts": self.drafts.list()}
+
+    def list_voyages(self) -> dict[str, Any]:
+        store = VoyageStore(self.base_dir, self.config.execution.allowed_roots)
+        return {"voyages": list(store.list())}
+
+    def copy_voyage_preset(
+        self,
+        preset_id: str,
+        input_roots: list[str],
+        output_dir: str = "run-reports/web-console",
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        store = VoyageStore(self.base_dir, self.config.execution.allowed_roots)
+        voyage = store.copy_preset(
+            preset_id,
+            input_roots=tuple(input_roots),
+            output_dir=output_dir,
+            name=name,
+        )
+        return {"voyage": voyage, "executed": False}
 
     def verify_report(self, report_path: str) -> dict[str, Any]:
         if not isinstance(report_path, str) or not self.path_gate.path_allowed(report_path):
@@ -215,6 +238,21 @@ def build_mcp_server(config: MCPServerConfig):
     def list_drafts() -> dict[str, Any]:
         """List model- or CLI-prepared jobs waiting in the local browser inbox."""
         return service.list_drafts()
+
+    @mcp.tool(name="nemofold_list_voyages")
+    def list_voyages() -> dict[str, Any]:
+        """List the saved use-case library and the shipped read-only specialists."""
+        return service.list_voyages()
+
+    @mcp.tool(name="nemofold_copy_voyage_preset")
+    def copy_voyage_preset(
+        preset_id: str,
+        input_roots: list[str],
+        output_dir: str = "run-reports/web-console",
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """Copy a shipped specialist into the library, bound to approved roots. Runs nothing."""
+        return service.copy_voyage_preset(preset_id, input_roots, output_dir, name)
 
     @mcp.tool(name="nemofold_verify_report")
     def verify_report(report_path: str) -> dict[str, Any]:
