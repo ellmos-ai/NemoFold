@@ -219,3 +219,16 @@ python generate_nautilus_assets.py
 The generator checks all twelve platform PNGs for their required dimensions and RGB mode, and verifies the two reusable lockup PNGs as 1600 × 400 RGBA images with transparency.
 
 Font lookup is portable across the supported production stacks: Segoe UI/Georgia on Windows, DejaVu Sans/Serif on Linux, and Arial/Georgia on macOS. Install one complete listed pair before rebuilding. Exact PNG bytes are expected to match only when Pillow, FreeType, fonts, and compression settings are pinned to the same host stack.
+
+### Scene canon additions (2026-08-31)
+
+Five text-free scene masters were added under `sources/` for the routed work areas,
+following the user's scene canon (decision D-023): `scene-analysis.png` (brass
+porthole with luminescent deep-sea life), `scene-connections.png` (the surfaced
+Nautilus on a sunny day), `scene-artifacts.png` (the Nautilus library),
+`scene-routines.png` (the echo-sounder station), and `scene-governance.png` (the
+command bridge). Generated via the Gemini image pipeline (agy) on 2026-08-31 from
+operator-written scene briefs, curated by the operator, resized to 1672x941, and
+shipped as optimized JPEGs in `src/nemofold/web/assets/`. No text is rendered inside
+the artwork; all figures are fictional crew. The Document Center scene keeps the
+existing `trust-voyage-background.png`.
