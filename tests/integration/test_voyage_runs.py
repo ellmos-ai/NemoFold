@@ -13,6 +13,7 @@ from nemofold.model_authority import (
     LEVEL_RUN_OVERRIDE,
     LOCAL_CORE,
 )
+from nemofold.policies import PolicyStore
 from nemofold.voyage_runs import run_voyage
 from nemofold.voyages import LOCAL_ONLY, VoyageStore
 
@@ -319,3 +320,111 @@ def test_an_empty_voyage_cannot_be_run(tmp_path) -> None:
             run_id="chain_empty",
             base_dir=tmp_path,
         )
+
+
+def test_a_bound_cleanup_policy_reaches_the_step_and_the_dossier(tmp_path) -> None:
+    documents = _corpus(tmp_path)
+    archive = tmp_path / "archive"
+    archive.mkdir()
+    roots = (str(tmp_path),)
+    policy_store = PolicyStore(base_dir=tmp_path, allowed_roots=roots)
+    policy = policy_store.save(
+        {
+            "name": "Ablage Standard",
+            "form": "policy",
+            "kind": "cleanup_rules",
+            "statements": ["Text und Markdown wandern in den Archivordner."],
+            "body": {"rules": [{"suffixes": [".txt"], "target_root": 0}]},
+        }
+    )
+    voyage = VoyageStore(base_dir=tmp_path, allowed_roots=roots).save(
+        {
+            "name": "Aufräumen nach Regelwerk",
+            "steps": [
+                {
+                    "workflow": "cleanup_rules",
+                    "job": {
+                        "schema": "nemofold.job.v1",
+                        "workflow": "cleanup_rules",
+                        "input_roots": [str(documents)],
+                        "target_roots": [str(archive)],
+                        "output_dir": str(tmp_path / "out" / "01-cleanup"),
+                        "privacy_mode": "local_only",
+                        "action_mode": "dry_run",
+                        "parameters": {"allowed_extensions": [".txt"]},
+                    },
+                }
+            ],
+        }
+    )
+    policy_store.bind(
+        policy["policy_id"], target="voyage", voyage_id=voyage["voyage_id"]
+    )
+
+    result = run_voyage(
+        voyage,
+        ExecutionConfig(allowed_roots=roots),
+        run_id="run_policy_bound",
+        base_dir=tmp_path,
+        policy_store=policy_store,
+    )
+
+    assert result.status == "executed"
+    assert result.steps[0].policy_note == "Cleanup rules came from policy Ablage Standard."
+    dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
+    assert dossier["steps"][0]["policy_note"].endswith("policy Ablage Standard.")
+    markdown = Path(result.dossier_path).with_suffix(".md").read_text(encoding="utf-8")
+    assert "Ablage Standard" in markdown
+
+
+def test_rules_in_the_contract_are_not_replaced_by_a_bound_policy(tmp_path) -> None:
+    documents = _corpus(tmp_path)
+    archive = tmp_path / "archive"
+    archive.mkdir()
+    roots = (str(tmp_path),)
+    policy_store = PolicyStore(base_dir=tmp_path, allowed_roots=roots)
+    policy = policy_store.save(
+        {
+            "name": "Ablage Standard",
+            "form": "policy",
+            "kind": "cleanup_rules",
+            "statements": ["Text wandert ins Archiv."],
+            "body": {"rules": [{"suffixes": [".md"], "target_root": 0}]},
+        }
+    )
+    voyage = VoyageStore(base_dir=tmp_path, allowed_roots=roots).save(
+        {
+            "name": "Eigene Regeln",
+            "steps": [
+                {
+                    "workflow": "cleanup_rules",
+                    "job": {
+                        "schema": "nemofold.job.v1",
+                        "workflow": "cleanup_rules",
+                        "input_roots": [str(documents)],
+                        "target_roots": [str(archive)],
+                        "output_dir": str(tmp_path / "out" / "01-cleanup"),
+                        "privacy_mode": "local_only",
+                        "action_mode": "dry_run",
+                        "parameters": {
+                            "allowed_extensions": [".txt"],
+                            "rules": [{"suffixes": [".txt"], "target_root": 0}],
+                        },
+                    },
+                }
+            ],
+        }
+    )
+    policy_store.bind(
+        policy["policy_id"], target="voyage", voyage_id=voyage["voyage_id"]
+    )
+
+    result = run_voyage(
+        voyage,
+        ExecutionConfig(allowed_roots=roots),
+        run_id="run_contract_wins",
+        base_dir=tmp_path,
+        policy_store=policy_store,
+    )
+
+    assert result.steps[0].policy_note == "Cleanup rules came from the job contract."

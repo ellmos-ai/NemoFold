@@ -1434,3 +1434,118 @@ def test_the_voyage_read_endpoint_is_absent_in_the_public_demo(tmp_path) -> None
         get_json(base_url + "/api/voyage?id=voyage_x")
 
     assert refused.value.code == 404
+
+
+def test_the_policy_register_saves_binds_and_lists_its_exceptions(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "police.txt").write_text("Beitrag: 148 Euro", encoding="utf-8")
+
+    with running_server(tmp_path) as base_url:
+        status, _ = get_json(base_url + "/api/status")
+        rule = post_json(
+            base_url + "/api/policies",
+            {
+                "name": "Anhänge nie ohne Bestätigung",
+                "form": "rule",
+                "statements": ["Ein Anhang geht nur mit Bestätigung."],
+            },
+        )
+        profile = post_json(
+            base_url + "/api/policies",
+            {
+                "name": "Standardrechte",
+                "form": "policy",
+                "kind": "rights_profile",
+                "statements": ["Entwurf bleibt der Normalfall."],
+                "body": {"rights": "draft_only"},
+                "applies_by_default": True,
+            },
+        )
+        copied = post_json(
+            base_url + "/api/voyage-preset",
+            {
+                "preset_id": "preset_fact_digest_pdf",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+            },
+        )
+        voyage_id = copied["voyage"]["voyage_id"]
+        bound = post_json(
+            base_url + "/api/policy-bind",
+            {
+                "policy_id": rule["policy"]["policy_id"],
+                "target": "voyage",
+                "voyage_id": voyage_id,
+            },
+        )
+        # A voyage that departs from the default shows up in the overview.
+        post_json(
+            base_url + "/api/voyages",
+            {
+                "voyage_id": voyage_id,
+                "name": copied["voyage"]["name"],
+                "steps": copied["voyage"]["steps"],
+                "rights": "send_with_confirmation",
+                "policy_refs": [rule["policy"]["policy_id"]],
+            },
+        )
+        register, _ = get_json(base_url + "/api/policies")
+        single, _ = get_json(base_url + f"/api/policy?id={rule['policy']['policy_id']}")
+        removed = post_json(
+            base_url + "/api/policy-delete", {"policy_id": profile["policy"]["policy_id"]}
+        )
+
+    assert status["policy_surface_enabled"] is True
+    assert bound["policy"]["bindings"][0]["voyage_id"] == voyage_id
+    assert single["policy"]["name"] == "Anhänge nie ohne Bestätigung"
+    assert register["default_rights"] == "draft_only"
+    assert [row["subject"] for row in register["exceptions"]] == ["rights"]
+    assert register["exceptions"][0]["voyage_id"] == voyage_id
+    assert register["exceptions"][0]["value"] == "send_with_confirmation"
+    assert removed["deleted"] is True
+
+
+def test_the_policy_register_is_absent_in_the_public_demo(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "note.txt").write_text("x", encoding="utf-8")
+
+    with running_public_demo(source_root) as (_, base_url):
+        status, _ = get_json(base_url + "/api/status")
+        with pytest.raises(HTTPError) as listed:
+            get_json(base_url + "/api/policies")
+        with pytest.raises(HTTPError) as written:
+            post_json(base_url + "/api/policies", {"name": "x", "statements": ["y"]})
+
+    assert status["policy_surface_enabled"] is False
+    assert listed.value.code == 404
+    assert written.value.code == 404
+
+
+def test_governance_and_library_reads_refuse_a_network_exposed_server(tmp_path) -> None:
+    server = build_server(
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(tmp_path),)),
+            exposed_to_network=True,
+        ),
+        host="127.0.0.1",
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    codes = {}
+    try:
+        for path in ("/api/policies", "/api/policy?id=policy_x", "/api/voyage?id=voyage_x"):
+            with pytest.raises(HTTPError) as refused:
+                get_json(f"http://{host}:{port}{path}")
+            codes[path] = refused.value.code
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+    # Present but refused over the network, unlike the demo where they are absent.
+    assert set(codes.values()) == {403}

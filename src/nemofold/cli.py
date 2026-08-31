@@ -30,6 +30,7 @@ from .nebius_token_factory import (
     run_token_factory_package,
 )
 from .nemoclaw_package import TRANSFER_ATTEMPT_FILENAME, validate_job_package
+from .policies import PolicyStore, default_rights, policy_exceptions
 from .policy import PolicyConfig, PolicyGate
 from .provider_analysis import analyze_with_provider
 from .providers import PROVIDER_DESCRIPTORS, provider_capabilities, provider_config_from_mapping
@@ -191,6 +192,11 @@ def build_parser() -> argparse.ArgumentParser:
     voyage_copy.add_argument("--output-dir", default="run-reports/web-console")
     voyage_copy.add_argument("--name")
     voyage_copy.add_argument("--base-dir", default=".")
+    policy_list = commands.add_parser(
+        "policies", help="list the named rules and policies, and where they are bound"
+    )
+    policy_list.add_argument("--allow-root", action="append", required=True)
+    policy_list.add_argument("--base-dir", default=".")
     mcp = commands.add_parser("mcp", help="start the bounded NemoFold MCP server over stdio")
     mcp.add_argument("--allow-root", action="append", required=True)
     mcp.add_argument("--base-dir", default=".")
@@ -274,6 +280,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _draft_command(args)
     if args.command in {"voyages", "voyage-copy"}:
         return _voyage_command(args)
+    if args.command == "policies":
+        return _policy_command(args)
     if args.command == "mcp":
         return _mcp_command(args)
     parser.print_help()
@@ -554,6 +562,32 @@ def _voyage_command(args: argparse.Namespace) -> int:
                 "executed": False,
             }
     except (JobFileError, OSError, PermissionError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
+        return 2
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
+
+
+def _policy_command(args: argparse.Namespace) -> int:
+    """Read the governance register: what holds in general, and what deviates."""
+    try:
+        roots = tuple(args.allow_root)
+        policies = PolicyStore(Path(args.base_dir), roots).list()
+        voyage_store = VoyageStore(Path(args.base_dir), roots)
+        saved = []
+        for row in voyage_store.list():
+            if not row.get("editable"):
+                continue
+            try:
+                saved.append(voyage_store.load(str(row["voyage_id"])))
+            except (OSError, ValueError, json.JSONDecodeError):
+                continue
+        payload = {
+            "policies": list(policies),
+            "default_rights": default_rights(policies),
+            "exceptions": list(policy_exceptions(tuple(saved), policies)),
+        }
+    except (OSError, PermissionError, ValueError) as exc:
         print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
         return 2
     print(json.dumps(payload, indent=2, sort_keys=True))

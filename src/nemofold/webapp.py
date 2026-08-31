@@ -18,6 +18,7 @@ from .contracts import RunStatus, to_primitive
 from .drafts import DraftStore
 from .job_io import ALLOWED_FIELDS, SUPPORTED_WORKFLOWS, JobFileError, parse_job_payload
 from .notebooks import ResearchNotebookStore
+from .policies import PolicyStore, default_rights, policy_exceptions
 from .provider_analysis import analyze_with_provider, preview_provider_context
 from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
@@ -320,6 +321,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "notebook_surface_enabled": provider_surface_enabled,
                     "wizard_surface_enabled": provider_surface_enabled,
                     "voyage_surface_enabled": provider_surface_enabled,
+                    "policy_surface_enabled": provider_surface_enabled,
                     "external_models_allowed": (
                         self.server.app_config.execution.external_models_allowed
                         if provider_surface_enabled
@@ -370,6 +372,12 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/voyage":
             self._handle_voyage_load(parse_qs(parsed_path.query, keep_blank_values=True))
             return
+        if path == "/api/policies":
+            self._handle_policy_list()
+            return
+        if path == "/api/policy":
+            self._handle_policy_load(parse_qs(parsed_path.query, keep_blank_values=True))
+            return
         if path == "/api/notebook":
             self._handle_notebook_load(parse_qs(parsed_path.query, keep_blank_values=True))
             return
@@ -418,6 +426,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/voyage-delete",
             "/api/voyage-run",
             "/api/voyage-edit",
+            "/api/policies",
+            "/api/policy-delete",
+            "/api/policy-bind",
         }:
             self._discard_bounded_request_body()
             self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -439,6 +450,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/voyage-delete",
                 "/api/voyage-run",
                 "/api/voyage-edit",
+                "/api/policies",
+                "/api/policy-delete",
+                "/api/policy-bind",
             }:
                 self._discard_bounded_request_body()
                 self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -510,6 +524,15 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/voyage-edit":
             self._handle_voyage_edit()
+            return
+        if path == "/api/policies":
+            self._handle_policy_save()
+            return
+        if path == "/api/policy-delete":
+            self._handle_policy_delete()
+            return
+        if path == "/api/policy-bind":
+            self._handle_policy_bind()
             return
         try:
             payload = self._read_json()
@@ -781,6 +804,147 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self.server.app_config.execution.allowed_roots,
         )
 
+    def _reject_closed_read_surface(self, path: str) -> bool:
+        """Close a loopback-only read the way every other surface closes.
+
+        Two different closures, on purpose: the public demo does not have these
+        surfaces at all, so it answers 404, while a network-exposed local server
+        has them and refuses to serve them over the network, which is a 403.
+        """
+        if self._voyage_surface_available():
+            return False
+        if self.server.app_config.public_demo:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", path)
+        else:
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "surface_loopback_only",
+                f"{path} is disabled when the HTTP server is network-exposed",
+            )
+        return True
+
+    def _policy_store(self) -> PolicyStore:
+        return PolicyStore(
+            self.server.app_config.base_dir,
+            self.server.app_config.execution.allowed_roots,
+        )
+
+    def _saved_voyages(self) -> tuple[dict[str, Any], ...]:
+        """Load the full saved voyages, skipping any that no longer parse."""
+        store = self._voyage_store()
+        loaded: list[dict[str, Any]] = []
+        for row in store.list():
+            if not row.get("editable"):
+                continue
+            try:
+                loaded.append(store.load(str(row["voyage_id"])))
+            except (OSError, ValueError, json.JSONDecodeError):
+                continue
+        return tuple(loaded)
+
+    def _handle_policy_list(self) -> None:
+        if self._reject_closed_read_surface("/api/policies"):
+            return
+        try:
+            policies = self._policy_store().list()
+            exceptions = policy_exceptions(self._saved_voyages(), policies)
+        except (OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "policy_list_rejected", str(exc))
+            return
+        self._json(
+            {
+                "ok": True,
+                "policies": list(policies),
+                "default_rights": default_rights(policies),
+                "exceptions": list(exceptions),
+            }
+        )
+
+    def _handle_policy_load(self, query: dict[str, list[str]]) -> None:
+        if self._reject_closed_read_surface("/api/policy"):
+            return
+        try:
+            if set(query) != {"id"} or len(query["id"]) != 1:
+                raise ValueError("one policy id is required")
+            policy = self._policy_store().load(query["id"][0])
+        except (OSError, PermissionError, ValueError, json.JSONDecodeError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "policy_load_rejected", str(exc))
+            return
+        self._json({"ok": True, "policy": policy})
+
+    def _handle_policy_save(self) -> None:
+        if self._reject_closed_policy_surface():
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            policy = self._policy_store().save(payload)
+        except (OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "policy_rejected", str(exc))
+            return
+        self._json({"ok": True, "policy": policy})
+
+    def _handle_policy_delete(self) -> None:
+        if self._reject_closed_policy_surface():
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict) or set(payload) - {"policy_id"}:
+                raise ValueError("request body must carry only policy_id")
+            policy_id = payload.get("policy_id")
+            if not isinstance(policy_id, str):
+                raise ValueError("policy_id must be a string")
+            self._policy_store().delete(policy_id)
+        except (OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "policy_delete_rejected", str(exc))
+            return
+        self._json({"ok": True, "deleted": True})
+
+    def _handle_policy_bind(self) -> None:
+        if self._reject_closed_policy_surface():
+            return
+        try:
+            payload = self._read_json()
+            allowed = {"policy_id", "target", "voyage_id", "step_index", "bound"}
+            if not isinstance(payload, dict) or set(payload) - allowed:
+                raise ValueError(
+                    "request body may carry policy_id, target, voyage_id, step_index "
+                    "and bound"
+                )
+            policy_id = payload.get("policy_id")
+            target = payload.get("target")
+            voyage_id = payload.get("voyage_id")
+            if not isinstance(policy_id, str) or not isinstance(voyage_id, str):
+                raise ValueError("policy_id and voyage_id must be strings")
+            if not isinstance(target, str):
+                raise ValueError("target must be a string")
+            step_index = payload.get("step_index")
+            bound = payload.get("bound", True)
+            if not isinstance(bound, bool):
+                raise ValueError("bound must be a boolean")
+            policy = self._policy_store().bind(
+                policy_id,
+                target=target,
+                voyage_id=voyage_id,
+                step_index=step_index,
+                bound=bound,
+            )
+        except (OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "policy_bind_rejected", str(exc))
+            return
+        self._json({"ok": True, "policy": policy})
+
+    def _reject_closed_policy_surface(self) -> bool:
+        if self._voyage_surface_available():
+            return False
+        self._reject_before_body_read(
+            HTTPStatus.FORBIDDEN,
+            "policy_surface_loopback_only",
+            "the policy register is disabled when the HTTP server is network-exposed",
+        )
+        return True
+
     def _voyage_surface_available(self) -> bool:
         return not (
             self.server.app_config.public_demo or self.server.app_config.exposed_to_network
@@ -882,8 +1046,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         traceability. This is the plain read, shaped like its two siblings
         /api/draft and /api/notebook rather than as a path parameter.
         """
-        if not self._voyage_surface_available():
-            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/voyage")
+        if self._reject_closed_read_surface("/api/voyage"):
             return
         try:
             if set(query) != {"id"} or len(query["id"]) != 1:
@@ -923,6 +1086,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 run_id=run_id,
                 base_dir=self.server.app_config.base_dir,
                 model_override=override,
+                policy_store=self._policy_store(),
             )
         except (JobFileError, OSError, PermissionError, RuntimeError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "voyage_run_rejected", str(exc))
@@ -954,6 +1118,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                         "model_level": step.model_level,
                         "rights": step.rights,
                         "rights_level": step.rights_level,
+                        "policy_note": step.policy_note,
                         "errors": list(step.errors),
                     }
                     for step in result.steps

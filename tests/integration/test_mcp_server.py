@@ -6,6 +6,7 @@ import pytest
 
 from nemofold.application import ExecutionConfig
 from nemofold.mcp_server import MCPServerConfig, NemoFoldMCPService, build_mcp_server
+from nemofold.policies import PolicyStore
 
 
 def test_mcp_server_exposes_one_bounded_tool_surface(tmp_path) -> None:
@@ -28,6 +29,7 @@ def test_mcp_server_exposes_one_bounded_tool_surface(tmp_path) -> None:
         "nemofold_list_drafts",
         "nemofold_list_voyages",
         "nemofold_copy_voyage_preset",
+        "nemofold_list_policies",
         "nemofold_verify_report",
     }
     # The surface stays bounded and self-describing: capabilities must name the
@@ -128,3 +130,28 @@ def test_mcp_report_verifier_rejects_paths_outside_allow_roots(tmp_path) -> None
 
     with pytest.raises(PermissionError, match="outside"):
         service.verify_report(str(tmp_path / "outside" / "report.json"))
+
+
+def test_mcp_reads_the_governance_register_without_granting_anything(tmp_path) -> None:
+    service = NemoFoldMCPService(
+        MCPServerConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        )
+    )
+    PolicyStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(
+        {
+            "name": "Standardrechte",
+            "form": "policy",
+            "kind": "rights_profile",
+            "statements": ["Versand nur nach Bestätigung."],
+            "body": {"rights": "send_with_confirmation"},
+            "applies_by_default": True,
+        }
+    )
+
+    listed = service.list_policies()
+
+    assert [item["name"] for item in listed["policies"]] == ["Standardrechte"]
+    assert listed["default_rights"] == "send_with_confirmation"
+    assert listed["exceptions"] == []

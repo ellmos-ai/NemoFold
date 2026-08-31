@@ -24,6 +24,7 @@ from .model_authority import (
     resolve_authority,
     resolve_rights,
 )
+from .policies import PolicyStore, cleanup_rules_for_step
 
 VOYAGE_RUN_SCHEMA = "nemofold.voyage-run.v1"
 LOCAL_CORE = "nemofold-local-core"
@@ -44,6 +45,7 @@ class VoyageStepResult:
     model_level: str
     rights: str
     rights_level: str
+    policy_note: str = ""
     errors: tuple[str, ...] = ()
 
 
@@ -99,6 +101,8 @@ def _dossier_markdown(result: VoyageRunResult) -> str:
                 f"- outbound rights: {step.rights} (level: {step.rights_level})",
             ]
         )
+        if step.policy_note:
+            lines.append(f"- policy: {step.policy_note}")
         if step.errors:
             lines.append(f"- errors: {', '.join(step.errors)}")
         lines.append("")
@@ -112,6 +116,7 @@ def run_voyage(
     run_id: str,
     base_dir: str | Path = ".",
     model_override: dict[str, Any] | None = None,
+    policy_store: PolicyStore | None = None,
 ) -> VoyageRunResult:
     """Run the steps in order, handing output to input where the plan says so.
 
@@ -124,6 +129,7 @@ def run_voyage(
     if len(steps) > MAX_CHAIN_STEPS:
         raise ValueError(f"a voyage chain may not exceed {MAX_CHAIN_STEPS} steps")
 
+    voyage_id = str(voyage.get("voyage_id", ""))
     chain_pref = voyage.get("model_pref")
     authority = voyage.get("model_authority", AUTHORITY_LINKS_WIN)
     chain_rights = voyage.get("rights")
@@ -136,6 +142,20 @@ def run_voyage(
         if step.get("reads_previous_output") and previous_output is not None:
             # Declared in the saved plan, applied here - never guessed.
             job_payload["input_roots"] = [previous_output]
+        policy_note = ""
+        if policy_store is not None and job_payload.get("workflow") == "cleanup_rules":
+            # A bound policy fills in only what the contract left empty, and the
+            # dossier says which of the two decided.
+            bound = (
+                *policy_store.for_target(voyage_id),
+                *policy_store.for_target(voyage_id, step_index=order),
+            )
+            parameters = dict(job_payload.get("parameters") or {})
+            rules, origin = cleanup_rules_for_step(bound, parameters)
+            if rules and not parameters.get("rules"):
+                parameters["rules"] = rules
+                job_payload["parameters"] = parameters
+            policy_note = f"Cleanup rules came from {origin}."
         job = parse_job_payload(job_payload, base_dir=base_dir)
         step_run_id = f"{run_id}_{order:02d}"
         resolution = resolve_authority(
@@ -163,6 +183,7 @@ def run_voyage(
                     model_level=resolution.level,
                     rights=rights,
                     rights_level=rights_level,
+                    policy_note=policy_note,
                     errors=(resolution.conflict or "model_conflict",),
                 )
             )
@@ -184,6 +205,7 @@ def run_voyage(
                 model_level=resolution.level,
                 rights=rights,
                 rights_level=rights_level,
+                policy_note=policy_note,
                 errors=tuple(report.errors),
             )
         )
@@ -240,6 +262,7 @@ def run_voyage(
                 "model_level": item.model_level,
                 "rights": item.rights,
                 "rights_level": item.rights_level,
+                "policy_note": item.policy_note,
                 "errors": list(item.errors),
             }
             for item in result.steps

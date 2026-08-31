@@ -13,6 +13,7 @@ from .contracts import to_primitive
 from .drafts import DraftStore
 from .job_io import SUPPORTED_WORKFLOWS, parse_job_payload
 from .ledger import validate_run_id
+from .policies import PolicyStore, default_rights, policy_exceptions
 from .policy import PolicyConfig, PolicyGate
 from .provider_analysis import analyze_with_provider
 from .providers import provider_capabilities, provider_config_from_mapping
@@ -62,6 +63,7 @@ class NemoFoldMCPService:
                 "nemofold_list_drafts",
                 "nemofold_list_voyages",
                 "nemofold_copy_voyage_preset",
+                "nemofold_list_policies",
                 "nemofold_verify_report",
             ],
             "allowed_root_count": len(self.config.execution.allowed_roots),
@@ -142,6 +144,24 @@ class NemoFoldMCPService:
     def list_voyages(self) -> dict[str, Any]:
         store = VoyageStore(self.base_dir, self.config.execution.allowed_roots)
         return {"voyages": list(store.list())}
+
+    def list_policies(self) -> dict[str, Any]:
+        store = PolicyStore(self.base_dir, self.config.execution.allowed_roots)
+        policies = store.list()
+        voyage_store = VoyageStore(self.base_dir, self.config.execution.allowed_roots)
+        saved = []
+        for row in voyage_store.list():
+            if not row.get("editable"):
+                continue
+            try:
+                saved.append(voyage_store.load(str(row["voyage_id"])))
+            except (OSError, ValueError):
+                continue
+        return {
+            "policies": list(policies),
+            "default_rights": default_rights(policies),
+            "exceptions": list(policy_exceptions(tuple(saved), policies)),
+        }
 
     def copy_voyage_preset(
         self,
@@ -253,6 +273,11 @@ def build_mcp_server(config: MCPServerConfig):
     ) -> dict[str, Any]:
         """Copy a shipped specialist into the library, bound to approved roots. Runs nothing."""
         return service.copy_voyage_preset(preset_id, input_roots, output_dir, name)
+
+    @mcp.tool(name="nemofold_list_policies")
+    def list_policies() -> dict[str, Any]:
+        """List named rules and policies, what holds by default, and what deviates."""
+        return service.list_policies()
 
     @mcp.tool(name="nemofold_verify_report")
     def verify_report(report_path: str) -> dict[str, Any]:
