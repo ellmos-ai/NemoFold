@@ -122,6 +122,16 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
         "modelId",
         "budget",
         "parameters",
+        "executionMode",
+        "providerId",
+        "providerModel",
+        "providerTokens",
+        "providerTimeout",
+        "providerRoute",
+        "providerTransport",
+        "externalApprovalRow",
+        "externalApproval",
+        "providerHint",
         "workflowHint",
         "previewButton",
         "runButton",
@@ -134,6 +144,8 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
     assert status["cloud_proof"] is False
     assert status["live_runtime_ready"] is False
+    assert status["provider_surface_enabled"] is True
+    assert status["external_models_allowed"] is False
     assert len(status["workflows"]) == 8
     assert preview["ok"] is True
     assert preview["report"]["workflow"] == "evidence_analyst"
@@ -153,6 +165,9 @@ def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
     assert "target_roots: lines" in script
     assert 'evidence_level: "offline"' in script
     assert "result-summary" in script
+    assert 'apiEndpoint = "provider-analyze"' in script
+    assert "External providers require Privacy = allow_once." in script
+    assert "Approve this external transfer once before running." in script
 
 
 def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> None:
@@ -167,6 +182,8 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert "overflow-wrap:anywhere" in stylesheet
     assert "a:focus-visible,button:focus-visible" in stylesheet
     assert "word-break:break-word" in stylesheet
+    assert ".approval-gate" in stylesheet
+    assert ".provider-contract" in stylesheet
 
 
 def test_web_console_rejects_cross_origin_posts(tmp_path) -> None:
@@ -238,6 +255,9 @@ def test_public_demo_executes_only_synthetic_ephemeral_work(tmp_path) -> None:
     assert status["public_demo"] is True
     assert status["read_only"] is True
     assert status["synthetic_only"] is True
+    assert status["provider_surface_enabled"] is False
+    assert status["external_models_allowed"] is False
+    assert status["providers"] == []
     assert "smart_inbox" not in status["workflows"]
     assert result["ok"] is True
     assert result["report"]["status"] == "executed"

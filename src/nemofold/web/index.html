@@ -99,6 +99,40 @@ Which earlier wording changed?</textarea></label>
               <label class="wide">Workflow parameters <span>strict JSON</span><textarea id="parameters" rows="4">{"max_chunks": 8, "formats": ["md", "txt"], "conflict_scan": true}</textarea></label>
             </div>
           </fieldset>
+          <fieldset id="providerFieldset" class="provider-fieldset">
+            <legend>04 · Reasoning worker</legend>
+            <div class="form-grid">
+              <label>Execution route
+                <select id="executionMode">
+                  <option value="local-core">NemoFold local engine</option>
+                  <option value="provider">Selected model provider</option>
+                </select>
+              </label>
+              <label>Provider
+                <select id="providerId" disabled>
+                  <option value="">Loading provider contracts…</option>
+                </select>
+              </label>
+              <label>Provider model
+                <input id="providerModel" autocomplete="off" disabled placeholder="Select a provider first">
+              </label>
+              <label>Maximum output tokens
+                <input id="providerTokens" type="number" min="1" max="65536" step="1" value="400" disabled>
+              </label>
+              <label>Timeout seconds
+                <input id="providerTimeout" type="number" min="1" max="600" step="1" value="180" disabled>
+              </label>
+              <div class="provider-contract" aria-live="polite">
+                <b id="providerRoute">LOCAL CORE</b>
+                <span id="providerTransport">No model transfer. Deterministic NemoFold workflow.</span>
+              </div>
+              <label id="externalApprovalRow" class="approval-gate wide" hidden>
+                <input id="externalApproval" type="checkbox">
+                <span><b>Approve this external transfer once</b>The selected, pseudonymized evidence package may be sent to the named provider. Ambient folder access and file authority remain local.</span>
+              </label>
+            </div>
+            <p id="providerHint" class="form-hint">Use Preview first to inspect the exact source scope. Provider runtime health is established only by a real bounded run.</p>
+          </fieldset>
           <p id="workflowHint" class="form-hint">Evidence Analyst searches the approved inputs and reports exact source locations, conflicts and coverage.</p>
           <div class="actions"><button type="button" id="previewButton" class="secondary">Preview exact scope</button><button type="submit" id="runButton">Run locally</button></div>
         </form>

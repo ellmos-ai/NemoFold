@@ -38,6 +38,29 @@ def running_provider_server(tmp_path):
 
 
 @contextmanager
+def running_external_provider_server(tmp_path):
+    server = build_server(
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(
+                allowed_roots=(str(tmp_path),),
+                external_models_allowed=True,
+            ),
+        ),
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    try:
+        yield f"http://{host}:{port}"
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+@contextmanager
 def running_network_exposed_server(tmp_path):
     server = build_server(
         WebAppConfig(
@@ -194,6 +217,7 @@ def test_loopback_api_lists_and_executes_provider_surface(tmp_path, monkeypatch)
 
     assert status["provider_surface_enabled"] is True
     assert status["provider_runtime_ready"] is False
+    assert status["external_models_allowed"] is False
     assert {item["provider_id"] for item in status["providers"]} >= {
         "ollama",
         "openai",
@@ -201,6 +225,24 @@ def test_loopback_api_lists_and_executes_provider_surface(tmp_path, monkeypatch)
     }
     assert result["ok"] is True
     assert result["report"]["metadata"]["competition_proof"] is False
+
+
+def test_loopback_status_exposes_external_server_gate_without_claiming_runtime(tmp_path) -> None:
+    with (
+        running_external_provider_server(tmp_path) as base_url,
+        urlopen(base_url + "/api/status", timeout=5) as response,  # noqa: S310
+    ):
+        status = json.load(response)
+
+    assert status["provider_surface_enabled"] is True
+    assert status["external_models_allowed"] is True
+    assert status["provider_runtime_ready"] is False
+    assert {item["provider_id"] for item in status["providers"] if item["external_transfer"]} == {
+        "anthropic",
+        "claude-code",
+        "codex-cli",
+        "openai",
+    }
 
 
 def test_network_exposed_http_server_disables_provider_surface(tmp_path) -> None:
@@ -228,4 +270,5 @@ def test_network_exposed_http_server_disables_provider_surface(tmp_path) -> None
     assert caught.value.code == 403
     assert status["provider_surface_enabled"] is False
     assert status["provider_runtime_ready"] is False
+    assert status["external_models_allowed"] is False
     assert status["providers"] == []

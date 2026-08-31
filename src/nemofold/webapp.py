@@ -205,6 +205,11 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "live_runtime_ready": False,
                     "provider_surface_enabled": provider_surface_enabled,
                     "provider_runtime_ready": False,
+                    "external_models_allowed": (
+                        self.server.app_config.execution.external_models_allowed
+                        if provider_surface_enabled
+                        else False
+                    ),
                     "network_exposed": self.server.app_config.exposed_to_network,
                     "public_demo": public_demo,
                     "read_only": public_demo,

@@ -1,6 +1,18 @@
 const $ = (id) => document.getElementById(id);
 const lines = (value) => value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
 let publicDemo = false;
+let providerSurfaceEnabled = false;
+let externalModelsAllowed = false;
+let providerContracts = new Map();
+let previousProviderId = "";
+const providerModelDefaults = {
+  ollama: "qwen3:4b",
+  "lm-studio": "local-model",
+  "codex-cli": "gpt-5.4",
+  "claude-code": "sonnet",
+  openai: "",
+  anthropic: ""
+};
 const workflowDefaults = {
   evidence_analyst: {
     questions: ["When does the current policy begin?", "Which earlier wording changed?"],
@@ -46,7 +58,17 @@ const workflowDefaults = {
 
 function newRunId() {
   const now = new Date();
-  return `web_${now.toISOString().replace(/[-:.TZ]/g, "").slice(0, 14)}`;
+  const timestamp = now.toISOString().replace(/[-:.TZ]/g, "").slice(0, 17);
+  const suffix = globalThis.crypto?.randomUUID?.().slice(0, 6) || String(now.getTime()).slice(-6);
+  return `web_${timestamp}_${suffix}`;
+}
+
+function providerExecutionSelected() {
+  return providerSurfaceEnabled && $("executionMode").value === "provider";
+}
+
+function selectedProvider() {
+  return providerContracts.get($("providerId").value);
 }
 
 function jobPayload() {
@@ -63,8 +85,93 @@ function jobPayload() {
     model_budget_usd: Number($("budget").value || 0),
     parameters: JSON.parse($("parameters").value || "{}")
   };
-  if (model) payload.model_id = model;
+  if (model && !providerExecutionSelected()) payload.model_id = model;
   return payload;
+}
+
+function providerPayload() {
+  return {
+    provider_id: $("providerId").value,
+    model: $("providerModel").value.trim(),
+    max_output_tokens: Number($("providerTokens").value),
+    timeout_seconds: Number($("providerTimeout").value)
+  };
+}
+
+function showLocalProviderState(message) {
+  $("providerRoute").textContent = "LOCAL CORE";
+  $("providerTransport").textContent = message;
+  $("externalApprovalRow").hidden = true;
+  $("externalApproval").checked = false;
+  $("runButton").textContent = publicDemo ? "Run synthetic demo" : "Run locally";
+  $("providerHint").textContent = publicDemo
+    ? "The public demo is synthetic and ephemeral. Start the loopback-only local app to use Ollama, Codex, or Claude."
+    : "Use Preview first to inspect the exact source scope. Provider runtime health is established only by a real bounded run.";
+}
+
+function updateProviderPanel({resetModel = false} = {}) {
+  const enabled = providerExecutionSelected();
+  const descriptor = selectedProvider();
+  $("providerId").disabled = !enabled;
+  for (const id of ["providerModel", "providerTokens", "providerTimeout"]) {
+    $(id).disabled = !enabled || !descriptor;
+  }
+  $("modelId").disabled = enabled || publicDemo;
+  if (!enabled || !descriptor) {
+    showLocalProviderState(
+      publicDemo
+        ? "Public demo: synthetic, ephemeral, and provider-disabled."
+        : "No model transfer. Deterministic NemoFold workflow."
+    );
+    return;
+  }
+  if (resetModel || previousProviderId !== descriptor.provider_id) {
+    $("providerModel").value = providerModelDefaults[descriptor.provider_id] || "";
+    previousProviderId = descriptor.provider_id;
+    $("externalApproval").checked = false;
+  }
+  const external = descriptor.external_transfer === true;
+  $("providerRoute").textContent = external ? "EXTERNAL WORKER" : "LOOPBACK WORKER";
+  const endpoint = descriptor.default_base_url ? ` · ${descriptor.default_base_url}` : "";
+  $("providerTransport").textContent = external
+    ? `${descriptor.label} · selected pseudonymized chunks only · competition proof remains false`
+    : `${descriptor.label} · ${descriptor.transport}${endpoint} · no external transfer`;
+  $("externalApprovalRow").hidden = !external;
+  $("externalApproval").disabled = !external;
+  $("runButton").textContent = `Analyze with ${descriptor.label}`;
+  $("providerHint").textContent = external
+    ? "External runs require privacy mode allow_once and the one-run transfer checkbox. No ambient folder authority is transferred."
+    : "The local provider must be running on its loopback endpoint. Privacy mode must remain local_only.";
+}
+
+function configureProviders(status) {
+  publicDemo = status.public_demo === true;
+  providerSurfaceEnabled = status.provider_surface_enabled === true;
+  externalModelsAllowed = status.external_models_allowed === true;
+  providerContracts = new Map(
+    (Array.isArray(status.providers) ? status.providers : []).map((item) => [item.provider_id, item])
+  );
+  const select = $("providerId");
+  select.replaceChildren();
+  for (const descriptor of providerContracts.values()) {
+    const option = document.createElement("option");
+    option.value = descriptor.provider_id;
+    option.textContent = descriptor.external_transfer && !externalModelsAllowed
+      ? `${descriptor.label} — server gate closed`
+      : descriptor.label;
+    option.disabled = descriptor.external_transfer && !externalModelsAllowed;
+    select.append(option);
+  }
+  if (!select.options.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = publicDemo ? "Unavailable in public demo" : "No provider contracts available";
+    select.append(option);
+  }
+  const providerMode = $("executionMode").querySelector('option[value="provider"]');
+  providerMode.disabled = !providerSurfaceEnabled || !providerContracts.size;
+  if (providerMode.disabled) $("executionMode").value = "local-core";
+  updateProviderPanel({resetModel: true});
 }
 
 function applyWorkflowDefaults() {
@@ -79,13 +186,34 @@ async function execute(endpoint) {
   buttons.forEach((button) => { button.disabled = true; });
   const result = $("result");
   result.className = "result";
+  const providerAnalysis = endpoint === "run" && providerExecutionSelected();
   result.textContent = endpoint === "preview"
     ? "Building bounded preview…"
-    : publicDemo ? "Running bounded synthetic demo…" : "Running local workflow…";
+    : publicDemo
+      ? "Running bounded synthetic demo…"
+      : providerAnalysis ? "Preparing bounded provider analysis…" : "Running local workflow…";
   try {
     const request = {job: jobPayload()};
     if (!publicDemo) request.run_id = $("runId").value.trim();
-    const response = await fetch(`/api/${endpoint}`, {
+    let apiEndpoint = endpoint;
+    if (providerAnalysis) {
+      const descriptor = selectedProvider();
+      if (!descriptor) throw new Error("Select a provider contract.");
+      if (!$("providerModel").value.trim()) throw new Error("Enter the provider model.");
+      if (descriptor.external_transfer && $("privacy").value !== "allow_once") {
+        throw new Error("External providers require Privacy = allow_once.");
+      }
+      if (!descriptor.external_transfer && $("privacy").value !== "local_only") {
+        throw new Error("Local providers require Privacy = local_only.");
+      }
+      if (descriptor.external_transfer && !$("externalApproval").checked) {
+        throw new Error("Approve this external transfer once before running.");
+      }
+      request.provider = providerPayload();
+      request.approve_external_transfer = $("externalApproval").checked;
+      apiEndpoint = "provider-analyze";
+    }
+    const response = await fetch(`/api/${apiEndpoint}`, {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify(request)
@@ -99,10 +227,14 @@ async function execute(endpoint) {
       ? data.error
       : typeof data?.detail === "string" ? data.detail : "rejected";
     const cloudProof = data?.cloud_proof ?? report?.metadata?.cloud_proof;
+    const provider = report?.metadata?.provider;
+    const transfer = report?.metadata?.transfer_performed;
     const facts = [
       ["REQUEST", response.ok ? "accepted" : `HTTP ${response.status}`],
       ["WORKFLOW", report?.workflow || request.job.workflow],
       ["STATUS", response.ok ? report?.status || "returned" : errorStatus],
+      ...(provider ? [["PROVIDER", `${provider.provider_id} / ${provider.model}`]] : []),
+      ...(transfer !== undefined ? [["TRANSFER", String(transfer)]] : []),
       ["CLOUD PROOF", cloudProof === true ? "true" : cloudProof === false ? "false" : "not claimed"]
     ];
     for (const [name, value] of facts) {
@@ -115,6 +247,10 @@ async function execute(endpoint) {
     const pre = document.createElement("pre");
     pre.textContent = JSON.stringify(data, null, 2);
     result.replaceChildren(summary, pre);
+    if (response.ok && endpoint === "run" && !publicDemo) {
+      $("runId").value = newRunId();
+      $("externalApproval").checked = false;
+    }
   } catch (error) {
     result.className = "result error";
     result.textContent = error instanceof Error ? error.message : String(error);
@@ -127,7 +263,7 @@ async function loadStatus() {
   try {
     const response = await fetch("/api/status");
     const status = await response.json();
-    publicDemo = status.public_demo === true;
+    configureProviders(status);
     if (publicDemo) {
       const supported = new Set(status.workflows);
       for (const option of [...$("workflow").options]) {
@@ -145,8 +281,8 @@ async function loadStatus() {
       }
       $("privacy").disabled = true;
       $("actionMode").disabled = true;
-      $("runButton").textContent = "Run synthetic demo";
       applyWorkflowDefaults();
+      updateProviderPanel();
     }
     $("systemState").textContent = status.live_runtime_ready
       ? "Live runtime ready"
@@ -161,6 +297,8 @@ async function loadStatus() {
 
 $("runId").value = newRunId();
 $("workflow").addEventListener("change", applyWorkflowDefaults);
+$("executionMode").addEventListener("change", () => updateProviderPanel());
+$("providerId").addEventListener("change", () => updateProviderPanel({resetModel: true}));
 $("jobForm").addEventListener("submit", (event) => { event.preventDefault(); execute("run"); });
 $("previewButton").addEventListener("click", () => execute("preview"));
 loadStatus();
