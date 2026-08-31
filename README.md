@@ -187,6 +187,7 @@ not proof of a Nebius, Nemotron or NemoClaw runtime call; `cloud_proof` remains 
 
 ## Design and integration
 
+- [Evidence-console interface direction](docs/design-direction.md)
 - [Architecture](docs/architecture.md)
 - [NemoClaw integration](docs/nemoclaw-integration.md)
 - [Product story](docs/product-story.md)

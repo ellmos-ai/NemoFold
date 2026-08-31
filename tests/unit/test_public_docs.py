@@ -51,7 +51,11 @@ def _resolves_with_exact_case(document: Path, target: str) -> bool:
 
 
 def test_public_readme_and_media_plan_links_resolve() -> None:
-    documents = (REPO_ROOT / "README.md", REPO_ROOT / "docs" / "jury-demo.md")
+    documents = (
+        REPO_ROOT / "README.md",
+        REPO_ROOT / "docs" / "jury-demo.md",
+        REPO_ROOT / "docs" / "design-direction.md",
+    )
     missing = [
         target
         for document in documents

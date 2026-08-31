@@ -1,12 +1,12 @@
 # Public release gate
 
-Gate date: 2026-08-30
+Gate date: 2026-08-31
 
 ## Local acceptance
 
 - `python -m ruff check src tests`: pass
 - `python -m mypy src`: pass for 30 source files
-- `python -m pytest -q`: 146 passed, one Windows privilege-dependent symlink test skipped
+- `python -m pytest -q`: 147 passed, one Windows privilege-dependent symlink test skipped
 - `python -m compileall -q src tests`: pass
 - `node --check src/nemofold/web/app.js`: pass
 - `python -m build`: source and wheel distributions built
@@ -19,6 +19,13 @@ Gate date: 2026-08-30
 - Public synthetic HTTP demo runtime: executed with server-controlled roots,
   ephemeral output, no external model authority, no file-action authority, and
   `cloud_proof=false`.
+- Evidence-console UI: focused HTTP/UI tests pass; every job-contract ID is present and
+  unique; the seven-stage evidence chain has explicit wrapping and responsive breakpoints.
+- Local Chrome readback at 1920x1080 and 1440x1200 confirms the authority ledger, job
+  console and all seven evidence-chain labels remain bounded.
+- Claude Fable 5 completion review found no blocking issue. Its actionable authority,
+  response-contract, contrast, focus, ARIA and breakpoint findings were applied and
+  locally re-tested; no additional Fable pass was used.
 
 The repository-wide format check is not asserted because 21 unchanged pre-existing
 files are outside the current formatting slice.
@@ -46,7 +53,7 @@ files are outside the current formatting slice.
 - Real Nebius Token Factory plus NVIDIA Nemotron run
 - Sanitized NemoClaw runtime proof
 - Public deployment of the implemented synthetic-only demo mode
-- User acceptance and upload of the checked local 73.07-second Andrew video draft; the
+- User acceptance and upload of the checked local 73.07-second Andrew v3 video draft; the
   linked Devpost YouTube video has not been replaced
 - Final live-content readback of the already submitted Devpost project
 

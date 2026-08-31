@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import threading
 from contextlib import contextmanager
 from urllib.error import HTTPError
@@ -101,13 +102,43 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
         )
 
     assert "Your files." in html
+    assert "Know what your documents prove." in html
+    assert "EVIDENCE CHAIN" in html
+    assert "ORIGIN" in html
+    assert "ACTION" in html
+    assert "MISSION REGISTER" in html
     assert 'id="targetRoots"' in html
+    element_ids = re.findall(r'\sid="([^"]+)"', html)
+    required_ids = {
+        "jobForm",
+        "workflow",
+        "runId",
+        "inputRoots",
+        "targetRoots",
+        "outputDir",
+        "questions",
+        "privacy",
+        "actionMode",
+        "modelId",
+        "budget",
+        "parameters",
+        "workflowHint",
+        "previewButton",
+        "runButton",
+        "result",
+        "systemState",
+        "cloudBadge",
+    }
+    assert required_ids <= set(element_ids)
+    assert len(element_ids) == len(set(element_ids))
     assert "frame-ancestors 'none'" in headers["Content-Security-Policy"]
     assert status["cloud_proof"] is False
     assert status["live_runtime_ready"] is False
     assert len(status["workflows"]) == 8
     assert preview["ok"] is True
+    assert preview["report"]["workflow"] == "evidence_analyst"
     assert preview["report"]["status"] == "planned"
+    assert preview["report"]["metadata"]["cloud_proof"] is False
     assert preview["report"]["coverage"]["read_sources"] == 1
 
 
@@ -121,6 +152,21 @@ def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
     assert "workflowDefaults" in script
     assert "target_roots: lines" in script
     assert 'evidence_level: "offline"' in script
+    assert "result-summary" in script
+
+
+def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> None:
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/assets/app.css", timeout=5) as response,  # noqa: S310
+    ):
+        stylesheet = response.read().decode()
+
+    assert ".evidence-chain ol" in stylesheet
+    assert "grid-template-columns:repeat(7,minmax(0,1fr))" in stylesheet
+    assert "overflow-wrap:anywhere" in stylesheet
+    assert "a:focus-visible,button:focus-visible" in stylesheet
+    assert "word-break:break-word" in stylesheet
 
 
 def test_web_console_rejects_cross_origin_posts(tmp_path) -> None:

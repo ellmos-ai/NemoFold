@@ -92,9 +92,29 @@ async function execute(endpoint) {
     });
     const data = await response.json();
     result.classList.toggle("error", !response.ok);
+    const summary = document.createElement("div");
+    summary.className = "result-summary";
+    const report = data?.report;
+    const errorStatus = typeof data?.error === "string"
+      ? data.error
+      : typeof data?.detail === "string" ? data.detail : "rejected";
+    const cloudProof = data?.cloud_proof ?? report?.metadata?.cloud_proof;
+    const facts = [
+      ["REQUEST", response.ok ? "accepted" : `HTTP ${response.status}`],
+      ["WORKFLOW", report?.workflow || request.job.workflow],
+      ["STATUS", response.ok ? report?.status || "returned" : errorStatus],
+      ["CLOUD PROOF", cloudProof === true ? "true" : cloudProof === false ? "false" : "not claimed"]
+    ];
+    for (const [name, value] of facts) {
+      const fact = document.createElement("span");
+      const label = document.createElement("b");
+      label.textContent = name;
+      fact.append(label, document.createTextNode(`: ${String(value)}`));
+      summary.append(fact);
+    }
     const pre = document.createElement("pre");
     pre.textContent = JSON.stringify(data, null, 2);
-    result.replaceChildren(pre);
+    result.replaceChildren(summary, pre);
   } catch (error) {
     result.className = "result error";
     result.textContent = error instanceof Error ? error.message : String(error);
