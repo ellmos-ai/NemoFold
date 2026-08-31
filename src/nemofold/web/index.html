@@ -21,6 +21,7 @@
         <a href="/routines" data-page-link="routines">Routines</a>
         <a href="/artifacts" data-page-link="artifacts">Artifacts</a>
         <a href="/connections" data-page-link="connections">Connections</a>
+        <a href="/governance" data-page-link="governance">Governance</a>
       </div>
       <div class="masthead-state" role="note"><span aria-hidden="true"></span>DEFAULT: LOCAL AUTHORITY</div>
     </nav>
@@ -62,9 +63,10 @@
       <a href="/routines"><span>ROUTINES</span><b>Folder Routines</b><small>Digest · versions · contact monitor</small><em>Open area →</em></a>
       <a href="/artifacts"><span>OUTPUT</span><b>Artifact Studio</b><small>Reports · ledgers · verified files</small><em>Open area →</em></a>
       <a href="/connections"><span>STATUS</span><b>Connections</b><small>Platform proof only</small><em>Open area →</em></a>
+      <a href="/governance"><span>BRIDGE</span><b>Command Bridge</b><small>Authority · gates · storage policy</small><em>Open area →</em></a>
     </nav>
 
-    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="document analysis routines artifacts connections">
+    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="document analysis routines artifacts connections governance">
       <div class="voyage-copy">
         <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
         <h2 id="voyageSceneTitle">Document Center</h2>
@@ -76,7 +78,6 @@
     <nav class="route-workflows" aria-label="Document Center workflows" data-page-section="document">
       <span>Document workflows</span>
       <a href="/document-center?workflow=smart_inbox" data-workflow-route="smart_inbox">Smart Inbox</a>
-      <a href="/document-center?workflow=storage_policy" data-workflow-route="storage_policy">Storage Policies</a>
       <a href="/document-center?workflow=cleanup_rules" data-workflow-route="cleanup_rules">Cleanup Rules</a>
       <a href="/document-center?workflow=mail_to_case" data-workflow-route="mail_to_case">Mail-to-Case</a>
       <a href="/document-center?workflow=controlled_email" data-workflow-route="controlled_email">Controlled Email</a>
@@ -93,6 +94,59 @@
       <a href="/routines?workflow=version_resolver" data-workflow-route="version_resolver">Version Resolver</a>
       <a href="/routines?workflow=contact_monitor" data-workflow-route="contact_monitor">Contact Monitor</a>
     </nav>
+    <nav class="route-workflows" aria-label="Governance workflows" data-page-section="governance">
+      <span>Bridge controls</span>
+      <a href="/governance?workflow=storage_policy" data-workflow-route="storage_policy">Storage Policies</a>
+    </nav>
+
+    <section id="commandBridge" class="command-bridge" aria-labelledby="commandBridgeTitle" data-page-section="governance">
+      <div class="section-title bridge-title">
+        <p class="kicker">COMMAND BRIDGE</p>
+        <div>
+          <h2 id="commandBridgeTitle">Every lever this vessel answers to.</h2>
+          <p>The bridge shows the authority this server was started with. Gates are read here, never granted here: a closed gate can only be opened by restarting the server with the matching flag.</p>
+        </div>
+      </div>
+      <div class="bridge-console">
+        <div class="bridge-panel" role="group" aria-label="Authority instruments">
+          <div class="instrument" data-state="pending">
+            <span>FILE ACTIONS</span>
+            <b id="bridgeActionGate">Reading instruments…</b>
+            <small>Dry-run keeps every plan reversible until an explicit apply gate exists.</small>
+            <i class="lever" aria-hidden="true"></i>
+          </div>
+          <div class="instrument" data-state="pending">
+            <span>EXTERNAL MODELS</span>
+            <b id="bridgeExternalGate">Reading instruments…</b>
+            <small>A closed gate keeps every evidence package on this host.</small>
+            <i class="lever" aria-hidden="true"></i>
+          </div>
+          <div class="instrument" data-state="pending">
+            <span>NETWORK SURFACE</span>
+            <b id="bridgeNetworkGate">Reading instruments…</b>
+            <small>Loopback is the default berth. Exposure disables the provider surface.</small>
+            <i class="lever" aria-hidden="true"></i>
+          </div>
+        </div>
+        <dl class="bridge-gauges" aria-label="Bridge gauges">
+          <div><dt>Approved roots</dt><dd id="bridgeRootCount">—</dd></div>
+          <div><dt>Model budget ceiling</dt><dd id="bridgeBudget">—</dd></div>
+          <div><dt>Runtime cores</dt><dd id="bridgeCores">—</dd></div>
+          <div><dt>Contracted workflows</dt><dd id="bridgeWorkflows">—</dd></div>
+        </dl>
+      </div>
+      <div id="bridgeRoots" class="bridge-roots" aria-live="polite"><p>Reading approved roots…</p></div>
+      <div class="bridge-doctrine">
+        <p class="kicker">AUTHORITY BEFORE INFERENCE</p>
+        <p>NemoFold accepts a strict job contract. A run can read only approved roots and can write only to the declared output location and, for action workflows, approved target roots. Remote reasoning is a worker: it receives selected chunks, never ambient folder authority.</p>
+        <ol role="list">
+          <li><span>01</span><div><b>Declare</b><small>roots, question, workflow</small></div></li>
+          <li><span>02</span><div><b>Preview</b><small>files, policy, estimated cost</small></div></li>
+          <li><span>03</span><div><b>Execute</b><small>local by default</small></div></li>
+          <li><span>04</span><div><b>Verify</b><small>quotes, gaps, journal</small></div></li>
+        </ol>
+      </div>
+    </section>
 
     <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="analysis" hidden>
       <div class="notebook-head">
@@ -125,7 +179,7 @@
       <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
     </section>
 
-    <section class="workspace-grid" aria-label="NemoFold job workspace" data-page-section="document analysis routines">
+    <section class="workspace-grid" aria-label="NemoFold job workspace" data-page-section="document analysis routines governance">
       <aside class="scope-rail" aria-labelledby="scopeTitle">
         <div>
           <p class="kicker">SCOPE LEDGER</p>
@@ -364,14 +418,15 @@ Which earlier wording changed?</textarea></label>
     <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle" data-page-section="overview">
       <div class="section-title">
         <p class="kicker">PRODUCT MAP</p>
-        <h2 id="registerTitle">Five work areas. Twelve technical contracts.</h2>
+        <h2 id="registerTitle">Six work areas. Twelve technical contracts.</h2>
       </div>
       <div class="register-table" role="list">
-        <a href="/document-center" role="listitem"><span>01 / START</span><h3>Document Center</h3><p>Intake and storage policy plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · storage_policy · cleanup_rules · mail_to_case · controlled_email</b></a>
+        <a href="/document-center" role="listitem"><span>01 / START</span><h3>Document Center</h3><p>Intake plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · cleanup_rules · mail_to_case · controlled_email</b></a>
         <a href="/analysis" role="listitem"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst</b></a>
         <a href="/routines" role="listitem"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck folders, resolve valid document versions and compare source-grounded contact responsibilities.</p><b>folder_digest · version_resolver · contact_monitor</b></a>
         <a href="/artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
         <a href="/connections" role="listitem"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
+        <a href="/governance" role="listitem"><span>06 / BRIDGE</span><h3>Command Bridge</h3><p>Read the authority this server was started with and set controlled routing and retention policy.</p><b>storage_policy · gates are read, not granted</b></a>
       </div>
       <p class="text-alt"><b>ROADMAP:</b> UC10 remains the separate design track. Planned Document Services include synopses, bilingual sync, rich ingest and OCR, document redaction, RAG export, dossiers, templates, QA, forms, duplicate review and verified conversions; none are presented as active before their own acceptance gate.</p>
     </section>

@@ -5,18 +5,20 @@ const pageByPath = new Map([
   ["/analysis", "analysis"],
   ["/routines", "routines"],
   ["/artifacts", "artifacts"],
-  ["/connections", "connections"]
+  ["/connections", "connections"],
+  ["/governance", "governance"]
 ]);
 const normalizedPath = globalThis.location.pathname.replace(/\/+$/, "") || "/";
 const currentPage = pageByPath.get(normalizedPath) || "overview";
 const requestedWorkflow = new URLSearchParams(globalThis.location.search).get("workflow");
 const pageConfiguration = {
   overview: {title: "NemoFold — Local evidence workspace", scene: null, defaultWorkflow: "smart_inbox", workflows: []},
-  document: {title: "Document Center — NemoFold", scene: "document", defaultWorkflow: "smart_inbox", workflows: ["smart_inbox", "storage_policy", "cleanup_rules", "mail_to_case", "controlled_email"]},
+  document: {title: "Document Center — NemoFold", scene: "document", defaultWorkflow: "smart_inbox", workflows: ["smart_inbox", "cleanup_rules", "mail_to_case", "controlled_email"]},
   analysis: {title: "Analysis Lab — NemoFold", scene: "analysis", defaultWorkflow: "evidence_analyst", workflows: ["evidence_analyst", "bundle_export", "report_studio"]},
   routines: {title: "Folder Routines — NemoFold", scene: "routines", defaultWorkflow: "folder_digest", workflows: ["folder_digest", "version_resolver", "contact_monitor"]},
   artifacts: {title: "Artifact Studio — NemoFold", scene: "artifacts", defaultWorkflow: "report_studio", workflows: []},
-  connections: {title: "Connections — NemoFold", scene: "connections", defaultWorkflow: "platform_proof", workflows: []}
+  connections: {title: "Connections — NemoFold", scene: "connections", defaultWorkflow: "platform_proof", workflows: []},
+  governance: {title: "Command Bridge — NemoFold", scene: "governance", defaultWorkflow: "storage_policy", workflows: ["storage_policy"]}
 };
 document.body.dataset.page = currentPage;
 document.title = pageConfiguration[currentPage].title;
@@ -420,16 +422,24 @@ const voyageScenes = {
     title: "Connections",
     text: "The Nautilus has surfaced. Local, provider, Nebius and NemoClaw connections remain separate signals; distant readiness is never presented as proof.",
     roadmap: "STATUS ONLY · platform_proof"
+  },
+  governance: {
+    className: "command-bridge-deck",
+    kicker: "THE BRIDGE OF THE NAUTILUS",
+    title: "Command Bridge",
+    text: "Every lever this vessel answers to, read from the running server: which gates are open, which roots are approved and what the storage policy does with a file once it is filed.",
+    roadmap: "ACTIVE · storage_policy + authority instruments"
   }
 };
 
 function updateVoyageScene(area = null) {
   const workflow = $("workflow").value;
   const key = area || pageConfiguration[currentPage].scene || (
-    ["smart_inbox", "storage_policy", "cleanup_rules", "mail_to_case", "controlled_email"].includes(workflow) ? "document"
-      : ["bundle_export", "evidence_analyst"].includes(workflow) ? "analysis"
-        : ["folder_digest", "version_resolver", "contact_monitor"].includes(workflow) ? "routines"
-          : workflow === "report_studio" ? "artifacts" : "connections"
+    workflow === "storage_policy" ? "governance"
+      : ["smart_inbox", "cleanup_rules", "mail_to_case", "controlled_email"].includes(workflow) ? "document"
+        : ["bundle_export", "evidence_analyst"].includes(workflow) ? "analysis"
+          : ["folder_digest", "version_resolver", "contact_monitor"].includes(workflow) ? "routines"
+            : workflow === "report_studio" ? "artifacts" : "connections"
   );
   const scene = voyageScenes[key];
   const container = $("voyageScene");
@@ -441,6 +451,66 @@ function updateVoyageScene(area = null) {
   const notebookVisible = currentPage === "analysis" && $("workflow").value === "evidence_analyst";
   $("researchNotebook").hidden = !notebookVisible;
   if (notebookVisible) updateNotebookSnapshot();
+}
+
+function setInstrument(id, open, openText, closedText) {
+  const readout = $(id);
+  if (!readout) return;
+  readout.textContent = open ? openText : closedText;
+  const instrument = readout.closest(".instrument");
+  if (instrument) instrument.dataset.state = open ? "open" : "closed";
+}
+
+function renderCommandBridge(status) {
+  if (!$("commandBridge")) return;
+  setInstrument(
+    "bridgeActionGate",
+    status.apply_actions_allowed === true,
+    "APPLY GATE OPEN · file actions may be executed",
+    "DRY-RUN ONLY · plans stay reversible"
+  );
+  setInstrument(
+    "bridgeExternalGate",
+    status.external_models_allowed === true,
+    "EXTERNAL GATE OPEN · a transfer still needs per-run approval",
+    "EXTERNAL GATE CLOSED · evidence stays on this host"
+  );
+  setInstrument(
+    "bridgeNetworkGate",
+    status.network_exposed !== true,
+    "LOOPBACK BERTH · reachable from this machine only",
+    "NETWORK EXPOSED · provider and browser surfaces disabled"
+  );
+  const rootCount = Number(status.approved_root_count || 0);
+  $("bridgeRootCount").textContent = rootCount === 1 ? "1 approved root" : `${rootCount} approved roots`;
+  const budget = Number(status.max_external_cost_usd || 0);
+  $("bridgeBudget").textContent = budget > 0
+    ? `${budget.toFixed(2)} USD per run`
+    : "0.00 USD · no external spend permitted";
+  const cores = Array.isArray(status.cores) ? status.cores : [];
+  $("bridgeCores").textContent = `${cores.length} shared cores`;
+  const workflows = Array.isArray(status.workflows) ? status.workflows : [];
+  $("bridgeWorkflows").textContent = `${workflows.length} contracted workflows`;
+  const roots = Array.isArray(status.approved_roots) ? status.approved_roots : [];
+  const list = $("bridgeRoots");
+  list.textContent = "";
+  if (!roots.length) {
+    const note = document.createElement("p");
+    note.textContent = rootCount
+      ? "Root locations are withheld on a public or network-exposed server. The count above remains authoritative."
+      : "This server was started without an approved root. No workflow can read a file.";
+    list.append(note);
+    return;
+  }
+  for (const root of roots) {
+    const row = document.createElement("div");
+    const label = document.createElement("span");
+    label.textContent = "APPROVED ROOT";
+    const value = document.createElement("b");
+    value.textContent = root;
+    row.append(label, value);
+    list.append(row);
+  }
 }
 
 function renderConnectionStatus(status) {
@@ -1253,6 +1323,7 @@ async function loadStatus() {
     notebookSurfaceEnabled = status.notebook_surface_enabled === true;
     configureProviders(status);
     renderConnectionStatus(status);
+    renderCommandBridge(status);
     if (publicDemo) {
       const supported = new Set(status.workflows);
       for (const option of [...$("workflow").options]) {

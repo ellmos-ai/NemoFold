@@ -199,6 +199,7 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
         ("/routines", "routines"),
         ("/artifacts", "artifacts"),
         ("/connections", "connections"),
+        ("/governance", "governance"),
     ],
 )
 def test_web_console_serves_each_product_area_as_a_real_route(tmp_path, route, page) -> None:
@@ -211,7 +212,10 @@ def test_web_console_serves_each_product_area_as_a_real_route(tmp_path, route, p
     assert response.status == 200
     assert f'<body data-page="{page}">' in html
     assert 'data-page-link="document"' in html
-    assert 'data-page-section="document analysis routines artifacts connections"' in html
+    assert 'data-page-link="governance"' in html
+    assert (
+        'data-page-section="document analysis routines artifacts connections governance"' in html
+    )
 
 
 def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
@@ -748,3 +752,67 @@ def test_corpus_glance_reports_bounded_home_overview(tmp_path) -> None:
     assert default["ok"] is True
     assert captured.value.code == 400
     assert json.load(captured.value)["error"] == "corpus_glance_rejected"
+
+
+def test_command_bridge_reads_the_authority_the_server_was_started_with(tmp_path) -> None:
+    server = build_server(
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(
+                allowed_roots=(str(tmp_path),),
+                apply_actions_allowed=True,
+                external_models_allowed=True,
+                max_external_cost_usd=2.5,
+            ),
+        ),
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    base_url = f"http://{host}:{port}"
+    try:
+        with urlopen(base_url + "/governance", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        status, _ = get_json(base_url + "/api/status")
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+    assert 'id="commandBridge"' in html
+    assert 'id="bridgeActionGate"' in html
+    assert "AUTHORITY BEFORE INFERENCE" in html
+    assert status["apply_actions_allowed"] is True
+    assert status["external_models_allowed"] is True
+    assert status["max_external_cost_usd"] == 2.5
+    assert status["approved_roots"] == [str(tmp_path)]
+    assert status["approved_root_count"] == 1
+
+
+def test_public_demo_status_withholds_root_locations_but_keeps_the_count(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
+
+    with running_public_demo(source_root) as (_, base_url):
+        status, _ = get_json(base_url + "/api/status")
+
+    assert status["approved_roots"] == []
+    assert status["approved_root_count"] == 1
+    assert status["apply_actions_allowed"] is False
+    assert status["max_external_cost_usd"] == 0.0
+
+
+def test_storage_policy_moved_from_document_center_to_the_bridge(tmp_path) -> None:
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/assets/app.js", timeout=5) as response,  # noqa: S310
+    ):
+        script = response.read().decode()
+
+    document_line = next(line for line in script.splitlines() if "document: {title:" in line)
+    governance_line = next(line for line in script.splitlines() if "governance: {title:" in line)
+
+    assert "storage_policy" not in document_line
+    assert "storage_policy" in governance_line

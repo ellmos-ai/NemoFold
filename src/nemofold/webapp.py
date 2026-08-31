@@ -253,6 +253,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/routines": "routines",
             "/artifacts": "artifacts",
             "/connections": "connections",
+            "/governance": "governance",
         }
         if page_path in page_routes:
             try:
@@ -307,6 +308,25 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                         if provider_surface_enabled
                         else False
                     ),
+                    "apply_actions_allowed": (
+                        self.server.app_config.execution.apply_actions_allowed
+                        if provider_surface_enabled
+                        else False
+                    ),
+                    "max_external_cost_usd": (
+                        self.server.app_config.execution.max_external_cost_usd
+                        if provider_surface_enabled
+                        else 0.0
+                    ),
+                    # Root paths follow the folder picker's rule: never in the public
+                    # demo and never on a network-exposed server. The count stays
+                    # visible everywhere because it discloses no location.
+                    "approved_roots": (
+                        list(self.server.app_config.execution.allowed_roots)
+                        if provider_surface_enabled
+                        else []
+                    ),
+                    "approved_root_count": len(self.server.app_config.execution.allowed_roots),
                     "network_exposed": self.server.app_config.exposed_to_network,
                     "public_demo": public_demo,
                     "read_only": public_demo,
