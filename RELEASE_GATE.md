@@ -6,7 +6,7 @@ Gate date: 2026-08-31
 
 - `python -m ruff check src tests`: pass
 - `python -m mypy src`: pass for 30 source files
-- `python -m pytest -q`: 147 passed, one Windows privilege-dependent symlink test skipped
+- `python -m pytest -q`: 149 passed, one Windows privilege-dependent symlink test skipped
 - `python -m compileall -q src tests`: pass
 - `node --check src/nemofold/web/app.js`: pass
 - `python -m build`: source and wheel distributions built
@@ -19,6 +19,9 @@ Gate date: 2026-08-31
 - Public synthetic HTTP demo runtime: executed with server-controlled roots,
   ephemeral output, no external model authority, no file-action authority, and
   `cloud_proof=false`.
+- Provider-neutral OCI/Docker definition: statically contract-tested for the bounded
+  `serve-demo` entrypoint, synthetic-only copy scope, non-root runtime and health check;
+  the container was not built locally because Docker is not installed on this workstation.
 - Evidence-console UI: focused HTTP/UI tests pass; every job-contract ID is present and
   unique; the seven-stage evidence chain has explicit wrapping and responsive breakpoints.
 - Local Chrome readback at 1920x1080 and 1440x1200 confirms the authority ledger, job
@@ -53,8 +56,9 @@ files are outside the current formatting slice.
 - Real Nebius Token Factory plus NVIDIA Nemotron run
 - Sanitized NemoClaw runtime proof
 - Public deployment of the implemented synthetic-only demo mode
-- User acceptance and upload of the checked local 73.07-second Andrew v3 video draft; the
-  linked Devpost YouTube video has not been replaced
+- User acceptance and upload of the checked local 73.07-second Andrew v3 video draft;
+  deterministic English VTT/SRT sidecars and the upload packet are ready, but the linked
+  Devpost YouTube video has not been replaced
 - Final live-content readback of the already submitted Devpost project
 
 ## Hosted repository acceptance

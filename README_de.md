@@ -204,6 +204,7 @@ Oberfläche, kein Nachweis für einen Nebius-, Nemotron- oder NemoClaw-Lauf;
 
 - [Ausrichtung der Evidence-Console-Oberfläche](docs/design-direction.md)
 - [Architektur](docs/architecture.md)
+- [Fähigkeitsminimale Demo-Bereitstellung](docs/deployment.md)
 - [NemoClaw-Integration](docs/nemoclaw-integration.md)
 - [Produktgeschichte](docs/product-story.md)
 - [Dreiminütige Jury-Demo](docs/jury-demo.md)
