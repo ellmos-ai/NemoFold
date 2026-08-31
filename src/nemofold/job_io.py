@@ -27,6 +27,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "report_studio",
         "platform_proof",
         "document_registry",
+        "fact_distill",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -115,6 +116,9 @@ WORKFLOW_PARAMETER_FIELDS = {
         {"as_of", "fallback_to_file_time", "family_hint", "validity_fields"}
     ),
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
+    "fact_distill": frozenset(
+        {"dedupe_scope", "focus_terms", "formats", "max_facts_per_source", "title"}
+    ),
     "document_registry": frozenset(
         {
             "column_template",
@@ -238,6 +242,16 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
         choice("citation_granularity", {"line_or_page"})
         if job.parameters.get("analysis_mode") == "nemotron" and not job.model_id:
             raise ValueError("nemotron analysis_mode requires model_id")
+    elif job.workflow == "fact_distill":
+        choice("dedupe_scope", {"exact", "normalized"})
+        focus = job.parameters.get("focus_terms", [])
+        if not isinstance(focus, list) or any(
+            not isinstance(item, str) or not item.strip() for item in focus
+        ):
+            raise ValueError("focus_terms must be a list of non-empty strings")
+        limit = job.parameters.get("max_facts_per_source", 200)
+        if isinstance(limit, bool) or not isinstance(limit, int) or not 1 <= limit <= 2000:
+            raise ValueError("max_facts_per_source must be between 1 and 2000")
     elif job.workflow == "document_registry":
         # The column contract itself is validated in document_registry; here only
         # the job-level shape is checked, so an unusable job fails before a run.

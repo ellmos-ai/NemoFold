@@ -31,6 +31,7 @@ WORKFLOW_ORDER = {
     "contact_monitor": 70,
     "bundle_export": 80,
     "evidence_analyst": 90,
+    "fact_distill": 92,
     "document_registry": 95,
     "report_studio": 100,
     "controlled_email": 110,
@@ -57,6 +58,7 @@ WORKFLOW_TITLES = {
     "version_resolver": "Version Resolver",
     "report_studio": "Report Studio",
     "document_registry": "Document Registry",
+    "fact_distill": "Fact Distill",
     "platform_proof": "Platform Proof",
 }
 
@@ -92,7 +94,7 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
         # "widerspr" is the common stem of Widerspruch, Widersprüche and
         # widersprechen; the umlaut in the plural breaks a full-word match.
         "was steht", "widerspr", "conflict", "frage an", "beantworte",
-        "destillier", "distil", "fakten", "facts", "extrahier", "extract",
+        "extrahier", "extract",
     ),
     "folder_digest": (
         "überblick", "ueberblick", "digest", "geändert", "geaendert", "changed",
@@ -111,6 +113,11 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "report_studio": (
         "bericht", "report", "pdf", "docx", "odt", "ausdruck",
+    ),
+    "fact_distill": (
+        "destillier", "distil", "fakten", "facts", "dubletten streichen",
+        "doppeltes streichen", "entdoppel", "faktenauszug", "doppelt",
+        "mehrfach vorkommend",
     ),
     "document_registry": (
         "verzeichnis", "register", "registry", "tabelle", "table", "übersichtstabelle",
@@ -200,9 +207,13 @@ ROADMAP_SERVICES = (
     RoadmapService(
         key="duplicate_review",
         label="Duplicate review",
-        keywords=("duplikat", "dublette", "doppelte datei", "duplicate", "doppelt",
-                  "mehrfach vorkommend"),
-        reason="Duplicate review is a planned Document Service.",
+        keywords=("duplikat", "dublette", "doppelte datei", "duplicate file",
+                  "identische datei"),
+        reason=(
+            "Review of duplicate FILES is a planned Document Service. Repeated "
+            "STATEMENTS are already handled: Fact Distill strikes them and lists every "
+            "struck occurrence."
+        ),
         alternative_workflows=("folder_digest",),
         approximation=(
             "Today's approximation: a Folder Digest lists every file with its hash, so "
@@ -392,7 +403,9 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
         questions.append(
             "Which earlier snapshot should the contacts be compared against, if any?"
         )
-    if workflow in {"report_studio", "bundle_export"} and any(
+    if workflow in {
+        "report_studio", "bundle_export", "fact_distill", "document_registry"
+    } and any(
         _mentions(text, keyword) for keyword in OUTPUT_LOCATION_KEYWORDS
     ):
         questions.append(
@@ -444,6 +457,11 @@ def _why(workflow: str) -> str:
             "Surfaces who the sources say is responsible, with quotes, so a recipient is "
             "chosen from evidence rather than memory."
         ),
+        "fact_distill": (
+            "Lifts quotable facts out of every approved source and strikes repeated "
+            "statements from the findings, listing each struck occurrence with the "
+            "statement it repeats."
+        ),
         "document_registry": (
             "Extracts the declared columns from every approved document into one table, "
             "with the source and line behind each filled cell and an empty cell wherever "
@@ -475,8 +493,19 @@ def _parameters_for(workflow: str, text: str) -> dict[str, Any]:
         return {"digest_depth": "full"}
     if workflow == "evidence_analyst":
         return {"analysis_mode": "local_extractive", "max_chunks": 64}
+    wants_pdf = _mentions(text.casefold(), "pdf")
+    if workflow == "fact_distill":
+        return {
+            "dedupe_scope": "normalized",
+            "formats": ["pdf", "md"] if wants_pdf else ["md"],
+            "focus_terms": [],
+        }
     if workflow == "document_registry":
-        return {"column_template": "medical_reports", "formats": ["md"], "topic_filter": []}
+        return {
+            "column_template": "medical_reports",
+            "formats": ["pdf", "md"] if wants_pdf else ["md"],
+            "topic_filter": [],
+        }
     if workflow == "report_studio":
         # report_studio really renders PDF (report_studio.SUPPORTED_FORMATS), so a
         # request for a PDF is answered with the format, not with an apology.
@@ -567,6 +596,17 @@ def plan_voyage(
                 ),
                 alternative_workflows=(),
             )
+        )
+
+    self_exporting = workflows & {"fact_distill", "document_registry"}
+    if self_exporting and "report_studio" in workflows and "evidence_analyst" not in workflows:
+        # report_studio renders one verified analysis JSON, which these two do
+        # not produce - and they already write every requested format themselves.
+        workflows.discard("report_studio")
+        notes.append(
+            "The report formats are written by "
+            + " and ".join(sorted(WORKFLOW_TITLES[item] for item in self_exporting))
+            + " directly, so no separate Report Studio step is needed."
         )
 
     ordered = sorted(workflows, key=lambda item: WORKFLOW_ORDER[item])

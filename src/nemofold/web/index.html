@@ -178,6 +178,7 @@
       <a href="/analysis?workflow=bundle_export" data-workflow-route="bundle_export">Bundle Export</a>
       <a href="/analysis?workflow=report_studio" data-workflow-route="report_studio">Report Studio</a>
       <a href="/analysis?workflow=document_registry" data-workflow-route="document_registry">Document Registry</a>
+      <a href="/analysis?workflow=fact_distill" data-workflow-route="fact_distill">Fact Distill</a>
     </nav>
     <nav class="route-workflows" aria-label="Folder routines" data-page-section="routines">
       <span>Folder routines</span>
@@ -293,7 +294,7 @@
             <legend>01 · Mission</legend>
             <div class="form-grid">
               <div class="workflow-choice">
-                <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>document_registry</option><option>platform_proof</option></select></label>
+                <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>document_registry</option><option>fact_distill</option><option>platform_proof</option></select></label>
                 <p id="workflowHint" class="selection-description">Smart Inbox is the Document Center entry point. Storage Policies are its controlled routing and retention settings.</p>
               </div>
               <div class="prompt-field wide">
@@ -598,11 +599,11 @@ Which earlier wording changed?</textarea></label>
         <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle">
           <div class="section-title">
             <p class="kicker">PRODUCT MAP</p>
-            <h2 id="registerTitle">Six work areas. Thirteen technical contracts.</h2>
+            <h2 id="registerTitle">Six work areas. Fourteen technical contracts.</h2>
           </div>
           <div class="register-table" role="list">
             <a href="/document-center" role="listitem"><span>01 / START</span><h3>Document Center</h3><p>Intake plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · cleanup_rules · mail_to_case · controlled_email</b></a>
-            <a href="/analysis" role="listitem"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst · document_registry</b></a>
+            <a href="/analysis" role="listitem"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst · document_registry · fact_distill</b></a>
             <a href="/routines" role="listitem"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck folders, resolve valid document versions and compare source-grounded contact responsibilities.</p><b>folder_digest · version_resolver · contact_monitor</b></a>
             <a href="/artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
             <a href="/connections" role="listitem"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>

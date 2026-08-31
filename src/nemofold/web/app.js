@@ -14,7 +14,7 @@ const requestedWorkflow = new URLSearchParams(globalThis.location.search).get("w
 const pageConfiguration = {
   overview: {title: "NemoFold — Local evidence workspace", scene: null, defaultWorkflow: "smart_inbox", workflows: []},
   document: {title: "Document Center — NemoFold", scene: "document", defaultWorkflow: "smart_inbox", workflows: ["smart_inbox", "cleanup_rules", "mail_to_case", "controlled_email"]},
-  analysis: {title: "Analysis Lab — NemoFold", scene: "analysis", defaultWorkflow: "evidence_analyst", workflows: ["evidence_analyst", "document_registry", "bundle_export", "report_studio"]},
+  analysis: {title: "Analysis Lab — NemoFold", scene: "analysis", defaultWorkflow: "evidence_analyst", workflows: ["evidence_analyst", "document_registry", "fact_distill", "bundle_export", "report_studio"]},
   routines: {title: "Folder Routines — NemoFold", scene: "routines", defaultWorkflow: "folder_digest", workflows: ["folder_digest", "version_resolver", "contact_monitor"]},
   artifacts: {title: "Artifact Studio — NemoFold", scene: "artifacts", defaultWorkflow: "report_studio", workflows: []},
   connections: {title: "Connections — NemoFold", scene: "connections", defaultWorkflow: "platform_proof", workflows: []},
@@ -97,6 +97,11 @@ const workflowDefaults = {
     questions: [],
     parameters: {from_address: "sender@example.org", to: ["recipient@example.org"], cc: [], subject: "Review draft", body: "Please review the attached material.", attachment_source_ids: [], send_requested: false},
     hint: "Controlled Email creates a local RFC 822 draft and approval digest. Actual sending stays blocked until that exact digest is confirmed and a server-side mail adapter is proven."
+  },
+  fact_distill: {
+    questions: [],
+    parameters: {dedupe_scope: "normalized", formats: ["md", "pdf"], focus_terms: []},
+    hint: "Fact Distill lifts quotable sentences from every approved source and strikes repeated statements from the findings. Every struck occurrence stays visible in its own appendix with the statement it repeats."
   },
   document_registry: {
     questions: [],
@@ -486,6 +491,10 @@ const workflowCards = {
   bundle_export: {
     title: "Bundle Export",
     benefit: "Build one deterministic bundle with manifest, hashes and visibly listed unreadable entries."
+  },
+  fact_distill: {
+    title: "Fact Distill",
+    benefit: "Pull the quotable facts out of a folder and strike repeats, with every removal listed."
   },
   document_registry: {
     title: "Document Registry",

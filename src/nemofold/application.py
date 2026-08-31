@@ -39,6 +39,7 @@ from .document_registry import (
 )
 from .evidence import compute_coverage, validate_claim
 from .evidence_analyst import build_context_receipts
+from .fact_distill import distil_facts, struck_markdown
 from .folder_digest import build_digest
 from .inventory import InventoryResult, scan_paths
 from .job_io import job_snapshot_payload, load_job_snapshot, validate_workflow_parameters
@@ -1565,6 +1566,105 @@ def _execute_document_registry(
     )
 
 
+def _execute_fact_distill(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Distil quotable facts, strike duplicates, and keep the struck ones visible."""
+    texts = _read_text_sources(inventory)
+    focus = tuple(job.parameters.get("focus_terms", [])) or tuple(job.questions)
+    result = distil_facts(
+        tuple(record.source_id for record in inventory.records),
+        texts,
+        dedupe_scope=str(job.parameters.get("dedupe_scope", "normalized")),
+        focus_terms=focus,
+        max_facts_per_source=int(job.parameters.get("max_facts_per_source", 200)),
+    )
+    output = Path(job.output_dir)
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(
+            output / f"{run_id}.struck-duplicates.md",
+            struck_markdown(result),
+            "struck-duplicates",
+        )
+    ]
+    claims = tuple(
+        Claim(
+            statement=fact.statement,
+            evidence=(
+                EvidenceLocator(
+                    source_id=fact.source_id,
+                    quote=fact.statement,
+                    section=f"line {fact.line}",
+                ),
+            ),
+        )
+        for fact in result.facts
+    )
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=texts,
+        cited_source_ids={fact.source_id for fact in result.facts},
+    )
+    formats = tuple(job.parameters.get("formats", ["md"]))
+    title = job.parameters.get("title") or "Distilled facts"
+    if not isinstance(title, str) or not title.strip():
+        raise ValueError("title must be a non-empty string")
+    if claims:
+        artifacts.extend(
+            render_report_formats(
+                ReportDocument(title=title, claims=claims, coverage=coverage),
+                output,
+                basename=f"{run_id}_facts",
+                formats=formats,
+            )
+        )
+    if result.struck:
+        # The appendix travels in the same formats as the findings, so a reader
+        # who only opens the PDF still sees what was removed.
+        artifacts.extend(
+            render_report_formats(
+                ReportDocument(
+                    title=f"{title} · struck duplicates",
+                    claims=tuple(
+                        Claim(
+                            statement=item.statement,
+                            evidence=(
+                                EvidenceLocator(
+                                    source_id=item.duplicate_source_id,
+                                    quote=item.statement,
+                                    section=(
+                                        f"line {item.duplicate_line}; kept in "
+                                        f"{item.kept_source_id} line {item.kept_line}"
+                                    ),
+                                ),
+                            ),
+                        )
+                        for item in result.struck
+                    ),
+                    coverage=coverage,
+                ),
+                output,
+                basename=f"{run_id}_struck",
+                formats=formats,
+            )
+        )
+    return (
+        ("inventory_scanned", "facts_distilled", "duplicates_struck", "coverage_recorded"),
+        tuple(artifacts),
+        coverage,
+        {
+            "dedupe_scope": result.dedupe_scope,
+            "facts_kept": len(result.facts),
+            "duplicates_struck": result.struck_count,
+            "sentences_considered": result.considered,
+            "focus_terms": list(focus),
+        },
+    )
+
+
 def _dispatch_workflow(
     job: JobEnvelope,
     inventory: InventoryResult,
@@ -1584,6 +1684,8 @@ def _dispatch_workflow(
         return _execute_report_studio(job, inventory, run_id=run_id)
     if job.workflow == "document_registry":
         return _execute_document_registry(job, inventory, run_id=run_id)
+    if job.workflow == "fact_distill":
+        return _execute_fact_distill(job, inventory, run_id=run_id)
     if job.workflow == "platform_proof":
         return _execute_evidence(job, inventory, run_id=run_id, platform_proof=True)
     if job.workflow == "storage_policy":

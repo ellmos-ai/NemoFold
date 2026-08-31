@@ -35,6 +35,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Show connection and proof status while keeping local readiness, provider execution, "
         "Nebius competition evidence, and NemoClaw runtime evidence explicitly separate."
     ),
+    "fact_distill": (
+        "Distil quotable facts from every approved source, strike duplicate statements from "
+        "the findings, and keep each struck occurrence visible with the statement it repeats."
+    ),
     "document_registry": (
         "Extract declared columns from every approved document into one table, anchor each "
         "filled cell to its source and line, and leave a cell empty when the sources are silent."
@@ -122,6 +126,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("nebius", "Nebius", "competition proof"),
         ("nemoclaw", "NemoClaw", "runtime proof"),
         ("report", "Status ledger", "no inferred proof"),
+    ),
+    "fact_distill": (
+        ("operation", "Inventory", "approved corpus"),
+        ("operation", "Distil", "quotable sentences"),
+        ("gate", "Dedupe", "exact or normalized"),
+        ("operation", "Appendix", "struck occurrences"),
+        ("operation", "Export", "selected formats"),
     ),
     "document_registry": (
         ("operation", "Inventory", "approved corpus"),

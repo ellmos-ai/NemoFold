@@ -171,25 +171,33 @@ TELEGRAM_REQUEST = (
 def test_facts_request_ends_in_a_real_pdf_report(tmp_path) -> None:
     plan = plan_voyage(FACTS_REQUEST, input_roots=(str(tmp_path),))
 
+    # Since wave 1 activated fact_distill, this request runs on the active path
+    # instead of being approximated by an analysis run.
     workflows = [step.workflow for step in plan.steps]
-    assert workflows == ["folder_digest", "evidence_analyst", "report_studio"]
+    # Fact Distill writes every requested format itself, and report_studio only
+    # renders a verified analysis JSON, which Fact Distill does not produce - so
+    # a second export step would be a promise the run could not keep.
+    assert workflows == ["fact_distill"]
+    assert plan.steps[0].job["parameters"]["dedupe_scope"] == "normalized"
+    assert any("no separate Report Studio step" in note for note in plan.notes)
 
     report = plan.steps[-1]
-    # report_studio genuinely renders PDF, so the request is answered with the
-    # format rather than with a roadmap apology.
     assert report.job["parameters"]["formats"] == ["pdf", "md"]
-    assert report.reads_previous_step is True
-    assert report.job["input_roots"] == [plan.steps[1].job["output_dir"]]
 
     # A desktop is a location outside the approved roots until it is approved.
     location = " ".join(report.questions_to_user)
     assert "approved folder should receive the file" in location
     assert "never writes outside them" in location
 
-    # Deduplication itself is a planned service and is named as one.
-    duplicates = next(item for item in plan.unavailable if item.key == "duplicate_review")
-    assert "planned Document Service" in duplicates.reason
-    assert duplicates.alternative_workflows == ("folder_digest",)
+    # Striking repeated statements is active now, so nothing is declared missing.
+    assert plan.unavailable == ()
+
+    # Only duplicate FILES remain a planned service, and the wording says which
+    # of the two readings is already handled.
+    files = plan_voyage("finde doppelte dateien im ordner", input_roots=(str(tmp_path),))
+    duplicates = next(item for item in files.unavailable if item.key == "duplicate_review")
+    assert "duplicate FILES is a planned Document Service" in duplicates.reason
+    assert "Fact Distill strikes them" in duplicates.reason
 
 
 def test_daily_report_request_names_the_missing_uploader_field(tmp_path) -> None:
