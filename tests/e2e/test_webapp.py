@@ -816,3 +816,64 @@ def test_storage_policy_moved_from_document_center_to_the_bridge(tmp_path) -> No
 
     assert "storage_policy" not in document_line
     assert "storage_policy" in governance_line
+
+
+def test_each_area_serves_its_own_home_module_and_task_cards(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        pages = {}
+        for route in ("/document-center", "/routines", "/analysis"):
+            with urlopen(base_url + route, timeout=5) as response:  # noqa: S310
+                pages[route] = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    document_page = pages["/document-center"]
+    assert 'id="homeGlance"' in document_page
+    assert 'data-folder-target="homeGlanceRoot"' in document_page
+    assert 'id="echoCheck"' in document_page
+    assert 'data-page-section="document"' in document_page
+    assert 'id="taskCards"' in document_page
+    assert 'data-page-section="document analysis routines governance"' in document_page
+    assert "workflowCards" in script
+    assert "renderTaskCards" in script
+    assert "loadHomeGlance" in script
+    assert "loadEcho" in script
+    assert "prepareWorkflow" in script
+
+
+def test_artifact_catalog_reports_when_each_ledger_was_written(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "folder_digest",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+    }
+
+    with running_server(tmp_path) as base_url:
+        post_json(base_url + "/api/run", {"run_id": "echo_run", "job": job})
+        catalog = post_json(base_url + "/api/artifacts", {"output_dir": "output"})
+
+    run = next(item for item in catalog["runs"] if item["run_id"] == "echo_run")
+    assert run["workflow"] == "folder_digest"
+    assert isinstance(run["recorded_at"], str)
+    assert run["recorded_at"].endswith("+00:00")
+
+
+def test_corpus_glance_feeds_the_document_center_home_module(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    (documents / "notes.md").write_text("# notes", encoding="utf-8")
+
+    with running_server(tmp_path) as base_url:
+        glance = post_json(base_url + "/api/corpus-glance", {"path": str(documents)})
+
+    assert glance["total_files"] == 2
+    assert glance["by_format"] == {"md": 1, "txt": 1}
+    assert len(glance["newest"]) == 2
+    assert glance["truncated"] is False

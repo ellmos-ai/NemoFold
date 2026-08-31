@@ -1110,9 +1110,18 @@ def _artifact_catalog(config: WebAppConfig, output_dir: str) -> dict[str, object
                 }
             )
         errors = payload.get("errors")
+        try:
+            # The ledger carries no timestamp of its own, so the honest signal is
+            # when this ledger file was written - never a reconstructed run time.
+            recorded_at = datetime.fromtimestamp(ledger.stat().st_mtime, tz=UTC).isoformat(
+                timespec="seconds"
+            )
+        except OSError:
+            recorded_at = None
         runs.append(
             {
                 "run_id": payload.get("run_id", ledger.stem),
+                "recorded_at": recorded_at,
                 "workflow": payload.get("workflow", "unknown"),
                 "status": payload.get("status", "unknown"),
                 "errors": errors if isinstance(errors, list) else [],

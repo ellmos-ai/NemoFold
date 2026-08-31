@@ -453,6 +453,208 @@ function updateVoyageScene(area = null) {
   if (notebookVisible) updateNotebookSnapshot();
 }
 
+const workflowCards = {
+  smart_inbox: {
+    title: "Smart Inbox",
+    benefit: "Sort new arrivals into approved folders with an all-or-nothing move you can undo."
+  },
+  cleanup_rules: {
+    title: "Cleanup Rules",
+    benefit: "Bulk-route what is already aboard, with suggestions learned only from your own corrections."
+  },
+  mail_to_case: {
+    title: "Mail-to-Case",
+    benefit: "Turn approved local .eml files into a source-grounded case dossier with hashed attachments."
+  },
+  controlled_email: {
+    title: "Controlled Email",
+    benefit: "Draft a reply locally and hold it at an approval digest until a proven adapter exists."
+  },
+  storage_policy: {
+    title: "Storage Policies",
+    benefit: "Decide where a filed document lives, how it is named and how long it stays aboard."
+  },
+  evidence_analyst: {
+    title: "Evidence Analyst",
+    benefit: "Ask the corpus a question and read exact quotes, source locations and the gaps that remain."
+  },
+  bundle_export: {
+    title: "Bundle Export",
+    benefit: "Build one deterministic bundle with manifest, hashes and visibly listed unreadable entries."
+  },
+  report_studio: {
+    title: "Report Studio",
+    benefit: "Render one verified analysis into Markdown, TXT, PDF, DOCX and ODT without changing its claims."
+  },
+  folder_digest: {
+    title: "Folder Digest",
+    benefit: "Take a bearing on a folder: what is new, changed, unchanged or gone since the last snapshot."
+  },
+  version_resolver: {
+    title: "Version Resolver",
+    benefit: "Resolve which document version is the valid one and compare the wording line by line."
+  },
+  contact_monitor: {
+    title: "Contact Monitor",
+    benefit: "Surface who the sources say is responsible, and compare that against an earlier snapshot."
+  }
+};
+
+function prepareWorkflow(workflow) {
+  const select = $("workflow");
+  const option = [...select.options].find((item) => item.value === workflow && !item.disabled);
+  if (!option) return;
+  select.value = workflow;
+  applyWorkflowDefaults();
+  renderTaskCards();
+  $("jobForm").scrollIntoView({behavior: "smooth", block: "start"});
+}
+
+function renderTaskCards() {
+  const list = $("taskCardList");
+  if (!list) return;
+  const workflows = pageConfiguration[currentPage].workflows.filter((item) => workflowCards[item]);
+  list.textContent = "";
+  if (!workflows.length) {
+    const note = document.createElement("p");
+    note.textContent = "This area has no job contract of its own.";
+    list.append(note);
+    return;
+  }
+  const active = $("workflow").value;
+  for (const workflow of workflows) {
+    const card = document.createElement("article");
+    card.className = "task-card";
+    card.setAttribute("role", "listitem");
+    if (workflow === active) card.dataset.active = "true";
+    const title = document.createElement("b");
+    title.textContent = workflowCards[workflow].title;
+    const benefit = document.createElement("p");
+    benefit.textContent = workflowCards[workflow].benefit;
+    const technical = document.createElement("span");
+    technical.textContent = workflow;
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = workflow === active ? "secondary" : "";
+    button.textContent = workflow === active ? "Selected · open contract" : "Prepare";
+    button.addEventListener("click", () => prepareWorkflow(workflow));
+    card.append(technical, title, benefit, button);
+    list.append(card);
+  }
+}
+
+function formatBytes(value) {
+  const size = Number(value || 0);
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  if (size < 1024 * 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(size / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+function renderHomeGlance(glance) {
+  $("glanceFiles").textContent = glance.truncated
+    ? `${glance.total_files}+ files`
+    : `${glance.total_files} files`;
+  $("glanceBytes").textContent = formatBytes(glance.total_bytes);
+  const formats = Object.entries(glance.by_format || {});
+  $("glanceFormats").textContent = formats.length
+    ? formats.map(([name, count]) => `${name} ${count}`).join(" · ")
+    : "none";
+  const list = $("glanceNewest");
+  list.textContent = "";
+  const newest = Array.isArray(glance.newest) ? glance.newest : [];
+  if (!newest.length) {
+    const note = document.createElement("p");
+    note.textContent = "This root holds no readable file yet.";
+    list.append(note);
+  }
+  for (const item of newest) {
+    const row = document.createElement("div");
+    const name = document.createElement("b");
+    name.textContent = item.relative_path || item.name;
+    const meta = document.createElement("span");
+    meta.textContent = `${item.modified} · ${formatBytes(item.bytes)}`;
+    row.append(name, meta);
+    list.append(row);
+  }
+  $("glanceState").textContent = glance.truncated
+    ? `Root ${glance.root} · counting stopped at the bounded file cap; totals are a floor, not the whole hold.`
+    : `Root ${glance.root} · counts and modification times only. No file was opened.`;
+}
+
+async function loadHomeGlance() {
+  if (!$("homeGlance")) return;
+  const requested = $("homeGlanceRoot").value.trim();
+  $("glanceState").textContent = "Looking around…";
+  try {
+    const response = await fetch("/api/corpus-glance", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({path: requested || null})
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    $("homeGlanceRoot").value = payload.root;
+    renderHomeGlance(payload);
+  } catch (error) {
+    $("glanceState").textContent = `No overview: ${error.message}`;
+    $("glanceNewest").textContent = "";
+    const note = document.createElement("p");
+    note.textContent = "The server refused or could not read this root. Nothing was inferred.";
+    $("glanceNewest").append(note);
+  }
+}
+
+async function loadEcho() {
+  if (!$("echoCheck")) return;
+  const outputDir = $("echoOutputDir").value.trim() || $("outputDir").value.trim();
+  const list = $("echoList");
+  list.textContent = "Listening…";
+  try {
+    const response = await fetch("/api/artifacts", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({output_dir: outputDir})
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    const routineWorkflows = new Set(pageConfiguration.routines.workflows);
+    const runs = (Array.isArray(payload.runs) ? payload.runs : [])
+      .filter((run) => routineWorkflows.has(run.workflow));
+    list.textContent = "";
+    if (!runs.length) {
+      const note = document.createElement("p");
+      note.textContent = "No echo from this direction yet — start a routine below.";
+      list.append(note);
+      return;
+    }
+    for (const run of runs) {
+      const row = document.createElement("div");
+      row.className = "echo-row";
+      row.dataset.status = run.status || "unknown";
+      const ping = document.createElement("i");
+      ping.setAttribute("aria-hidden", "true");
+      const label = document.createElement("b");
+      label.textContent = `${workflowCards[run.workflow]?.title || run.workflow} · ${run.status}`;
+      const meta = document.createElement("span");
+      meta.textContent = run.recorded_at
+        ? `${run.run_id} · ledger written ${run.recorded_at}`
+        : `${run.run_id} · ledger write time unavailable`;
+      row.append(ping, label, meta);
+      list.append(row);
+    }
+  } catch (error) {
+    list.textContent = "";
+    const note = document.createElement("p");
+    note.textContent = `No echo read: ${error.message}`;
+    list.append(note);
+  }
+}
+
 function setInstrument(id, open, openText, closedText) {
   const readout = $(id);
   if (!readout) return;
@@ -956,7 +1158,7 @@ function openFolderDialog(targetId) {
 function useCurrentFolder() {
   if (!folderCurrentPath || !folderTargetId) return;
   const target = $(folderTargetId);
-  if (folderTargetId === "outputDir") {
+  if (["outputDir", "homeGlanceRoot"].includes(folderTargetId)) {
     target.value = folderCurrentPath;
   } else {
     const values = lines(target.value);
@@ -1310,6 +1512,29 @@ async function linkResearchRun(runId) {
   }
 }
 
+async function loadHomeModules() {
+  if ($("homeGlance")) {
+    if (!$("homeGlanceRoot").value.trim()) {
+      $("homeGlanceRoot").value = lines($("inputRoots").value)[0] || "";
+    }
+    if (folderPickerEnabled) await loadHomeGlance();
+    else {
+      $("glanceState").textContent =
+        "The corpus overview is a loopback-only surface and stays closed here.";
+    }
+  }
+  if ($("echoCheck")) {
+    if (!$("echoOutputDir").value.trim()) $("echoOutputDir").value = $("outputDir").value;
+    if (artifactSurfaceEnabled) await loadEcho();
+    else {
+      $("echoList").textContent = "";
+      const note = document.createElement("p");
+      note.textContent = "Echo sounding is a loopback-only surface and stays closed here.";
+      $("echoList").append(note);
+    }
+  }
+}
+
 async function loadStatus() {
   try {
     const response = await fetch("/api/status");
@@ -1352,9 +1577,11 @@ async function loadStatus() {
         button.disabled = !folderPickerEnabled;
       }
     }
+    renderTaskCards();
     await loadDraftInbox();
     await loadResearchNotebooks();
     await loadArtifacts();
+    await loadHomeModules();
     $("systemState").textContent = status.live_runtime_ready
       ? "Verified live runtime receipt"
       : publicDemo ? "Public synthetic demo · read-only" : "Local core responding · cloud proof absent";
@@ -1367,8 +1594,11 @@ async function loadStatus() {
 }
 
 configureRoutedPage();
+renderTaskCards();
 $("runId").value = "";
-$("workflow").addEventListener("change", applyWorkflowDefaults);
+$("workflow").addEventListener("change", () => { applyWorkflowDefaults(); renderTaskCards(); });
+if ($("homeGlanceLook")) $("homeGlanceLook").addEventListener("click", loadHomeGlance);
+if ($("echoCheckRun")) $("echoCheckRun").addEventListener("click", loadEcho);
 $("executionMode").addEventListener("change", () => { resetPrivacyCenter(); updateProviderPanel(); });
 $("providerId").addEventListener("change", () => { resetPrivacyCenter(); updateProviderPanel({resetModel: true}); });
 $("analysisScale").addEventListener("change", applyAnalysisScale);

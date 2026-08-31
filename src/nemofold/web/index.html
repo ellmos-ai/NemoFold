@@ -73,6 +73,58 @@
         <p id="voyageSceneText">Your protected home on board: intake, cleanup, local mail cases and controlled drafts remain inspectable before anything moves or leaves the Nautilus.</p>
         <small id="voyageRoadmap">ACTIVE · inbox + policy + cleanup + mail cases + controlled drafts</small>
       </div>
+      <div class="porthole-life" aria-hidden="true">
+        <svg class="drifter jelly-a" viewBox="0 0 40 60" role="presentation"><ellipse cx="20" cy="20" rx="14" ry="12"/><path d="M8 22c2 12 4 20 3 30M14 24c1 13 0 22-2 30M20 25c0 14 1 22 1 31M26 24c-1 13 0 22 2 30M32 22c-2 12-4 20-3 30"/></svg>
+        <svg class="drifter jelly-b" viewBox="0 0 40 60" role="presentation"><ellipse cx="20" cy="18" rx="11" ry="9"/><path d="M11 20c1 11 3 18 2 27M17 21c0 12 0 19-1 27M23 21c0 12 0 19 1 27M29 20c-1 11-3 18-2 27"/></svg>
+        <svg class="drifter lantern" viewBox="0 0 60 34" role="presentation"><path d="M6 17c9-12 30-15 44-3 4 3 4 5 0 8-14 12-35 9-44-3Z"/><circle class="lamp" cx="16" cy="14" r="3"/><path d="M50 10c5 3 5 9 0 12"/></svg>
+        <i class="mote m1"></i><i class="mote m2"></i><i class="mote m3"></i><i class="mote m4"></i><i class="mote m5"></i>
+      </div>
+    </section>
+
+    <section id="homeGlance" class="home-glance" aria-labelledby="homeGlanceTitle" data-page-section="document">
+      <div class="glance-head">
+        <div>
+          <p class="kicker">A LOOK AROUND THE HOLD</p>
+          <h2 id="homeGlanceTitle">What is actually on board.</h2>
+        </div>
+        <div class="glance-controls">
+          <label>Corpus root<input id="homeGlanceRoot" autocomplete="off" placeholder="examples/synthetic-home"></label>
+          <button type="button" class="path-add secondary" data-folder-target="homeGlanceRoot">Choose folder</button>
+          <button type="button" id="homeGlanceLook">Look around</button>
+        </div>
+      </div>
+      <div class="glance-tiles" id="homeGlanceTiles">
+        <div class="tile"><span>FILES ABOARD</span><b id="glanceFiles">—</b><small>counted, never opened</small></div>
+        <div class="tile"><span>HOLD SIZE</span><b id="glanceBytes">—</b><small>on-disk size of the approved root</small></div>
+        <div class="tile"><span>TOP FORMATS</span><b id="glanceFormats">—</b><small>what this corpus is made of</small></div>
+      </div>
+      <div class="glance-recent">
+        <p class="kicker">CAME ABOARD MOST RECENTLY</p>
+        <div id="glanceNewest" class="glance-list" aria-live="polite"><p>Choose an approved root and look around.</p></div>
+      </div>
+      <p id="glanceState" class="glance-state" aria-live="polite">Counts and modification times only. No file is read and nothing leaves this host.</p>
+    </section>
+
+    <section id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" data-page-section="document analysis routines governance">
+      <div class="task-cards-head">
+        <p class="kicker">WHAT YOU CAN DO HERE</p>
+        <h2 id="taskCardsTitle">Pick the task. The contract follows.</h2>
+      </div>
+      <div id="taskCardList" class="task-card-list" role="list"></div>
+    </section>
+
+    <section id="echoCheck" class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="routines">
+      <div class="glance-head">
+        <div>
+          <p class="kicker">ECHO SOUNDING</p>
+          <h2 id="echoCheckTitle">What came back from the last pings.</h2>
+        </div>
+        <div class="glance-controls">
+          <label>Output scope<input id="echoOutputDir" autocomplete="off" placeholder="run-reports/web-console"></label>
+          <button type="button" id="echoCheckRun">Check echo</button>
+        </div>
+      </div>
+      <div id="echoList" class="echo-list" aria-live="polite"><p>No echo read yet. Check the output scope above.</p></div>
     </section>
 
     <nav class="route-workflows" aria-label="Document Center workflows" data-page-section="document">
@@ -197,7 +249,7 @@
 
       <section class="console" aria-labelledby="consoleTitle">
         <div class="console-head">
-          <div><p class="kicker">JOB CONTRACT / V1</p><h2 id="consoleTitle">Run a bounded job</h2></div>
+          <div><p class="kicker">ENGINE ROOM · JOB CONTRACT V1</p><h2 id="consoleTitle">The engine room</h2></div>
           <div id="systemState" class="state" role="status">Checking local runtime…</div>
         </div>
         <form id="jobForm">
@@ -326,7 +378,7 @@ Which earlier wording changed?</textarea></label>
         </form>
         <section class="result-block" aria-labelledby="resultTitle">
           <div class="result-label"><span>RUN DOSSIER</span><h3 id="resultTitle">Evidence output</h3></div>
-          <div id="result" class="result" aria-live="polite"><p>No job has run in this browser session.</p></div>
+          <div id="result" class="result" aria-live="polite"><p>Nothing has run from this browser session yet.</p></div>
         </section>
       </section>
     </section>
@@ -335,7 +387,7 @@ Which earlier wording changed?</textarea></label>
       <div class="section-title artifact-title">
         <p class="kicker">ARTIFACT STUDIO</p>
         <div>
-          <h2 id="artifactStudioTitle">Runs you can inspect.</h2>
+          <h2 id="artifactStudioTitle">Every run keeps its place on the shelf.</h2>
           <p>Executed, blocked and failed runs remain distinguishable. Written artifacts are linked to their evidence ledger and verified against their recorded hash before receiving a green state.</p>
         </div>
       </div>
@@ -343,7 +395,7 @@ Which earlier wording changed?</textarea></label>
         <div><span>OUTPUT SCOPE</span><b id="artifactScope">run-reports/web-console</b></div>
         <button type="button" id="artifactRefresh" class="secondary">Refresh artifacts</button>
       </div>
-      <div id="artifactGallery" class="artifact-gallery" aria-live="polite"><p>No artifact catalog loaded yet.</p></div>
+      <div id="artifactGallery" class="artifact-gallery" aria-live="polite"><p>The shelves are not read yet. Choose an output scope and refresh.</p></div>
     </section>
 
     <section id="connectionPanel" class="connection-panel" aria-labelledby="connectionPanelTitle" data-page-section="connections">
