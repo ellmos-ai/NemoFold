@@ -35,6 +35,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Show connection and proof status while keeping local readiness, provider execution, "
         "Nebius competition evidence, and NemoClaw runtime evidence explicitly separate."
     ),
+    "document_registry": (
+        "Extract declared columns from every approved document into one table, anchor each "
+        "filled cell to its source and line, and leave a cell empty when the sources are silent."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -118,6 +122,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("nebius", "Nebius", "competition proof"),
         ("nemoclaw", "NemoClaw", "runtime proof"),
         ("report", "Status ledger", "no inferred proof"),
+    ),
+    "document_registry": (
+        ("operation", "Inventory", "approved corpus"),
+        ("operation", "Columns", "declared contract"),
+        ("operation", "Extract", "labelled lines only"),
+        ("gate", "Anchor", "source + line per cell"),
+        ("operation", "Table", "json + csv + report"),
     ),
     "report_studio": (
         ("input", "Validated report", "claims + coverage"),

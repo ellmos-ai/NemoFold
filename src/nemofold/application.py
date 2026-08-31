@@ -30,6 +30,13 @@ from .contracts import (
 )
 from .document_extract import extract_document_text
 from .document_index import DocumentIndex, SearchHit
+from .document_registry import (
+    build_registry,
+    columns_from_parameters,
+    due_within,
+    registry_to_csv,
+    registry_to_primitive,
+)
 from .evidence import compute_coverage, validate_claim
 from .evidence_analyst import build_context_receipts
 from .folder_digest import build_digest
@@ -1448,6 +1455,116 @@ def _execute_contact_monitor(
     )
 
 
+def _execute_document_registry(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Extract fixed columns from a folder into a table, anchor included."""
+    columns = columns_from_parameters(
+        job.parameters.get("columns"), job.parameters.get("column_template")
+    )
+    texts = _read_text_sources(inventory)
+    table = build_registry(
+        tuple((record.source_id, record.display_name) for record in inventory.records),
+        texts,
+        columns,
+        topic_filter=tuple(job.parameters.get("topic_filter", [])),
+    )
+    output = Path(job.output_dir)
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(
+            output / f"{run_id}.registry.json",
+            json.dumps(registry_to_primitive(table), indent=2, sort_keys=True) + "\n",
+            "document-registry",
+        ),
+        write_text_artifact(
+            output / f"{run_id}.registry.csv", registry_to_csv(table), "csv"
+        ),
+    ]
+
+    # One claim per filled cell: the value is the statement, the line it came
+    # from is the evidence. An empty cell produces no claim, so the report can
+    # never present a gap as a finding.
+    claims: list[Claim] = []
+    cited: set[str] = set()
+    for row in table.rows:
+        for cell in row.cells:
+            if not cell.filled or cell.source_id is None or cell.quote is None:
+                continue
+            claims.append(
+                Claim(
+                    statement=f"{row.display_name} · {cell.column}: {cell.value}",
+                    evidence=(
+                        EvidenceLocator(
+                            source_id=cell.source_id,
+                            quote=cell.quote,
+                            section=f"line {cell.line}",
+                        ),
+                    ),
+                    uncertainty=0.0,
+                    conflict_status="none",
+                )
+            )
+            cited.add(cell.source_id)
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=texts,
+        cited_source_ids=cited,
+    )
+    formats = tuple(job.parameters.get("formats", ["md"]))
+    title = job.parameters.get("title") or "Document registry"
+    if not isinstance(title, str) or not title.strip():
+        raise ValueError("title must be a non-empty string")
+    if claims:
+        artifacts.extend(
+            render_report_formats(
+                ReportDocument(
+                    title=title,
+                    claims=tuple(claims),
+                    coverage=coverage,
+                    source_labels=tuple(
+                        (row.source_id, row.display_name) for row in table.rows
+                    ),
+                ),
+                output,
+                basename=f"{run_id}_registry",
+                formats=formats,
+            )
+        )
+
+    due: tuple[dict[str, object], ...] = ()
+    due_column = job.parameters.get("due_column")
+    if isinstance(due_column, str) and due_column.strip():
+        reference_value = job.parameters.get("reference_date")
+        reference = (
+            date.fromisoformat(reference_value)
+            if isinstance(reference_value, str)
+            else datetime.now(UTC).date()
+        )
+        due = due_within(
+            table,
+            column=due_column,
+            reference=reference,
+            days=int(job.parameters.get("due_within_days", 30)),
+        )
+    return (
+        ("inventory_scanned", "registry_columns_extracted", "registry_table_written"),
+        tuple(artifacts),
+        coverage,
+        {
+            "columns": [column.name for column in columns],
+            "rows": len(table.rows),
+            "filled_cells": table.filled_cells,
+            "empty_cells": table.empty_cells,
+            "skipped_source_ids": list(table.skipped_source_ids),
+            "due_entries": list(due),
+            "extraction": "labelled_lines_only",
+        },
+    )
+
+
 def _dispatch_workflow(
     job: JobEnvelope,
     inventory: InventoryResult,
@@ -1465,6 +1582,8 @@ def _dispatch_workflow(
         return _execute_versions(job, inventory, run_id=run_id)
     if job.workflow == "report_studio":
         return _execute_report_studio(job, inventory, run_id=run_id)
+    if job.workflow == "document_registry":
+        return _execute_document_registry(job, inventory, run_id=run_id)
     if job.workflow == "platform_proof":
         return _execute_evidence(job, inventory, run_id=run_id, platform_proof=True)
     if job.workflow == "storage_policy":

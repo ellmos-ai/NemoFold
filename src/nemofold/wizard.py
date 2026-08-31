@@ -31,6 +31,7 @@ WORKFLOW_ORDER = {
     "contact_monitor": 70,
     "bundle_export": 80,
     "evidence_analyst": 90,
+    "document_registry": 95,
     "report_studio": 100,
     "controlled_email": 110,
     "platform_proof": 120,
@@ -55,6 +56,7 @@ WORKFLOW_TITLES = {
     "evidence_analyst": "Evidence Analyst",
     "version_resolver": "Version Resolver",
     "report_studio": "Report Studio",
+    "document_registry": "Document Registry",
     "platform_proof": "Platform Proof",
 }
 
@@ -109,6 +111,11 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "report_studio": (
         "bericht", "report", "pdf", "docx", "odt", "ausdruck",
+    ),
+    "document_registry": (
+        "verzeichnis", "register", "registry", "tabelle", "table", "übersichtstabelle",
+        "spalten", "columns", "auflistung", "liste aller", "katalog", "erfasse",
+        "strukturier", "in daten", "datenbank",
     ),
     "platform_proof": (
         "plattformnachweis", "platform proof",
@@ -376,6 +383,11 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
         questions.append("Which exact questions should be asked of the sources?")
     elif workflow == "smart_inbox":
         questions.append("Which target folder should the sorted files move into?")
+    elif workflow == "document_registry":
+        questions.append(
+            "Which columns should the table carry, or which template fits "
+            "(medical_reports, insurance_registry, recurring_costs)?"
+        )
     elif workflow == "contact_monitor":
         questions.append(
             "Which earlier snapshot should the contacts be compared against, if any?"
@@ -432,6 +444,11 @@ def _why(workflow: str) -> str:
             "Surfaces who the sources say is responsible, with quotes, so a recipient is "
             "chosen from evidence rather than memory."
         ),
+        "document_registry": (
+            "Extracts the declared columns from every approved document into one table, "
+            "with the source and line behind each filled cell and an empty cell wherever "
+            "the sources say nothing."
+        ),
         "report_studio": (
             "Renders one verified analysis into Markdown, TXT, PDF, DOCX and ODT without "
             "changing its claims."
@@ -458,6 +475,8 @@ def _parameters_for(workflow: str, text: str) -> dict[str, Any]:
         return {"digest_depth": "full"}
     if workflow == "evidence_analyst":
         return {"analysis_mode": "local_extractive", "max_chunks": 64}
+    if workflow == "document_registry":
+        return {"column_template": "medical_reports", "formats": ["md"], "topic_filter": []}
     if workflow == "report_studio":
         # report_studio really renders PDF (report_studio.SUPPORTED_FORMATS), so a
         # request for a PDF is answered with the format, not with an apology.

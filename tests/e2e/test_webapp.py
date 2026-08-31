@@ -13,6 +13,7 @@ import pytest
 
 from nemofold.application import ExecutionConfig
 from nemofold.cli import build_parser, main
+from nemofold.job_io import SUPPORTED_WORKFLOWS
 from nemofold.webapp import WebAppConfig, build_server
 
 
@@ -183,7 +184,10 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert status["draft_surface_enabled"] is True
     assert status["notebook_surface_enabled"] is True
     assert status["external_models_allowed"] is False
-    assert len(status["workflows"]) == 12
+    # Bound to the contract itself: activating a workflow should not need a
+    # magic number edited here as well.
+    assert len(status["workflows"]) == len(SUPPORTED_WORKFLOWS)
+    assert "document_registry" in status["workflows"]
     assert preview["ok"] is True
     assert preview["report"]["workflow"] == "evidence_analyst"
     assert preview["report"]["status"] == "planned"
@@ -1010,7 +1014,7 @@ def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> No
         "ORIGIN",
         "ACTION",
         "PRODUCT MAP",
-        "Six work areas. Twelve technical contracts.",
+        "Six work areas.",  # the contract count moves as workflows activate
         "ROADMAP:",
     ):
         assert marker in folded_away, marker

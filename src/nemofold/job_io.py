@@ -3,10 +3,12 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from typing import Any
 
 from .contracts import ActionMode, JobEnvelope, PrivacyMode, SourceRecord, to_primitive
+from .document_registry import columns_from_parameters
 
 JOB_SCHEMA = "nemofold.job.v1"
 JOB_SNAPSHOT_SCHEMA = "nemofold.job-snapshot.v1"
@@ -24,6 +26,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "version_resolver",
         "report_studio",
         "platform_proof",
+        "document_registry",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -112,6 +115,18 @@ WORKFLOW_PARAMETER_FIELDS = {
         {"as_of", "fallback_to_file_time", "family_hint", "validity_fields"}
     ),
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
+    "document_registry": frozenset(
+        {
+            "column_template",
+            "columns",
+            "due_column",
+            "due_within_days",
+            "formats",
+            "reference_date",
+            "title",
+            "topic_filter",
+        }
+    ),
     "platform_proof": frozenset(
         {
             "analysis_mode",
@@ -223,6 +238,33 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
         choice("citation_granularity", {"line_or_page"})
         if job.parameters.get("analysis_mode") == "nemotron" and not job.model_id:
             raise ValueError("nemotron analysis_mode requires model_id")
+    elif job.workflow == "document_registry":
+        # The column contract itself is validated in document_registry; here only
+        # the job-level shape is checked, so an unusable job fails before a run.
+        columns_from_parameters(
+            job.parameters.get("columns"), job.parameters.get("column_template")
+        )
+        topic_filter = job.parameters.get("topic_filter", [])
+        if not isinstance(topic_filter, list) or any(
+            not isinstance(item, str) or not item.strip() for item in topic_filter
+        ):
+            raise ValueError("topic_filter must be a list of non-empty strings")
+        due_column = job.parameters.get("due_column")
+        if due_column is not None and (
+            not isinstance(due_column, str) or not due_column.strip()
+        ):
+            raise ValueError("due_column must be a non-empty string")
+        window = job.parameters.get("due_within_days", 30)
+        if isinstance(window, bool) or not isinstance(window, int) or not 0 <= window <= 3660:
+            raise ValueError("due_within_days must be between 0 and 3660")
+        reference = job.parameters.get("reference_date")
+        if reference is not None:
+            if not isinstance(reference, str):
+                raise ValueError("reference_date must be an ISO date string")
+            try:
+                date.fromisoformat(reference)
+            except ValueError as exc:
+                raise ValueError("reference_date must be an ISO date string") from exc
     elif job.workflow == "report_studio":
         choice("template", {"default"})
         choice("language", {"en"})
