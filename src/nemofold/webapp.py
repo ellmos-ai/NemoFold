@@ -214,30 +214,28 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         static = {
             "/assets/app.css": (WEB_ROOT / "app.css", "text/css; charset=utf-8"),
             "/assets/app.js": (WEB_ROOT / "app.js", "text/javascript; charset=utf-8"),
-            "/assets/theme-document-center.png": (
-                self.server.app_config.base_dir
-                / "docs/media/designset/sources/trust-voyage-background.png",
-                "image/png",
+            # Theme scenes ship inside the package so the console keeps its
+            # visual identity for any base-dir and for wheel installs. The
+            # uncompressed masters stay in docs/media/designset/sources/.
+            "/assets/theme-document-center.jpg": (
+                WEB_ROOT / "assets/theme-document-center.jpg",
+                "image/jpeg",
             ),
-            "/assets/theme-analysis-lab.png": (
-                self.server.app_config.base_dir
-                / "docs/media/designset/sources/captain-nemo-observatory-master.png",
-                "image/png",
+            "/assets/theme-analysis-lab.jpg": (
+                WEB_ROOT / "assets/theme-analysis-lab.jpg",
+                "image/jpeg",
             ),
-            "/assets/theme-folder-routines.png": (
-                self.server.app_config.base_dir
-                / "docs/media/designset/sources/fold-depth-master.png",
-                "image/png",
+            "/assets/theme-folder-routines.jpg": (
+                WEB_ROOT / "assets/theme-folder-routines.jpg",
+                "image/jpeg",
             ),
-            "/assets/theme-artifact-studio.png": (
-                self.server.app_config.base_dir
-                / "videos/nemofold-promo/assets/nemofold-comic-nautilus.png",
-                "image/png",
+            "/assets/theme-artifact-studio.jpg": (
+                WEB_ROOT / "assets/theme-artifact-studio.jpg",
+                "image/jpeg",
             ),
-            "/assets/theme-connections.png": (
-                self.server.app_config.base_dir
-                / "docs/media/designset/sources/nautilus-descent-master.png",
-                "image/png",
+            "/assets/theme-connections.jpg": (
+                WEB_ROOT / "assets/theme-connections.jpg",
+                "image/jpeg",
             ),
         }
         if page_path in page_routes:
@@ -339,6 +337,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/notebooks",
             "/api/notebook-run",
         }:
+            self._discard_bounded_request_body()
             self._error(HTTPStatus.NOT_FOUND, "not_found", path)
             return
         if self.server.app_config.public_demo:
@@ -351,9 +350,13 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/notebooks",
                 "/api/notebook-run",
             }:
+                self._discard_bounded_request_body()
                 self._error(HTTPStatus.NOT_FOUND, "not_found", path)
                 return
             if not self.server.demo_slots.acquire(blocking=False):
+                # Same Windows reset race as the cross-origin 403: reject with
+                # the declared bounded body drained so the client can read 429.
+                self._discard_bounded_request_body()
                 self._error(
                     HTTPStatus.TOO_MANY_REQUESTS,
                     "demo_busy",
@@ -573,7 +576,12 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         if not self._draft_surface_available():
             self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/drafts")
             return
-        self._json({"ok": True, "drafts": self._draft_store().list()})
+        try:
+            drafts = self._draft_store().list()
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "draft_inbox_unavailable", str(exc))
+            return
+        self._json({"ok": True, "drafts": drafts})
 
     def _handle_draft_load(self, query: dict[str, list[str]]) -> None:
         if not self._draft_surface_available():
@@ -623,7 +631,12 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         if not self._draft_surface_available():
             self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/notebooks")
             return
-        self._json({"ok": True, "notebooks": self._notebook_store().list()})
+        try:
+            notebooks = self._notebook_store().list()
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "notebook_store_unavailable", str(exc))
+            return
+        self._json({"ok": True, "notebooks": notebooks})
 
     def _handle_notebook_load(self, query: dict[str, list[str]]) -> None:
         if not self._draft_surface_available():

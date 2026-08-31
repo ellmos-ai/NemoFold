@@ -646,3 +646,50 @@ def test_public_demo_cli_rejects_a_symlinked_corpus_root(tmp_path) -> None:
         pytest.skip(f"directory symlinks unavailable: {exc}")
 
     assert main(["serve-demo", "--demo-root", str(linked_root)]) == 2
+
+
+def test_draft_and_notebook_lists_reject_out_of_root_stores_with_json(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    server = build_server(
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(documents),)),
+        ),
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    base_url = f"http://{host}:{port}"
+    try:
+        for endpoint, error_code in (
+            ("/api/drafts", "draft_inbox_unavailable"),
+            ("/api/notebooks", "notebook_store_unavailable"),
+        ):
+            with pytest.raises(HTTPError) as captured:
+                get_json(base_url + endpoint)
+            assert captured.value.code == 400
+            payload = json.load(captured.value)
+            assert payload["ok"] is False
+            assert payload["error"] == error_code
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_theme_scene_assets_ship_with_the_package(tmp_path) -> None:
+    scenes = (
+        "document-center",
+        "analysis-lab",
+        "folder-routines",
+        "artifact-studio",
+        "connections",
+    )
+    with running_server(tmp_path) as base_url:
+        for scene in scenes:
+            url = f"{base_url}/assets/theme-{scene}.jpg"
+            with urlopen(url, timeout=5) as response:  # noqa: S310 - loopback test server
+                assert response.headers["Content-Type"] == "image/jpeg"
+                assert len(response.read()) > 10_000
