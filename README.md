@@ -219,6 +219,33 @@ reversed with `nemofold undo <run-id> --output <dir> --allow-root <root>
 --approve-actions`. Failed or blocked jobs can be retried with `nemofold resume` while
 preserving the original job identity and journal.
 
+## Ask the Captain's Desk
+
+The console's overview opens with the Captain's Desk: one plain sentence in, a chain of
+prepared job drafts out. It plans and prepares; it never executes, never sends, and
+never stores an approval. Every step it prepares is dry-run, local-only and carries a
+zero budget, whatever the request asked for.
+
+Say `Unfall mit Hyundai und schreib mir eine mail an zuständigen versicherungsberater
+füge bild ein als entwurf` and the desk prepares Contact Monitor — because the sources
+may already name who is responsible — followed by a Controlled Email draft with the
+subject seeded from your sentence. What it does not know it asks: the recipient, the
+sender, and which approved file to attach, with the note that an attachment is hashed
+but never quoted as evidence.
+
+The desk is equally explicit about what it cannot do. Ask it to keep a bilingual
+document in sync and it answers that bilingual sync is a planned Document Service, not
+an active one, then prepares the closest honest approximation — a Folder Digest
+snapshot and a Version Resolver comparison — so you still leave with something
+runnable. Ask for repetition and you get the two truthful options: run the prepared
+drafts again, or install a task in your own operating system that calls the CLI.
+NemoFold has no scheduler and does not start itself, so it never claims one.
+
+Prepared voyages land in the same prepared-job inbox the CLI, MCP and local API write
+to, marked `source: wizard`. A person still opens each draft in the engine room,
+completes what is open and runs it. The desk is a loopback-only surface: it is absent
+in the public demo and refused on a network-exposed server.
+
 ## Open the local web console
 
 ```powershell

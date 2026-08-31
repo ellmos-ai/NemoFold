@@ -227,6 +227,35 @@ Aktionslauf kann mit `nemofold undo <run-id> --output <dir> --allow-root <root>
 lassen sich mit `nemofold resume` unter Beibehaltung der ursprünglichen Auftragsidentität
 und des Journals fortsetzen.
 
+## Das Captain's Desk fragen
+
+Die Übersicht der Konsole beginnt mit dem Captain's Desk: ein einfacher Satz hinein,
+eine Kette vorbereiteter Auftragsentwürfe hinaus. Es plant und bereitet vor; es führt
+nie aus, versendet nie und speichert keine Freigabe. Jeder vorbereitete Schritt bleibt
+Dry-run, rein lokal und ohne Budget — unabhängig davon, was die Anfrage verlangt hat.
+
+Auf `Unfall mit Hyundai und schreib mir eine mail an zuständigen versicherungsberater
+füge bild ein als entwurf` bereitet das Desk den Contact Monitor vor — weil die Quellen
+die zuständige Person bereits nennen könnten — und danach einen Controlled-Email-Entwurf,
+dessen Betreff aus dem Satz stammt. Was es nicht weiß, fragt es: Empfänger, Absender und
+welche freigegebene Datei angehängt werden soll, mit dem Hinweis, dass ein Anhang gehasht,
+aber nie als Beleg zitiert wird.
+
+Ebenso deutlich benennt das Desk seine Grenzen. Wer ein zweisprachiges Dokument
+abgleichen will, erfährt, dass Bilingual Sync ein geplanter, kein aktiver Document
+Service ist — und bekommt die ehrlichste heutige Annäherung vorbereitet: einen
+Folder-Digest-Schnappschuss und einen Version-Resolver-Vergleich. Wer Wiederholung
+verlangt, erhält die zwei wahrheitsgemäßen Wege: die vorbereiteten Entwürfe erneut
+ausführen oder selbst eine Aufgabe im eigenen Betriebssystem einrichten, die die CLI
+aufruft. NemoFold hat keinen eigenen Scheduler und startet sich nicht selbst — und
+behauptet das folglich auch nicht.
+
+Vorbereitete Fahrten landen in derselben Entwurfs-Inbox, in die auch CLI, MCP und die
+lokale API schreiben, gekennzeichnet mit `source: wizard`. Ein Mensch öffnet jeden
+Entwurf im Maschinenraum, ergänzt das Offene und führt ihn aus. Das Desk ist eine reine
+Loopback-Fläche: in der öffentlichen Demo nicht vorhanden, auf einem netzexponierten
+Server abgelehnt.
+
 ## Lokale Webkonsole öffnen
 
 ```powershell
