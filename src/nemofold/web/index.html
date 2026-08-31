@@ -9,6 +9,25 @@
   <script src="/assets/app.js" defer></script>
 </head>
 <body data-page="overview">
+  <svg class="instrument-sprite" aria-hidden="true" focusable="false" width="0" height="0">
+    <symbol id="icon-wheel" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="8.5"/><circle cx="16" cy="16" r="3"/>
+      <g class="wheel-spokes"><path d="M16 7.5V1.5M16 30.5v-6M7.5 16h-6M30.5 16h-6"/>
+      <path d="M10 10 5.7 5.7M26.3 26.3 22 22M22 10l4.3-4.3M5.7 26.3 10 22"/></g>
+    </symbol>
+    <symbol id="icon-stethoscope" viewBox="0 0 32 32">
+      <path d="M8 4v7a6 6 0 0 0 12 0V4"/><path d="M5.5 4h5M17.5 4h5"/>
+      <path d="M14 17v3a6 6 0 0 0 12 0v-2"/><circle class="steth-bell" cx="26" cy="13" r="3.4"/>
+    </symbol>
+    <symbol id="icon-radar" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="12.5"/><circle cx="16" cy="16" r="7.5"/><circle cx="16" cy="16" r="2"/>
+      <path class="radar-needle" d="M16 16 26 9"/>
+    </symbol>
+    <symbol id="icon-lifebuoy" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="12.5"/><circle cx="16" cy="16" r="5.5"/>
+      <path class="buoy-band" d="M16 3.5v7M16 21.5v7M3.5 16h7M21.5 16h7"/>
+    </symbol>
+  </svg>
   <header class="masthead">
     <nav aria-label="Product identity">
       <a class="brand" href="/" data-page-link="overview">
@@ -227,27 +246,21 @@
       <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
     </section>
 
-    <section class="workspace-grid" aria-label="NemoFold job workspace" data-page-section="document analysis routines governance">
-      <aside class="scope-rail" aria-labelledby="scopeTitle">
-        <div>
-          <p class="kicker">SCOPE LEDGER</p>
-          <h2 id="scopeTitle">Authority before inference</h2>
-          <p>NemoFold accepts a strict job contract. The run can read only approved roots and can write only to the declared output location and, for action workflows, approved target roots.</p>
-        </div>
-        <ol role="list">
-          <li><span>01</span><div><b>Declare</b><small>roots, question, workflow</small></div></li>
-          <li><span>02</span><div><b>Preview</b><small>files, policy, estimated cost</small></div></li>
-          <li><span>03</span><div><b>Execute</b><small>local by default</small></div></li>
-          <li><span>04</span><div><b>Verify</b><small>quotes, gaps, journal</small></div></li>
-        </ol>
-        <div class="rail-note"><b>Remote reasoning is a worker.</b><span>It receives selected chunks, never ambient folder authority.</span></div>
-      </aside>
-
-      <section class="console" aria-labelledby="consoleTitle">
-        <div class="console-head">
-          <div><p class="kicker">ENGINE ROOM · JOB CONTRACT V1</p><h2 id="consoleTitle">The engine room</h2></div>
+    <aside id="engineRoom" class="engine-drawer" data-page-section="document analysis routines governance" aria-labelledby="consoleTitle" data-open="false">
+      <div class="drawer-shell">
+        <div class="drawer-head">
+          <div class="drawer-title">
+            <p class="kicker">ENGINE ROOM · JOB CONTRACT V1</p>
+            <h2 id="consoleTitle">The engine room</h2>
+          </div>
           <div id="systemState" class="state" role="status">Checking local runtime…</div>
+          <button type="button" id="engineClose" class="drawer-close" aria-label="Close the engine room">
+            <svg class="instrument-icon" aria-hidden="true"><use href="#icon-wheel"></use></svg>
+            <span aria-hidden="true">Close</span>
+          </button>
         </div>
+        <div class="drawer-body">
+          <section class="console" aria-label="Job contract">
         <form id="jobForm">
           <fieldset>
             <legend>01 · Mission</legend>
@@ -376,8 +389,31 @@ Which earlier wording changed?</textarea></label>
           <div class="result-label"><span>RUN DOSSIER</span><h3 id="resultTitle">Evidence output</h3></div>
           <div id="result" class="result" aria-live="polite"><p>Nothing has run from this browser session yet.</p></div>
         </section>
-      </section>
-    </section>
+          </section>
+          <div class="drawer-help">
+            <button type="button" class="instrument-anchor" data-collapse="scopeLedger" aria-expanded="false" aria-controls="scopeLedger">
+              <svg class="instrument-icon lifebuoy" aria-hidden="true"><use href="#icon-lifebuoy"></use></svg>
+              <span>Authority before inference</span>
+              <i class="chevron" aria-hidden="true"></i>
+            </button>
+            <div id="scopeLedger" class="collapse-panel scope-rail" hidden>
+        <div>
+          <p class="kicker">SCOPE LEDGER</p>
+          <h2 id="scopeTitle">Authority before inference</h2>
+          <p>NemoFold accepts a strict job contract. The run can read only approved roots and can write only to the declared output location and, for action workflows, approved target roots.</p>
+        </div>
+        <ol role="list">
+          <li><span>01</span><div><b>Declare</b><small>roots, question, workflow</small></div></li>
+          <li><span>02</span><div><b>Preview</b><small>files, policy, estimated cost</small></div></li>
+          <li><span>03</span><div><b>Execute</b><small>local by default</small></div></li>
+          <li><span>04</span><div><b>Verify</b><small>quotes, gaps, journal</small></div></li>
+        </ol>
+        <div class="rail-note"><b>Remote reasoning is a worker.</b><span>It receives selected chunks, never ambient folder authority.</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
 
     <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="artifacts">
       <div class="section-title artifact-title">
@@ -479,6 +515,10 @@ Which earlier wording changed?</textarea></label>
       <p class="text-alt"><b>ROADMAP:</b> UC10 remains the separate design track. Planned Document Services include synopses, bilingual sync, rich ingest and OCR, document redaction, RAG export, dossiers, templates, QA, forms, duplicate review and verified conversions; none are presented as active before their own acceptance gate.</p>
     </section>
   </main>
+  <button type="button" id="engineHandle" class="engine-handle" aria-expanded="false" aria-controls="engineRoom">
+    <svg class="instrument-icon wheel" aria-hidden="true"><use href="#icon-wheel"></use></svg>
+    <span>Engine room</span>
+  </button>
   <footer><span>NemoFold 0.1</span><span>Evidence before inference</span><span>Live Nebius proof remains an explicit gate</span></footer>
 </body>
 </html>

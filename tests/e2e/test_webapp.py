@@ -890,3 +890,31 @@ def test_corpus_glance_feeds_the_document_center_home_module(tmp_path) -> None:
     assert glance["by_format"] == {"md": 1, "txt": 1}
     assert len(glance["newest"]) == 2
     assert glance["truncated"] is False
+
+
+def test_engine_room_is_a_drawer_rather_than_a_permanent_page_footer(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        with urlopen(base_url + "/document-center", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+        with urlopen(base_url + "/assets/app.css", timeout=5) as response:  # noqa: S310
+            stylesheet = response.read().decode()
+
+    assert 'id="engineRoom"' in html
+    assert 'class="engine-drawer"' in html
+    assert 'data-open="false"' in html
+    assert 'id="engineHandle"' in html
+    assert 'aria-controls="engineRoom"' in html
+    assert 'id="jobForm"' in html
+    # The permanent footer placement is gone with its grid.
+    assert "workspace-grid" not in html
+    assert "workspace-grid" not in stylesheet
+    # Scope ledger now lives inside the drawer behind a collapsed anchor.
+    assert 'data-collapse="scopeLedger"' in html
+    assert 'id="scopeLedger" class="collapse-panel scope-rail" hidden' in html
+    for symbol in ("icon-wheel", "icon-stethoscope", "icon-radar", "icon-lifebuoy"):
+        assert f'id="{symbol}"' in html
+    assert "setEngineDrawer" in script
+    assert "toggleCollapse" in script
+    assert '.engine-drawer[data-open="true"]{visibility:visible;transform:none}' in stylesheet

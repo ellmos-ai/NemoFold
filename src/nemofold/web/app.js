@@ -500,6 +500,69 @@ const workflowCards = {
   }
 };
 
+const SVG_NS = "http://www.w3.org/2000/svg";
+
+function instrumentIcon(name) {
+  const svg = document.createElementNS(SVG_NS, "svg");
+  svg.setAttribute("class", `instrument-icon ${name}`);
+  svg.setAttribute("aria-hidden", "true");
+  const use = document.createElementNS(SVG_NS, "use");
+  use.setAttribute("href", `#icon-${name}`);
+  svg.append(use);
+  return svg;
+}
+
+const overlayQuery = globalThis.matchMedia?.("(max-width: 680px)");
+let engineReturnFocus = null;
+
+function engineDrawerIsOpen() {
+  return $("engineRoom")?.dataset.open === "true";
+}
+
+function syncDrawerModality() {
+  const drawer = $("engineRoom");
+  if (!drawer) return;
+  // The drawer only traps the page on the mobile full-surface overlay. Beside a
+  // readable page it is a panel, and announcing it as a modal would lie.
+  if (overlayQuery?.matches && engineDrawerIsOpen()) {
+    drawer.setAttribute("role", "dialog");
+    drawer.setAttribute("aria-modal", "true");
+  } else {
+    drawer.removeAttribute("role");
+    drawer.removeAttribute("aria-modal");
+  }
+}
+
+function setEngineDrawer(open, {moveFocus = true} = {}) {
+  const drawer = $("engineRoom");
+  if (!drawer) return;
+  const wasOpen = engineDrawerIsOpen();
+  drawer.dataset.open = open ? "true" : "false";
+  document.body.dataset.engineRoom = open ? "open" : "closed";
+  $("engineHandle")?.setAttribute("aria-expanded", open ? "true" : "false");
+  syncDrawerModality();
+  if (open && !wasOpen) {
+    engineReturnFocus = document.activeElement;
+    if (moveFocus) ($("engineClose") || drawer).focus({preventScroll: true});
+    return;
+  }
+  if (!open && wasOpen) {
+    const trigger = engineReturnFocus;
+    engineReturnFocus = null;
+    if (moveFocus && trigger instanceof HTMLElement && document.contains(trigger)) {
+      trigger.focus({preventScroll: true});
+    }
+  }
+}
+
+function toggleCollapse(button) {
+  const panel = $(button.getAttribute("aria-controls"));
+  if (!panel) return;
+  const expanded = button.getAttribute("aria-expanded") === "true";
+  button.setAttribute("aria-expanded", expanded ? "false" : "true");
+  panel.hidden = expanded;
+}
+
 function prepareWorkflow(workflow) {
   const select = $("workflow");
   const option = [...select.options].find((item) => item.value === workflow && !item.disabled);
@@ -507,7 +570,7 @@ function prepareWorkflow(workflow) {
   select.value = workflow;
   applyWorkflowDefaults();
   renderTaskCards();
-  $("jobForm").scrollIntoView({behavior: "smooth", block: "start"});
+  setEngineDrawer(true);
 }
 
 function renderTaskCards() {
@@ -535,8 +598,11 @@ function renderTaskCards() {
     technical.textContent = workflow;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = workflow === active ? "secondary" : "";
-    button.textContent = workflow === active ? "Selected · open contract" : "Prepare";
+    button.className = workflow === active ? "card-open secondary" : "card-open";
+    button.append(
+      instrumentIcon("wheel"),
+      workflow === active ? "Selected · open engine room" : "Prepare in engine room"
+    );
     button.addEventListener("click", () => prepareWorkflow(workflow));
     card.append(technical, title, benefit, button);
     list.append(card);
@@ -1595,6 +1661,25 @@ async function loadStatus() {
 
 configureRoutedPage();
 renderTaskCards();
+if ($("engineHandle")) {
+  $("engineHandle").addEventListener("click", () => setEngineDrawer(!engineDrawerIsOpen()));
+}
+if ($("engineClose")) $("engineClose").addEventListener("click", () => setEngineDrawer(false));
+overlayQuery?.addEventListener?.("change", syncDrawerModality);
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && engineDrawerIsOpen() && !document.querySelector("dialog[open]")) {
+    setEngineDrawer(false);
+  }
+});
+document.addEventListener("click", (event) => {
+  const anchor = event.target.closest?.("[data-collapse]");
+  if (anchor) toggleCollapse(anchor);
+});
+// A ?workflow= deep link names one task, so the contract opens with it. Focus
+// stays where the browser put it; the reader asked for a page, not a dialog.
+if (requestedWorkflow && pageConfiguration[currentPage].workflows.includes(requestedWorkflow)) {
+  setEngineDrawer(true, {moveFocus: false});
+}
 $("runId").value = "";
 $("workflow").addEventListener("change", () => { applyWorkflowDefaults(); renderTaskCards(); });
 if ($("homeGlanceLook")) $("homeGlanceLook").addEventListener("click", loadHomeGlance);
