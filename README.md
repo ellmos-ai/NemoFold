@@ -16,6 +16,23 @@ AI Hackathon. The local core is deliberately usable without a cloud account. Nem
 OpenShell, Nemotron, and Nebius integration will be marked as proven only after a real,
 sanitized runtime test exists.
 
+NemoFold turns documents into data - it makes knowledge usable in the first place.
+Twelve document workflows are compositions of four shared primitives: schema-bound
+field extraction, deduplication that keeps what it strikes, section-wise merging with
+visible conflicts, and a delta against a named snapshot. Because those primitives are
+shared rather than private to one workflow, the same building blocks can be chained
+for a case nobody has written a workflow for yet.
+
+It adapts to your use cases in two honest ways: the Captain's Desk plans new
+combinations of existing primitives from one plain sentence, and every prepared voyage
+becomes a reusable draft. That is the whole learning story - a growing library of
+voyages, not a model that trains on your files. Nothing is fine-tuned, and nothing
+about your documents leaves the host unless you approve that specific transfer.
+
+The same core serves both ends of the range: everyday work on a laptop with a small
+local model, and a data analyst pointing Nemotron on Nebius Token Factory at a large
+corpus. The evidence contract does not change between them - only the worker does.
+
 ## What is implemented
 
 | Workflow | Local result |

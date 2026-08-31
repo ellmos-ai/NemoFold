@@ -16,6 +16,25 @@ Global AI Hackathon. Der lokale Kern ist bewusst ohne Cloud-Konto nutzbar. Die
 Integration mit NemoClaw, OpenShell, Nemotron und Nebius wird erst dann als belegt
 gekennzeichnet, wenn ein echter, bereinigter Laufzeitnachweis vorliegt.
 
+NemoFold macht aus Dokumenten Daten — es macht Wissen überhaupt erst nutzbar. Die
+Dokument-Workflows sind Kompositionen aus vier geteilten Bausteinen: schemagebundene
+Feldextraktion, Deduplikation, die das Gestrichene behält, abschnittsweise
+Zusammenführung mit sichtbaren Konflikten und ein Delta gegen einen benannten
+Snapshot. Weil diese Bausteine geteilt sind statt in einem Workflow eingeschlossen,
+lassen sie sich auch für Fälle verketten, für die noch niemand einen Workflow
+geschrieben hat.
+
+Es passt sich Ihren Usecases auf zwei ehrliche Arten an: Das Captain's Desk plant aus
+einem einfachen Satz neue Kombinationen vorhandener Bausteine, und jede vorbereitete
+Fahrt wird zu einem wiederverwendbaren Entwurf. Das ist die ganze Lerngeschichte — eine
+wachsende Bibliothek von Fahrten, kein Modell, das auf Ihren Dateien trainiert. Es wird
+nichts feinjustiert, und nichts aus Ihren Dokumenten verlässt den Rechner ohne Ihre
+Freigabe für genau diesen Transfer.
+
+Derselbe Kern trägt beide Enden: Alltagsarbeit auf dem Laptop mit einem kleinen lokalen
+Modell und eine Datenanalystin, die Nemotron über die Nebius Token Factory auf einen
+großen Korpus richtet. Der Evidenzvertrag ändert sich dabei nicht — nur der Arbeiter.
+
 ## Was implementiert ist
 
 | Workflow | Lokales Ergebnis |

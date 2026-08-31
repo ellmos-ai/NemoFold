@@ -15,18 +15,12 @@ from dataclasses import dataclass
 from datetime import date, datetime
 from typing import Any
 
+from .primitives import FieldSpec, extract_fields
+
 MAX_COLUMNS = 24
 MAX_VALUE_CHARS = 300
 MAX_ROWS = 500
 LABEL_SEPARATORS = ":：–—-"
-
-
-UMLAUT_FOLDING = {"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss",
-                  "Ä": "Ae", "Ö": "Oe", "Ü": "Ue"}
-
-
-def _ascii_variant(label: str) -> str:
-    return "".join(UMLAUT_FOLDING.get(character, character) for character in label)
 
 
 @dataclass(frozen=True, slots=True)
@@ -35,15 +29,11 @@ class RegistryColumn:
     description: str = ""
     aliases: tuple[str, ...] = ()
 
-    def labels(self) -> tuple[str, ...]:
-        """Every spelling of this label, including its transliterated form.
+    def spec(self) -> FieldSpec:
+        return FieldSpec(name=self.name, description=self.description, aliases=self.aliases)
 
-        Scanned and exported documents routinely write "Naechste Faelligkeit"
-        for "Nächste Fälligkeit", so the ASCII variant is derived rather than
-        maintained by hand - a missing alias would read as an empty cell.
-        """
-        declared = (self.name, *self.aliases)
-        return tuple(dict.fromkeys((*declared, *(_ascii_variant(item) for item in declared))))
+    def labels(self) -> tuple[str, ...]:
+        return self.spec().labels()
 
 
 @dataclass(frozen=True, slots=True)
@@ -174,23 +164,6 @@ def columns_from_parameters(value: Any, template: Any) -> tuple[RegistryColumn, 
     return tuple(columns)
 
 
-def _label_pattern(column: RegistryColumn) -> re.Pattern[str]:
-    labels = sorted({label.strip() for label in column.labels() if label.strip()}, key=len,
-                    reverse=True)
-    alternatives = "|".join(re.escape(label) for label in labels)
-    return re.compile(
-        rf"^\s*(?:{alternatives})\s*[{re.escape(LABEL_SEPARATORS)}]\s*(?P<value>\S.*?)\s*$",
-        re.IGNORECASE,
-    )
-
-
-def _matches_topic(text: str, topic_filter: tuple[str, ...]) -> bool:
-    if not topic_filter:
-        return True
-    haystack = text.casefold()
-    return any(term.casefold() in haystack for term in topic_filter)
-
-
 def build_registry(
     sources: tuple[tuple[str, str], ...],
     texts: dict[str, str],
@@ -198,45 +171,35 @@ def build_registry(
     *,
     topic_filter: tuple[str, ...] = (),
 ) -> RegistryTable:
-    """Extract one row per readable source, one cell per declared column."""
-    patterns = {column.name: _label_pattern(column) for column in columns}
-    rows: list[RegistryRow] = []
-    skipped: list[str] = []
-    for source_id, display_name in sources:
-        text = texts.get(source_id)
-        if text is None:
-            skipped.append(source_id)
-            continue
-        if not _matches_topic(text, topic_filter):
-            skipped.append(source_id)
-            continue
-        lines = text.splitlines()
-        cells: list[RegistryCell] = []
-        for column in columns:
-            pattern = patterns[column.name]
-            cell = RegistryCell(column=column.name)
-            for number, line in enumerate(lines, start=1):
-                match = pattern.match(line)
-                if match is None:
-                    continue
-                value = match.group("value").strip()[:MAX_VALUE_CHARS]
-                if not value:
-                    continue
-                cell = RegistryCell(
-                    column=column.name,
-                    value=value,
-                    source_id=source_id,
-                    line=number,
-                    quote=line.strip()[:MAX_VALUE_CHARS],
-                )
-                break
-            cells.append(cell)
-        rows.append(
-            RegistryRow(source_id=source_id, display_name=display_name, cells=tuple(cells))
-        )
-        if len(rows) >= MAX_ROWS:
-            break
-    return RegistryTable(columns=columns, rows=tuple(rows), skipped_source_ids=tuple(skipped))
+    """Adapt the shared field primitive to the registry's own row contract."""
+    rows, skipped = extract_fields(
+        sources,
+        texts,
+        tuple(column.spec() for column in columns),
+        topic_filter=topic_filter,
+        max_rows=MAX_ROWS,
+    )
+    return RegistryTable(
+        columns=columns,
+        rows=tuple(
+            RegistryRow(
+                source_id=row.source_id,
+                display_name=row.display_name,
+                cells=tuple(
+                    RegistryCell(
+                        column=value.field,
+                        value=value.value,
+                        source_id=value.anchor.source_id if value.anchor else None,
+                        line=value.anchor.line if value.anchor else None,
+                        quote=value.quote,
+                    )
+                    for value in row.values
+                ),
+            )
+            for row in rows
+        ),
+        skipped_source_ids=skipped,
+    )
 
 
 def registry_to_primitive(table: RegistryTable) -> dict[str, Any]:

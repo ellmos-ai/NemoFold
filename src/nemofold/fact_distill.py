@@ -1,32 +1,23 @@
 """Distil extractive facts from a corpus and strike duplicates visibly.
 
-Every statement is a sentence lifted verbatim from an approved source, so a
-"fact" here is always quotable. Duplicates are removed from the findings but
-never from the record: each struck occurrence keeps its own source and line in
-an appendix, because a deduplication a reader cannot audit is indistinguishable
-from a deletion.
+A thin contract over two shared primitives: statements_from_texts lifts quotable
+sentences with their anchors, deduplicate folds the repeats. This module only
+adds the workflow's own vocabulary and the appendix that keeps every struck
+occurrence readable.
 """
 
 from __future__ import annotations
 
-import re
-import unicodedata
 from dataclasses import dataclass
 
-DEDUPE_SCOPES = frozenset({"exact", "normalized"})
+from .primitives import (
+    DEDUPE_SCOPES,
+    deduplicate,
+    statements_from_texts,
+)
+
 MIN_FACT_WORDS = 4
-MAX_FACT_CHARS = 400
 MAX_FACTS_PER_SOURCE = 200
-SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
-# A German ordinal ends a fragment with one or two digits and a period
-# ("am 1." + "April 2026."), and splitting there would cut a fact in half so the
-# halves escape deduplication and stop working as a quote. A four-digit year
-# ("2026.") is a real sentence end, so the digit count is what separates them -
-# a plain "period after a digit" rule gets the year wrong.
-# Known limit: abbreviations such as "z. B." still split.
-ORDINAL_TAIL = re.compile(r"(?:^|\D)\d{1,2}\.$")
-PUNCTUATION = re.compile(r"[^\w\s]", re.UNICODE)
-WHITESPACE = re.compile(r"\s+")
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,46 +48,6 @@ class DistillResult:
         return len(self.struck)
 
 
-def _fingerprint(statement: str, scope: str) -> str:
-    collapsed = WHITESPACE.sub(" ", statement).strip()
-    if scope == "exact":
-        return collapsed
-    # "normalized" folds case, punctuation and accents so the same sentence
-    # written twice with different typography collapses into one finding.
-    folded = unicodedata.normalize("NFKD", collapsed.casefold())
-    folded = "".join(ch for ch in folded if not unicodedata.combining(ch))
-    return WHITESPACE.sub(" ", PUNCTUATION.sub(" ", folded)).strip()
-
-
-def _sentences(text: str) -> tuple[tuple[int, str], ...]:
-    """Yield (line number, sentence) pairs, keeping the anchor to the source."""
-    results: list[tuple[int, str]] = []
-    for number, line in enumerate(text.splitlines(), start=1):
-        stripped = line.strip()
-        if not stripped:
-            continue
-        merged: list[str] = []
-        for fragment in SENTENCE_SPLIT.split(stripped):
-            candidate = fragment.strip()
-            if not candidate:
-                continue
-            if merged and ORDINAL_TAIL.search(merged[-1]):
-                merged[-1] = f"{merged[-1]} {candidate}"
-                continue
-            merged.append(candidate)
-        results.extend((number, sentence[:MAX_FACT_CHARS]) for sentence in merged)
-    return tuple(results)
-
-
-def _is_fact(sentence: str, focus_terms: tuple[str, ...]) -> bool:
-    if len(sentence.split()) < MIN_FACT_WORDS:
-        return False
-    if not focus_terms:
-        return True
-    haystack = sentence.casefold()
-    return any(term.casefold() in haystack for term in focus_terms)
-
-
 def distil_facts(
     sources: tuple[str, ...],
     texts: dict[str, str],
@@ -105,47 +56,38 @@ def distil_facts(
     focus_terms: tuple[str, ...] = (),
     max_facts_per_source: int = MAX_FACTS_PER_SOURCE,
 ) -> DistillResult:
+    """Compose: lift anchored statements, then fold the repeated ones."""
     if dedupe_scope not in DEDUPE_SCOPES:
         raise ValueError("dedupe_scope must be exact or normalized")
-    kept: dict[str, Fact] = {}
-    facts: list[Fact] = []
-    struck: list[StruckDuplicate] = []
-    considered = 0
-    for source_id in sources:
-        text = texts.get(source_id)
-        if text is None:
-            continue
-        taken = 0
-        for line, sentence in _sentences(text):
-            if taken >= max_facts_per_source:
-                break
-            if not _is_fact(sentence, focus_terms):
-                continue
-            considered += 1
-            taken += 1
-            key = _fingerprint(sentence, dedupe_scope)
-            if not key:
-                continue
-            first = kept.get(key)
-            if first is None:
-                fact = Fact(statement=sentence, source_id=source_id, line=line)
-                kept[key] = fact
-                facts.append(fact)
-                continue
-            struck.append(
-                StruckDuplicate(
-                    statement=sentence,
-                    kept_source_id=first.source_id,
-                    kept_line=first.line,
-                    duplicate_source_id=source_id,
-                    duplicate_line=line,
-                )
-            )
+    statements = statements_from_texts(
+        sources,
+        texts,
+        min_words=MIN_FACT_WORDS,
+        focus_terms=focus_terms,
+        max_per_source=max_facts_per_source,
+    )
+    outcome = deduplicate(statements, scope=dedupe_scope)
     return DistillResult(
-        facts=tuple(facts),
-        struck=tuple(struck),
+        facts=tuple(
+            Fact(
+                statement=item.text,
+                source_id=item.anchor.source_id,
+                line=item.anchor.line,
+            )
+            for item in outcome.kept
+        ),
+        struck=tuple(
+            StruckDuplicate(
+                statement=item.statement.text,
+                kept_source_id=item.duplicate_of.anchor.source_id,
+                kept_line=item.duplicate_of.anchor.line,
+                duplicate_source_id=item.statement.anchor.source_id,
+                duplicate_line=item.statement.anchor.line,
+            )
+            for item in outcome.struck
+        ),
         dedupe_scope=dedupe_scope,
-        considered=considered,
+        considered=len(statements),
     )
 
 

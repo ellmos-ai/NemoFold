@@ -1,28 +1,30 @@
-"""Report what newly arrived in a folder since the last snapshot.
+"""Report what newly arrived in a folder; the delta is a shared primitive.
 
-Name, size, modification time and a short readable content for every new file,
-plus the account that owns it where the platform can answer that question. On
-Windows the standard library cannot, and this module says so per file instead
-of leaving the column suspiciously blank - a report that looks complete while
-one column silently means nothing is worse than one that admits the gap.
+snapshot_delta in primitives compares against the named baseline, reads size,
+time and a short content, and resolves the owning account where the platform
+can. This module keeps the report and the task template the user installs.
+
+Removing the local copy also removed a real divergence: this module carried an
+earlier sentence splitter that suppressed a split after any digit, so a year
+ending a sentence ("2026.") was treated as an ordinal. Both callers now use the
+one splitter that separates the two by digit count.
 """
 
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
-from datetime import UTC, datetime
-from pathlib import Path
+
+from .primitives import (
+    OWNER_DENIED,
+    OWNER_RESOLVED,
+    OWNER_UNKNOWN,
+    OWNER_UNSUPPORTED,
+    DeltaEntry,
+    resolve_owner,
+    snapshot_delta,
+)
 
 MAX_SUMMARY_SENTENCES = 3
-MAX_SUMMARY_CHARS = 320
-MAX_ARRIVALS = 500
-SENTENCE_SPLIT = re.compile(r"(?<![0-9])(?<=[.!?])\s+")
-
-OWNER_RESOLVED = "resolved"
-OWNER_UNSUPPORTED = "unavailable_on_platform"
-OWNER_DENIED = "permission_denied"
-OWNER_UNKNOWN = "unknown"
 
 OWNER_NOTES = {
     OWNER_RESOLVED: "Owner read from the file system.",
@@ -34,50 +36,33 @@ OWNER_NOTES = {
     OWNER_UNKNOWN: "The owner could not be read for this file.",
 }
 
+# The workflow keeps its own word for a delta entry.
+Arrival = DeltaEntry
 
-@dataclass(frozen=True, slots=True)
-class Arrival:
-    source_id: str
-    display_name: str
-    size_bytes: int
-    modified: str
-    summary: str
-    owner: str | None
-    owner_status: str
+__all__ = [
+    "OWNER_DENIED",
+    "OWNER_NOTES",
+    "OWNER_RESOLVED",
+    "OWNER_UNKNOWN",
+    "OWNER_UNSUPPORTED",
+    "Arrival",
+    "ArrivalsReport",
+    "arrivals_markdown",
+    "build_arrivals",
+    "resolve_owner",
+    "windows_task_xml",
+]
 
 
 @dataclass(frozen=True, slots=True)
 class ArrivalsReport:
-    arrivals: tuple[Arrival, ...]
+    arrivals: tuple[DeltaEntry, ...]
     owner_status: str
     total_sources: int
 
     @property
     def count(self) -> int:
         return len(self.arrivals)
-
-
-def resolve_owner(path: Path) -> tuple[str | None, str]:
-    """Name the owning account, or say precisely why it cannot be named."""
-    try:
-        # typeshed marks Path.owner as unavailable on Windows, which is exactly
-        # the case this function exists to report at runtime rather than avoid.
-        return path.owner(), OWNER_RESOLVED  # type: ignore[misc]
-    except NotImplementedError:
-        # Windows: pathlib needs the pwd module, which does not exist there.
-        return None, OWNER_UNSUPPORTED
-    except PermissionError:
-        return None, OWNER_DENIED
-    except (OSError, KeyError, ValueError):
-        return None, OWNER_UNKNOWN
-
-
-def _summary(text: str, max_sentences: int) -> str:
-    collapsed = " ".join(text.split())
-    if not collapsed:
-        return ""
-    sentences = [item.strip() for item in SENTENCE_SPLIT.split(collapsed) if item.strip()]
-    return " ".join(sentences[:max_sentences])[:MAX_SUMMARY_CHARS]
 
 
 def build_arrivals(
@@ -87,49 +72,12 @@ def build_arrivals(
     *,
     max_sentences: int = MAX_SUMMARY_SENTENCES,
 ) -> ArrivalsReport:
-    """Describe each newly seen source; records are (source_id, display_name, path)."""
-    wanted = set(new_source_ids)
-    arrivals: list[Arrival] = []
-    statuses: set[str] = set()
-    for source_id, display_name, path_value in records:
-        if source_id not in wanted:
-            continue
-        path = Path(path_value)
-        try:
-            stat = path.stat()
-            size = stat.st_size
-            modified = datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(
-                timespec="seconds"
-            )
-        except OSError:
-            size = 0
-            modified = ""
-        owner, status = resolve_owner(path)
-        statuses.add(status)
-        arrivals.append(
-            Arrival(
-                source_id=source_id,
-                display_name=display_name,
-                size_bytes=size,
-                modified=modified,
-                summary=_summary(texts.get(source_id, ""), max_sentences),
-                owner=owner,
-                owner_status=status,
-            )
-        )
-        if len(arrivals) >= MAX_ARRIVALS:
-            break
-    overall = (
-        OWNER_RESOLVED
-        if statuses == {OWNER_RESOLVED}
-        else (statuses - {OWNER_RESOLVED}).pop()
-        if statuses - {OWNER_RESOLVED}
-        else OWNER_UNKNOWN
+    """Adapt the shared snapshot delta to the workflow's report contract."""
+    entries, owner_status = snapshot_delta(
+        records, texts, new_source_ids, max_sentences=max_sentences
     )
     return ArrivalsReport(
-        arrivals=tuple(arrivals),
-        owner_status=overall if arrivals else OWNER_UNKNOWN,
-        total_sources=len(records),
+        arrivals=entries, owner_status=owner_status, total_sources=len(records)
     )
 
 

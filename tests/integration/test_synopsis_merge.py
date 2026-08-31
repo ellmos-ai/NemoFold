@@ -37,10 +37,12 @@ def test_merge_keeps_the_anchor_of_every_paragraph() -> None:
 
     leistung = synopsis.sections[0]
     # Both offers contribute to the same section, each paragraph keeping its source.
-    assert {paragraph.source_id for paragraph in leistung.paragraphs} == {"src_a", "src_b"}
+    assert {
+        paragraph.anchor.source_id for paragraph in leistung.paragraphs
+    } == {"src_a", "src_b"}
     first = leistung.paragraphs[0]
     assert first.text == "Die Deckung gilt weltweit."
-    assert (first.source_id, first.line) == ("src_a", 2)
+    assert (first.anchor.source_id, first.anchor.line) == ("src_a", 2)
 
 
 def test_disagreeing_labels_become_a_visible_conflict() -> None:
@@ -50,11 +52,11 @@ def test_disagreeing_labels_become_a_visible_conflict() -> None:
     conflict = synopsis.conflicts[0]
     assert conflict.label == "beitrag"
     assert conflict.section == "Leistung"
-    assert {value.value for value in conflict.values} == {
+    assert {value for value, _ in conflict.values} == {
         "148 Euro pro Jahr",
         "160 Euro pro Jahr",
     }
-    assert {value.source_id for value in conflict.values} == {"src_a", "src_b"}
+    assert {anchor.source_id for _, anchor in conflict.values} == {"src_a", "src_b"}
 
 
 def test_agreeing_labels_do_not_raise_a_conflict() -> None:
@@ -72,10 +74,9 @@ def test_documents_without_headings_merge_into_one_body() -> None:
     assert [section.title for section in synopsis.sections] == ["Document body"]
     # Merged, but every line still says where it came from.
     assert len(synopsis.sections[0].paragraphs) == 4
-    assert {paragraph.source_id for paragraph in synopsis.sections[0].paragraphs} == {
-        "src_a",
-        "src_b",
-    }
+    assert {
+        paragraph.anchor.source_id for paragraph in synopsis.sections[0].paragraphs
+    } == {"src_a", "src_b"}
 
 
 def test_markdown_shows_conflicts_before_the_merged_sections() -> None:

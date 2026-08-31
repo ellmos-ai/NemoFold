@@ -1,0 +1,495 @@
+"""Reusable document primitives: structure, dedupe, merge, snapshot delta.
+
+D-032: use cases are open-ended, so the workflows must be compositions of a few
+shared, anchored operations rather than four private implementations of the same
+ideas. Everything here returns values that carry their own source anchor, which
+is what lets a later Voyage library chain these primitives into cases nobody has
+written a workflow for yet.
+
+Four primitives, one vocabulary:
+
+* :func:`extract_fields`   - schema-bound extraction of declared fields into rows
+* :func:`deduplicate`      - fold repeated statements, keeping every struck one
+* :func:`merge_sections`   - merge documents section-wise and surface conflicts
+* :func:`snapshot_delta`   - describe what is new against a named baseline
+
+The text helpers they share (sentence splitting, summarising, fingerprinting,
+label folding) live here too, because two copies of a sentence splitter is how a
+corpus ends up with two different ideas of what a sentence is.
+"""
+
+from __future__ import annotations
+
+import re
+import unicodedata
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from pathlib import Path
+
+# --------------------------------------------------------------------------- #
+# Shared text handling
+# --------------------------------------------------------------------------- #
+
+DEDUPE_SCOPES = frozenset({"exact", "normalized"})
+LABEL_SEPARATORS = ":：–—-"
+MAX_VALUE_CHARS = 300
+MAX_SENTENCE_CHARS = 400
+UMLAUT_FOLDING = {
+    "ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue",
+}
+
+_SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
+# A German ordinal ends a fragment with one or two digits and a period
+# ("am 1." + "April 2026."); splitting there cuts a fact in half so the halves
+# escape deduplication and stop working as quotes. Two near misses this rule has
+# to avoid: a four-digit year ("2026.") really does end a sentence, and so does
+# a date fragment ("Rechnung 2026-04."), where the trailing "04" is not an
+# ordinal at all. Hence the number must stand on its own after whitespace, not
+# merely follow any non-digit. Known limit: "z. B." still splits.
+_ORDINAL_TAIL = re.compile(r"(?:^|\s)\d{1,2}\.$")
+_PUNCTUATION = re.compile(r"[^\w\s]", re.UNICODE)
+_WHITESPACE = re.compile(r"\s+")
+_LABELLED_LINE = re.compile(r"^\s*(?P<label>[^:#]{2,60}?)\s*:\s*(?P<value>\S.*?)\s*$")
+
+
+def ascii_variant(label: str) -> str:
+    """Transliterate umlauts, because documents write both spellings."""
+    return "".join(UMLAUT_FOLDING.get(character, character) for character in label)
+
+
+def split_sentences(text: str) -> tuple[str, ...]:
+    """Split into sentences without cutting German ordinals in half."""
+    merged: list[str] = []
+    for fragment in _SENTENCE_SPLIT.split(text):
+        candidate = fragment.strip()
+        if not candidate:
+            continue
+        if merged and _ORDINAL_TAIL.search(merged[-1]):
+            merged[-1] = f"{merged[-1]} {candidate}"
+            continue
+        merged.append(candidate)
+    return tuple(sentence[:MAX_SENTENCE_CHARS] for sentence in merged)
+
+
+def summarize(text: str, max_sentences: int, *, max_chars: int = 320) -> str:
+    collapsed = " ".join(text.split())
+    if not collapsed:
+        return ""
+    return " ".join(split_sentences(collapsed)[:max_sentences])[:max_chars]
+
+
+def fingerprint(statement: str, scope: str) -> str:
+    """Key a statement for deduplication under the requested scope."""
+    if scope not in DEDUPE_SCOPES:
+        raise ValueError("dedupe scope must be exact or normalized")
+    collapsed = _WHITESPACE.sub(" ", statement).strip()
+    if scope == "exact":
+        return collapsed
+    folded = unicodedata.normalize("NFKD", collapsed.casefold())
+    folded = "".join(ch for ch in folded if not unicodedata.combining(ch))
+    return _WHITESPACE.sub(" ", _PUNCTUATION.sub(" ", folded)).strip()
+
+
+@dataclass(frozen=True, slots=True)
+class Anchor:
+    """Where a value came from. Every primitive result carries one."""
+
+    source_id: str
+    line: int
+
+
+# --------------------------------------------------------------------------- #
+# Primitive 1: schema-bound structure extraction
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True, slots=True)
+class FieldSpec:
+    name: str
+    description: str = ""
+    aliases: tuple[str, ...] = ()
+
+    def labels(self) -> tuple[str, ...]:
+        declared = (self.name, *self.aliases)
+        return tuple(dict.fromkeys((*declared, *(ascii_variant(item) for item in declared))))
+
+
+@dataclass(frozen=True, slots=True)
+class FieldValue:
+    field: str
+    value: str | None = None
+    anchor: Anchor | None = None
+    quote: str | None = None
+
+    @property
+    def filled(self) -> bool:
+        return self.value is not None
+
+
+@dataclass(frozen=True, slots=True)
+class FieldRow:
+    source_id: str
+    display_name: str
+    values: tuple[FieldValue, ...]
+
+    @property
+    def filled_count(self) -> int:
+        return sum(1 for value in self.values if value.filled)
+
+
+def label_pattern(spec: FieldSpec) -> re.Pattern[str]:
+    labels = sorted(
+        {label.strip() for label in spec.labels() if label.strip()}, key=len, reverse=True
+    )
+    alternatives = "|".join(re.escape(label) for label in labels)
+    return re.compile(
+        rf"^\s*(?:{alternatives})\s*[{re.escape(LABEL_SEPARATORS)}]\s*(?P<value>\S.*?)\s*$",
+        re.IGNORECASE,
+    )
+
+
+def matches_topic(text: str, topic_filter: tuple[str, ...]) -> bool:
+    if not topic_filter:
+        return True
+    haystack = text.casefold()
+    return any(term.casefold() in haystack for term in topic_filter)
+
+
+def extract_fields(
+    sources: tuple[tuple[str, str], ...],
+    texts: dict[str, str],
+    fields: tuple[FieldSpec, ...],
+    *,
+    topic_filter: tuple[str, ...] = (),
+    max_rows: int = 500,
+) -> tuple[tuple[FieldRow, ...], tuple[str, ...]]:
+    """Read declared fields out of labelled lines; return rows and skipped ids.
+
+    A field the sources do not answer stays empty. There is no inference step
+    that could fill it, which is the property the whole registry rests on.
+    """
+    patterns = {spec.name: label_pattern(spec) for spec in fields}
+    rows: list[FieldRow] = []
+    skipped: list[str] = []
+    for source_id, display_name in sources:
+        text = texts.get(source_id)
+        if text is None or not matches_topic(text, topic_filter):
+            skipped.append(source_id)
+            continue
+        lines = text.splitlines()
+        values: list[FieldValue] = []
+        for spec in fields:
+            pattern = patterns[spec.name]
+            found = FieldValue(field=spec.name)
+            for number, line in enumerate(lines, start=1):
+                match = pattern.match(line)
+                if match is None:
+                    continue
+                value = match.group("value").strip()[:MAX_VALUE_CHARS]
+                if not value:
+                    continue
+                found = FieldValue(
+                    field=spec.name,
+                    value=value,
+                    anchor=Anchor(source_id=source_id, line=number),
+                    quote=line.strip()[:MAX_VALUE_CHARS],
+                )
+                break
+            values.append(found)
+        rows.append(
+            FieldRow(source_id=source_id, display_name=display_name, values=tuple(values))
+        )
+        if len(rows) >= max_rows:
+            break
+    return tuple(rows), tuple(skipped)
+
+
+# --------------------------------------------------------------------------- #
+# Primitive 2: deduplication that keeps what it strikes
+# --------------------------------------------------------------------------- #
+
+
+@dataclass(frozen=True, slots=True)
+class AnchoredStatement:
+    text: str
+    anchor: Anchor
+
+
+@dataclass(frozen=True, slots=True)
+class StruckStatement:
+    statement: AnchoredStatement
+    duplicate_of: AnchoredStatement
+
+
+@dataclass(frozen=True, slots=True)
+class DedupeOutcome:
+    kept: tuple[AnchoredStatement, ...]
+    struck: tuple[StruckStatement, ...]
+    scope: str
+
+    @property
+    def struck_count(self) -> int:
+        return len(self.struck)
+
+
+def deduplicate(
+    statements: tuple[AnchoredStatement, ...],
+    *,
+    scope: str = "normalized",
+) -> DedupeOutcome:
+    """Fold repeated statements, recording every struck occurrence with its twin.
+
+    Nothing is dropped silently: a deduplication a reader cannot audit is
+    indistinguishable from a deletion.
+    """
+    first_seen: dict[str, AnchoredStatement] = {}
+    kept: list[AnchoredStatement] = []
+    struck: list[StruckStatement] = []
+    for statement in statements:
+        key = fingerprint(statement.text, scope)
+        if not key:
+            continue
+        original = first_seen.get(key)
+        if original is None:
+            first_seen[key] = statement
+            kept.append(statement)
+            continue
+        struck.append(StruckStatement(statement=statement, duplicate_of=original))
+    return DedupeOutcome(kept=tuple(kept), struck=tuple(struck), scope=scope)
+
+
+def statements_from_texts(
+    source_ids: tuple[str, ...],
+    texts: dict[str, str],
+    *,
+    min_words: int = 4,
+    focus_terms: tuple[str, ...] = (),
+    max_per_source: int = 200,
+) -> tuple[AnchoredStatement, ...]:
+    """Lift quotable sentences out of the sources, each with its own anchor."""
+    statements: list[AnchoredStatement] = []
+    for source_id in source_ids:
+        text = texts.get(source_id)
+        if text is None:
+            continue
+        taken = 0
+        for number, raw in enumerate(text.splitlines(), start=1):
+            stripped = raw.strip()
+            if not stripped:
+                continue
+            for sentence in split_sentences(stripped):
+                if taken >= max_per_source:
+                    break
+                if len(sentence.split()) < min_words:
+                    continue
+                if focus_terms and not any(
+                    term.casefold() in sentence.casefold() for term in focus_terms
+                ):
+                    continue
+                taken += 1
+                statements.append(
+                    AnchoredStatement(
+                        text=sentence, anchor=Anchor(source_id=source_id, line=number)
+                    )
+                )
+    return tuple(statements)
+
+
+# --------------------------------------------------------------------------- #
+# Primitive 3: section-wise merge with visible conflicts
+# --------------------------------------------------------------------------- #
+
+HEADING = re.compile(r"^\s{0,3}(#{1,6})\s+(?P<title>\S.*?)\s*#*\s*$")
+DEFAULT_SECTION = "Document body"
+MAX_PARAGRAPH_CHARS = 800
+
+
+@dataclass(frozen=True, slots=True)
+class MergedSection:
+    title: str
+    paragraphs: tuple[AnchoredStatement, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class MergeConflict:
+    section: str
+    label: str
+    values: tuple[tuple[str, Anchor], ...]
+
+
+@dataclass(frozen=True, slots=True)
+class MergedDocument:
+    sections: tuple[MergedSection, ...]
+    conflicts: tuple[MergeConflict, ...]
+    source_ids: tuple[str, ...]
+
+    @property
+    def paragraph_count(self) -> int:
+        return sum(len(section.paragraphs) for section in self.sections)
+
+
+def _sections_of(text: str) -> list[tuple[str, list[tuple[int, str]]]]:
+    sections: list[tuple[str, list[tuple[int, str]]]] = []
+    current_title = DEFAULT_SECTION
+    current: list[tuple[int, str]] = []
+    for number, raw in enumerate(text.splitlines(), start=1):
+        heading = HEADING.match(raw)
+        if heading is not None:
+            if current:
+                sections.append((current_title, current))
+                current = []
+            current_title = heading.group("title")
+            continue
+        line = raw.strip()
+        if line:
+            current.append((number, line[:MAX_PARAGRAPH_CHARS]))
+    if current:
+        sections.append((current_title, current))
+    return sections
+
+
+def merge_sections(
+    source_ids: tuple[str, ...],
+    texts: dict[str, str],
+    *,
+    max_sections: int = 200,
+) -> MergedDocument:
+    """Merge documents section by section, surfacing disagreements as conflicts.
+
+    Merging is where provenance is usually lost, so every paragraph keeps its
+    anchor and a label two sources answer differently becomes a conflict rather
+    than a silent winner.
+    """
+    ordered_titles: list[str] = []
+    grouped: dict[str, list[AnchoredStatement]] = {}
+    labelled: dict[tuple[str, str], list[tuple[str, Anchor]]] = {}
+    used: list[str] = []
+
+    for source_id in source_ids:
+        text = texts.get(source_id)
+        if text is None:
+            continue
+        used.append(source_id)
+        for title, entries in _sections_of(text):
+            key = title.casefold()
+            if key not in grouped:
+                if len(ordered_titles) >= max_sections:
+                    continue
+                ordered_titles.append(title)
+                grouped[key] = []
+            for line, paragraph in entries:
+                anchor = Anchor(source_id=source_id, line=line)
+                grouped[key].append(AnchoredStatement(text=paragraph, anchor=anchor))
+                match = _LABELLED_LINE.match(paragraph)
+                if match is None:
+                    continue
+                labelled.setdefault((key, match.group("label").strip().casefold()), []).append(
+                    (match.group("value").strip(), anchor)
+                )
+
+    conflicts = [
+        MergeConflict(
+            section=next(
+                (title for title in ordered_titles if title.casefold() == section_key),
+                section_key,
+            ),
+            label=label_key,
+            values=tuple(values),
+        )
+        for (section_key, label_key), values in labelled.items()
+        if len({value.casefold() for value, _ in values}) > 1
+    ]
+    return MergedDocument(
+        sections=tuple(
+            MergedSection(title=title, paragraphs=tuple(grouped[title.casefold()]))
+            for title in ordered_titles
+        ),
+        conflicts=tuple(sorted(conflicts, key=lambda item: (item.section, item.label))),
+        source_ids=tuple(dict.fromkeys(used)),
+    )
+
+
+# --------------------------------------------------------------------------- #
+# Primitive 4: snapshot delta
+# --------------------------------------------------------------------------- #
+
+OWNER_RESOLVED = "resolved"
+OWNER_UNSUPPORTED = "unavailable_on_platform"
+OWNER_DENIED = "permission_denied"
+OWNER_UNKNOWN = "unknown"
+
+
+@dataclass(frozen=True, slots=True)
+class DeltaEntry:
+    source_id: str
+    display_name: str
+    size_bytes: int
+    modified: str
+    summary: str
+    owner: str | None
+    owner_status: str
+
+
+def resolve_owner(path: Path) -> tuple[str | None, str]:
+    """Name the owning account, or say precisely why it cannot be named."""
+    try:
+        # typeshed marks Path.owner as unavailable on Windows, which is exactly
+        # the case this function exists to report at runtime rather than avoid.
+        return path.owner(), OWNER_RESOLVED  # type: ignore[misc]
+    except NotImplementedError:
+        return None, OWNER_UNSUPPORTED
+    except PermissionError:
+        return None, OWNER_DENIED
+    except (OSError, KeyError, ValueError):
+        return None, OWNER_UNKNOWN
+
+
+def snapshot_delta(
+    records: tuple[tuple[str, str, str], ...],
+    texts: dict[str, str],
+    new_source_ids: tuple[str, ...],
+    *,
+    max_sentences: int = 3,
+    max_entries: int = 500,
+) -> tuple[tuple[DeltaEntry, ...], str]:
+    """Describe each newly seen source; records are (source_id, display_name, path)."""
+    wanted = set(new_source_ids)
+    entries: list[DeltaEntry] = []
+    statuses: set[str] = set()
+    for source_id, display_name, path_value in records:
+        if source_id not in wanted:
+            continue
+        path = Path(path_value)
+        try:
+            stat = path.stat()
+            size = stat.st_size
+            modified = datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(
+                timespec="seconds"
+            )
+        except OSError:
+            size = 0
+            modified = ""
+        owner, status = resolve_owner(path)
+        statuses.add(status)
+        entries.append(
+            DeltaEntry(
+                source_id=source_id,
+                display_name=display_name,
+                size_bytes=size,
+                modified=modified,
+                summary=summarize(texts.get(source_id, ""), max_sentences),
+                owner=owner,
+                owner_status=status,
+            )
+        )
+        if len(entries) >= max_entries:
+            break
+    unresolved = statuses - {OWNER_RESOLVED}
+    overall = (
+        OWNER_UNKNOWN
+        if not entries
+        else OWNER_RESOLVED
+        if not unresolved
+        else sorted(unresolved)[0]
+    )
+    return tuple(entries), overall

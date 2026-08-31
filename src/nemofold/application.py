@@ -1702,16 +1702,16 @@ def _execute_synopsis_merge(
             Claim(
                 statement=(
                     f"{conflict.section} · {conflict.label}: sources disagree ("
-                    + " | ".join(item.value for item in conflict.values)
+                    + " | ".join(value for value, _ in conflict.values)
                     + ")"
                 ),
                 evidence=tuple(
                     EvidenceLocator(
-                        source_id=item.source_id,
-                        quote=f"{conflict.label}: {item.value}",
-                        section=f"line {item.line}",
+                        source_id=anchor.source_id,
+                        quote=f"{conflict.label}: {value}",
+                        section=f"line {anchor.line}",
                     )
-                    for item in conflict.values
+                    for value, anchor in conflict.values
                 ),
                 uncertainty=0.5,
                 conflict_status="confirmed_conflict",
@@ -1724,9 +1724,9 @@ def _execute_synopsis_merge(
                     statement=f"{section.title}: {paragraph.text}",
                     evidence=(
                         EvidenceLocator(
-                            source_id=paragraph.source_id,
+                            source_id=paragraph.anchor.source_id,
                             quote=paragraph.text,
-                            section=f"line {paragraph.line}",
+                            section=f"line {paragraph.anchor.line}",
                         ),
                     ),
                 )

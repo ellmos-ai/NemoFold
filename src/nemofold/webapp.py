@@ -68,6 +68,9 @@ CORE_NAMES = (
     "policy_privacy_gate",
     "run_ledger_recovery",
     "evidence_engine",
+    # D-032: structure, dedupe, merge and snapshot-delta are shared primitives,
+    # not private code inside four workflows.
+    "document_primitives",
     "artifact_export",
     "provider_adapter_core",
     "mcp_surface",
