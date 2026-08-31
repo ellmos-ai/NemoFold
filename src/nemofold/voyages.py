@@ -87,8 +87,17 @@ def validate_model_pref(value: Any) -> dict[str, Any] | None:
 
 
 def _step(value: Any, index: int, *, base_dir: Path, gate: PolicyGate) -> dict[str, Any]:
-    if not isinstance(value, dict) or set(value) - {"workflow", "job", "model_pref", "note"}:
-        raise ValueError(f"step {index} may only carry workflow, job, model_pref and note")
+    allowed = {"workflow", "job", "model_pref", "note", "reads_previous_output"}
+    if not isinstance(value, dict) or set(value) - allowed:
+        raise ValueError(
+            f"step {index} may only carry workflow, job, model_pref, note and "
+            "reads_previous_output"
+        )
+    reads_previous = value.get("reads_previous_output", False)
+    if not isinstance(reads_previous, bool):
+        raise ValueError(f"step {index} reads_previous_output must be a boolean")
+    if reads_previous and index == 1:
+        raise ValueError("the first step has no previous output to read")
     raw_job = value.get("job")
     if not isinstance(raw_job, dict):
         raise ValueError(f"step {index} requires a job object")
@@ -115,6 +124,7 @@ def _step(value: Any, index: int, *, base_dir: Path, gate: PolicyGate) -> dict[s
         "job": job_value,
         "model_pref": validate_model_pref(value.get("model_pref")),
         "note": _text(value.get("note", ""), "note", maximum=400, required=False),
+        "reads_previous_output": reads_previous,
     }
 
 
@@ -305,6 +315,7 @@ class VoyageStore:
                         "parameters": dict(template.get("parameters", {})),
                     },
                     "note": template.get("note", ""),
+                    "reads_previous_output": bool(template.get("reads_previous_output", False)),
                 }
             )
         return self.save(

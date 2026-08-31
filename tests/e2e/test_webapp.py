@@ -1234,3 +1234,38 @@ def test_use_case_library_is_absent_in_the_public_demo(tmp_path) -> None:
 
     assert status["voyage_surface_enabled"] is False
     assert refused.value.code == 404
+
+
+def test_running_a_saved_voyage_returns_a_dossier_over_its_steps(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "police.txt").write_text(
+        "Die Deckung beginnt am 1. April 2026.\nDer Beitrag betraegt 148 Euro.",
+        encoding="utf-8",
+    )
+
+    with running_server(tmp_path) as base_url:
+        copied = post_json(
+            base_url + "/api/voyage-preset",
+            {
+                "preset_id": "preset_fact_digest_pdf",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+            },
+        )
+        run = post_json(
+            base_url + "/api/voyage-run", {"voyage_id": copied["voyage"]["voyage_id"]}
+        )
+
+    assert run["ok"] is True
+    assert run["status"] == "executed"
+    assert run["stopped_at"] is None
+    assert len(run["steps"]) == 1
+    step = run["steps"][0]
+    assert step["workflow"] == "fact_distill"
+    assert step["status"] == "executed"
+    assert step["artifact_count"] >= 1
+    # A chained step never escalates on its own, and says which model ran.
+    assert step["model_used"] == "nemofold-local-core"
+    assert "No model preference" in step["model_note"]
+    assert Path(run["dossier_path"]).is_file()

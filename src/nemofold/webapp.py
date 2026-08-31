@@ -21,6 +21,7 @@ from .notebooks import ResearchNotebookStore
 from .provider_analysis import analyze_with_provider, preview_provider_context
 from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
+from .voyage_runs import run_voyage
 from .voyages import VoyageStore
 from .wizard import DEFAULT_OUTPUT_DIR, plan_to_primitive, plan_voyage
 from .workflow_graphs import workflow_graphs
@@ -411,6 +412,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/voyages",
             "/api/voyage-preset",
             "/api/voyage-delete",
+            "/api/voyage-run",
         }:
             self._discard_bounded_request_body()
             self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -430,6 +432,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/voyages",
                 "/api/voyage-preset",
                 "/api/voyage-delete",
+                "/api/voyage-run",
             }:
                 self._discard_bounded_request_body()
                 self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -495,6 +498,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/voyage-delete":
             self._handle_voyage_delete()
+            return
+        if path == "/api/voyage-run":
+            self._handle_voyage_run()
             return
         try:
             payload = self._read_json()
@@ -841,6 +847,52 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self._error(HTTPStatus.BAD_REQUEST, "voyage_list_rejected", str(exc))
             return
         self._json({"ok": True, "voyages": list(voyages)})
+
+    def _handle_voyage_run(self) -> None:
+        if self._reject_closed_voyage_surface():
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict) or set(payload) - {"voyage_id", "run_id"}:
+                raise ValueError("request body must carry voyage_id and an optional run_id")
+            voyage_id = payload.get("voyage_id")
+            if not isinstance(voyage_id, str):
+                raise ValueError("voyage_id must be a string")
+            voyage = self._voyage_store().load(voyage_id)
+            run_id = _api_run_id(payload.get("run_id"), prefix="api_voyage")
+            result = run_voyage(
+                voyage,
+                self.server.app_config.execution,
+                run_id=run_id,
+                base_dir=self.server.app_config.base_dir,
+            )
+        except (JobFileError, OSError, PermissionError, RuntimeError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "voyage_run_rejected", str(exc))
+            return
+        self._json(
+            {
+                "ok": result.completed,
+                "status": result.status,
+                "run_id": result.run_id,
+                "stopped_at": result.stopped_at,
+                "dossier_path": result.dossier_path,
+                "steps": [
+                    {
+                        "order": step.order,
+                        "workflow": step.workflow,
+                        "run_id": step.run_id,
+                        "status": step.status,
+                        "artifact_count": step.artifact_count,
+                        "ledger_path": step.ledger_path,
+                        "model_used": step.model_used,
+                        "model_note": step.model_note,
+                        "errors": list(step.errors),
+                    }
+                    for step in result.steps
+                ],
+            },
+            HTTPStatus.OK if result.completed else HTTPStatus.CONFLICT,
+        )
 
     def _handle_artifact_catalog(self) -> None:
         if self.server.app_config.exposed_to_network:

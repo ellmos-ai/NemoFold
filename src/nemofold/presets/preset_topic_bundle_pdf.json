@@ -29,6 +29,7 @@
       "questions": [
         "Which claims do the approved sources support?"
       ],
+      "reads_previous_output": true,
       "workflow": "evidence_analyst"
     }
   ]
