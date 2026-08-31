@@ -964,3 +964,23 @@ def test_porthole_is_one_svg_and_explainers_start_collapsed(tmp_path) -> None:
         assert f'data-collapse="{group}"' in html
         assert f'<div id="{group}" class="collapse-panel" hidden>' in html
     assert 'class="instrument-icon radar"' in html
+
+
+def test_drawer_is_a_modal_overlay_only_on_narrow_viewports(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        with urlopen(base_url + "/assets/app.css", timeout=5) as response:  # noqa: S310
+            stylesheet = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    # Below 680px the drawer takes the whole surface and locks the page behind it.
+    assert ".engine-drawer{width:100vw;border-left:0}" in stylesheet
+    assert 'body[data-engine-room="open"]{overflow:hidden}' in stylesheet
+    # role/aria-modal are set only for that overlay, never for the side panel.
+    assert "syncDrawerModality" in script
+    assert '"(max-width: 680px)"' in script
+    assert 'drawer.setAttribute("aria-modal", "true")' in script
+    assert 'drawer.removeAttribute("aria-modal")' in script
+    # Escape closes and focus returns to whatever opened the drawer.
+    assert 'event.key === "Escape"' in script
+    assert "engineReturnFocus" in script
