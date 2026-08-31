@@ -19,6 +19,7 @@ from .application import (
 from .contracts import ActionMode, JobEnvelope, PrivacyMode, RunReport, RunStatus
 from .demo import DeterministicDemoReasoner
 from .demo_pipeline import run_full_offline_demo
+from .drafts import DraftStore
 from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
 from .ledger import RunLedger, validate_run_id
@@ -160,6 +161,21 @@ def build_parser() -> argparse.ArgumentParser:
     provider_run.add_argument("--allow-external-models", action="store_true")
     provider_run.add_argument("--approve-external-transfer", action="store_true")
     provider_run.add_argument("--max-external-cost-usd", type=float, default=0.0)
+    draft_save = commands.add_parser(
+        "draft-save",
+        help="save a validated job for browser review without persisting approvals",
+    )
+    draft_save.add_argument("--job", required=True)
+    draft_save.add_argument("--allow-root", action="append", required=True)
+    draft_save.add_argument("--base-dir", default=".")
+    draft_save.add_argument("--name")
+    draft_save.add_argument("--provider", choices=tuple(PROVIDER_DESCRIPTORS))
+    draft_save.add_argument("--model")
+    draft_save.add_argument("--max-output-tokens", type=int, default=32_768)
+    draft_save.add_argument("--timeout-seconds", type=float, default=1_800)
+    draft_list = commands.add_parser("draft-list", help="list jobs waiting for browser review")
+    draft_list.add_argument("--allow-root", action="append", required=True)
+    draft_list.add_argument("--base-dir", default=".")
     mcp = commands.add_parser("mcp", help="start the bounded NemoFold MCP server over stdio")
     mcp.add_argument("--allow-root", action="append", required=True)
     mcp.add_argument("--base-dir", default=".")
@@ -239,6 +255,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "analyze-provider":
         return _provider_analysis_command(args)
+    if args.command in {"draft-save", "draft-list"}:
+        return _draft_command(args)
     if args.command == "mcp":
         return _mcp_command(args)
     parser.print_help()
@@ -465,6 +483,41 @@ def _provider_analysis_command(args: argparse.Namespace) -> int:
         )
     )
     return 0 if report.status is RunStatus.EXECUTED else 2
+
+
+def _draft_command(args: argparse.Namespace) -> int:
+    try:
+        store = DraftStore(Path(args.base_dir), tuple(args.allow_root))
+        if args.command == "draft-list":
+            payload: dict[str, object] = {"drafts": store.list()}
+        else:
+            if bool(args.provider) != bool(args.model):
+                raise ValueError("--provider and --model must be supplied together")
+            load_job_file(args.job)
+            job_value = json.loads(Path(args.job).read_text(encoding="utf-8"))
+            provider = (
+                {
+                    "provider_id": args.provider,
+                    "model": args.model,
+                    "max_output_tokens": args.max_output_tokens,
+                    "timeout_seconds": args.timeout_seconds,
+                }
+                if args.provider
+                else None
+            )
+            payload = {
+                "draft": store.save(
+                    job_value,
+                    provider=provider,
+                    name=args.name,
+                    source="cli",
+                )
+            }
+    except (JobFileError, OSError, PermissionError, ValueError) as exc:
+        print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
+        return 2
+    print(json.dumps(payload, indent=2, sort_keys=True))
+    return 0
 
 
 def _mcp_command(args: argparse.Namespace) -> int:

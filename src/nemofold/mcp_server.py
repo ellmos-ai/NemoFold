@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+from uuid import uuid4
 
 from .anonymizer import pseudonymize_text
 from .application import ExecutionConfig, preview_job, run_job
 from .contracts import to_primitive
+from .drafts import DraftStore
 from .job_io import SUPPORTED_WORKFLOWS, parse_job_payload
 from .ledger import validate_run_id
 from .policy import PolicyConfig, PolicyGate
@@ -33,6 +36,15 @@ class NemoFoldMCPService:
         self.config = config
         self.base_dir = config.base_dir.resolve()
         self.path_gate = PolicyGate(PolicyConfig(allowed_roots=config.execution.allowed_roots))
+        self.drafts = DraftStore(self.base_dir, config.execution.allowed_roots)
+
+    @staticmethod
+    def _run_id(value: str | None) -> str:
+        run_id = value or (
+            f"mcp_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}_{uuid4().hex[:8]}"
+        )
+        validate_run_id(run_id)
+        return run_id
 
     def capabilities(self) -> dict[str, Any]:
         return {
@@ -45,6 +57,8 @@ class NemoFoldMCPService:
                 "nemofold_preview",
                 "nemofold_run",
                 "nemofold_analyze_with_provider",
+                "nemofold_save_draft",
+                "nemofold_list_drafts",
                 "nemofold_verify_report",
             ],
             "allowed_root_count": len(self.config.execution.allowed_roots),
@@ -68,8 +82,8 @@ class NemoFoldMCPService:
             "transfer_performed": False,
         }
 
-    def preview(self, job: dict[str, Any], run_id: str) -> dict[str, Any]:
-        validate_run_id(run_id)
+    def preview(self, job: dict[str, Any], run_id: str | None = None) -> dict[str, Any]:
+        run_id = self._run_id(run_id)
         parsed = parse_job_payload(job, base_dir=self.base_dir)
         result = preview_job(parsed, self.config.execution, run_id=run_id)
         return {
@@ -77,8 +91,8 @@ class NemoFoldMCPService:
             "report_path": str(result.report_path) if result.report_path else None,
         }
 
-    def run(self, job: dict[str, Any], run_id: str) -> dict[str, Any]:
-        validate_run_id(run_id)
+    def run(self, job: dict[str, Any], run_id: str | None = None) -> dict[str, Any]:
+        run_id = self._run_id(run_id)
         parsed = parse_job_payload(job, base_dir=self.base_dir)
         result = run_job(parsed, self.config.execution, run_id=run_id)
         return {
@@ -90,10 +104,10 @@ class NemoFoldMCPService:
         self,
         job: dict[str, Any],
         provider: dict[str, Any],
-        run_id: str,
+        run_id: str | None = None,
         approve_external_transfer: bool = False,
     ) -> dict[str, Any]:
-        validate_run_id(run_id)
+        run_id = self._run_id(run_id)
         if not isinstance(approve_external_transfer, bool):
             raise ValueError("approve_external_transfer must be a boolean")
         parsed = parse_job_payload(job, base_dir=self.base_dir)
@@ -109,6 +123,18 @@ class NemoFoldMCPService:
             "report": to_primitive(result.report),
             "report_path": str(result.report_path) if result.report_path else None,
         }
+
+    def save_draft(
+        self,
+        job: dict[str, Any],
+        provider: dict[str, Any] | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """Save settings for browser review; never persist action or transfer approval."""
+        return {"draft": self.drafts.save(job, provider=provider, name=name, source="mcp")}
+
+    def list_drafts(self) -> dict[str, Any]:
+        return {"drafts": self.drafts.list()}
 
     def verify_report(self, report_path: str) -> dict[str, Any]:
         if not isinstance(report_path, str) or not self.path_gate.path_allowed(report_path):
@@ -149,12 +175,12 @@ def build_mcp_server(config: MCPServerConfig):
         return service.anonymize(text, sensitive_terms)
 
     @mcp.tool(name="nemofold_preview")
-    def preview(job: dict[str, Any], run_id: str) -> dict[str, Any]:
+    def preview(job: dict[str, Any], run_id: str | None = None) -> dict[str, Any]:
         """Validate and preview a NemoFold job under the configured root and privacy gates."""
         return service.preview(job, run_id)
 
     @mcp.tool(name="nemofold_run")
-    def run(job: dict[str, Any], run_id: str) -> dict[str, Any]:
+    def run(job: dict[str, Any], run_id: str | None = None) -> dict[str, Any]:
         """Execute a NemoFold job; file actions remain server-gated and reversible."""
         return service.run(job, run_id)
 
@@ -162,7 +188,7 @@ def build_mcp_server(config: MCPServerConfig):
     def analyze_with_selected_provider(
         job: dict[str, Any],
         provider: dict[str, Any],
-        run_id: str,
+        run_id: str | None = None,
         approve_external_transfer: bool = False,
     ) -> dict[str, Any]:
         """Anonymize, analyze with a selected provider, and validate every returned quote."""
@@ -172,6 +198,20 @@ def build_mcp_server(config: MCPServerConfig):
             run_id,
             approve_external_transfer,
         )
+
+    @mcp.tool(name="nemofold_save_draft")
+    def save_draft(
+        job: dict[str, Any],
+        provider: dict[str, Any] | None = None,
+        name: str | None = None,
+    ) -> dict[str, Any]:
+        """Configure a complete job for later review and execution in the local browser."""
+        return service.save_draft(job, provider, name)
+
+    @mcp.tool(name="nemofold_list_drafts")
+    def list_drafts() -> dict[str, Any]:
+        """List model- or CLI-prepared jobs waiting in the local browser inbox."""
+        return service.list_drafts()
 
     @mcp.tool(name="nemofold_verify_report")
     def verify_report(report_path: str) -> dict[str, Any]:

@@ -32,7 +32,12 @@ Each stage has one job. Long labels must wrap inside their own cell; no label ma
 - **Job console:** groups mission, territory, and authority rather than presenting one undifferentiated form.
 - **Run dossier:** adds compact status facts above the full machine-readable JSON evidence.
 - **Trust boundary:** visually separates the local zone, policy gate and isolated worker.
-- **Mission register:** presents all eight workflows as an operational index, not feature cards.
+- **Product map:** groups eight technical contracts into Document Center, Analysis Lab,
+  Folder Routines, Artifact Studio, and Connections.
+- **Research Notebook:** keeps a local investigation goal, source scope, question set,
+  provider route, and verified ledger trail together without persisting approval.
+- **Artifact Studio:** makes success, rejection, evidence ledgers, outputs, and hash
+  verification directly inspectable.
 
 ### Provider worker contract
 
@@ -70,9 +75,11 @@ Desktop uses a 270-pixel authority rail and a flexible console. Evidence-chain c
 2. The job console shows approved roots, a question and dry-run authority.
 3. Preview produces a dossier without implying a cloud call.
 4. The trust boundary explains what Nemotron can and cannot receive.
-5. The mission register reveals that NemoFold does more than one analysis workflow.
+5. The product map reveals that NemoFold does more than one analysis workflow.
 6. The local console distinguishes local-core, loopback-provider, blocked external,
    approved external, running, rejected, and validated-result states.
+7. The Analysis Lab can save and reopen a multi-run Research Notebook, while Artifact
+   Studio independently verifies the linked ledgers and outputs.
 
 ## Provider acceptance gate
 

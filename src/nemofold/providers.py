@@ -112,15 +112,15 @@ class ProviderConfig:
         if (
             isinstance(self.max_output_tokens, bool)
             or not isinstance(self.max_output_tokens, int)
-            or not 1 <= self.max_output_tokens <= 65_536
+            or not 1 <= self.max_output_tokens <= 131_072
         ):
-            raise ValueError("max_output_tokens must be between 1 and 65536")
+            raise ValueError("max_output_tokens must be between 1 and 131072")
         if (
             isinstance(self.timeout_seconds, bool)
             or not isinstance(self.timeout_seconds, (int, float))
-            or not 1 <= self.timeout_seconds <= 600
+            or not 1 <= self.timeout_seconds <= 3_600
         ):
-            raise ValueError("timeout_seconds must be between 1 and 600")
+            raise ValueError("timeout_seconds must be between 1 and 3600")
         descriptor = self.descriptor
         if descriptor.transport is ProviderTransport.LOCAL_HTTP:
             _validated_local_base_url(self.base_url or descriptor.default_base_url or "")

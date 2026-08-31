@@ -29,6 +29,10 @@ sanitized runtime test exists.
 | Report & Artifact Studio | A validated analysis contract rendered to Markdown, TXT, PDF, DOCX, and ODT |
 | NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; the real competition run remains open |
 
+The Analysis Lab also includes the local **Research Notebook** workspace. It keeps an
+investigation goal, approved roots, reusable questions/prompts, provider configuration,
+and a trail of verified run ledgers together without storing API keys or approvals.
+
 The shared cores are the runtime, policy/privacy gate, run ledger/recovery, evidence
 engine, provider adapter core, MCP surface, and artifact export. Local extraction
 supports text-family files, JSON, CSV, HTML, PDF, DOCX, and ODT. Unsupported or
@@ -185,6 +189,13 @@ application service as the CLI. It starts on loopback only, rejects cross-origin
 and requires `--expose-network` before it will bind to a non-loopback address. Preview
 is the default safe path; action workflows additionally require the server-side
 `--approve-actions` gate before an apply request can succeed.
+
+The console is organized as five work areas: Document Center, Analysis Lab, Folder
+Routines, Artifact Studio, and Connections. Analysis Lab combines deterministic bundle
+preparation, privacy preflight, Evidence Analyst, reusable prompt sets, and persistent
+Research Notebooks. Artifact Studio opens executed or blocked ledgers and verifies every
+recorded artifact hash. A model can prepare the same settings for browser review through
+`draft-save`, MCP, or the loopback draft API; approvals are always reset.
 
 ### Run the capability-minimal synthetic demo
 

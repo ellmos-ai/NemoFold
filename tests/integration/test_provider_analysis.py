@@ -7,7 +7,7 @@ import pytest
 
 from nemofold.application import ExecutionConfig
 from nemofold.contracts import ActionMode, JobEnvelope, PrivacyMode, RunStatus
-from nemofold.provider_analysis import analyze_with_provider
+from nemofold.provider_analysis import analyze_with_provider, preview_provider_context
 from nemofold.providers import ProviderConfig, ProviderRequest, ProviderResponse
 from nemofold.report_verifier import verify_run_report
 
@@ -101,6 +101,26 @@ def test_local_provider_analysis_anonymizes_then_validates_every_quote(tmp_path)
     assert verify_run_report(result.report_path).valid is True
     report_text = (tmp_path / "output" / "ollama_analysis-provider.md").read_text(encoding="utf-8")
     assert "case.txt" in report_text
+
+
+def test_provider_preview_reports_anonymization_without_transfer_or_model_call(tmp_path) -> None:
+    job = make_job(tmp_path)
+    provider = ProviderConfig(provider_id="claude-code", model="sonnet")
+
+    preview = preview_provider_context(
+        job,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        provider,
+        run_id="privacy_preview",
+    )
+
+    assert preview["transfer_performed"] is False
+    assert preview["external_transfer_ready"] is False
+    assert preview["selected_chunk_count"] >= 1
+    assert preview["anonymization"]["status"] == "passed"
+    assert preview["anonymization"]["source_names_removed"] is True
+    assert preview["anonymization"]["raw_mapping_stored"] is False
+    assert preview["anonymization"]["replacement_counts"]["EMAIL"] == 1
 
 
 def test_hallucinated_provider_quote_fails_closed_without_competition_proof(tmp_path) -> None:

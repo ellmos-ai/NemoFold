@@ -312,6 +312,7 @@ def _prepare_context(
     tuple[ContextReceipt, ...],
     dict[str, Any],
     tuple[str, ...],
+    dict[str, int],
 ]:
     texts = _read_text_sources(inventory)
     max_chunks = job.parameters.get("max_chunks", 8)
@@ -359,7 +360,79 @@ def _prepare_context(
     categories = detect_sensitive_categories(outbound)
     if categories:
         raise ValueError(f"sanitized context still contains: {', '.join(categories)}")
-    return texts, sanitized.receipts, context, sensitive_terms
+    return (
+        texts,
+        sanitized.receipts,
+        context,
+        sensitive_terms,
+        sanitized.replacement_counts,
+    )
+
+
+def preview_provider_context(
+    job: JobEnvelope,
+    execution: ExecutionConfig,
+    provider_config: ProviderConfig,
+    *,
+    run_id: str,
+) -> dict[str, Any]:
+    """Prepare and inspect the exact provider context without performing a transfer."""
+    validate_run_id(run_id)
+    validate_workflow_parameters(job)
+    reasons = list(
+        PolicyGate(
+            PolicyConfig(
+                allowed_roots=execution.allowed_roots,
+                apply_actions_allowed=execution.apply_actions_allowed,
+            )
+        )
+        .evaluate(job)
+        .reasons
+    )
+    if job.workflow != "evidence_analyst":
+        reasons.append("provider_analysis_requires_evidence_analyst")
+    if job.model_id is not None:
+        reasons.append("generic_provider_job_must_not_declare_model_id")
+    if job.action_mode is not ActionMode.DRY_RUN:
+        reasons.append("provider_analysis_is_read_only")
+    if (
+        not provider_config.descriptor.external_transfer
+        and job.privacy_mode is not PrivacyMode.LOCAL_ONLY
+    ):
+        reasons.append("local_provider_requires_local_only_privacy")
+    if reasons:
+        raise ValueError(", ".join(dict.fromkeys(reasons)))
+
+    inventory = scan_paths(job.input_roots)
+    prepared = replace(job, sources=inventory.records)
+    texts, receipts, _context, _terms, replacement_counts = _prepare_context(
+        prepared,
+        inventory,
+    )
+    external = provider_config.descriptor.external_transfer
+    return {
+        "schema": "nemofold.provider-preview.v1",
+        "run_id": run_id,
+        "provider": provider_config.public_summary(),
+        "source_count": len(inventory.records),
+        "read_source_count": len(texts),
+        "question_count": len(prepared.questions),
+        "selected_chunk_count": sum(len(receipt.hits) for receipt in receipts),
+        "anonymization": {
+            "status": "passed",
+            "required_for_transfer": external,
+            "applied": True,
+            "replacement_counts": replacement_counts,
+            "source_names_removed": True,
+            "raw_mapping_stored": False,
+            "residual_sensitive_categories": [],
+        },
+        "privacy_mode": prepared.privacy_mode.value,
+        "external_transfer_ready": external and prepared.privacy_mode is PrivacyMode.ALLOW_ONCE,
+        "transfer_performed": False,
+        "competition_proof": False,
+        "cloud_proof": False,
+    }
 
 
 def analyze_with_provider(
@@ -453,8 +526,14 @@ def analyze_with_provider(
     provider_attempted = False
     provider_returned = False
     raw_response_sha256: str | None = None
+    anonymization_status = "not_completed"
+    replacement_counts: dict[str, int] = {}
     try:
-        texts, receipts, context, sensitive_terms = _prepare_context(prepared, inventory)
+        texts, receipts, context, sensitive_terms, replacement_counts = _prepare_context(
+            prepared,
+            inventory,
+        )
+        anonymization_status = "passed"
         context_text = json.dumps(context, indent=2, sort_keys=True) + "\n"
         system_prompt = (
             "You are NemoFold's evidence analyst. Answer only from the supplied chunks. "
@@ -584,6 +663,9 @@ def analyze_with_provider(
             artifacts=artifacts,
             metadata={
                 **running.metadata,
+                "anonymization_status": anonymization_status,
+                "pseudonymization_counts": replacement_counts,
+                "raw_mapping_stored": False,
                 "transfer_performed": failure_transfer,
             },
         )
@@ -609,6 +691,9 @@ def analyze_with_provider(
             "resolved_model": response.model,
             "usage": response.usage,
             "answered_questions": len(claims),
+            "anonymization_status": anonymization_status,
+            "pseudonymization_counts": replacement_counts,
+            "raw_mapping_stored": False,
             "unanswered_questions": [
                 prepared.questions[int(item.removeprefix("q_")) - 1] for item in unanswered_ids
             ],

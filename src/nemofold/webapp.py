@@ -8,15 +8,19 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, quote, urlparse
 from uuid import uuid4
 
 from . import __version__
 from .application import ExecutionConfig, preview_job, run_job
 from .contracts import RunStatus, to_primitive
+from .drafts import DraftStore
 from .job_io import ALLOWED_FIELDS, SUPPORTED_WORKFLOWS, JobFileError, parse_job_payload
-from .provider_analysis import analyze_with_provider
+from .notebooks import ResearchNotebookStore
+from .provider_analysis import analyze_with_provider, preview_provider_context
 from .providers import provider_capabilities, provider_config_from_mapping
+from .report_verifier import verify_run_report
+from .workflow_graphs import workflow_graphs
 
 MAX_REQUEST_BYTES = 512 * 1024
 WEB_ROOT = Path(__file__).with_name("web")
@@ -68,6 +72,18 @@ MAX_DEMO_QUESTIONS = 5
 MAX_DEMO_QUESTION_CHARS = 500
 MAX_DEMO_SOURCE_FILES = 100
 MAX_DEMO_SOURCE_BYTES = 10 * 1024 * 1024
+MAX_FOLDER_CHOICES = 500
+MAX_ARTIFACT_LEDGERS = 200
+MAX_LEDGER_BYTES = 4 * 1024 * 1024
+MAX_ARTIFACT_VIEW_BYTES = 64 * 1024 * 1024
+
+
+def _api_run_id(value: Any, *, prefix: str = "api") -> str:
+    if value is None:
+        return f"{prefix}_{uuid4().hex}"
+    if not isinstance(value, str):
+        raise ValueError("run_id must be a string or null")
+    return value
 
 
 @dataclass(frozen=True, slots=True)
@@ -123,7 +139,14 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
     def log_message(self, format: str, *args: object) -> None:
         return
 
-    def _headers(self, content_type: str, length: int, status: HTTPStatus) -> None:
+    def _headers(
+        self,
+        content_type: str,
+        length: int,
+        status: HTTPStatus,
+        *,
+        extra: dict[str, str] | None = None,
+    ) -> None:
         self.send_response(status)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(length))
@@ -132,6 +155,8 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Referrer-Policy", "no-referrer")
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "DENY")
+        for name, value in (extra or {}).items():
+            self.send_header(name, value)
         self.end_headers()
 
     def _write(self, data: bytes, content_type: str, status: HTTPStatus = HTTPStatus.OK) -> None:
@@ -175,18 +200,44 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         return json.loads(self.rfile.read(length))
 
     def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
-        path = urlparse(self.path).path
+        parsed_path = urlparse(self.path)
+        path = parsed_path.path
         static = {
-            "/": ("index.html", "text/html; charset=utf-8"),
-            "/assets/app.css": ("app.css", "text/css; charset=utf-8"),
-            "/assets/app.js": ("app.js", "text/javascript; charset=utf-8"),
+            "/": (WEB_ROOT / "index.html", "text/html; charset=utf-8"),
+            "/assets/app.css": (WEB_ROOT / "app.css", "text/css; charset=utf-8"),
+            "/assets/app.js": (WEB_ROOT / "app.js", "text/javascript; charset=utf-8"),
+            "/assets/theme-document-center.png": (
+                self.server.app_config.base_dir
+                / "docs/media/designset/sources/trust-voyage-background.png",
+                "image/png",
+            ),
+            "/assets/theme-analysis-lab.png": (
+                self.server.app_config.base_dir
+                / "docs/media/designset/sources/captain-nemo-observatory-master.png",
+                "image/png",
+            ),
+            "/assets/theme-folder-routines.png": (
+                self.server.app_config.base_dir
+                / "docs/media/designset/sources/fold-depth-master.png",
+                "image/png",
+            ),
+            "/assets/theme-artifact-studio.png": (
+                self.server.app_config.base_dir
+                / "videos/nemofold-promo/assets/nemofold-comic-nautilus.png",
+                "image/png",
+            ),
+            "/assets/theme-connections.png": (
+                self.server.app_config.base_dir
+                / "docs/media/designset/sources/nautilus-descent-master.png",
+                "image/png",
+            ),
         }
         if path in static:
             filename, content_type = static[path]
             try:
-                data = (WEB_ROOT / filename).read_bytes()
+                data = filename.read_bytes()
             except OSError:
-                self._error(HTTPStatus.INTERNAL_SERVER_ERROR, "asset_missing", filename)
+                self._error(HTTPStatus.INTERNAL_SERVER_ERROR, "asset_missing", str(filename))
                 return
             self._write(data, content_type)
             return
@@ -194,6 +245,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             public_demo = self.server.app_config.public_demo
             provider_surface_enabled = not (
                 public_demo or self.server.app_config.exposed_to_network
+            )
+            available_workflows = (
+                PUBLIC_DEMO_WORKFLOWS if public_demo else SUPPORTED_WORKFLOWS
             )
             self._json(
                 {
@@ -205,6 +259,10 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "live_runtime_ready": False,
                     "provider_surface_enabled": provider_surface_enabled,
                     "provider_runtime_ready": False,
+                    "folder_picker_enabled": provider_surface_enabled,
+                    "artifact_surface_enabled": provider_surface_enabled,
+                    "draft_surface_enabled": provider_surface_enabled,
+                    "notebook_surface_enabled": provider_surface_enabled,
                     "external_models_allowed": (
                         self.server.app_config.execution.external_models_allowed
                         if provider_surface_enabled
@@ -214,13 +272,27 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "public_demo": public_demo,
                     "read_only": public_demo,
                     "synthetic_only": public_demo,
-                    "workflows": sorted(
-                        PUBLIC_DEMO_WORKFLOWS if public_demo else SUPPORTED_WORKFLOWS
-                    ),
+                    "workflows": sorted(available_workflows),
+                    "workflow_graphs": workflow_graphs(available_workflows),
                     "cores": list(CORE_NAMES),
                     "providers": provider_capabilities() if provider_surface_enabled else [],
                 }
             )
+            return
+        if path == "/api/drafts":
+            self._handle_draft_list()
+            return
+        if path == "/api/draft":
+            self._handle_draft_load(parse_qs(parsed_path.query, keep_blank_values=True))
+            return
+        if path == "/api/notebooks":
+            self._handle_notebook_list()
+            return
+        if path == "/api/notebook":
+            self._handle_notebook_load(parse_qs(parsed_path.query, keep_blank_values=True))
+            return
+        if path == "/api/artifact":
+            self._handle_artifact_file(parse_qs(parsed_path.query, keep_blank_values=True))
             return
         self._error(HTTPStatus.NOT_FOUND, "not_found", path)
 
@@ -231,11 +303,29 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self._error(HTTPStatus.FORBIDDEN, "origin_rejected", "cross-origin request")
             return
         path = urlparse(self.path).path
-        if path not in {"/api/preview", "/api/run", "/api/provider-analyze"}:
+        if path not in {
+            "/api/preview",
+            "/api/run",
+            "/api/provider-analyze",
+            "/api/provider-preview",
+            "/api/folders",
+            "/api/artifacts",
+            "/api/drafts",
+            "/api/notebooks",
+            "/api/notebook-run",
+        }:
             self._error(HTTPStatus.NOT_FOUND, "not_found", path)
             return
         if self.server.app_config.public_demo:
-            if path == "/api/provider-analyze":
+            if path in {
+                "/api/provider-analyze",
+                "/api/provider-preview",
+                "/api/folders",
+                "/api/artifacts",
+                "/api/drafts",
+                "/api/notebooks",
+                "/api/notebook-run",
+            }:
                 self._error(HTTPStatus.NOT_FOUND, "not_found", path)
                 return
             if not self.server.demo_slots.acquire(blocking=False):
@@ -253,13 +343,29 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/provider-analyze":
             self._handle_provider_analysis()
             return
+        if path == "/api/provider-preview":
+            self._handle_provider_preview()
+            return
+        if path == "/api/folders":
+            self._handle_folder_browser()
+            return
+        if path == "/api/artifacts":
+            self._handle_artifact_catalog()
+            return
+        if path == "/api/drafts":
+            self._handle_draft_save()
+            return
+        if path == "/api/notebooks":
+            self._handle_notebook_save()
+            return
+        if path == "/api/notebook-run":
+            self._handle_notebook_run_link()
+            return
         try:
             payload = self._read_json()
             if not isinstance(payload, dict):
                 raise ValueError("request body must be an object")
-            run_id = payload.get("run_id")
-            if not isinstance(run_id, str):
-                raise ValueError("run_id must be a string")
+            run_id = _api_run_id(payload.get("run_id"))
             job = parse_job_payload(
                 payload.get("job"),
                 base_dir=self.server.app_config.base_dir,
@@ -304,9 +410,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             )
             if unknown:
                 raise ValueError(f"unknown request fields: {', '.join(unknown)}")
-            run_id = payload.get("run_id")
-            if not isinstance(run_id, str):
-                raise ValueError("run_id must be a string")
+            run_id = _api_run_id(payload.get("run_id"), prefix="api_provider")
             provider_value = payload.get("provider")
             if not isinstance(provider_value, dict):
                 raise ValueError("provider must be an object")
@@ -337,6 +441,251 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             },
             status,
         )
+
+    def _handle_provider_preview(self) -> None:
+        if self.server.app_config.exposed_to_network:
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "provider_surface_loopback_only",
+                "provider preview is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            unknown = sorted(set(payload) - {"run_id", "job", "provider"})
+            if unknown:
+                raise ValueError(f"unknown request fields: {', '.join(unknown)}")
+            run_id = _api_run_id(payload.get("run_id"), prefix="api_preview")
+            provider_value = payload.get("provider")
+            if not isinstance(provider_value, dict):
+                raise ValueError("provider must be an object")
+            job = parse_job_payload(
+                payload.get("job"),
+                base_dir=self.server.app_config.base_dir,
+            )
+            result = preview_provider_context(
+                job,
+                self.server.app_config.execution,
+                provider_config_from_mapping(provider_value),
+                run_id=run_id,
+            )
+        except (JobFileError, json.JSONDecodeError, OSError, RuntimeError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "provider_preview_rejected", str(exc))
+            return
+        self._json({"ok": True, "preview": result})
+
+    def _handle_folder_browser(self) -> None:
+        if self.server.app_config.exposed_to_network:
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "folder_picker_loopback_only",
+                "folder browsing is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            unknown = sorted(set(payload) - {"path"})
+            if unknown:
+                raise ValueError(f"unknown request fields: {', '.join(unknown)}")
+            path = payload.get("path")
+            if path is not None and not isinstance(path, str):
+                raise ValueError("path must be a string or null")
+            result = _folder_listing(
+                self.server.app_config,
+                requested_path=path,
+            )
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "folder_rejected", str(exc))
+            return
+        self._json({"ok": True, **result})
+
+    def _handle_artifact_catalog(self) -> None:
+        if self.server.app_config.exposed_to_network:
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "artifact_surface_loopback_only",
+                "artifact browsing is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            unknown = sorted(set(payload) - {"output_dir"})
+            if unknown:
+                raise ValueError(f"unknown request fields: {', '.join(unknown)}")
+            output_dir = payload.get("output_dir")
+            if not isinstance(output_dir, str) or not output_dir.strip():
+                raise ValueError("output_dir must be a non-empty string")
+            result = _artifact_catalog(self.server.app_config, output_dir)
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "artifact_catalog_rejected", str(exc))
+            return
+        self._json({"ok": True, **result})
+
+    def _draft_store(self) -> DraftStore:
+        return DraftStore(
+            self.server.app_config.base_dir,
+            self.server.app_config.execution.allowed_roots,
+        )
+
+    def _draft_surface_available(self) -> bool:
+        return not (
+            self.server.app_config.public_demo or self.server.app_config.exposed_to_network
+        )
+
+    def _notebook_store(self) -> ResearchNotebookStore:
+        return ResearchNotebookStore(
+            self.server.app_config.base_dir,
+            self.server.app_config.execution.allowed_roots,
+        )
+
+    def _handle_draft_list(self) -> None:
+        if not self._draft_surface_available():
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/drafts")
+            return
+        self._json({"ok": True, "drafts": self._draft_store().list()})
+
+    def _handle_draft_load(self, query: dict[str, list[str]]) -> None:
+        if not self._draft_surface_available():
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/draft")
+            return
+        try:
+            if set(query) != {"id"} or len(query["id"]) != 1:
+                raise ValueError("one draft id is required")
+            draft = self._draft_store().load(query["id"][0])
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "draft_load_rejected", str(exc))
+            return
+        self._json({"ok": True, "draft": draft})
+
+    def _handle_draft_save(self) -> None:
+        if not self._draft_surface_available():
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/drafts")
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            unknown = sorted(set(payload) - {"job", "provider", "name"})
+            if unknown:
+                raise ValueError(f"unknown request fields: {', '.join(unknown)}")
+            provider = payload.get("provider")
+            if provider is not None and not isinstance(provider, dict):
+                raise ValueError("provider must be an object or null")
+            name = payload.get("name")
+            if name is not None and not isinstance(name, str):
+                raise ValueError("name must be a string or null")
+            job = payload.get("job")
+            if not isinstance(job, dict):
+                raise ValueError("job must be an object")
+            draft = self._draft_store().save(
+                job,
+                provider=provider,
+                name=name,
+                source="api",
+            )
+        except (JobFileError, OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "draft_save_rejected", str(exc))
+            return
+        self._json({"ok": True, "draft": draft}, HTTPStatus.CREATED)
+
+    def _handle_notebook_list(self) -> None:
+        if not self._draft_surface_available():
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/notebooks")
+            return
+        self._json({"ok": True, "notebooks": self._notebook_store().list()})
+
+    def _handle_notebook_load(self, query: dict[str, list[str]]) -> None:
+        if not self._draft_surface_available():
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/notebook")
+            return
+        try:
+            if set(query) != {"id"} or len(query["id"]) != 1:
+                raise ValueError("one research notebook id is required")
+            notebook = self._notebook_store().load(query["id"][0])
+        except (OSError, ValueError, json.JSONDecodeError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "notebook_load_rejected", str(exc))
+            return
+        self._json({"ok": True, "notebook": notebook})
+
+    def _handle_notebook_save(self) -> None:
+        if not self._draft_surface_available():
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/notebooks")
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            notebook = self._notebook_store().save(payload)
+        except (OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "notebook_save_rejected", str(exc))
+            return
+        self._json({"ok": True, "notebook": notebook}, HTTPStatus.CREATED)
+
+    def _handle_notebook_run_link(self) -> None:
+        if not self._draft_surface_available():
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/notebook-run")
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict) or set(payload) != {"notebook_id", "run_id"}:
+                raise ValueError("notebook_id and run_id are required")
+            notebook_id = payload.get("notebook_id")
+            run_id = payload.get("run_id")
+            if not isinstance(notebook_id, str) or not isinstance(run_id, str):
+                raise ValueError("notebook_id and run_id must be strings")
+            notebook = self._notebook_store().link_run(notebook_id, run_id)
+        except (OSError, PermissionError, ValueError, json.JSONDecodeError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "notebook_run_rejected", str(exc))
+            return
+        self._json({"ok": True, "notebook": notebook})
+
+    def _handle_artifact_file(self, query: dict[str, list[str]]) -> None:
+        if self.server.app_config.public_demo:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/artifact")
+            return
+        if self.server.app_config.exposed_to_network:
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "artifact_surface_loopback_only",
+                "artifact viewing is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            if set(query) != {"output_dir", "path"}:
+                raise ValueError("output_dir and path are required")
+            output_values = query["output_dir"]
+            path_values = query["path"]
+            if len(output_values) != 1 or len(path_values) != 1:
+                raise ValueError("output_dir and path must be singular")
+            artifact = _registered_artifact_path(
+                self.server.app_config,
+                output_values[0],
+                path_values[0],
+            )
+            size = artifact.stat().st_size
+            if size > MAX_ARTIFACT_VIEW_BYTES:
+                raise ValueError("artifact exceeds the browser-view size limit")
+            data = artifact.read_bytes()
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "artifact_view_rejected", str(exc))
+            return
+        suffix = artifact.suffix.casefold()
+        content_type = "application/pdf" if suffix == ".pdf" else "text/plain; charset=utf-8"
+        disposition = "inline" if suffix in {".json", ".md", ".pdf", ".txt"} else "attachment"
+        filename = quote(artifact.name, safe="")
+        self._headers(
+            content_type,
+            len(data),
+            HTTPStatus.OK,
+            extra={"Content-Disposition": f"{disposition}; filename*=UTF-8''{filename}"},
+        )
+        self.wfile.write(data)
 
     def _handle_public_demo(self, path: str) -> None:
         source_root = self.server.app_config.demo_source_root
@@ -397,6 +746,202 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             },
             status,
         )
+
+
+def _allowed_folder_roots(config: WebAppConfig) -> tuple[Path, ...]:
+    roots: list[Path] = []
+    for value in config.execution.allowed_roots:
+        candidate = Path(value).resolve()
+        if candidate.is_dir() and candidate not in roots:
+            roots.append(candidate)
+    return tuple(roots)
+
+
+def _matching_folder_root(candidate: Path, roots: tuple[Path, ...]) -> Path | None:
+    return next(
+        (
+            root
+            for root in roots
+            if candidate == root or candidate.is_relative_to(root)
+        ),
+        None,
+    )
+
+
+def _folder_listing(
+    config: WebAppConfig,
+    *,
+    requested_path: str | None,
+) -> dict[str, object]:
+    roots = _allowed_folder_roots(config)
+    root_values = [
+        {"name": root.name or str(root), "path": str(root)}
+        for root in roots
+    ]
+    if requested_path is None:
+        return {
+            "roots": root_values,
+            "current": None,
+            "parent": None,
+            "directories": [],
+            "truncated": False,
+        }
+    raw_candidate = Path(requested_path)
+    candidate = (
+        raw_candidate if raw_candidate.is_absolute() else config.base_dir / raw_candidate
+    ).resolve()
+    root = _matching_folder_root(candidate, roots)
+    if root is None:
+        raise PermissionError("folder is outside the server-approved roots")
+    if not candidate.is_dir():
+        raise ValueError("folder must be an existing directory")
+    directories: list[dict[str, str]] = []
+    skipped = 0
+    for item in sorted(candidate.iterdir(), key=lambda path: path.name.casefold()):
+        if item.is_symlink():
+            skipped += 1
+            continue
+        try:
+            resolved = item.resolve()
+            if not resolved.is_dir() or _matching_folder_root(resolved, (root,)) is None:
+                continue
+        except OSError:
+            skipped += 1
+            continue
+        if len(directories) == MAX_FOLDER_CHOICES:
+            skipped += 1
+            continue
+        directories.append({"name": item.name, "path": str(resolved)})
+    parent = None
+    if candidate != root:
+        parent_candidate = candidate.parent.resolve()
+        if _matching_folder_root(parent_candidate, (root,)) is not None:
+            parent = str(parent_candidate)
+    return {
+        "roots": root_values,
+        "current": {"name": candidate.name or str(candidate), "path": str(candidate)},
+        "parent": parent,
+        "directories": directories,
+        "skipped_count": skipped,
+        "truncated": len(directories) == MAX_FOLDER_CHOICES and skipped > 0,
+    }
+
+
+def _allowed_output_root(config: WebAppConfig, value: str) -> Path:
+    raw = Path(value)
+    output = (raw if raw.is_absolute() else config.base_dir / raw).resolve()
+    if _matching_folder_root(output, _allowed_folder_roots(config)) is None:
+        raise PermissionError("output directory is outside the server-approved roots")
+    if output.exists() and (not output.is_dir() or output.is_symlink()):
+        raise ValueError("output directory must be a real directory")
+    return output
+
+
+def _ledger_paths(output: Path) -> tuple[Path, ...]:
+    ledger_root = output / "ledger"
+    if not ledger_root.is_dir() or ledger_root.is_symlink():
+        return ()
+    candidates: list[tuple[int, Path]] = []
+    for path in ledger_root.glob("*.json"):
+        try:
+            if path.is_file() and not path.is_symlink():
+                candidates.append((path.stat().st_mtime_ns, path.resolve()))
+        except OSError:
+            continue
+    candidates.sort(key=lambda item: (item[0], item[1].name.casefold()), reverse=True)
+    return tuple(path for _, path in candidates[:MAX_ARTIFACT_LEDGERS])
+
+
+def _load_ledger(path: Path) -> dict[str, Any] | None:
+    try:
+        if path.stat().st_size > MAX_LEDGER_BYTES:
+            return None
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def _artifact_record_path(output: Path, value: str) -> Path:
+    raw = Path(value)
+    return (raw if raw.is_absolute() else output / raw).resolve()
+
+
+def _artifact_catalog(config: WebAppConfig, output_dir: str) -> dict[str, object]:
+    output = _allowed_output_root(config, output_dir)
+    runs: list[dict[str, object]] = []
+    for ledger in _ledger_paths(output):
+        payload = _load_ledger(ledger)
+        if payload is None:
+            continue
+        verification = verify_run_report(ledger)
+        artifacts: list[dict[str, object]] = []
+        records = payload.get("artifacts")
+        for record in records if isinstance(records, list) else []:
+            if not isinstance(record, dict) or not isinstance(record.get("path"), str):
+                continue
+            path = _artifact_record_path(output, record["path"])
+            within_output = path == output or path.is_relative_to(output)
+            available = (
+                verification.valid
+                and within_output
+                and path.is_file()
+                and not path.is_symlink()
+            )
+            artifacts.append(
+                {
+                    "format": str(record.get("format") or path.suffix.lstrip(".") or "file"),
+                    "name": path.name,
+                    "path": str(path),
+                    "sha256": record.get("sha256"),
+                    "status": record.get("status", "unknown"),
+                    "available": available,
+                }
+            )
+        errors = payload.get("errors")
+        runs.append(
+            {
+                "run_id": payload.get("run_id", ledger.stem),
+                "workflow": payload.get("workflow", "unknown"),
+                "status": payload.get("status", "unknown"),
+                "errors": errors if isinstance(errors, list) else [],
+                "ledger_path": str(ledger),
+                "verification": {
+                    "valid": verification.valid,
+                    "checked_artifacts": verification.checked_artifacts,
+                    "errors": list(verification.errors),
+                },
+                "artifacts": artifacts,
+            }
+        )
+    return {
+        "output_dir": str(output),
+        "runs": runs,
+        "truncated": len(_ledger_paths(output)) == MAX_ARTIFACT_LEDGERS,
+        "verification_note": (
+            "green means the ledger contract and every recorded artifact hash passed"
+        ),
+    }
+
+
+def _registered_artifact_path(config: WebAppConfig, output_dir: str, value: str) -> Path:
+    output = _allowed_output_root(config, output_dir)
+    candidate = _artifact_record_path(output, value)
+    if not candidate.is_relative_to(output) or not candidate.is_file() or candidate.is_symlink():
+        raise PermissionError("artifact is unavailable or outside the selected output directory")
+    for ledger in _ledger_paths(output):
+        if candidate == ledger:
+            return candidate
+        if not verify_run_report(ledger).valid:
+            continue
+        payload = _load_ledger(ledger)
+        records = payload.get("artifacts") if payload is not None else None
+        for record in records if isinstance(records, list) else []:
+            if not isinstance(record, dict) or not isinstance(record.get("path"), str):
+                continue
+            if _artifact_record_path(output, record["path"]) == candidate:
+                return candidate
+    raise PermissionError("file is not registered by a NemoFold run ledger")
 
 
 def _normalize_public_demo_job(

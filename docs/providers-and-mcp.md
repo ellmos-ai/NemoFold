@@ -158,13 +158,15 @@ claude mcp add --scope user nemofold -- python -m nemofold mcp `
   --base-dir C:\Documents --allow-root C:\Documents
 ```
 
-This exposes six typed tools:
+This exposes eight typed tools:
 
 - `nemofold_capabilities`
 - `nemofold_anonymize`
 - `nemofold_preview`
 - `nemofold_run`
 - `nemofold_analyze_with_provider`
+- `nemofold_save_draft`
+- `nemofold_list_drafts`
 - `nemofold_verify_report`
 
 External model use remains disabled unless the MCP process itself was started with
@@ -182,6 +184,17 @@ contains `run_id`, `job`, a non-secret `provider` object, and the per-call appro
 The provider route is available only while the regular server remains loopback-only.
 It is disabled when `--expose-network` is active, and the capability-minimal
 `serve-demo` surface does not expose it at all.
+`run_id` is optional on the loopback preview, run, provider-preview, and provider-run
+endpoints; the server assigns a fresh ID when it is omitted. A caller should provide one
+only when it deliberately needs a stable external correlation key.
+
+The loopback surface also exposes prepared-job and Research Notebook endpoints. A model
+may save a strict job through `POST /api/drafts` for later browser review, or an Evidence
+Analyst investigation through `POST /api/notebooks`. The browser can load these records
+and explicitly trigger a run. `POST /api/notebook-run` links a run only when its ledger
+exists inside that notebook's output scope; the server verifies the ledger and artifact
+hashes before recording the link. These endpoints are absent from public-demo and
+network-exposed surfaces. Neither record type stores API keys or approvals.
 
 Example provider object:
 
@@ -189,10 +202,15 @@ Example provider object:
 {
   "provider_id": "ollama",
   "model": "qwen3",
-  "max_output_tokens": 1200,
-  "timeout_seconds": 60
+  "max_output_tokens": 32768,
+  "timeout_seconds": 1800
 }
 ```
+
+The provider layer accepts up to 131072 output tokens and a 3600-second timeout. These
+are response and request ceilings, not corpus-size limits. In the local console,
+`max_chunks` bounds relevant evidence per question; it does not cap how many files are
+inventoried and indexed.
 
 ## Upstream contracts
 

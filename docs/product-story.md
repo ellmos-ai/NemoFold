@@ -37,6 +37,12 @@ serve eight practical workflow chains:
 8. Platform Proof distinguishes offline capability, package readiness, transfer, and
    live cloud evidence instead of conflating them.
 
+These contracts appear in five user-facing work areas rather than eight disconnected
+tiles. The Analysis Lab adds UC07 Research Notebook as a persistent orchestration layer:
+one investigation can retain its goal, approved corpus, complete question/prompt set,
+chosen reasoning route, and multiple verified run ledgers. It is not a ninth execution
+workflow and does not persist transfer or action approval.
+
 The browser console, CLI, and skill all submit the same `nemofold.job.v1` contract to
 the same application service. That makes a visual demo useful without creating a
 second, less safe implementation path.

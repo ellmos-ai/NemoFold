@@ -203,7 +203,6 @@ def test_loopback_api_lists_and_executes_provider_surface(tmp_path, monkeypatch)
             base_url + "/api/provider-analyze",
             data=json.dumps(
                 {
-                    "run_id": "api_provider",
                     "job": job,
                     "provider": {"provider_id": "lm-studio", "model": "local-model"},
                     "approve_external_transfer": False,
@@ -224,7 +223,34 @@ def test_loopback_api_lists_and_executes_provider_surface(tmp_path, monkeypatch)
         "anthropic",
     }
     assert result["ok"] is True
+    assert result["report"]["run_id"].startswith("api_provider_")
     assert result["report"]["metadata"]["competition_proof"] is False
+
+
+def test_loopback_provider_preview_never_requires_transfer_approval(tmp_path) -> None:
+    job_path = write_job(tmp_path)
+    job = json.loads(job_path.read_text(encoding="utf-8"))
+
+    with running_provider_server(tmp_path) as base_url:
+        request = Request(
+            base_url + "/api/provider-preview",
+            data=json.dumps(
+                {
+                    "job": job,
+                    "provider": {"provider_id": "claude-code", "model": "sonnet"},
+                }
+            ).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urlopen(request, timeout=5) as response:  # noqa: S310
+            result = json.load(response)
+
+    assert result["ok"] is True
+    assert result["preview"]["run_id"].startswith("api_preview_")
+    assert result["preview"]["anonymization"]["status"] == "passed"
+    assert result["preview"]["transfer_performed"] is False
+    assert result["preview"]["external_transfer_ready"] is False
 
 
 def test_loopback_status_exposes_external_server_gate_without_claiming_runtime(tmp_path) -> None:

@@ -24,6 +24,8 @@ def test_mcp_server_exposes_one_bounded_tool_surface(tmp_path) -> None:
         "nemofold_preview",
         "nemofold_run",
         "nemofold_analyze_with_provider",
+        "nemofold_save_draft",
+        "nemofold_list_drafts",
         "nemofold_verify_report",
     }
 
@@ -72,6 +74,35 @@ def test_mcp_preview_uses_the_same_job_contract_and_root_gate(tmp_path) -> None:
 
     assert result["report"]["status"] == "planned"
     assert result["report"]["workflow"] == "folder_digest"
+
+
+def test_mcp_can_prepare_a_browser_draft_and_assign_run_ids_automatically(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "case.txt").write_text("Evidence.", encoding="utf-8")
+    service = NemoFoldMCPService(
+        MCPServerConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        )
+    )
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "evidence_analyst",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "questions": ["What is supported?"],
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {"max_chunks": 64, "formats": ["md"]},
+    }
+
+    draft = service.save_draft(job, name="MCP handoff")
+    preview = service.preview(job)
+
+    assert service.list_drafts()["drafts"][0]["name"] == "MCP handoff"
+    assert draft["draft"]["approval_state"]["external_transfer"] is False
+    assert preview["report"]["run_id"].startswith("mcp_")
 
 
 def test_mcp_report_verifier_rejects_paths_outside_allow_roots(tmp_path) -> None:

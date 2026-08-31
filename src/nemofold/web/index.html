@@ -16,6 +16,7 @@
         <span><strong>NemoFold</strong><small>Local evidence workspace</small></span>
       </a>
       <p class="nav-note">Captain Nemo console · Your files. Your rules. Your agent.</p>
+      <div class="nav-links"><a href="#workflowRegister">Workflows</a><a href="#artifactStudio">Artifacts</a></div>
       <div class="masthead-state" role="note"><span aria-hidden="true"></span>DEFAULT: LOCAL AUTHORITY</div>
     </nav>
   </header>
@@ -50,6 +51,54 @@
       </ol>
     </section>
 
+    <nav class="product-areas" aria-label="NemoFold work areas">
+      <button type="button" data-workflow-open="smart_inbox"><span>START</span><b>Document Center</b><small>Smart Inbox · Storage Policies</small></button>
+      <button type="button" data-workflow-open="evidence_analyst"><span>ANALYZE</span><b>Analysis Lab</b><small>Bundle Export → Evidence Analyst</small></button>
+      <button type="button" data-workflow-open="folder_digest"><span>ROUTINES</span><b>Folder Routines</b><small>Folder Digest · Version Resolver</small></button>
+      <button type="button" data-artifact-open><span>OUTPUT</span><b>Artifact Studio</b><small>Reports · ledgers · verified files</small></button>
+      <button type="button" data-workflow-open="platform_proof"><span>STATUS</span><b>Connections</b><small>Platform proof only</small></button>
+    </nav>
+
+    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle">
+      <div class="voyage-copy">
+        <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
+        <h2 id="voyageSceneTitle">Document Center</h2>
+        <p id="voyageSceneText">Your protected home on board: new documents arrive in Smart Inbox and follow the Storage Policies you can inspect before anything moves.</p>
+        <small id="voyageRoadmap">START AREA · smart_inbox + storage_policy</small>
+      </div>
+    </section>
+
+    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" hidden>
+      <div class="notebook-head">
+        <div>
+          <p class="kicker">UC07 · RESEARCH NOTEBOOK</p>
+          <h2 id="researchNotebookTitle">Keep the whole investigation, not just one answer.</h2>
+          <p>Save the research goal, approved source roots, question set, reasoning route and verified run trail as one local investigation. Approvals and secrets are never stored.</p>
+        </div>
+        <div class="notebook-sonar" aria-hidden="true"><i></i><i></i><i></i><b>DEEP CORPUS</b></div>
+      </div>
+      <div class="notebook-grid">
+        <div class="notebook-library">
+          <label>Saved investigations<select id="notebookSelect"><option value="">No investigations loaded</option></select></label>
+          <div class="notebook-actions">
+            <button type="button" id="notebookRefresh" class="secondary">Refresh</button>
+            <button type="button" id="notebookLoad" class="secondary" disabled>Load</button>
+            <button type="button" id="notebookNew" class="secondary">New</button>
+          </div>
+        </div>
+        <label>Investigation name<input id="notebookName" maxlength="120" placeholder="e.g. Contract change investigation"></label>
+        <label class="wide">Research goal <span>the thread connecting all questions and runs</span><textarea id="notebookGoal" rows="3" maxlength="4000" placeholder="What should this investigation establish, compare or disprove?"></textarea></label>
+        <div class="notebook-snapshot wide">
+          <div><span>SOURCES</span><b id="notebookSourceCount">0 approved roots</b></div>
+          <div><span>TASKS</span><b id="notebookQuestionCount">0 questions or prompts</b></div>
+          <div><span>RUN TRAIL</span><b id="notebookRunCount">0 linked ledgers</b></div>
+          <button type="button" id="notebookSave">Save investigation snapshot</button>
+        </div>
+      </div>
+      <div id="notebookState" class="notebook-state" aria-live="polite">Choose Analysis Lab, define sources and questions, then save the investigation.</div>
+      <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
+    </section>
+
     <section class="workspace-grid" aria-label="NemoFold job workspace">
       <aside class="scope-rail" aria-labelledby="scopeTitle">
         <div>
@@ -75,18 +124,54 @@
           <fieldset>
             <legend>01 · Mission</legend>
             <div class="form-grid">
-              <label>Workflow<select id="workflow"><option>evidence_analyst</option><option>folder_digest</option><option>bundle_export</option><option>version_resolver</option><option>report_studio</option><option>platform_proof</option><option>storage_policy</option><option>smart_inbox</option></select></label>
-              <label>Run ID<input id="runId" autocomplete="off"></label>
-              <label class="wide">Questions <span>one per line</span><textarea id="questions" rows="3">When does the current policy begin?
+              <div id="draftInbox" class="draft-inbox wide">
+                <label>Prepared job inbox <span>from CLI, MCP or local API</span><select id="draftSelect"><option value="">No prepared drafts loaded</option></select></label>
+                <button type="button" id="draftRefresh" class="secondary">Refresh inbox</button>
+                <button type="button" id="draftLoad" disabled>Load for review</button>
+                <small id="draftState">Drafts never retain external-transfer or file-action approval.</small>
+              </div>
+              <div class="workflow-choice">
+                <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>report_studio</option><option>platform_proof</option></select></label>
+                <p id="workflowHint" class="selection-description">Smart Inbox is the Document Center entry point. Storage Policies are its controlled routing and retention settings.</p>
+              </div>
+              <div class="run-id-control">
+                <label class="run-id-toggle"><input id="customRunId" type="checkbox"> Use a custom Run ID</label>
+                <input id="runId" autocomplete="off" disabled placeholder="Assigned automatically on each request">
+                <small id="runIdState">No request assigned yet.</small>
+              </div>
+              <div class="prompt-field wide">
+                <label>Questions or prompts <span>one task per line · all entries are processed</span><textarea id="questions" rows="4">When does the current policy begin?
 Which earlier wording changed?</textarea></label>
+                <div class="prompt-actions">
+                  <button type="button" id="promptLibraryButton" class="secondary">Open question &amp; prompt catalog</button>
+                  <button type="button" id="promptSaveButton" class="secondary">Save current set</button>
+                  <span id="promptHistoryState">Stored locally in this browser.</span>
+                </div>
+              </div>
+              <section class="workflow-visual wide" aria-labelledby="workflowMapTitle">
+                <div class="workflow-visual-head">
+                  <div><span>WORKFLOW MAP</span><b id="workflowMapTitle">Evidence Analyst</b></div>
+                  <span id="workflowPrivacyBadge" class="workflow-privacy-badge">Anonymization included</span>
+                </div>
+                <div id="workflowMap" class="workflow-map" role="list" aria-label="Selected workflow steps"></div>
+              </section>
             </div>
           </fieldset>
           <fieldset>
             <legend>02 · Bounded territory</legend>
             <div class="form-grid">
-              <label class="wide">Approved input roots <span>one per line</span><textarea id="inputRoots" rows="2">examples/synthetic-home</textarea></label>
-              <label class="wide">Approved target roots <span>one per line · required only for action workflows</span><textarea id="targetRoots" rows="2" placeholder="examples/synthetic-home/archive"></textarea></label>
-              <label class="wide">Output directory<input id="outputDir" value="run-reports/web-console"></label>
+              <div class="path-field wide">
+                <label>Approved input roots <span>one per line</span><textarea id="inputRoots" rows="2">examples/synthetic-home</textarea></label>
+                <button type="button" class="path-add secondary" data-folder-target="inputRoots">+ Add source folder</button>
+              </div>
+              <div class="path-field wide">
+                <label>Approved target roots <span>one per line · required only for action workflows</span><textarea id="targetRoots" rows="2" placeholder="examples/synthetic-home/archive"></textarea></label>
+                <button type="button" class="path-add secondary" data-folder-target="targetRoots">+ Add target folder</button>
+              </div>
+              <div class="path-field wide">
+                <label>Output directory<input id="outputDir" value="run-reports/web-console"></label>
+                <button type="button" class="path-add secondary" data-folder-target="outputDir">Choose output folder</button>
+              </div>
             </div>
           </fieldset>
           <fieldset>
@@ -96,7 +181,16 @@ Which earlier wording changed?</textarea></label>
               <label>Action mode<select id="actionMode"><option>dry_run</option><option>apply</option></select></label>
               <label>Model ID <span>optional</span><input id="modelId" placeholder="nvidia/nemotron-3-super-120b-a12b"></label>
               <label>Maximum model cost USD<input id="budget" type="number" min="0" step="0.01" value="0"></label>
-              <label class="wide">Workflow parameters <span>strict JSON</span><textarea id="parameters" rows="4">{"max_chunks": 8, "formats": ["md", "txt"], "conflict_scan": true}</textarea></label>
+              <label>Analysis scale
+                <select id="analysisScale">
+                  <option value="focused">Focused · 16 chunks per task</option>
+                  <option value="deep">Deep · 64 chunks per task</option>
+                  <option value="corpus" selected>Large corpus · 256 chunks per task</option>
+                  <option value="custom">Custom · keep parameter value</option>
+                </select>
+              </label>
+              <label class="wide">Workflow parameters <span>strict JSON</span><textarea id="parameters" rows="4">{"classification_policy": "suffix_routes", "routes": [{"suffixes": [".txt", ".md"], "target_root": 0}], "allowed_extensions": [".txt", ".md"], "original_policy": "move"}</textarea></label>
+              <p class="scale-note wide">The approved corpus is indexed locally without a demo-size cap. <code>max_chunks</code> controls relevant evidence per task, not total files. Large-corpus mode raises the evidence window while retaining an explicit resource ceiling.</p>
             </div>
           </fieldset>
           <fieldset id="providerFieldset" class="provider-fieldset">
@@ -116,11 +210,11 @@ Which earlier wording changed?</textarea></label>
               <label>Provider model
                 <input id="providerModel" autocomplete="off" disabled placeholder="Select a provider first">
               </label>
-              <label>Maximum output tokens
-                <input id="providerTokens" type="number" min="1" max="65536" step="1" value="400" disabled>
+              <label>Maximum output tokens <span>response ceiling, not corpus size</span>
+                <input id="providerTokens" type="number" min="1" max="131072" step="1" value="32768" disabled>
               </label>
-              <label>Timeout seconds
-                <input id="providerTimeout" type="number" min="1" max="600" step="1" value="180" disabled>
+              <label>Timeout seconds <span>large runs may use up to one hour</span>
+                <input id="providerTimeout" type="number" min="1" max="3600" step="1" value="1800" disabled>
               </label>
               <div class="provider-contract" aria-live="polite">
                 <b id="providerRoute">LOCAL CORE</b>
@@ -133,7 +227,21 @@ Which earlier wording changed?</textarea></label>
             </div>
             <p id="providerHint" class="form-hint">Use Preview first to inspect the exact source scope. Provider runtime health is established only by a real bounded run.</p>
           </fieldset>
-          <p id="workflowHint" class="form-hint">Evidence Analyst searches the approved inputs and reports exact source locations, conflicts and coverage.</p>
+          <section id="privacyCenter" class="privacy-center" aria-labelledby="privacyCenterTitle">
+            <div class="privacy-center-head">
+              <div><span>ANONYMIZATION CENTER</span><h3 id="privacyCenterTitle">Outbound privacy check</h3></div>
+              <div id="privacyTraffic" class="traffic-clip" data-state="pending" role="status" aria-live="polite">
+                <i class="light red" aria-hidden="true"></i><i class="light amber" aria-hidden="true"></i><i class="light green" aria-hidden="true"></i>
+                <b id="privacySignal">PREVIEW REQUIRED</b>
+              </div>
+            </div>
+            <dl class="privacy-ledger">
+              <div><dt>Workflow</dt><dd id="privacyScope">Anonymization is part of this workflow.</dd></div>
+              <div><dt>Replacements</dt><dd id="privacyReplacements">Not checked</dd></div>
+              <div><dt>Transfer</dt><dd id="privacyTransfer">No transfer performed</dd></div>
+            </dl>
+            <p id="privacyMessage">Preview prepares the selected context locally and reports replacement categories without exposing original values.</p>
+          </section>
           <div class="actions"><button type="button" id="previewButton" class="secondary">Preview exact scope</button><button type="submit" id="runButton">Run locally</button></div>
         </form>
         <section class="result-block" aria-labelledby="resultTitle">
@@ -142,6 +250,49 @@ Which earlier wording changed?</textarea></label>
         </section>
       </section>
     </section>
+
+    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle">
+      <div class="section-title artifact-title">
+        <p class="kicker">ARTIFACT STUDIO</p>
+        <div>
+          <h2 id="artifactStudioTitle">Runs you can inspect.</h2>
+          <p>Executed, blocked and failed runs remain distinguishable. Written artifacts are linked to their evidence ledger and verified against their recorded hash before receiving a green state.</p>
+        </div>
+      </div>
+      <div class="artifact-toolbar">
+        <div><span>OUTPUT SCOPE</span><b id="artifactScope">run-reports/web-console</b></div>
+        <button type="button" id="artifactRefresh" class="secondary">Refresh artifacts</button>
+      </div>
+      <div id="artifactGallery" class="artifact-gallery" aria-live="polite"><p>No artifact catalog loaded yet.</p></div>
+    </section>
+
+    <dialog id="folderDialog" class="folder-dialog" aria-labelledby="folderDialogTitle">
+      <form method="dialog" class="folder-dialog-shell">
+        <div class="folder-dialog-head">
+          <div><span>APPROVED ROOT BROWSER</span><h2 id="folderDialogTitle">Add a folder</h2></div>
+          <button type="submit" id="folderClose" class="secondary" value="cancel">Close</button>
+        </div>
+        <p id="folderCurrent" class="folder-current">Loading server-approved roots…</p>
+        <div class="folder-toolbar">
+          <button type="button" id="folderUp" class="secondary" disabled>↑ Parent</button>
+          <button type="button" id="folderSelectCurrent" disabled>Use this folder</button>
+        </div>
+        <div id="folderChoices" class="folder-choices" role="list" aria-live="polite"></div>
+        <p id="folderStatus" class="folder-status">Only folders inside the server-approved roots are visible.</p>
+      </form>
+    </dialog>
+
+    <dialog id="promptLibraryDialog" class="prompt-library-dialog" aria-labelledby="promptLibraryTitle">
+      <div class="prompt-library-shell">
+        <div class="folder-dialog-head">
+          <div><span>LOCAL REUSABLE SETS</span><h2 id="promptLibraryTitle">Question &amp; prompt catalog</h2></div>
+          <button type="button" id="promptLibraryClose" class="secondary">Close</button>
+        </div>
+        <p>Use a set to replace the editor or append every task to the current list. History and saved catalog entries stay in this browser.</p>
+        <div class="prompt-library-tabs"><button type="button" id="promptCatalogTab">Catalog</button><button type="button" id="promptHistoryTab" class="secondary">History</button></div>
+        <div id="promptLibraryList" class="prompt-library-list" aria-live="polite"></div>
+      </div>
+    </dialog>
 
     <section class="trust-boundary" aria-labelledby="boundaryTitle">
       <div class="section-title">
@@ -162,20 +313,17 @@ Which earlier wording changed?</textarea></label>
       <p class="text-alt">Text alternative: approved local files are inventoried and indexed locally. A privacy gate may prepare selected pseudonymized chunks for an isolated Nemotron worker. Every returned claim is checked against local sources before any report or reversible action is accepted.</p>
     </section>
 
-    <section class="workflow-register" aria-labelledby="registerTitle">
+    <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle">
       <div class="section-title">
-        <p class="kicker">MISSION REGISTER</p>
-        <h2 id="registerTitle">One core. Eight practical chains.</h2>
+        <p class="kicker">PRODUCT MAP</p>
+        <h2 id="registerTitle">Five work areas. Eight technical contracts.</h2>
       </div>
       <div class="register-table" role="list">
-        <article role="listitem"><span>01 / INTAKE</span><h3>Smart Inbox</h3><p>Route new files after a full-batch preflight.</p><b>reversible journal</b></article>
-        <article role="listitem"><span>02 / POLICY</span><h3>Storage Policies</h3><p>Name, retain, move, copy and convert text.</p><b>no silent deletion</b></article>
-        <article role="listitem"><span>03 / EXPORT</span><h3>Bundle Export</h3><p>Create deterministic bundles with hashes.</p><b>visible omissions</b></article>
-        <article role="listitem"><span>04 / MEMORY</span><h3>Folder Digest</h3><p>Track new, changed, stable or deleted files.</p><b>run-to-run evidence</b></article>
-        <article role="listitem"><span>05 / ANALYSIS</span><h3>Evidence Analyst</h3><p>Answer many questions from approved sources.</p><b>exact quotes + gaps</b></article>
-        <article role="listitem"><span>06 / TIME</span><h3>Version Resolver</h3><p>Select the document valid at a requested date.</p><b>family-aware history</b></article>
-        <article role="listitem"><span>07 / OUTPUT</span><h3>Artifact Studio</h3><p>Render verified claims in five formats.</p><b>consistent artifacts</b></article>
-        <article role="listitem"><span>08 / PROOF</span><h3>Platform Proof</h3><p>Keep offline, package and live proof distinct.</p><b>honest runtime status</b></article>
+        <button type="button" role="listitem" data-workflow-open="smart_inbox"><span>01 / START</span><h3>Document Center</h3><p>Smart Inbox with Storage Policies as its routing, naming and retention settings.</p><b>smart_inbox · storage_policy</b></button>
+        <button type="button" role="listitem" data-workflow-open="evidence_analyst"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst</b></button>
+        <button type="button" role="listitem" data-workflow-open="folder_digest"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck recurring folders and resolve the document version valid at a chosen date.</p><b>folder_digest · version_resolver</b></button>
+        <button type="button" role="listitem" data-artifact-open><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></button>
+        <button type="button" role="listitem" data-workflow-open="platform_proof"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></button>
       </div>
     </section>
   </main>

@@ -18,6 +18,9 @@ flowchart LR
     MODULES --> FILES[Local file ports]
     FILES --> LOCAL[(Approved local folders)]
     EVIDENCE --> INDEX[(Local FTS index)]
+    SURFACE --> NOTEBOOK[(Local research notebooks)]
+    NOTEBOOK --> JOB
+    LEDGER --> NOTEBOOK
     FILES --> JOURNAL[Atomic action journal and undo]
     POLICY --> SAFE[Selected and pseudonymized context]
     SAFE --> PROVIDERS[Provider-neutral adapter core]
@@ -67,6 +70,12 @@ and prunes deleted sources; the ledger records terminal status; action journals 
 crashes before a retry and generate verifiable undo receipts. Transfer-attempt receipts
 also prevent an uncertain network failure from becoming an automatic second request.
 External language-model output cannot directly mutate any authoritative layer.
+
+Research Notebooks are local orchestration records rather than execution authority. They
+store one validated Evidence Analyst job snapshot, an investigation goal, an optional
+non-secret provider configuration, and links to existing run ledgers. Loading a notebook
+never restores external-transfer or file-action approval; linking a run requires the
+ledger to exist in the notebook's output scope and pass the normal report verifier.
 
 See [NemoClaw integration](nemoclaw-integration.md) for the supported skill route and
 the separate runtime-plugin route. See [Provider adapters, local API, and MCP](providers-and-mcp.md)

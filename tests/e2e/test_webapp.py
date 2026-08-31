@@ -4,7 +4,9 @@ import json
 import re
 import threading
 from contextlib import contextmanager
+from pathlib import Path
 from urllib.error import HTTPError
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 import pytest
@@ -106,22 +108,29 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert "EVIDENCE CHAIN" in html
     assert "ORIGIN" in html
     assert "ACTION" in html
-    assert "MISSION REGISTER" in html
+    assert "PRODUCT MAP" in html
+    assert "Document Center" in html
+    assert "Artifact Studio" in html
     assert 'id="targetRoots"' in html
     element_ids = re.findall(r'\sid="([^"]+)"', html)
     required_ids = {
         "jobForm",
         "workflow",
         "runId",
+        "customRunId",
+        "runIdState",
         "inputRoots",
         "targetRoots",
         "outputDir",
         "questions",
+        "promptLibraryButton",
+        "promptSaveButton",
         "privacy",
         "actionMode",
         "modelId",
         "budget",
         "parameters",
+        "analysisScale",
         "executionMode",
         "providerId",
         "providerModel",
@@ -136,6 +145,20 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
         "previewButton",
         "runButton",
         "result",
+        "artifactStudio",
+        "artifactGallery",
+        "artifactRefresh",
+        "folderDialog",
+        "promptLibraryDialog",
+        "draftInbox",
+        "draftSelect",
+        "draftLoad",
+        "researchNotebook",
+        "notebookSelect",
+        "notebookName",
+        "notebookGoal",
+        "notebookSave",
+        "notebookRuns",
         "systemState",
         "cloudBadge",
     }
@@ -145,6 +168,10 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert status["cloud_proof"] is False
     assert status["live_runtime_ready"] is False
     assert status["provider_surface_enabled"] is True
+    assert status["folder_picker_enabled"] is True
+    assert status["artifact_surface_enabled"] is True
+    assert status["draft_surface_enabled"] is True
+    assert status["notebook_surface_enabled"] is True
     assert status["external_models_allowed"] is False
     assert len(status["workflows"]) == 8
     assert preview["ok"] is True
@@ -168,6 +195,10 @@ def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
     assert 'apiEndpoint = "provider-analyze"' in script
     assert "External providers require Privacy = allow_once." in script
     assert "Approve this external transfer once before running." in script
+    assert "assignRunId" in script
+    assert "loadArtifacts" in script
+    assert "loadDraftInbox" in script
+    assert "promptCatalogKey" in script
 
 
 def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> None:
@@ -184,6 +215,12 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert "word-break:break-word" in stylesheet
     assert ".approval-gate" in stylesheet
     assert ".provider-contract" in stylesheet
+    assert ".workflow-map" in stylesheet
+    assert ".privacy-center" in stylesheet
+    assert ".artifact-gallery" in stylesheet
+    assert ".voyage-scene.analysis-lab" in stylesheet
+    assert ".research-notebook" in stylesheet
+    assert ".notebook-sonar" in stylesheet
 
 
 def test_web_console_rejects_cross_origin_posts(tmp_path) -> None:
@@ -215,6 +252,188 @@ def test_web_console_action_gate_uses_the_shared_explicit_approval_name(tmp_path
     args = build_parser().parse_args(["serve", "--allow-root", str(tmp_path), "--approve-actions"])
 
     assert args.approve_actions is True
+
+
+def test_local_folder_picker_is_allow_root_bounded(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    child = documents / "child"
+    child.mkdir(parents=True)
+
+    with running_server(tmp_path) as base_url:
+        roots = post_json(base_url + "/api/folders", {"path": None})
+        listing = post_json(base_url + "/api/folders", {"path": str(documents)})
+        with pytest.raises(HTTPError) as captured:
+            post_json(base_url + "/api/folders", {"path": str(tmp_path.parent)})
+
+    assert roots["roots"] == [{"name": tmp_path.name, "path": str(tmp_path)}]
+    assert listing["current"]["path"] == str(documents)
+    assert {entry["path"] for entry in listing["directories"]} == {str(child)}
+    assert captured.value.code == 400
+
+
+def test_artifact_studio_lists_verified_runs_and_serves_registered_files(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "evidence_analyst",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "questions": ["When does coverage begin?"],
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {"max_chunks": 16, "formats": ["md"]},
+    }
+
+    with running_server(tmp_path) as base_url:
+        run = post_json(base_url + "/api/run", {"run_id": "artifact_run", "job": job})
+        catalog = post_json(base_url + "/api/artifacts", {"output_dir": "output"})
+        ledger_path = catalog["runs"][0]["ledger_path"]
+        query = urlencode({"output_dir": "output", "path": ledger_path})
+        with urlopen(base_url + "/api/artifact?" + query, timeout=5) as response:  # noqa: S310
+            ledger = json.load(response)
+
+    assert run["report"]["status"] == "executed"
+    assert catalog["runs"][0]["verification"]["valid"] is True
+    assert catalog["runs"][0]["verification"]["checked_artifacts"] >= 1
+    assert ledger["run_id"] == "artifact_run"
+
+
+def test_local_api_assigns_a_run_id_when_the_caller_omits_it(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "evidence_analyst",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "questions": ["When does coverage begin?"],
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {"max_chunks": 16, "formats": ["md"]},
+    }
+
+    with running_server(tmp_path) as base_url:
+        preview = post_json(base_url + "/api/preview", {"job": job})
+
+    assert preview["report"]["run_id"].startswith("api_")
+
+
+def test_artifact_studio_does_not_serve_an_artifact_from_a_failed_ledger(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "evidence_analyst",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "questions": ["When does coverage begin?"],
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {"max_chunks": 16, "formats": ["md"]},
+    }
+
+    with running_server(tmp_path) as base_url:
+        post_json(base_url + "/api/run", {"run_id": "tampered_artifact", "job": job})
+        initial = post_json(base_url + "/api/artifacts", {"output_dir": "output"})
+        artifact = next(item for item in initial["runs"][0]["artifacts"] if item["available"])
+        Path(artifact["path"]).write_text("tampered", encoding="utf-8")
+        catalog = post_json(base_url + "/api/artifacts", {"output_dir": "output"})
+        query = urlencode({"output_dir": "output", "path": artifact["path"]})
+        with pytest.raises(HTTPError) as captured:
+            urlopen(base_url + "/api/artifact?" + query, timeout=5)  # noqa: S310
+
+    assert catalog["runs"][0]["verification"]["valid"] is False
+    assert all(not item["available"] for item in catalog["runs"][0]["artifacts"])
+    assert captured.value.code == 400
+
+
+def test_api_saved_draft_loads_for_browser_review_without_approvals(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "evidence_analyst",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "questions": ["Inspect the full corpus."],
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {"max_chunks": 256, "formats": ["md"]},
+    }
+
+    with running_server(tmp_path) as base_url:
+        created = post_json(
+            base_url + "/api/drafts",
+            {
+                "name": "Model prepared analysis",
+                "job": job,
+                "provider": {
+                    "provider_id": "ollama",
+                    "model": "qwen3",
+                    "max_output_tokens": 32768,
+                    "timeout_seconds": 1800,
+                },
+            },
+        )
+        drafts, _ = get_json(base_url + "/api/drafts")
+        loaded, _ = get_json(
+            base_url + "/api/draft?" + urlencode({"id": created["draft"]["draft_id"]})
+        )
+
+    assert drafts["drafts"][0]["name"] == "Model prepared analysis"
+    assert loaded["draft"]["job"]["parameters"]["max_chunks"] == 256
+    assert loaded["draft"]["approval_state"]["external_transfer"] is False
+    assert loaded["draft"]["approval_state"]["file_actions"] is False
+
+
+def test_research_notebook_saves_scope_and_links_a_verified_run(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "evidence_analyst",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "questions": ["When does coverage begin?"],
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {"max_chunks": 256, "formats": ["md"]},
+    }
+
+    with running_server(tmp_path) as base_url:
+        created = post_json(
+            base_url + "/api/notebooks",
+            {
+                "name": "Coverage investigation",
+                "goal": "Establish the effective date with exact evidence.",
+                "job": job,
+                "provider": None,
+            },
+        )
+        run = post_json(base_url + "/api/run", {"run_id": "notebook_run", "job": job})
+        linked = post_json(
+            base_url + "/api/notebook-run",
+            {
+                "notebook_id": created["notebook"]["notebook_id"],
+                "run_id": "notebook_run",
+            },
+        )
+        notebooks, _ = get_json(base_url + "/api/notebooks")
+        loaded, _ = get_json(
+            base_url + "/api/notebook?"
+            + urlencode({"id": created["notebook"]["notebook_id"]})
+        )
+
+    assert run["report"]["status"] == "executed"
+    assert notebooks["notebooks"][0]["run_count"] == 1
+    assert loaded["notebook"]["approval_state"]["external_transfer"] is False
+    assert linked["notebook"]["runs"][0]["run_id"] == "notebook_run"
+    assert linked["notebook"]["runs"][0]["verification"]["valid"] is True
 
 
 def public_demo_job(**overrides):
