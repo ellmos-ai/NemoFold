@@ -194,9 +194,11 @@ and requires `--expose-network` before it will bind to a non-loopback address. P
 is the default safe path; action workflows additionally require the server-side
 `--approve-actions` gate before an apply request can succeed.
 
-The console is organized as five work areas: Document Center, Analysis Lab, Folder
-Routines, Artifact Studio, and Connections. Analysis Lab combines deterministic bundle
-preparation, privacy preflight, Evidence Analyst, reusable prompt sets, and persistent
+The overview and five work areas use distinct, bookmarkable routes instead of in-page
+scroll jumps: `/document-center`, `/analysis`, `/routines`, `/artifacts`, and
+`/connections`. Each work page exposes only its relevant workflow choices. Analysis Lab
+combines deterministic bundle preparation, privacy preflight, Evidence Analyst, reusable
+prompt sets, and persistent
 Research Notebooks. Artifact Studio opens executed or blocked ledgers and verifies every
 recorded artifact hash. Document Center also contains explainable Cleanup Rules,
 read-only Mail-to-Case intake, and Controlled Email drafts; Folder Routines includes the

@@ -1,4 +1,25 @@
 const $ = (id) => document.getElementById(id);
+const pageByPath = new Map([
+  ["/", "overview"],
+  ["/document-center", "document"],
+  ["/analysis", "analysis"],
+  ["/routines", "routines"],
+  ["/artifacts", "artifacts"],
+  ["/connections", "connections"]
+]);
+const normalizedPath = globalThis.location.pathname.replace(/\/+$/, "") || "/";
+const currentPage = pageByPath.get(normalizedPath) || "overview";
+const requestedWorkflow = new URLSearchParams(globalThis.location.search).get("workflow");
+const pageConfiguration = {
+  overview: {title: "NemoFold — Local evidence workspace", scene: null, defaultWorkflow: "smart_inbox", workflows: []},
+  document: {title: "Document Center — NemoFold", scene: "document", defaultWorkflow: "smart_inbox", workflows: ["smart_inbox", "storage_policy", "cleanup_rules", "mail_to_case", "controlled_email"]},
+  analysis: {title: "Analysis Lab — NemoFold", scene: "analysis", defaultWorkflow: "evidence_analyst", workflows: ["evidence_analyst", "bundle_export", "report_studio"]},
+  routines: {title: "Folder Routines — NemoFold", scene: "routines", defaultWorkflow: "folder_digest", workflows: ["folder_digest", "version_resolver", "contact_monitor"]},
+  artifacts: {title: "Artifact Studio — NemoFold", scene: "artifacts", defaultWorkflow: "report_studio", workflows: []},
+  connections: {title: "Connections — NemoFold", scene: "connections", defaultWorkflow: "platform_proof", workflows: []}
+};
+document.body.dataset.page = currentPage;
+document.title = pageConfiguration[currentPage].title;
 const lines = (value) => value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
 let publicDemo = false;
 let folderPickerEnabled = false;
@@ -121,6 +142,40 @@ const workflowDefaults = {
     hint: "Smart Inbox requires at least one approved target root and routes the full batch only after collision and policy preflight."
   }
 };
+
+function syncWorkflowRouteLinks() {
+  for (const link of document.querySelectorAll("[data-workflow-route]")) {
+    const active = link.dataset.workflowRoute === $("workflow").value;
+    link.classList.toggle("active", active);
+    if (active) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
+}
+
+function configureRoutedPage() {
+  const configuration = pageConfiguration[currentPage];
+  for (const link of document.querySelectorAll("[data-page-link]")) {
+    const active = link.dataset.pageLink === currentPage;
+    link.classList.toggle("active", active);
+    if (active) link.setAttribute("aria-current", "page");
+    else link.removeAttribute("aria-current");
+  }
+  const options = [...$("workflow").options];
+  if (configuration.workflows.length) {
+    for (const option of options) {
+      const inScope = configuration.workflows.includes(option.value);
+      option.hidden = !inScope;
+      option.disabled = !inScope;
+    }
+    const candidate = configuration.workflows.includes(requestedWorkflow)
+      ? requestedWorkflow
+      : configuration.defaultWorkflow;
+    const selected = options.find((option) => option.value === candidate && !option.disabled)
+      || options.find((option) => !option.disabled);
+    if (selected) $("workflow").value = selected.value;
+  }
+  syncWorkflowRouteLinks();
+}
 
 function newRunId() {
   const now = new Date();
@@ -370,7 +425,7 @@ const voyageScenes = {
 
 function updateVoyageScene(area = null) {
   const workflow = $("workflow").value;
-  const key = area || (
+  const key = area || pageConfiguration[currentPage].scene || (
     ["smart_inbox", "storage_policy", "cleanup_rules", "mail_to_case", "controlled_email"].includes(workflow) ? "document"
       : ["bundle_export", "evidence_analyst"].includes(workflow) ? "analysis"
         : ["folder_digest", "version_resolver", "contact_monitor"].includes(workflow) ? "routines"
@@ -383,9 +438,67 @@ function updateVoyageScene(area = null) {
   $("voyageSceneTitle").textContent = scene.title;
   $("voyageSceneText").textContent = scene.text;
   $("voyageRoadmap").textContent = scene.roadmap;
-  const notebookVisible = key === "analysis" && $("workflow").value === "evidence_analyst";
+  const notebookVisible = currentPage === "analysis" && $("workflow").value === "evidence_analyst";
   $("researchNotebook").hidden = !notebookVisible;
   if (notebookVisible) updateNotebookSnapshot();
+}
+
+function renderConnectionStatus(status) {
+  $("connectionLocal").textContent = status.ok
+    ? `Local API responding · ${status.mode}`
+    : "Local API unavailable";
+  $("connectionProvider").textContent = status.provider_runtime_ready
+    ? "Verified provider execution receipt available"
+    : "Configured routes only · no verified execution receipt";
+  $("connectionTransfer").textContent = status.transfer_performed
+    ? "Transfer recorded: true"
+    : `Transfer recorded: false · external gate ${status.external_models_allowed ? "available" : "closed"}`;
+  $("connectionCloud").textContent = status.cloud_proof
+    ? "True · verified live evidence"
+    : "False · no live competition proof";
+  const registry = $("connectionRegistry");
+  registry.replaceChildren();
+  const providers = Array.isArray(status.providers) ? status.providers : [];
+  if (!providers.length) {
+    const empty = document.createElement("p");
+    empty.textContent = "No provider adapters are exposed by this runtime.";
+    registry.append(empty);
+    return;
+  }
+  for (const provider of providers) {
+    const row = document.createElement("article");
+    row.className = provider.external_transfer ? "connection-route external" : "connection-route loopback";
+    const identity = document.createElement("div");
+    const label = document.createElement("h3");
+    label.textContent = provider.label;
+    const id = document.createElement("small");
+    id.textContent = provider.provider_id;
+    identity.append(label, id);
+    const transport = document.createElement("div");
+    const transportLabel = document.createElement("span");
+    transportLabel.textContent = "TRANSPORT";
+    const transportValue = document.createElement("b");
+    transportValue.textContent = provider.transport;
+    transport.append(transportLabel, transportValue);
+    const boundary = document.createElement("div");
+    const boundaryLabel = document.createElement("span");
+    boundaryLabel.textContent = "BOUNDARY";
+    const boundaryValue = document.createElement("b");
+    boundaryValue.textContent = provider.external_transfer
+      ? "External · one-run approval"
+      : "Loopback · local only";
+    boundary.append(boundaryLabel, boundaryValue);
+    const proof = document.createElement("div");
+    const proofLabel = document.createElement("span");
+    proofLabel.textContent = "CURRENT CLAIM";
+    const proofValue = document.createElement("b");
+    proofValue.textContent = provider.competition_proof
+      ? "Competition proof recorded"
+      : "Configured · execution unverified";
+    proof.append(proofLabel, proofValue);
+    row.append(identity, transport, boundary, proof);
+    registry.append(row);
+  }
 }
 
 function setTrafficClip(state, label) {
@@ -595,6 +708,7 @@ function updateProviderAvailability() {
 
 function applyWorkflowDefaults() {
   const defaults = workflowDefaults[$("workflow").value];
+  if (!defaults) return;
   $("questions").value = defaults.questions.join("\n");
   $("parameters").value = JSON.stringify(defaults.parameters, null, 2);
   $("analysisScale").disabled = !["evidence_analyst", "platform_proof"].includes($("workflow").value);
@@ -603,6 +717,7 @@ function applyWorkflowDefaults() {
   renderWorkflowMap();
   updateProviderAvailability();
   updateProviderPanel();
+  syncWorkflowRouteLinks();
 }
 
 async function execute(endpoint) {
@@ -1137,6 +1252,7 @@ async function loadStatus() {
     draftSurfaceEnabled = status.draft_surface_enabled === true;
     notebookSurfaceEnabled = status.notebook_surface_enabled === true;
     configureProviders(status);
+    renderConnectionStatus(status);
     if (publicDemo) {
       const supported = new Set(status.workflows);
       for (const option of [...$("workflow").options]) {
@@ -1154,10 +1270,12 @@ async function loadStatus() {
       }
       $("privacy").disabled = true;
       $("actionMode").disabled = true;
+      configureRoutedPage();
       applyWorkflowDefaults();
       updateProviderPanel();
       for (const button of document.querySelectorAll("[data-folder-target]")) button.disabled = true;
     } else {
+      configureRoutedPage();
       applyWorkflowDefaults();
       for (const button of document.querySelectorAll("[data-folder-target]")) {
         button.disabled = !folderPickerEnabled;
@@ -1167,8 +1285,8 @@ async function loadStatus() {
     await loadResearchNotebooks();
     await loadArtifacts();
     $("systemState").textContent = status.live_runtime_ready
-      ? "Live runtime ready"
-      : publicDemo ? "Public synthetic demo · read-only" : "Local runtime ready · live proof open";
+      ? "Verified live runtime receipt"
+      : publicDemo ? "Public synthetic demo · read-only" : "Local core responding · cloud proof absent";
     $("systemState").classList.add(status.live_runtime_ready ? "ok" : "warn");
     $("cloudBadge").textContent = `Cloud proof: ${status.cloud_proof}`;
   } catch {
@@ -1177,6 +1295,7 @@ async function loadStatus() {
   }
 }
 
+configureRoutedPage();
 $("runId").value = "";
 $("workflow").addEventListener("change", applyWorkflowDefaults);
 $("executionMode").addEventListener("change", () => { resetPrivacyCenter(); updateProviderPanel(); });
@@ -1213,18 +1332,4 @@ $("notebookNew").addEventListener("click", newResearchNotebook);
 $("notebookSave").addEventListener("click", saveResearchNotebook);
 $("inputRoots").addEventListener("input", updateNotebookSnapshot);
 $("questions").addEventListener("input", updateNotebookSnapshot);
-for (const button of document.querySelectorAll("[data-workflow-open]")) {
-  button.addEventListener("click", () => {
-    $("workflow").value = button.dataset.workflowOpen;
-    applyWorkflowDefaults();
-    $("jobForm").scrollIntoView({behavior: "smooth", block: "start"});
-  });
-}
-for (const button of document.querySelectorAll("[data-artifact-open]")) {
-  button.addEventListener("click", () => {
-    updateVoyageScene("artifacts");
-    $("artifactStudio").scrollIntoView({behavior: "smooth", block: "start"});
-    loadArtifacts();
-  });
-}
 loadStatus();

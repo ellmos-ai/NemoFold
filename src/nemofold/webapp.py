@@ -202,8 +202,16 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
         parsed_path = urlparse(self.path)
         path = parsed_path.path
+        page_path = path.rstrip("/") or "/"
+        page_routes = {
+            "/": "overview",
+            "/document-center": "document",
+            "/analysis": "analysis",
+            "/routines": "routines",
+            "/artifacts": "artifacts",
+            "/connections": "connections",
+        }
         static = {
-            "/": (WEB_ROOT / "index.html", "text/html; charset=utf-8"),
             "/assets/app.css": (WEB_ROOT / "app.css", "text/css; charset=utf-8"),
             "/assets/app.js": (WEB_ROOT / "app.js", "text/javascript; charset=utf-8"),
             "/assets/theme-document-center.png": (
@@ -232,6 +240,23 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "image/png",
             ),
         }
+        if page_path in page_routes:
+            try:
+                page = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
+            except OSError:
+                self._error(
+                    HTTPStatus.INTERNAL_SERVER_ERROR,
+                    "asset_missing",
+                    str(WEB_ROOT / "index.html"),
+                )
+                return
+            page = page.replace(
+                'data-page="overview"',
+                f'data-page="{page_routes[page_path]}"',
+                1,
+            )
+            self._write(page.encode("utf-8"), "text/html; charset=utf-8")
+            return
         if path in static:
             filename, content_type = static[path]
             try:

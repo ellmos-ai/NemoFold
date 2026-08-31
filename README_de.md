@@ -200,6 +200,13 @@ ab und verlangt `--expose-network`, bevor sie eine Nicht-Loopback-Adresse verwen
 Preview ist der standardmäßige sichere Pfad; Aktionsworkflows benötigen zusätzlich das
 serverseitige Gate `--approve-actions`, bevor eine Apply-Anfrage erfolgreich sein kann.
 
+Übersicht und Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt Sprüngen
+innerhalb einer langen Seite: `/document-center`, `/analysis`, `/routines`, `/artifacts`
+und `/connections`. Jede Arbeitsseite zeigt nur die fachlich passenden Workflows.
+Artifact Studio öffnet unmittelbar den verifizierten Artefaktkatalog; Connections ist
+eine reine Statusseite und trennt konfigurierte Adapter, ausgeführte Providerläufe,
+Transfers und Cloud-Nachweise sichtbar voneinander.
+
 ### Fähigkeitsminimale synthetische Demo starten
 
 Nutze den getrennten Demo-Befehl, wenn Personen die Konsole erreichen könnten, die

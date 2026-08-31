@@ -8,21 +8,26 @@
   <link rel="stylesheet" href="/assets/app.css">
   <script src="/assets/app.js" defer></script>
 </head>
-<body>
+<body data-page="overview">
   <header class="masthead">
     <nav aria-label="Product identity">
-      <a class="brand" href="#workspace">
+      <a class="brand" href="/" data-page-link="overview">
         <span class="mark" aria-hidden="true">NF</span>
         <span><strong>NemoFold</strong><small>Local evidence workspace</small></span>
       </a>
-      <p class="nav-note">Captain Nemo console · Your files. Your rules. Your agent.</p>
-      <div class="nav-links"><a href="#workflowRegister">Workflows</a><a href="#artifactStudio">Artifacts</a></div>
+      <div class="nav-links" aria-label="Primary navigation">
+        <a href="/document-center" data-page-link="document">Documents</a>
+        <a href="/analysis" data-page-link="analysis">Analysis</a>
+        <a href="/routines" data-page-link="routines">Routines</a>
+        <a href="/artifacts" data-page-link="artifacts">Artifacts</a>
+        <a href="/connections" data-page-link="connections">Connections</a>
+      </div>
       <div class="masthead-state" role="note"><span aria-hidden="true"></span>DEFAULT: LOCAL AUTHORITY</div>
     </nav>
   </header>
 
   <main id="workspace">
-    <section class="briefing" aria-labelledby="briefingTitle">
+    <section class="briefing" aria-labelledby="briefingTitle" data-page-section="overview">
       <div class="briefing-copy">
         <p class="kicker">CASE FILE / NF-01</p>
         <h1 id="briefingTitle">Know what your documents prove.</h1>
@@ -35,7 +40,7 @@
       </dl>
     </section>
 
-    <section class="evidence-chain" aria-labelledby="chainTitle">
+    <section class="evidence-chain" aria-labelledby="chainTitle" data-page-section="overview">
       <div class="chain-label">
         <p class="kicker">EVIDENCE CHAIN</p>
         <h2 id="chainTitle">Every claim keeps its route home.</h2>
@@ -51,15 +56,15 @@
       </ol>
     </section>
 
-    <nav class="product-areas" aria-label="NemoFold work areas">
-      <button type="button" data-workflow-open="smart_inbox"><span>START</span><b>Document Center</b><small>Inbox · cleanup · mail cases · drafts</small></button>
-      <button type="button" data-workflow-open="evidence_analyst"><span>ANALYZE</span><b>Analysis Lab</b><small>Bundle Export → Evidence Analyst</small></button>
-      <button type="button" data-workflow-open="folder_digest"><span>ROUTINES</span><b>Folder Routines</b><small>Digest · versions · contact monitor</small></button>
-      <button type="button" data-artifact-open><span>OUTPUT</span><b>Artifact Studio</b><small>Reports · ledgers · verified files</small></button>
-      <button type="button" data-workflow-open="platform_proof"><span>STATUS</span><b>Connections</b><small>Platform proof only</small></button>
+    <nav class="product-areas" aria-label="NemoFold work areas" data-page-section="overview">
+      <a href="/document-center"><span>START</span><b>Document Center</b><small>Inbox · cleanup · mail cases · drafts</small><em>Open area →</em></a>
+      <a href="/analysis"><span>ANALYZE</span><b>Analysis Lab</b><small>Bundle Export → Evidence Analyst</small><em>Open area →</em></a>
+      <a href="/routines"><span>ROUTINES</span><b>Folder Routines</b><small>Digest · versions · contact monitor</small><em>Open area →</em></a>
+      <a href="/artifacts"><span>OUTPUT</span><b>Artifact Studio</b><small>Reports · ledgers · verified files</small><em>Open area →</em></a>
+      <a href="/connections"><span>STATUS</span><b>Connections</b><small>Platform proof only</small><em>Open area →</em></a>
     </nav>
 
-    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle">
+    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="document analysis routines artifacts connections">
       <div class="voyage-copy">
         <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
         <h2 id="voyageSceneTitle">Document Center</h2>
@@ -68,7 +73,28 @@
       </div>
     </section>
 
-    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" hidden>
+    <nav class="route-workflows" aria-label="Document Center workflows" data-page-section="document">
+      <span>Document workflows</span>
+      <a href="/document-center?workflow=smart_inbox" data-workflow-route="smart_inbox">Smart Inbox</a>
+      <a href="/document-center?workflow=storage_policy" data-workflow-route="storage_policy">Storage Policies</a>
+      <a href="/document-center?workflow=cleanup_rules" data-workflow-route="cleanup_rules">Cleanup Rules</a>
+      <a href="/document-center?workflow=mail_to_case" data-workflow-route="mail_to_case">Mail-to-Case</a>
+      <a href="/document-center?workflow=controlled_email" data-workflow-route="controlled_email">Controlled Email</a>
+    </nav>
+    <nav class="route-workflows" aria-label="Analysis workflows" data-page-section="analysis">
+      <span>Analysis workflows</span>
+      <a href="/analysis?workflow=evidence_analyst" data-workflow-route="evidence_analyst">Evidence Analyst</a>
+      <a href="/analysis?workflow=bundle_export" data-workflow-route="bundle_export">Bundle Export</a>
+      <a href="/analysis?workflow=report_studio" data-workflow-route="report_studio">Report Studio</a>
+    </nav>
+    <nav class="route-workflows" aria-label="Folder routines" data-page-section="routines">
+      <span>Folder routines</span>
+      <a href="/routines?workflow=folder_digest" data-workflow-route="folder_digest">Folder Digest</a>
+      <a href="/routines?workflow=version_resolver" data-workflow-route="version_resolver">Version Resolver</a>
+      <a href="/routines?workflow=contact_monitor" data-workflow-route="contact_monitor">Contact Monitor</a>
+    </nav>
+
+    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="analysis" hidden>
       <div class="notebook-head">
         <div>
           <p class="kicker">UC07 · RESEARCH NOTEBOOK</p>
@@ -99,7 +125,7 @@
       <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
     </section>
 
-    <section class="workspace-grid" aria-label="NemoFold job workspace">
+    <section class="workspace-grid" aria-label="NemoFold job workspace" data-page-section="document analysis routines">
       <aside class="scope-rail" aria-labelledby="scopeTitle">
         <div>
           <p class="kicker">SCOPE LEDGER</p>
@@ -251,7 +277,7 @@ Which earlier wording changed?</textarea></label>
       </section>
     </section>
 
-    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle">
+    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="artifacts">
       <div class="section-title artifact-title">
         <p class="kicker">ARTIFACT STUDIO</p>
         <div>
@@ -264,6 +290,28 @@ Which earlier wording changed?</textarea></label>
         <button type="button" id="artifactRefresh" class="secondary">Refresh artifacts</button>
       </div>
       <div id="artifactGallery" class="artifact-gallery" aria-live="polite"><p>No artifact catalog loaded yet.</p></div>
+    </section>
+
+    <section id="connectionPanel" class="connection-panel" aria-labelledby="connectionPanelTitle" data-page-section="connections">
+      <div class="section-title connection-title">
+        <p class="kicker">CONNECTION LEDGER</p>
+        <div>
+          <h2 id="connectionPanelTitle">What is connected—and what is proven.</h2>
+          <p>Configuration, runtime readiness, transfer and competition proof remain separate signals. A listed provider is not presented as a successful model call.</p>
+        </div>
+      </div>
+      <dl class="connection-summary" aria-label="Current connection truth">
+        <div><dt>Local core</dt><dd id="connectionLocal">Checking runtime…</dd></div>
+        <div><dt>Provider execution</dt><dd id="connectionProvider">Not verified</dd></div>
+        <div><dt>External transfer</dt><dd id="connectionTransfer">No transfer recorded</dd></div>
+        <div><dt>Cloud proof</dt><dd id="connectionCloud">False</dd></div>
+      </dl>
+      <div class="connection-registry-head">
+        <div><span>AVAILABLE ROUTES</span><b>Configured adapters</b></div>
+        <a class="status-json-link" href="/api/status" target="_blank" rel="noopener">Open machine status ↗</a>
+      </div>
+      <div id="connectionRegistry" class="connection-registry" aria-live="polite"><p>Loading provider contracts…</p></div>
+      <p class="connection-warning"><b>Proof rule:</b> Nebius, Nemotron and NemoClaw remain unproven until their own bounded execution receipts exist. Local readiness never upgrades them automatically.</p>
     </section>
 
     <dialog id="folderDialog" class="folder-dialog" aria-labelledby="folderDialogTitle">
@@ -294,7 +342,7 @@ Which earlier wording changed?</textarea></label>
       </div>
     </dialog>
 
-    <section class="trust-boundary" aria-labelledby="boundaryTitle">
+    <section class="trust-boundary" aria-labelledby="boundaryTitle" data-page-section="analysis connections">
       <div class="section-title">
         <p class="kicker">CONTROLLED AGENT LOOP</p>
         <h2 id="boundaryTitle">Reasoning may travel. Authority does not.</h2>
@@ -313,17 +361,17 @@ Which earlier wording changed?</textarea></label>
       <p class="text-alt">Text alternative: approved local files are inventoried and indexed locally. A privacy gate may prepare selected pseudonymized chunks for an isolated Nemotron worker. Every returned claim is checked against local sources before any report or reversible action is accepted.</p>
     </section>
 
-    <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle">
+    <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle" data-page-section="overview">
       <div class="section-title">
         <p class="kicker">PRODUCT MAP</p>
         <h2 id="registerTitle">Five work areas. Twelve technical contracts.</h2>
       </div>
       <div class="register-table" role="list">
-        <button type="button" role="listitem" data-workflow-open="smart_inbox"><span>01 / START</span><h3>Document Center</h3><p>Intake and storage policy plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · storage_policy · cleanup_rules · mail_to_case · controlled_email</b></button>
-        <button type="button" role="listitem" data-workflow-open="evidence_analyst"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst</b></button>
-        <button type="button" role="listitem" data-workflow-open="folder_digest"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck folders, resolve valid document versions and compare source-grounded contact responsibilities.</p><b>folder_digest · version_resolver · contact_monitor</b></button>
-        <button type="button" role="listitem" data-artifact-open><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></button>
-        <button type="button" role="listitem" data-workflow-open="platform_proof"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></button>
+        <a href="/document-center" role="listitem"><span>01 / START</span><h3>Document Center</h3><p>Intake and storage policy plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · storage_policy · cleanup_rules · mail_to_case · controlled_email</b></a>
+        <a href="/analysis" role="listitem"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst</b></a>
+        <a href="/routines" role="listitem"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck folders, resolve valid document versions and compare source-grounded contact responsibilities.</p><b>folder_digest · version_resolver · contact_monitor</b></a>
+        <a href="/artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
+        <a href="/connections" role="listitem"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
       </div>
       <p class="text-alt"><b>ROADMAP:</b> UC10 remains the separate design track. Planned Document Services include synopses, bilingual sync, rich ingest and OCR, document redaction, RAG export, dossiers, templates, QA, forms, duplicate review and verified conversions; none are presented as active before their own acceptance gate.</p>
     </section>

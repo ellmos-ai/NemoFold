@@ -103,7 +103,11 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
             {"run_id": "web_preview", "job": job},
         )
 
-    assert "Your files." in html
+    assert 'href="/document-center"' in html
+    assert 'href="/analysis"' in html
+    assert 'href="/routines"' in html
+    assert 'href="/artifacts"' in html
+    assert 'href="/connections"' in html
     assert "Know what your documents prove." in html
     assert "EVIDENCE CHAIN" in html
     assert "ORIGIN" in html
@@ -161,6 +165,12 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
         "notebookRuns",
         "systemState",
         "cloudBadge",
+        "connectionPanel",
+        "connectionLocal",
+        "connectionProvider",
+        "connectionTransfer",
+        "connectionCloud",
+        "connectionRegistry",
     }
     assert required_ids <= set(element_ids)
     assert len(element_ids) == len(set(element_ids))
@@ -181,6 +191,29 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert preview["report"]["coverage"]["read_sources"] == 1
 
 
+@pytest.mark.parametrize(
+    ("route", "page"),
+    [
+        ("/document-center", "document"),
+        ("/analysis", "analysis"),
+        ("/routines", "routines"),
+        ("/artifacts", "artifacts"),
+        ("/connections", "connections"),
+    ],
+)
+def test_web_console_serves_each_product_area_as_a_real_route(tmp_path, route, page) -> None:
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + route, timeout=5) as response,  # noqa: S310
+    ):
+        html = response.read().decode()
+
+    assert response.status == 200
+    assert f'<body data-page="{page}">' in html
+    assert 'data-page-link="document"' in html
+    assert 'data-page-section="document analysis routines artifacts connections"' in html
+
+
 def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
     with (
         running_server(tmp_path) as base_url,
@@ -199,6 +232,9 @@ def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
     assert "loadArtifacts" in script
     assert "loadDraftInbox" in script
     assert "promptCatalogKey" in script
+    assert "pageConfiguration" in script
+    assert "configureRoutedPage" in script
+    assert "renderConnectionStatus" in script
 
 
 def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> None:
@@ -221,6 +257,9 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert ".voyage-scene.analysis-lab" in stylesheet
     assert ".research-notebook" in stylesheet
     assert ".notebook-sonar" in stylesheet
+    assert 'body[data-page="analysis"]' in stylesheet
+    assert ".route-workflows" in stylesheet
+    assert ".connection-registry" in stylesheet
 
 
 def test_web_console_rejects_cross_origin_posts(tmp_path) -> None:

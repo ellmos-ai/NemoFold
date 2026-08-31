@@ -26,6 +26,9 @@ Each stage has one job. Long labels must wrap inside their own cell; no label ma
 
 ## Component grammar
 
+- **Routed product areas:** Overview, Document Center, Analysis Lab, Folder Routines,
+  Artifact Studio, and Connections use distinct URLs and full page navigation. The
+  interface does not jump between distant anchors on one long dashboard.
 - **Case file:** states the current question and product truth without a marketing hero.
 - **Boundary ledger:** distinguishes local readiness, action mode and live cloud proof.
 - **Scope rail:** explains the strict job contract and execution sequence.
@@ -38,6 +41,21 @@ Each stage has one job. Long labels must wrap inside their own cell; no label ma
   provider route, and verified ledger trail together without persisting approval.
 - **Artifact Studio:** makes success, rejection, evidence ledgers, outputs, and hash
   verification directly inspectable.
+- **Connection ledger:** separates configured adapters, verified provider execution,
+  transfer receipts, and cloud or competition proof.
+
+### Navigation model
+
+- `/` is the short orientation and product map, not an execution form.
+- `/document-center` contains intake, policy, cleanup, mail-case and controlled-draft work.
+- `/analysis` contains large-corpus analysis, bundle creation, reports and the Research Notebook.
+- `/routines` contains recurring folder, version and contact checks.
+- `/artifacts` opens the verified artifact catalog directly.
+- `/connections` is status-only and never upgrades configuration into runtime proof.
+
+Each work page exposes only its relevant workflow choices. Navigation uses ordinary
+links so browser back/forward, refresh, copying a URL and opening a section in a new
+tab all behave predictably.
 
 ### Provider worker contract
 
@@ -57,7 +75,7 @@ checkbox and requires `privacy_mode=allow_once`.
 
 ## Density and responsive behavior
 
-Desktop uses a 270-pixel authority rail and a flexible console. Evidence-chain cells use `minmax(0, 1fr)` and `overflow-wrap: anywhere` so long translated or runtime-provided strings stay bounded. The chain becomes four and then two columns on narrower screens. Forms become one column below 680 pixels.
+Desktop uses a 270-pixel authority rail and a flexible console. Evidence-chain cells use `minmax(0, 1fr)` and `overflow-wrap: anywhere` so long translated or runtime-provided strings stay bounded. The chain becomes four and then two columns on narrower screens. Forms become one column below 680 pixels. Primary navigation becomes a horizontally scrollable route strip on narrow screens rather than disappearing.
 
 ## Accuracy and accessibility
 
@@ -80,6 +98,8 @@ Desktop uses a 270-pixel authority rail and a flexible console. Evidence-chain c
    approved external, running, rejected, and validated-result states.
 7. The Analysis Lab can save and reopen a multi-run Research Notebook, while Artifact
    Studio independently verifies the linked ledgers and outputs.
+8. Each primary navigation item opens a distinct route without an in-page scroll jump,
+   and browser back/forward preserves understandable navigation history.
 
 ## Provider acceptance gate
 
