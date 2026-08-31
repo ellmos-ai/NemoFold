@@ -22,22 +22,29 @@ evidence, and cannot safely maintain the file system where the work actually liv
 
 ## The product
 
-NemoFold separates durable authority from optional reasoning. Its five shared cores
-serve eight practical workflow chains:
+NemoFold separates durable authority from optional reasoning. Its shared cores serve
+twelve practical workflow chains:
 
 1. Smart Inbox routes new files after a full-batch collision and policy preflight.
 2. Storage Policies name, retain, move, copy, or convert files with dry-run and undo.
-3. Bundle Export creates deterministic document packages with manifests and hashes.
-4. Folder Digest records what is new, changed, stable, or deleted across runs.
-5. Evidence Analyst answers multiple questions with exact quotes, locations, conflicts,
+3. Cleanup Rules turns explicit corrections into readable suggestions while activating
+   only separately declared, reversible bulk rules.
+4. Mail-to-Case reads approved local EML files into a source-grounded case dossier.
+5. Controlled Email creates an inspectable local draft and exact approval digest while
+   blocking actual delivery without confirmation and a proven server adapter.
+6. Bundle Export creates deterministic document packages with manifests and hashes.
+7. Folder Digest records what is new, changed, stable, or deleted across runs.
+8. Evidence Analyst answers multiple questions with exact quotes, locations, conflicts,
    and measured coverage.
-6. Version Resolver selects the document valid at a requested date, not simply the
+9. Version Resolver selects the document valid at a requested date, not simply the
    newest filename.
-7. Artifact Studio renders validated claims consistently to five formats.
-8. Platform Proof distinguishes offline capability, package readiness, transfer, and
+10. Contact Monitor compares source-grounded contact and responsibility candidates
+    across named snapshots and never deletes a missing contact automatically.
+11. Artifact Studio renders validated claims consistently to five formats.
+12. Platform Proof distinguishes offline capability, package readiness, transfer, and
    live cloud evidence instead of conflating them.
 
-These contracts appear in five user-facing work areas rather than eight disconnected
+These contracts appear in five user-facing work areas rather than twelve disconnected
 tiles. The Analysis Lab adds UC07 Research Notebook as a persistent orchestration layer:
 one investigation can retain its goal, approved corpus, complete question/prompt set,
 chosen reasoning route, and multiple verified run ledgers. It is not a ninth execution

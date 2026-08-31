@@ -22,10 +22,14 @@ sanitized runtime test exists.
 |---|---|
 | Smart Inbox | Extension-based routing plan, all-or-nothing collision gate, journaled moves, resume and undo |
 | Naming, Format & Retention | Rule resolution, naming/retention checks, dry-run, reversible move/copy, and TXT/MD/RST conversion copies |
+| Cleanup Rules | Manual bulk routing plus readable suggestions learned only from explicit corrections; suggestions never activate themselves |
+| Mail-to-Case | Read-only local EML intake, source-grounded case dossier, manifest, and hash-recorded attachment extraction |
+| Controlled Email | Local RFC 822 draft and exact approval digest; send requests fail closed without immediate confirmation and a proven server adapter |
 | Universal Bundle | Deterministic text bundle, manifest, ZIP, hashes, and explicit unsupported/unreadable entries |
 | Continuous Folder Digest | Persistent inventory snapshots with new, changed, unchanged, and deleted source IDs |
 | Evidence Analyst | Persistent SQLite FTS index, multiple questions, exact quotes, source catalog, line/page locations, coverage and reports |
 | Version Resolver | Per-family resolution, explicit validity/date/version priority, named file-time fallback, and line comparison |
+| Contact Monitor | Source-quoted contact and responsibility candidates, named snapshot comparison, and no automatic deletion |
 | Report & Artifact Studio | A validated analysis contract rendered to Markdown, TXT, PDF, DOCX, and ODT |
 | NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; the real competition run remains open |
 
@@ -194,8 +198,15 @@ The console is organized as five work areas: Document Center, Analysis Lab, Fold
 Routines, Artifact Studio, and Connections. Analysis Lab combines deterministic bundle
 preparation, privacy preflight, Evidence Analyst, reusable prompt sets, and persistent
 Research Notebooks. Artifact Studio opens executed or blocked ledgers and verifies every
-recorded artifact hash. A model can prepare the same settings for browser review through
-`draft-save`, MCP, or the loopback draft API; approvals are always reset.
+recorded artifact hash. Document Center also contains explainable Cleanup Rules,
+read-only Mail-to-Case intake, and Controlled Email drafts; Folder Routines includes the
+source-grounded Contact Monitor. A model can prepare the same settings for browser review
+through `draft-save`, MCP, or the loopback draft API; approvals are always reset.
+
+Controlled Email does not claim network delivery in the default runtime. It writes the
+exact draft and approval digest, then blocks a send request until the same digest is
+confirmed and a separately proven server-side mail adapter exists. Mail-to-Case accepts
+approved local `.eml` files; it does not silently connect to a mailbox.
 
 ### Run the capability-minimal synthetic demo
 

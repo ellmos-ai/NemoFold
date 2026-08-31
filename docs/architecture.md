@@ -11,7 +11,7 @@ flowchart LR
     SURFACE --> APP[Application service]
     APP --> POLICY[Policy and privacy gate]
     APP --> LEDGER[Run ledger, resume and verification]
-    APP --> MODULES[Eight use-case modules]
+    APP --> MODULES[Twelve workflow modules]
     APP --> INV[Persistent inventory snapshots]
     MODULES --> EVIDENCE[Evidence engine]
     MODULES --> EXPORT[Artifact export]
@@ -45,7 +45,7 @@ flowchart LR
 
 Text alternative: a person calls one application service through the local web
 console, CLI, MCP server, or NemoFold skill. Every surface uses the same strict job
-contract. The service invokes eight modules. Local policy, ledger, evidence, index,
+contract. The service invokes twelve workflow modules. Local policy, ledger, evidence, index,
 files, and export components remain authoritative. The generic adapter route can call
 loopback models, personal CLI bridges, or official provider APIs, but accepts a result
 only after every quote matches the pseudonymized context supplied for that question.
@@ -105,7 +105,7 @@ contract used by the CLI and skill:
 
 | Console element | Question it asks | Contract effect | Empty or invalid behavior |
 |---|---|---|---|
-| Workflow | What job should NemoFold perform? | Selects one of the eight workflow modules | Unknown values are rejected |
+| Workflow | What job should NemoFold perform? | Selects one of the twelve workflow modules | Unknown values are rejected |
 | Approved input roots | Which folders may this run read? | Sets the only readable source roots | A missing or out-of-scope root blocks the run |
 | Approved target roots | Where may an action workflow write? | Bounds action destinations | Optional for analysis; required and checked for actions |
 | Questions | What should the evidence workflow answer? | Preserves ordered questions in the job snapshot | Required by question-driven workflows |

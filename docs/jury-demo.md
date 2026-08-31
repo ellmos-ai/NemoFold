@@ -33,7 +33,7 @@ replace an open state with a success claim.
 
 ### 0:00-0:18 — Hook
 
-**Picture:** Captain Nemo console hero, then the eight workflow names.
+**Picture:** Captain Nemo console hero, then the twelve workflow names.
 
 **Say:**
 
@@ -128,7 +128,7 @@ Use this only as a comparison cut; keep the remainder unchanged.
 
 > One folder arrives. NemoFold can index it, answer questions with exact citations,
 > track later changes, select the valid version, build reports, and safely organize the
-> files. The same persistent agent does all eight jobs—but its authority and memory
+> files. The same persistent agent does all twelve jobs—but its authority and memory
 > remain local.
 
 The trust-boundary opening is recommended because it differentiates NemoFold sooner and

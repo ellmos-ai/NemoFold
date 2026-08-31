@@ -32,7 +32,7 @@ Each stage has one job. Long labels must wrap inside their own cell; no label ma
 - **Job console:** groups mission, territory, and authority rather than presenting one undifferentiated form.
 - **Run dossier:** adds compact status facts above the full machine-readable JSON evidence.
 - **Trust boundary:** visually separates the local zone, policy gate and isolated worker.
-- **Product map:** groups eight technical contracts into Document Center, Analysis Lab,
+- **Product map:** groups twelve technical contracts into Document Center, Analysis Lab,
   Folder Routines, Artifact Studio, and Connections.
 - **Research Notebook:** keeps a local investigation goal, source scope, question set,
   provider route, and verified ledger trail together without persisting approval.

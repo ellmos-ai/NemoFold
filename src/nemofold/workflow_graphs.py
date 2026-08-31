@@ -3,6 +3,18 @@ from __future__ import annotations
 from collections.abc import Iterable
 
 WORKFLOW_DESCRIPTIONS: dict[str, str] = {
+    "cleanup_rules": (
+        "Turn explicit cleanup corrections into readable rule suggestions, then apply only "
+        "separately declared rules through dry-run, collision checks and the undo journal."
+    ),
+    "contact_monitor": (
+        "Extract source-grounded contact and responsibility candidates, compare them with a "
+        "named prior snapshot, and retain missing contacts for review instead of deleting them."
+    ),
+    "controlled_email": (
+        "Build a local RFC 822 draft and an exact approval digest. Sending remains blocked until "
+        "the digest is confirmed and a separately proven server adapter is configured."
+    ),
     "bundle_export": (
         "Build a deterministic document bundle, manifest, omission list, and integrity hashes "
         "without changing the source files."
@@ -14,6 +26,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
     "folder_digest": (
         "Run a repeatable folder routine: compare inventories, resolve version families, "
         "and publish a source-grounded digest of additions, changes, stable files, and deletions."
+    ),
+    "mail_to_case": (
+        "Read approved local EML files, preserve message provenance, and create a document case "
+        "with a manifest, readable dossier and hash-recorded attachments."
     ),
     "platform_proof": (
         "Show connection and proof status while keeping local readiness, provider execution, "
@@ -39,6 +55,30 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
 
 
 WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
+    "cleanup_rules": (
+        ("scan", "Scan", "approved cleanup set"),
+        ("corrections", "Corrections", "explicit user examples"),
+        ("suggest", "Suggest", "readable suffix rules"),
+        ("preview", "Dry run", "declared rules only"),
+        ("collision", "Preflight", "targets + collisions"),
+        ("gate", "Action gate", "immediate authority"),
+        ("journal", "Apply + undo", "reversible moves"),
+    ),
+    "contact_monitor": (
+        ("extract", "Extract", "approved documents + EML"),
+        ("candidates", "Candidates", "email + role evidence"),
+        ("compare", "Compare", "named prior snapshot"),
+        ("review", "Review", "new + changed + missing"),
+        ("retain", "Retain", "no automatic deletion"),
+    ),
+    "controlled_email": (
+        ("compose", "Compose", "local RFC 822 draft"),
+        ("attachments", "Attach", "approved source IDs"),
+        ("digest", "Approval digest", "exact content identity"),
+        ("gate", "Send gate", "immediate confirmation"),
+        ("adapter", "Mail adapter", "server-proven transport"),
+        ("receipt", "Receipt", "sent or honestly blocked"),
+    ),
     "bundle_export": (
         ("inventory", "Inventory", "approved sources"),
         ("extract", "Extract", "supported text"),
@@ -64,6 +104,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("synthesize", "Synthesize", "bounded digest"),
         ("validate", "Source check", "coverage + gaps"),
         ("report", "Digest", "versioned artifact"),
+    ),
+    "mail_to_case": (
+        ("inventory", "Inventory", "approved local EML"),
+        ("parse", "Parse", "headers + plain body"),
+        ("attachments", "Attachments", "safe names + hashes"),
+        ("case", "Case dossier", "source-grounded thread"),
+        ("manifest", "Manifest", "omissions + provenance"),
     ),
     "platform_proof": (
         ("local", "Local core", "ready or unavailable"),

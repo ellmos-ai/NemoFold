@@ -173,7 +173,7 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert status["draft_surface_enabled"] is True
     assert status["notebook_surface_enabled"] is True
     assert status["external_models_allowed"] is False
-    assert len(status["workflows"]) == 8
+    assert len(status["workflows"]) == 12
     assert preview["ok"] is True
     assert preview["report"]["workflow"] == "evidence_analyst"
     assert preview["report"]["status"] == "planned"

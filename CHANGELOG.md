@@ -4,6 +4,11 @@ All notable changes to NemoFold are documented here.
 
 ## Unreleased
 
+- Expand the shared job contract from eight to twelve workflows with explainable
+  Cleanup Rules, local Mail-to-Case intake, confirmation-bound Controlled Email
+  drafts, and a source-grounded Contact Monitor.
+- Keep cleanup suggestions inactive until declared as explicit rules, preserve each
+  mail-case run, block unproven email delivery, and never auto-delete missing contacts.
 - Add one provider-neutral analysis core shared by CLI, loopback HTTP API, and MCP,
   with Ollama, LM Studio, Codex CLI, Claude Code, OpenAI, and Anthropic adapters.
 - Keep generic provider execution receipts explicitly separate from the dedicated

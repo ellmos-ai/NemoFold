@@ -60,6 +60,26 @@ const providerModelDefaults = {
   anthropic: ""
 };
 const workflowDefaults = {
+  cleanup_rules: {
+    questions: [],
+    parameters: {rules: [], corrections: [], min_support: 2, allowed_extensions: [".txt", ".md"], naming_template: "{stem}{suffix}", original_policy: "move", retention_action: "keep"},
+    hint: "Cleanup Rules learns only readable suggestions from explicit corrections. Suggestions never activate themselves; declared rules run through dry-run, collision checks and undo receipts."
+  },
+  mail_to_case: {
+    questions: [],
+    parameters: {case_id: "new-case", case_title: "NemoFold mail case", include_attachments: true},
+    hint: "Mail-to-Case reads approved local .eml files and creates a provenance manifest, readable dossier and hash-recorded attachments without changing the source messages."
+  },
+  controlled_email: {
+    questions: [],
+    parameters: {from_address: "sender@example.org", to: ["recipient@example.org"], cc: [], subject: "Review draft", body: "Please review the attached material.", attachment_source_ids: [], send_requested: false},
+    hint: "Controlled Email creates a local RFC 822 draft and approval digest. Actual sending stays blocked until that exact digest is confirmed and a server-side mail adapter is proven."
+  },
+  contact_monitor: {
+    questions: [],
+    parameters: {},
+    hint: "Contact Monitor extracts email and responsibility candidates with source quotes, compares a named earlier snapshot and never auto-deletes missing contacts."
+  },
   evidence_analyst: {
     questions: ["When does the current policy begin?", "Which earlier wording changed?"],
     parameters: {max_chunks: 256, formats: ["md", "txt"], conflict_scan: true},
@@ -315,8 +335,8 @@ const voyageScenes = {
     className: "document-center",
     kicker: "INSIDE THE NAUTILUS",
     title: "Document Center",
-    text: "Your protected home on board: new documents arrive in Smart Inbox and follow the Storage Policies you can inspect before anything moves.",
-    roadmap: "START AREA · smart_inbox + storage_policy"
+    text: "Your protected home on board: intake, cleanup, local mail cases and controlled drafts remain inspectable before anything moves or leaves the Nautilus.",
+    roadmap: "ACTIVE · smart_inbox + storage_policy + cleanup_rules + mail_to_case + controlled_email"
   },
   analysis: {
     className: "analysis-lab",
@@ -329,8 +349,8 @@ const voyageScenes = {
     className: "folder-routines",
     kicker: "SONAR AND ECHO ROUTINES",
     title: "Folder Routines",
-    text: "Recurring folders return as sonar echoes: detect changes, resolve document families and identify the version valid at the requested time.",
-    roadmap: "ACTIVE · folder_digest + version_resolver"
+    text: "Recurring folders return as sonar echoes: detect changes, resolve valid versions and surface contact or responsibility changes without automatic deletion.",
+    roadmap: "ACTIVE · folder_digest + version_resolver + contact_monitor"
   },
   artifacts: {
     className: "artifact-library",
@@ -351,9 +371,9 @@ const voyageScenes = {
 function updateVoyageScene(area = null) {
   const workflow = $("workflow").value;
   const key = area || (
-    ["smart_inbox", "storage_policy"].includes(workflow) ? "document"
+    ["smart_inbox", "storage_policy", "cleanup_rules", "mail_to_case", "controlled_email"].includes(workflow) ? "document"
       : ["bundle_export", "evidence_analyst"].includes(workflow) ? "analysis"
-        : ["folder_digest", "version_resolver"].includes(workflow) ? "routines"
+        : ["folder_digest", "version_resolver", "contact_monitor"].includes(workflow) ? "routines"
           : workflow === "report_studio" ? "artifacts" : "connections"
   );
   const scene = voyageScenes[key];

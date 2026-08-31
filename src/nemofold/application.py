@@ -13,6 +13,8 @@ from .action_journal import ActionJournal
 from .anonymizer import pseudonymize_questions_and_receipts
 from .artifacts import write_text_artifact
 from .bundle_export import create_text_bundle
+from .cleanup_rules import suggest_cleanup_rules
+from .contact_monitor import build_contact_monitor
 from .contracts import (
     ActionMode,
     ArtifactRecord,
@@ -34,6 +36,7 @@ from .folder_digest import build_digest
 from .inventory import InventoryResult, scan_paths
 from .job_io import job_snapshot_payload, load_job_snapshot, validate_workflow_parameters
 from .ledger import RunLedger, validate_run_id
+from .mail_workflows import build_controlled_draft, build_mail_case, parse_eml
 from .nemoclaw_package import NemoClawPackage, export_job_package
 from .policy import PolicyConfig, PolicyGate
 from .report_studio import ReportDocument, render_report_formats
@@ -296,6 +299,12 @@ def preview_job(
             )
         elif prepared.workflow == "smart_inbox":
             actions, artifacts, coverage, preview_metadata = _execute_smart_inbox(
+                prepared_read,
+                inventory,
+                run_id=run_id,
+            )
+        elif prepared.workflow == "cleanup_rules":
+            actions, artifacts, coverage, preview_metadata = _execute_cleanup_rules(
                 prepared_read,
                 inventory,
                 run_id=run_id,
@@ -1216,6 +1225,229 @@ def _execute_smart_inbox(
     return _finalize_action_plans(job, inventory, plans, run_id=run_id)
 
 
+def _execute_cleanup_rules(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    corrections = job.parameters.get("corrections", [])
+    rules_value = job.parameters.get("rules", [])
+    if not isinstance(corrections, list) or not isinstance(rules_value, list):
+        raise ValueError("cleanup rules and corrections must be lists")
+    suggestions = suggest_cleanup_rules(
+        inventory.records,
+        corrections,
+        min_support=int(job.parameters.get("min_support", 2)),
+        target_root_count=len(job.target_roots),
+    )
+    suggestion_record = write_text_artifact(
+        Path(job.output_dir) / f"{run_id}.cleanup-suggestions.json",
+        json.dumps(
+            {
+                "schema": "nemofold.cleanup-suggestions.v1",
+                "run_id": run_id,
+                "suggestions": [item.to_payload() for item in suggestions],
+                "activation": "manual_explicit_rule_only",
+                "automatic_activation": False,
+            },
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n",
+        "cleanup-rule-suggestions",
+    )
+    routes: list[RoutingRule] = []
+    normalized_suffixes: set[str] = set()
+    for value in rules_value:
+        suffixes = value.get("suffixes")
+        target_index = value.get("target_root")
+        if (
+            not isinstance(suffixes, list)
+            or any(not isinstance(item, str) for item in suffixes)
+            or isinstance(target_index, bool)
+            or not isinstance(target_index, int)
+            or not 0 <= target_index < len(job.target_roots)
+        ):
+            raise ValueError("cleanup rule is invalid")
+        target = Path(job.target_roots[target_index])
+        if not target.is_dir():
+            raise FileNotFoundError(target)
+        route = RoutingRule(tuple(suffixes), target)
+        routes.append(route)
+        normalized_suffixes.update(route.suffixes)
+    matched_records = tuple(
+        record
+        for record in inventory.records
+        if Path(record.path).suffix.casefold() in normalized_suffixes
+    )
+    plans = (
+        plan_inbox(
+            (record.path for record in matched_records),
+            rules=tuple(routes),
+            policies=_action_policy_set(job, default_original="move"),
+        )
+        if routes
+        else ()
+    )
+    common_metadata: dict[str, object] = {
+        "suggested_rule_count": len(suggestions),
+        "explicit_rule_count": len(routes),
+        "matched_file_count": len(matched_records),
+        "unmatched_file_count": len(inventory.records) - len(matched_records),
+        "automatic_rule_activation": False,
+    }
+    if job.action_mode is ActionMode.APPLY and not plans:
+        raise WorkflowBlocked(
+            ("no_explicit_cleanup_actions",),
+            actions=("cleanup_suggestions_written", "cleanup_apply_blocked"),
+            artifacts=(suggestion_record,),
+            coverage=_action_coverage(inventory),
+            metadata=common_metadata,
+        )
+    try:
+        actions, artifacts, coverage, metadata = _finalize_action_plans(
+            job, inventory, plans, run_id=run_id
+        )
+    except WorkflowBlocked as exc:
+        raise WorkflowBlocked(
+            exc.errors,
+            actions=("cleanup_suggestions_written",) + exc.actions,
+            artifacts=(suggestion_record,) + exc.artifacts,
+            coverage=exc.coverage,
+            metadata={**common_metadata, **exc.metadata},
+        ) from exc
+    return (
+        ("cleanup_suggestions_written",) + actions,
+        (suggestion_record,) + artifacts,
+        coverage,
+        {**common_metadata, **metadata},
+    )
+
+
+def _execute_mail_to_case(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    case_id = job.parameters.get("case_id", f"case-{run_id}")
+    case_title = job.parameters.get("case_title", "NemoFold mail case")
+    if not isinstance(case_id, str) or not isinstance(case_title, str):
+        raise ValueError("case_id and case_title must be strings")
+    artifacts, read_ids, metadata = build_mail_case(
+        inventory.records,
+        job.output_dir,
+        run_id=run_id,
+        case_id=case_id,
+        case_title=case_title,
+        include_attachments=job.parameters.get("include_attachments", True) is True,
+    )
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=read_ids,
+        cited_source_ids=read_ids,
+    )
+    return (
+        ("mail_sources_read", "case_manifest_written", "attachments_extracted"),
+        artifacts,
+        coverage,
+        metadata,
+    )
+
+
+def _execute_controlled_email(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    result = build_controlled_draft(
+        inventory.records, job.output_dir, job.parameters, run_id=run_id
+    )
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=result.attachment_source_ids,
+        cited_source_ids=(),
+    )
+    metadata: dict[str, object] = {
+        "approval_digest": result.approval_digest,
+        "send_requested": job.parameters.get("send_requested", False) is True,
+        "send_performed": False,
+        "mail_adapter_configured": False,
+    }
+    if job.parameters.get("send_requested", False) is True:
+        reasons: list[str] = []
+        if job.action_mode is not ActionMode.APPLY:
+            reasons.append("mail_send_requires_apply")
+        confirmation = job.parameters.get("confirmation_digest")
+        if not confirmation:
+            reasons.append("mail_confirmation_required")
+        elif confirmation != result.approval_digest:
+            reasons.append("mail_confirmation_mismatch")
+        reasons.append("mail_adapter_unavailable")
+        raise WorkflowBlocked(
+            tuple(reasons),
+            actions=("mail_draft_written", "mail_send_blocked"),
+            artifacts=result.records,
+            coverage=coverage,
+            metadata=metadata,
+        )
+    return (
+        ("mail_draft_written", "mail_confirmation_receipt_written"),
+        result.records,
+        coverage,
+        metadata,
+    )
+
+
+def _execute_contact_monitor(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    texts = _read_text_sources(inventory)
+    for record in inventory.records:
+        if Path(record.path).suffix.casefold() != ".eml":
+            continue
+        try:
+            mail = parse_eml(record)
+        except (OSError, ValueError, UnicodeError):
+            continue
+        texts[record.source_id] = "\n".join(
+            (
+                f"From: {mail.sender}",
+                *(f"To/Cc: {item}" for item in mail.recipients),
+                mail.body_text,
+            )
+        )
+    artifacts, read_ids, metadata = build_contact_monitor(
+        inventory.records,
+        texts,
+        job.output_dir,
+        run_id=run_id,
+        since_run_id=job.parameters.get("contact_since_run_id"),
+    )
+    cited_value = metadata.get("cited_source_ids", ())
+    cited_ids = (
+        tuple(str(item) for item in cited_value)
+        if isinstance(cited_value, (list, tuple))
+        else ()
+    )
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=read_ids,
+        cited_source_ids=cited_ids,
+    )
+    return (
+        ("contact_sources_read", "contact_candidates_extracted", "contact_changes_compared"),
+        artifacts,
+        coverage,
+        metadata,
+    )
+
+
 def _dispatch_workflow(
     job: JobEnvelope,
     inventory: InventoryResult,
@@ -1239,6 +1471,14 @@ def _dispatch_workflow(
         return _execute_storage_policy(job, inventory, run_id=run_id)
     if job.workflow == "smart_inbox":
         return _execute_smart_inbox(job, inventory, run_id=run_id)
+    if job.workflow == "cleanup_rules":
+        return _execute_cleanup_rules(job, inventory, run_id=run_id)
+    if job.workflow == "mail_to_case":
+        return _execute_mail_to_case(job, inventory, run_id=run_id)
+    if job.workflow == "controlled_email":
+        return _execute_controlled_email(job, inventory, run_id=run_id)
+    if job.workflow == "contact_monitor":
+        return _execute_contact_monitor(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
 
 

@@ -11,10 +11,14 @@
       "enum": [
         "smart_inbox",
         "storage_policy",
+        "cleanup_rules",
+        "mail_to_case",
+        "controlled_email",
         "bundle_export",
         "folder_digest",
         "evidence_analyst",
         "version_resolver",
+        "contact_monitor",
         "report_studio",
         "platform_proof"
       ]

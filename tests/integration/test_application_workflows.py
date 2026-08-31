@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from datetime import date
+from email.message import EmailMessage
 
 from nemofold.application import ExecutionConfig, run_job
 from nemofold.contracts import ActionMode, JobEnvelope, PrivacyMode
@@ -364,3 +366,150 @@ def test_smart_inbox_collision_blocks_the_entire_batch_before_any_move(tmp_path)
     assert (inbox / "a.txt").is_file()
     assert (inbox / "b.txt").is_file()
     assert not (target / "a.txt").exists()
+
+
+def test_cleanup_rules_suggest_from_corrections_but_apply_only_explicit_rules(
+    tmp_path,
+) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "one.txt").write_text("one", encoding="utf-8")
+    (documents / "two.txt").write_text("two", encoding="utf-8")
+    target = tmp_path / "archive"
+    target.mkdir()
+    current = JobEnvelope(
+        workflow="cleanup_rules",
+        input_roots=(str(documents),),
+        target_roots=(str(target),),
+        output_dir=str(tmp_path / "output"),
+        action_mode=ActionMode.DRY_RUN,
+        parameters={
+            "rules": [{"suffixes": [".txt"], "target_root": 0}],
+            "corrections": [
+                {"source": "one.txt", "target_root": 0},
+                {"source": "two.txt", "target_root": 0},
+            ],
+            "min_support": 2,
+        },
+    )
+
+    result = run_job(current, config(tmp_path), run_id="cleanup_1")
+
+    assert result.report.status.value == "executed"
+    assert result.report.metadata["suggested_rule_count"] == 1
+    assert result.report.metadata["matched_file_count"] == 2
+    assert (documents / "one.txt").is_file()
+    suggestions = json.loads(
+        (tmp_path / "output" / "cleanup_1.cleanup-suggestions.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert suggestions["automatic_activation"] is False
+    assert suggestions["suggestions"][0]["suffixes"] == [".txt"]
+
+    applied = run_job(
+        replace(current, action_mode=ActionMode.APPLY),
+        ExecutionConfig(
+            allowed_roots=(str(tmp_path),),
+            apply_actions_allowed=True,
+        ),
+        run_id="cleanup_apply_1",
+    )
+
+    assert applied.report.status.value == "executed"
+    assert applied.report.metadata["applied_actions"] == 2
+    assert (target / "one.txt").is_file()
+    assert (target / "two.txt").is_file()
+    assert not (documents / "one.txt").exists()
+
+
+def test_mail_to_case_extracts_local_eml_and_attachment_without_touching_source(
+    tmp_path,
+) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    source = documents / "message.eml"
+    message = EmailMessage()
+    message["From"] = "Alice Example <alice@example.org>"
+    message["To"] = "case@example.org"
+    message["Subject"] = "Case update"
+    message.set_content("The review is complete.")
+    message.add_attachment(
+        b"evidence", maintype="text", subtype="plain", filename="evidence.txt"
+    )
+    source.write_bytes(message.as_bytes())
+    current = job(
+        tmp_path,
+        "mail_to_case",
+        parameters={
+            "case_id": "case-42",
+            "case_title": "Case 42",
+            "include_attachments": True,
+        },
+    )
+
+    result = run_job(current, config(tmp_path), run_id="mail_case_1")
+
+    assert result.report.status.value == "executed"
+    assert result.report.metadata["message_count"] == 1
+    assert result.report.metadata["attachment_count"] == 1
+    assert source.is_file()
+    case = json.loads(
+        (
+            tmp_path
+            / "output"
+            / "cases"
+            / "case-42"
+            / "mail_case_1"
+            / "case.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert case["source_files_unchanged"] is True
+    assert case["messages"][0]["subject"] == "Case update"
+
+
+def test_controlled_email_writes_draft_and_blocks_unavailable_send_adapter(tmp_path) -> None:
+    current = job(
+        tmp_path,
+        "controlled_email",
+        parameters={
+            "from_address": "sender@example.org",
+            "to": ["recipient@example.org"],
+            "cc": [],
+            "subject": "Review",
+            "body": "Please review this draft.",
+            "attachment_source_ids": [],
+            "send_requested": True,
+        },
+    )
+
+    result = run_job(current, config(tmp_path), run_id="mail_draft_1")
+
+    assert result.report.status.value == "blocked"
+    assert "mail_confirmation_required" in result.report.errors
+    assert "mail_adapter_unavailable" in result.report.errors
+    assert result.report.metadata["send_performed"] is False
+    assert (tmp_path / "output" / "mail-drafts" / "mail_draft_1" / "draft.eml").is_file()
+
+
+def test_contact_monitor_keeps_source_quotes_and_never_deletes(tmp_path) -> None:
+    current = job(tmp_path, "contact_monitor")
+    (tmp_path / "documents" / "owners.txt").write_text(
+        "Alice Example <alice@example.org> is the responsible contact for invoices.",
+        encoding="utf-8",
+    )
+
+    result = run_job(current, config(tmp_path), run_id="contacts_1")
+
+    assert result.report.status.value == "executed"
+    assert result.report.metadata["candidate_count"] == 1
+    assert result.report.metadata["automatic_deletion"] is False
+    snapshot = json.loads(
+        (tmp_path / "output" / "contacts" / "contacts_1.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert snapshot["candidates"][0]["email"] == "alice@example.org"
+    assert snapshot["candidates"][0]["evidence"][0]["quote"].startswith(
+        "Alice Example"
+    )

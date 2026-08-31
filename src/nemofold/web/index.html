@@ -52,9 +52,9 @@
     </section>
 
     <nav class="product-areas" aria-label="NemoFold work areas">
-      <button type="button" data-workflow-open="smart_inbox"><span>START</span><b>Document Center</b><small>Smart Inbox · Storage Policies</small></button>
+      <button type="button" data-workflow-open="smart_inbox"><span>START</span><b>Document Center</b><small>Inbox · cleanup · mail cases · drafts</small></button>
       <button type="button" data-workflow-open="evidence_analyst"><span>ANALYZE</span><b>Analysis Lab</b><small>Bundle Export → Evidence Analyst</small></button>
-      <button type="button" data-workflow-open="folder_digest"><span>ROUTINES</span><b>Folder Routines</b><small>Folder Digest · Version Resolver</small></button>
+      <button type="button" data-workflow-open="folder_digest"><span>ROUTINES</span><b>Folder Routines</b><small>Digest · versions · contact monitor</small></button>
       <button type="button" data-artifact-open><span>OUTPUT</span><b>Artifact Studio</b><small>Reports · ledgers · verified files</small></button>
       <button type="button" data-workflow-open="platform_proof"><span>STATUS</span><b>Connections</b><small>Platform proof only</small></button>
     </nav>
@@ -63,8 +63,8 @@
       <div class="voyage-copy">
         <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
         <h2 id="voyageSceneTitle">Document Center</h2>
-        <p id="voyageSceneText">Your protected home on board: new documents arrive in Smart Inbox and follow the Storage Policies you can inspect before anything moves.</p>
-        <small id="voyageRoadmap">START AREA · smart_inbox + storage_policy</small>
+        <p id="voyageSceneText">Your protected home on board: intake, cleanup, local mail cases and controlled drafts remain inspectable before anything moves or leaves the Nautilus.</p>
+        <small id="voyageRoadmap">ACTIVE · inbox + policy + cleanup + mail cases + controlled drafts</small>
       </div>
     </section>
 
@@ -131,7 +131,7 @@
                 <small id="draftState">Drafts never retain external-transfer or file-action approval.</small>
               </div>
               <div class="workflow-choice">
-                <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>report_studio</option><option>platform_proof</option></select></label>
+                <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>platform_proof</option></select></label>
                 <p id="workflowHint" class="selection-description">Smart Inbox is the Document Center entry point. Storage Policies are its controlled routing and retention settings.</p>
               </div>
               <div class="run-id-control">
@@ -316,15 +316,16 @@ Which earlier wording changed?</textarea></label>
     <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle">
       <div class="section-title">
         <p class="kicker">PRODUCT MAP</p>
-        <h2 id="registerTitle">Five work areas. Eight technical contracts.</h2>
+        <h2 id="registerTitle">Five work areas. Twelve technical contracts.</h2>
       </div>
       <div class="register-table" role="list">
-        <button type="button" role="listitem" data-workflow-open="smart_inbox"><span>01 / START</span><h3>Document Center</h3><p>Smart Inbox with Storage Policies as its routing, naming and retention settings.</p><b>smart_inbox · storage_policy</b></button>
+        <button type="button" role="listitem" data-workflow-open="smart_inbox"><span>01 / START</span><h3>Document Center</h3><p>Intake and storage policy plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · storage_policy · cleanup_rules · mail_to_case · controlled_email</b></button>
         <button type="button" role="listitem" data-workflow-open="evidence_analyst"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst</b></button>
-        <button type="button" role="listitem" data-workflow-open="folder_digest"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck recurring folders and resolve the document version valid at a chosen date.</p><b>folder_digest · version_resolver</b></button>
+        <button type="button" role="listitem" data-workflow-open="folder_digest"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck folders, resolve valid document versions and compare source-grounded contact responsibilities.</p><b>folder_digest · version_resolver · contact_monitor</b></button>
         <button type="button" role="listitem" data-artifact-open><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></button>
         <button type="button" role="listitem" data-workflow-open="platform_proof"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></button>
       </div>
+      <p class="text-alt"><b>ROADMAP / UC10:</b> Brief and business-card design remains planned and is not presented as an active document-processing workflow.</p>
     </section>
   </main>
   <footer><span>NemoFold 0.1</span><span>Evidence before inference</span><span>Live Nebius proof remains an explicit gate</span></footer>

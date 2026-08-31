@@ -14,6 +14,10 @@ SUPPORTED_WORKFLOWS = frozenset(
     {
         "smart_inbox",
         "storage_policy",
+        "cleanup_rules",
+        "mail_to_case",
+        "controlled_email",
+        "contact_monitor",
         "bundle_export",
         "folder_digest",
         "evidence_analyst",
@@ -64,6 +68,31 @@ WORKFLOW_PARAMETER_FIELDS = {
             "retention_rule",
         }
     ),
+    "cleanup_rules": frozenset(
+        {
+            "allowed_extensions",
+            "corrections",
+            "min_support",
+            "naming_template",
+            "original_policy",
+            "retention_action",
+            "rules",
+        }
+    ),
+    "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),
+    "controlled_email": frozenset(
+        {
+            "attachment_source_ids",
+            "body",
+            "cc",
+            "confirmation_digest",
+            "from_address",
+            "send_requested",
+            "subject",
+            "to",
+        }
+    ),
+    "contact_monitor": frozenset({"contact_since_run_id"}),
     "bundle_export": frozenset(
         {"bundle_format", "bundle_name", "include_manifest", "order", "recursive"}
     ),
@@ -121,6 +150,67 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             or not 0 <= threshold <= 1
         ):
             raise ValueError("confidence_threshold must be between 0 and 1")
+    elif job.workflow == "cleanup_rules":
+        minimum = job.parameters.get("min_support", 2)
+        if isinstance(minimum, bool) or not isinstance(minimum, int) or minimum < 1:
+            raise ValueError("min_support must be a positive integer")
+        for name in ("rules", "corrections"):
+            value = job.parameters.get(name, [])
+            if not isinstance(value, list) or any(not isinstance(item, dict) for item in value):
+                raise ValueError(f"{name} must be a list of objects")
+        seen_cleanup_suffixes: set[str] = set()
+        for rule in job.parameters.get("rules", []):
+            if set(rule) != {"suffixes", "target_root"}:
+                raise ValueError("cleanup rule must contain only suffixes and target_root")
+            if not isinstance(rule["suffixes"], list) or any(
+                not isinstance(item, str) or not item.strip() for item in rule["suffixes"]
+            ):
+                raise ValueError("cleanup rule suffixes must be non-empty strings")
+            if isinstance(rule["target_root"], bool) or not isinstance(
+                rule["target_root"], int
+            ):
+                raise ValueError("cleanup rule target_root must be an integer")
+            normalized = {
+                item.casefold() if item.startswith(".") else f".{item.casefold()}"
+                for item in rule["suffixes"]
+            }
+            if seen_cleanup_suffixes & normalized:
+                raise ValueError("cleanup rule suffixes must not overlap")
+            seen_cleanup_suffixes.update(normalized)
+        for correction in job.parameters.get("corrections", []):
+            if set(correction) != {"source", "target_root"}:
+                raise ValueError("cleanup correction must contain only source and target_root")
+    elif job.workflow == "mail_to_case":
+        for name in ("case_id", "case_title"):
+            value = job.parameters.get(name)
+            if value is not None and (not isinstance(value, str) or not value.strip()):
+                raise ValueError(f"{name} must be a non-empty string")
+        if "include_attachments" in job.parameters and not isinstance(
+            job.parameters["include_attachments"], bool
+        ):
+            raise ValueError("include_attachments must be a boolean")
+    elif job.workflow == "controlled_email":
+        for name in ("to", "cc", "attachment_source_ids"):
+            value = job.parameters.get(name, [])
+            if not isinstance(value, list) or any(
+                not isinstance(item, str) or not item.strip() for item in value
+            ):
+                raise ValueError(f"{name} must be a list of non-empty strings")
+        for name in ("from_address", "subject", "body", "confirmation_digest"):
+            value = job.parameters.get(name)
+            if value is not None and not isinstance(value, str):
+                raise ValueError(f"{name} must be a string")
+        if "send_requested" in job.parameters and not isinstance(
+            job.parameters["send_requested"], bool
+        ):
+            raise ValueError("send_requested must be a boolean")
+    elif job.workflow == "contact_monitor":
+        since_run_id = job.parameters.get("contact_since_run_id")
+        if since_run_id is not None and (
+            not isinstance(since_run_id, str)
+            or not re.fullmatch(r"[A-Za-z0-9_-]+", since_run_id)
+        ):
+            raise ValueError("since_run_id contains unsafe characters")
     elif job.workflow == "bundle_export":
         choice("bundle_format", {"text"})
         choice("order", {"display_name"})

@@ -22,10 +22,14 @@ gekennzeichnet, wenn ein echter, bereinigter Laufzeitnachweis vorliegt.
 |---|---|
 | Smart Inbox | Dateiendungsbasierter Ablageplan, Alles-oder-nichts-Kollisionsgate, protokollierte Verschiebungen, Fortsetzen und Rückgängig |
 | Naming, Format & Retention | Regelauflösung, Namens- und Aufbewahrungsprüfungen, Dry-Run, reversible Verschiebe-/Kopiervorgänge sowie Konvertierungskopien für TXT/MD/RST |
+| Cleanup Rules | Manuelle Massenablage plus lesbare Vorschläge, die nur aus expliziten Korrekturen entstehen und sich nie selbst aktivieren |
+| Mail-to-Case | Schreibgeschützte lokale EML-Aufnahme, quellengebundenes Falldossier, Manifest und gehashte Anlagenextraktion |
+| Controlled Email | Lokaler RFC-822-Entwurf und exakter Freigabe-Hash; Versandwünsche blockieren ohne unmittelbare Bestätigung und belegten Serveradapter |
 | Universal Bundle | Deterministisches Textbündel, Manifest, ZIP, Hashes und explizite Einträge für nicht unterstützte oder unlesbare Dateien |
 | Continuous Folder Digest | Dauerhafte Bestands-Snapshots mit neuen, geänderten, unveränderten und gelöschten Quell-IDs |
 | Evidence Analyst | Persistenter SQLite-FTS-Index, mehrere Fragen, exakte Zitate, Quellenkatalog, Zeilen-/Seitenfundstellen, Abdeckung und Berichte |
 | Version Resolver | Auflösung je Dateifamilie, explizite Priorität für Gültigkeit/Datum/Version, benannter Dateizeit-Fallback und Zeilenvergleich |
+| Contact Monitor | Quellenzitierte Kontakt- und Zuständigkeitskandidaten, Vergleich benannter Snapshots und keine automatische Löschung |
 | Report & Artifact Studio | Validierter Analysevertrag, ausgegeben als Markdown, TXT, PDF, DOCX und ODT |
 | NemoClaw Platform & Proof | Pfadfreie, gehashte Auftragspakete mit Fail-closed-Adapter für die Nebius Token Factory und unabhängig prüfbarem Ergebnisbeleg; der echte Wettbewerbslauf ist weiterhin offen |
 
