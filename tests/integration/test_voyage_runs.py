@@ -6,7 +6,14 @@ from pathlib import Path
 import pytest
 
 from nemofold.application import ExecutionConfig
-from nemofold.voyage_runs import LOCAL_CORE, resolve_model, run_voyage
+from nemofold.model_authority import (
+    AUTHORITY_CHAIN_WINS,
+    LEVEL_CHAIN,
+    LEVEL_LINK,
+    LEVEL_RUN_OVERRIDE,
+    LOCAL_CORE,
+)
+from nemofold.voyage_runs import run_voyage
 from nemofold.voyages import LOCAL_ONLY, VoyageStore
 
 NOTE_A = """Vertragsstand April
@@ -159,12 +166,12 @@ def test_a_blocked_step_stops_the_chain_and_says_where(tmp_path) -> None:
     assert "Later steps were not started" in markdown
 
 
-def test_the_dossier_names_the_model_that_actually_ran(tmp_path) -> None:
+def test_the_dossier_names_the_model_and_the_level_that_decided(tmp_path) -> None:
     documents = _corpus(tmp_path)
     store = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),))
     chain = _chain(tmp_path, documents)
     chain["steps"][0]["model_pref"] = {
-        "preferred": {"provider": "openai", "model": "gpt-4o-mini"},
+        "preferred": {"provider": "ollama", "model": "qwen3"},
         "fallback": LOCAL_ONLY,
     }
     voyage = store.save(chain)
@@ -176,35 +183,132 @@ def test_the_dossier_names_the_model_that_actually_ran(tmp_path) -> None:
         base_dir=tmp_path,
     )
 
-    step = result.steps[0]
-    # The preference did not run. The dossier says what did, and why.
-    assert step.model_used == LOCAL_CORE
-    assert "was not applied" in step.model_note
-    assert "per-run approval" in step.model_note
-    assert "lowers exposure" in step.model_note
+    first, second = result.steps
+    assert first.model_used == "ollama:qwen3"
+    assert first.model_level == LEVEL_LINK
+    assert "link level" in first.model_note
+    # The step without a preference falls back to the local default.
+    assert second.model_used == LOCAL_CORE
+    assert second.model_level == "default"
 
     dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
-    assert dossier["steps"][0]["model_used"] == LOCAL_CORE
+    assert dossier["steps"][0]["model_level"] == LEVEL_LINK
+    assert dossier["model_authority"] == "links_win"
+    assert dossier["run_level_override"] is None
+
+    markdown = Path(result.dossier_path).with_suffix(".md").read_text(encoding="utf-8")
+    assert "level: link" in markdown
+    assert "outbound rights: draft_only" in markdown
 
 
-def test_an_allowed_external_preference_still_does_not_escalate_a_chain() -> None:
-    pref = {
+def test_a_chain_that_overrides_its_links_says_so_in_the_dossier(tmp_path) -> None:
+    documents = _corpus(tmp_path)
+    store = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),))
+    chain = _chain(tmp_path, documents)
+    chain["steps"][0]["model_pref"] = {
+        "preferred": {"provider": "lm-studio", "model": "mistral"},
+        "fallback": LOCAL_ONLY,
+    }
+    chain["model_pref"] = {
+        "preferred": {"provider": "ollama", "model": "qwen3"},
+        "fallback": LOCAL_ONLY,
+    }
+    chain["model_authority"] = AUTHORITY_CHAIN_WINS
+    chain["authority_reason"] = "Datenschutzkritisch: laeuft immer lokal."
+    voyage = store.save(chain)
+
+    result = run_voyage(
+        voyage,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="chain_authority",
+        base_dir=tmp_path,
+    )
+
+    first = result.steps[0]
+    assert first.model_used == "ollama:qwen3"
+    assert first.model_level == LEVEL_CHAIN
+    assert "overrides this step's own setting" in first.model_note
+    dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
+    assert dossier["model_authority"] == AUTHORITY_CHAIN_WINS
+    assert dossier["authority_reason"] == "Datenschutzkritisch: laeuft immer lokal."
+
+
+def test_a_run_level_override_applies_once_and_changes_nothing_stored(tmp_path) -> None:
+    documents = _corpus(tmp_path)
+    store = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),))
+    chain = _chain(tmp_path, documents)
+    chain["steps"][0]["model_pref"] = {
+        "preferred": {"provider": "ollama", "model": "qwen3"},
+        "fallback": LOCAL_ONLY,
+    }
+    voyage = store.save(chain)
+
+    result = run_voyage(
+        voyage,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="chain_override",
+        base_dir=tmp_path,
+        model_override={"provider": "lm-studio", "model": "mistral"},
+    )
+
+    assert all(step.model_used == "lm-studio:mistral" for step in result.steps)
+    assert all(step.model_level == LEVEL_RUN_OVERRIDE for step in result.steps)
+    dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
+    assert dossier["run_level_override"] == "lm-studio:mistral"
+
+    # The stored voyage is untouched by the one-off choice.
+    stored = store.load(voyage["voyage_id"])
+    assert stored["steps"][0]["model_pref"]["preferred"]["provider"] == "ollama"
+
+
+def test_a_local_only_cap_stops_the_chain_instead_of_escalating(tmp_path) -> None:
+    documents = _corpus(tmp_path)
+    store = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),))
+    chain = _chain(tmp_path, documents)
+    chain["model_pref"] = LOCAL_ONLY
+    chain["steps"][0]["model_pref"] = {
         "preferred": {"provider": "openai", "model": "gpt-4o-mini"},
         "fallback": LOCAL_ONLY,
     }
+    voyage = store.save(chain)
 
-    used, note = resolve_model(pref, external_allowed=True)
+    result = run_voyage(
+        voyage,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="chain_capped",
+        base_dir=tmp_path,
+    )
 
-    # Even with the server gate open, a chained step does not raise exposure.
-    assert used == LOCAL_CORE
-    assert "raising exposure is never automatic" in note
-    assert "fallback is local-only" in note
+    assert result.status == "needs_user_input"
+    assert result.stopped_at == 1
+    step = result.steps[0]
+    assert step.status == "needs_user_input"
+    assert step.errors == ("local_only_cap",)
+    assert step.ledger_path is None  # nothing ran
+    assert step.artifact_count == 0
+
+    markdown = Path(result.dossier_path).with_suffix(".md").read_text(encoding="utf-8")
+    assert "conflicts with the chain's local-only cap" in markdown
+    assert "needs your decision" in markdown
 
 
-def test_no_preference_is_reported_as_such() -> None:
-    used, note = resolve_model(None, external_allowed=False)
-    assert used == LOCAL_CORE
-    assert "No model preference" in note
+def test_the_cap_also_holds_against_a_run_level_override(tmp_path) -> None:
+    documents = _corpus(tmp_path)
+    store = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),))
+    chain = _chain(tmp_path, documents)
+    chain["model_pref"] = LOCAL_ONLY
+    voyage = store.save(chain)
+
+    result = run_voyage(
+        voyage,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="chain_capped_override",
+        base_dir=tmp_path,
+        model_override={"provider": "anthropic", "model": "claude-sonnet-4-5"},
+    )
+
+    assert result.status == "needs_user_input"
+    assert result.steps[0].errors == ("local_only_cap",)
 
 
 def test_an_empty_voyage_cannot_be_run(tmp_path) -> None:

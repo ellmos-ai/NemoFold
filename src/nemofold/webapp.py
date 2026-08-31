@@ -23,7 +23,7 @@ from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
 from .voyage_edit import edit_to_primitive, plan_voyage_edit
 from .voyage_runs import run_voyage
-from .voyages import VoyageStore
+from .voyages import VoyageStore, validate_model_pref
 from .wizard import DEFAULT_OUTPUT_DIR, plan_to_primitive, plan_voyage
 from .workflow_graphs import workflow_graphs
 
@@ -717,6 +717,22 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self._error(HTTPStatus.BAD_REQUEST, "wizard_request_rejected", str(exc))
             return
         result = plan_to_primitive(plan)
+        # A plan the product cannot fully serve is still something the person
+        # wants. Rather than only refusing it, offer to keep it as a
+        # reservation that names the missing instrument.
+        result["reservation"] = (
+            {
+                "suggested": True,
+                "missing_capability": plan.unavailable[0].key,
+                "label": plan.unavailable[0].label,
+                "note": (
+                    "This can be kept in your use cases as a reservation. It becomes "
+                    "runnable once that instrument exists."
+                ),
+            }
+            if plan.unavailable
+            else {"suggested": False}
+        )
         result["ok"] = True
         result["prepared"] = False
         result["drafts"] = []
@@ -859,11 +875,22 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         try:
             payload = self._read_json()
-            if not isinstance(payload, dict) or set(payload) - {"voyage_id", "run_id"}:
-                raise ValueError("request body must carry voyage_id and an optional run_id")
+            allowed = {"voyage_id", "run_id", "model_override"}
+            if not isinstance(payload, dict) or set(payload) - allowed:
+                raise ValueError(
+                    "request body may carry voyage_id, run_id and model_override"
+                )
             voyage_id = payload.get("voyage_id")
             if not isinstance(voyage_id, str):
                 raise ValueError("voyage_id must be a string")
+            # A run-level override applies once. It is validated like any other
+            # endpoint and still cannot lift the chain's local-only cap.
+            override = payload.get("model_override")
+            if override is not None:
+                validated = validate_model_pref({"preferred": override})
+                if validated is None:
+                    raise ValueError("model_override must name a provider and a model")
+                override = validated["preferred"]
             voyage = self._voyage_store().load(voyage_id)
             run_id = _api_run_id(payload.get("run_id"), prefix="api_voyage")
             result = run_voyage(
@@ -871,6 +898,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 self.server.app_config.execution,
                 run_id=run_id,
                 base_dir=self.server.app_config.base_dir,
+                model_override=override,
             )
         except (JobFileError, OSError, PermissionError, RuntimeError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "voyage_run_rejected", str(exc))
@@ -882,6 +910,13 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "run_id": result.run_id,
                 "stopped_at": result.stopped_at,
                 "dossier_path": result.dossier_path,
+                "model_authority": voyage.get("model_authority", "links_win"),
+                "authority_reason": voyage.get("authority_reason", ""),
+                "run_level_override": (
+                    None
+                    if override is None
+                    else f"{override.get('provider')}:{override.get('model')}"
+                ),
                 "steps": [
                     {
                         "order": step.order,
@@ -892,6 +927,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                         "ledger_path": step.ledger_path,
                         "model_used": step.model_used,
                         "model_note": step.model_note,
+                        "model_level": step.model_level,
+                        "rights": step.rights,
+                        "rights_level": step.rights_level,
                         "errors": list(step.errors),
                     }
                     for step in result.steps

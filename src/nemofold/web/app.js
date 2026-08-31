@@ -1988,18 +1988,26 @@ async function loadLibrary() {
   }
 }
 
-function renderLibrary(entries) {
-  const list = $("libraryList");
-  list.textContent = "";
-  if (!entries.length) {
-    libraryNote(list, "Nothing saved yet. Copy a specialist to start your own library.");
-    return;
-  }
+function renderLibraryCards(list, entries) {
   for (const entry of entries) {
     const card = deskLine(list, "article", "library-card");
     card.setAttribute("role", "listitem");
     if (!entry.editable) card.dataset.shipped = "true";
     deskLine(card, "span", "library-kind", entry.editable ? "SAVED" : "SPECIALIST · READ-ONLY");
+    if (entry.overrides_links) {
+      const warning = deskLine(card, "p", "library-warning");
+      deskLine(warning, "span", "warning-mark", "▲");
+      deskLine(warning, "b", null, "This voyage overrides its links");
+      if (entry.authority_reason) deskLine(warning, "small", null, entry.authority_reason);
+    }
+    if (entry.status === "pending_capability") {
+      deskLine(
+        card,
+        "p",
+        "library-pending",
+        `Waiting for: ${entry.missing_capability}`
+      );
+    }
     deskLine(card, "b", null, entry.name);
     deskLine(card, "p", null, entry.description || "");
     deskLine(card, "small", "library-steps-line", entry.workflows.join(" → "));
@@ -2015,6 +2023,32 @@ function renderLibrary(entries) {
     );
     card.append(button);
   }
+}
+
+function renderLibrary(entries) {
+  const list = $("libraryList");
+  list.textContent = "";
+  if (!entries.length) {
+    libraryNote(list, "Nothing saved yet. Copy a specialist to start your own library.");
+    return;
+  }
+  const pending = entries.filter((entry) => entry.status === "pending_capability");
+  const ready = entries.filter((entry) => entry.status !== "pending_capability");
+  const readyGroup = deskLine(list, "div", "library-group");
+  renderLibraryCards(readyGroup, ready);
+  if (!pending.length) return;
+  // A use case someone wanted but the product cannot serve yet is kept, and
+  // kept visibly apart, so nobody mistakes it for something that would run.
+  const waiting = deskLine(list, "div", "library-waiting");
+  deskLine(waiting, "p", "kicker", "WAITING FOR A NEW INSTRUMENT");
+  deskLine(
+    waiting,
+    "p",
+    "desk-note",
+    "These are saved on purpose. Each becomes runnable once the named instrument exists."
+  );
+  const group = deskLine(waiting, "div", "library-group");
+  renderLibraryCards(group, pending);
 }
 
 async function copySpecialist(presetId) {
@@ -2059,6 +2093,8 @@ async function openLibraryEntry(voyageId) {
       voyage_id: voyageId,
       name: known.name,
       description: known.description,
+      overrides_links: known.overrides_links === true,
+      authority_reason: known.authority_reason || "",
       workflows: detail.before || known.workflows,
       steps: detail.steps_after || []
     };
@@ -2077,6 +2113,16 @@ function renderVoyageDetail() {
   panel.hidden = false;
   $("libraryDetailTitle").textContent = openVoyage.name;
   $("libraryDetailDescription").textContent = openVoyage.description || "";
+  const banner = $("libraryDetailWarning");
+  banner.textContent = "";
+  banner.hidden = !openVoyage.overrides_links;
+  if (openVoyage.overrides_links) {
+    deskLine(banner, "span", "warning-mark", "▲");
+    deskLine(banner, "b", null, "This voyage overrides its links");
+    if (openVoyage.authority_reason) {
+      deskLine(banner, "small", null, openVoyage.authority_reason);
+    }
+  }
   const list = $("librarySteps");
   list.textContent = "";
   openVoyage.workflows.forEach((workflow, index) => {
@@ -2196,6 +2242,21 @@ function renderVoyageRun(result) {
     deskLine(anchor, "span", null, "Show the steps, gates and models");
     deskLine(anchor, "i", "chevron");
     panel.append(anchor);
+    // Editing is the normal move after a quality judgement, not only after a
+    // failure, so it sits next to a successful run too.
+    const refine = document.createElement("button");
+    refine.type = "button";
+    refine.className = "card-open secondary";
+    refine.id = "libraryRefine";
+    refine.append(instrumentIcon("wheel"), "Not happy? Insert or edit a step");
+    refine.addEventListener("click", () => {
+      $("libraryEditRequest").focus();
+      $("libraryEditRequest").scrollIntoView({
+        behavior: reducedMotionQuery?.matches ? "auto" : "smooth",
+        block: "nearest"
+      });
+    });
+    panel.append(refine);
   } else {
     deskLine(panel, "b", "run-explain",
       `Stopped at step ${result.stopped_at}. Later steps were not started.`);
@@ -2207,7 +2268,13 @@ function renderVoyageRun(result) {
     const row = deskLine(detail, "div", "run-step");
     row.dataset.status = step.status;
     deskLine(row, "b", null, `Step ${step.order} · ${step.workflow} · ${step.status}`);
-    deskLine(row, "small", null, `${step.artifact_count} artifact(s) · model ${step.model_used}`);
+    deskLine(
+      row,
+      "small",
+      null,
+      `${step.artifact_count} artifact(s) · model ${step.model_used}`
+        + ` (level: ${step.model_level}) · rights ${step.rights}`
+    );
     deskLine(row, "small", "run-model-note", step.model_note);
     if (step.errors && step.errors.length) {
       deskLine(row, "small", "run-errors", step.errors.join(", "));

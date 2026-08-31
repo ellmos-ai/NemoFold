@@ -24,6 +24,13 @@ from uuid import uuid4
 from .artifacts import write_text_artifact
 from .contracts import to_primitive
 from .job_io import parse_job_payload
+from .model_authority import (
+    AUTHORITY_CHAIN_WINS,
+    AUTHORITY_LINKS_WIN,
+    MODEL_AUTHORITIES,
+    OUTBOUND_RIGHTS,
+    is_external,
+)
 from .policy import PolicyConfig, PolicyGate
 from .providers import PROVIDER_DESCRIPTORS
 
@@ -34,6 +41,10 @@ MAX_VOYAGE_BYTES = 1024 * 1024
 MAX_STEPS = 24
 LOCAL_ONLY = "local-only"
 VOYAGE_SOURCES = frozenset({"wizard", "manual", "preset"})
+STATUS_RUNNABLE = "runnable"
+STATUS_PENDING = "pending_capability"
+VOYAGE_STATUSES = frozenset({STATUS_RUNNABLE, STATUS_PENDING})
+MAX_POLICY_REFS = 20
 PRESET_ROOT = Path(__file__).with_name("presets")
 
 _VOYAGE_ID = re.compile(r"voyage_[A-Za-z0-9_-]+")
@@ -86,12 +97,51 @@ def validate_model_pref(value: Any) -> dict[str, Any] | None:
     return {"preferred": preferred, "fallback": resolved}
 
 
+
+def validate_rights(value, field: str):
+    """Check an outbound-action right without granting it."""
+    if value is None:
+        return None
+    if value not in OUTBOUND_RIGHTS:
+        raise ValueError(
+            f"{field} must be draft_only, send_with_confirmation or send_when_ordered"
+        )
+    return str(value)
+
+
+def validate_policy_refs(value, field: str) -> list[str]:
+    """Carry named policy references through untouched.
+
+    Policies become first-class objects in a later wave. The field exists now so
+    a person can already reference one without the stored schema having to be
+    migrated later.
+    """
+    if value is None:
+        return []
+    if not isinstance(value, list) or len(value) > MAX_POLICY_REFS:
+        raise ValueError(f"{field} must be a list of at most {MAX_POLICY_REFS} names")
+    refs = [_text(item, f"{field} entry", maximum=120) for item in value]
+    if len(set(refs)) != len(refs):
+        raise ValueError(f"{field} must not repeat a policy name")
+    return refs
+
+
+def validate_chain_model_pref(value):
+    """A chain may name a model, or declare itself local-only as a cap."""
+    if value == LOCAL_ONLY:
+        return LOCAL_ONLY
+    return validate_model_pref(value)
+
+
 def _step(value: Any, index: int, *, base_dir: Path, gate: PolicyGate) -> dict[str, Any]:
-    allowed = {"workflow", "job", "model_pref", "note", "reads_previous_output"}
+    allowed = {
+        "workflow", "job", "model_pref", "note", "reads_previous_output",
+        "rights", "policy_refs",
+    }
     if not isinstance(value, dict) or set(value) - allowed:
         raise ValueError(
-            f"step {index} may only carry workflow, job, model_pref, note and "
-            "reads_previous_output"
+            f"step {index} may only carry workflow, job, model_pref, note, "
+            "reads_previous_output, rights and policy_refs"
         )
     reads_previous = value.get("reads_previous_output", False)
     if not isinstance(reads_previous, bool):
@@ -125,6 +175,10 @@ def _step(value: Any, index: int, *, base_dir: Path, gate: PolicyGate) -> dict[s
         "model_pref": validate_model_pref(value.get("model_pref")),
         "note": _text(value.get("note", ""), "note", maximum=400, required=False),
         "reads_previous_output": reads_previous,
+        "rights": validate_rights(value.get("rights"), f"step {index} rights"),
+        "policy_refs": validate_policy_refs(
+            value.get("policy_refs"), f"step {index} policy_refs"
+        ),
     }
 
 
@@ -167,7 +221,11 @@ class VoyageStore:
         return PolicyGate(PolicyConfig(allowed_roots=self.allowed_roots))
 
     def save(self, value: dict[str, Any]) -> dict[str, Any]:
-        allowed = {"voyage_id", "name", "description", "steps", "source"}
+        allowed = {
+            "voyage_id", "name", "description", "steps", "source", "status",
+            "missing_capability", "model_pref", "model_authority", "authority_reason",
+            "confirm_external_authority", "rights", "policy_refs",
+        }
         unknown = sorted(set(value) - allowed)
         if unknown:
             raise ValueError(f"unknown voyage field: {unknown[0]}")
@@ -179,8 +237,25 @@ class VoyageStore:
             previous = self.load(voyage_id)
         else:
             voyage_id = f"voyage_{datetime.now(UTC).strftime('%Y%m%dT%H%M%SZ')}_{uuid4().hex[:8]}"
+        status = value.get("status", STATUS_RUNNABLE)
+        if status not in VOYAGE_STATUSES:
+            raise ValueError("status must be runnable or pending_capability")
+        missing = _text(
+            value.get("missing_capability", ""),
+            "missing_capability",
+            maximum=200,
+            required=False,
+        )
+        if status == STATUS_PENDING and not missing:
+            raise ValueError(
+                "a reservation must name the missing capability it is waiting for"
+            )
+        if status == STATUS_RUNNABLE and missing:
+            raise ValueError("a runnable voyage cannot wait for a missing capability")
         raw_steps = value.get("steps")
         if not isinstance(raw_steps, list) or not raw_steps:
+            # A reservation is still a plan someone wants; it needs at least one
+            # step so the library shows what it is waiting to do.
             raise ValueError("a voyage requires at least one step")
         if len(raw_steps) > MAX_STEPS:
             raise ValueError(f"a voyage may not exceed {MAX_STEPS} steps")
@@ -191,6 +266,28 @@ class VoyageStore:
         source = value.get("source", "manual")
         if source not in VOYAGE_SOURCES:
             raise ValueError("voyage source must be wizard, manual or preset")
+        authority = value.get("model_authority", AUTHORITY_LINKS_WIN)
+        if authority not in MODEL_AUTHORITIES:
+            raise ValueError("model_authority must be links_win or chain_wins")
+        chain_pref = validate_chain_model_pref(value.get("model_pref"))
+        reason = _text(
+            value.get("authority_reason", ""),
+            "authority_reason",
+            maximum=500,
+            required=False,
+        )
+        # chain_wins overrides settings a person made on the links, so an external
+        # chain model is confirmed when it is set, not only when it runs.
+        if (
+            authority == AUTHORITY_CHAIN_WINS
+            and isinstance(chain_pref, dict)
+            and is_external(chain_pref.get("preferred"))
+            and value.get("confirm_external_authority") is not True
+        ):
+            raise ValueError(
+                "a chain that overrides its links with an external model must be "
+                "confirmed at set time: pass confirm_external_authority"
+            )
         now = datetime.now(UTC).isoformat()
         payload = {
             "schema": VOYAGE_SCHEMA,
@@ -202,6 +299,13 @@ class VoyageStore:
             "created_at": previous["created_at"] if previous else now,
             "updated_at": now,
             "source": source,
+            "status": status,
+            "missing_capability": missing,
+            "model_pref": chain_pref,
+            "model_authority": authority,
+            "authority_reason": reason,
+            "rights": validate_rights(value.get("rights"), "rights"),
+            "policy_refs": validate_policy_refs(value.get("policy_refs"), "policy_refs"),
             "steps": steps,
             "approval_state": {
                 "external_transfer": False,
@@ -251,6 +355,14 @@ class VoyageStore:
                             "description": value["description"],
                             "updated_at": value["updated_at"],
                             "source": value["source"],
+                            "status": value.get("status", STATUS_RUNNABLE),
+                            "missing_capability": value.get("missing_capability", ""),
+                            "model_authority": value.get(
+                                "model_authority", AUTHORITY_LINKS_WIN
+                            ),
+                            "authority_reason": value.get("authority_reason", ""),
+                            "overrides_links": value.get("model_authority")
+                            == AUTHORITY_CHAIN_WINS,
                             "step_count": len(value["steps"]),
                             "workflows": [step["workflow"] for step in value["steps"]],
                             "editable": True,
@@ -266,6 +378,11 @@ class VoyageStore:
                 "description": preset["description"],
                 "updated_at": None,
                 "source": "preset",
+                "status": STATUS_RUNNABLE,
+                "missing_capability": "",
+                "model_authority": AUTHORITY_LINKS_WIN,
+                "authority_reason": "",
+                "overrides_links": False,
                 "step_count": len(preset["steps"]),
                 "workflows": [step["workflow"] for step in preset["steps"]],
                 "editable": False,

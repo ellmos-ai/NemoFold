@@ -275,13 +275,27 @@ die Kette dort, damit nichts Nachgelagertes auf einem unfertigen Ergebnis läuft
 es gut, sehen Sie eine ruhige Zeile und die Details einen Klick entfernt; ging es
 schief, liegen Schritte, Gates und Modelle offen vor Ihnen.
 
-Ein Schritt kann eine Modellpräferenz tragen — bevorzugter Provider und Modell plus
-Fallback. Die Präferenz erteilt für sich keine Erlaubnis: Externmodell-Gate, Freigabe je
-Lauf und Budget entscheiden weiterhin. Eine Regel steckt fest im Code und lässt sich
-nicht wegkonfigurieren: Ein Fallback darf die Exponierung nur senken. Extern zu lokal
-ist in Ordnung, lokal zu extern wird abgelehnt. Ein Kettenschritt läuft deshalb immer
-auf der lokalen Engine, und das Dossier nennt das tatsächlich gelaufene Modell samt
-Grund, warum eine Präferenz nicht angewandt wurde.
+Eine Modellpräferenz kann auf drei Ebenen stehen, und die spezifischste gewinnt: Glied,
+Kette, lokaler Default. Eine Kette kann stattdessen erklären, dass sie ihre Glieder
+überschreibt — gedacht für datenschutzkritische Arbeit, die lokal bleiben muss, was ein
+Glied auch sagt. Eine solche Fahrt trägt in der Bibliothek ein Warnzeichen und die
+Begründung, die ihr Besitzer hinterlegt hat. Für einen einzelnen Lauf lässt sich außerdem
+ein Modell für die ganze Fahrt wählen: Der Override gilt einmalig, erscheint im Dossier
+und lässt die gespeicherten Einstellungen unberührt.
+
+Über allem steht eine Regel, die kein Modus, kein Override und keine Einstellung
+aufheben kann: Eine als local-only erklärte Kette ist ein Deckel. Eine exponiertere
+Einstellung darunter gewinnt nicht und verliert auch nicht still — sie stoppt die Kette
+und fragt nach, denn still zu erweitern, wer Ihre Dokumente sieht, ist das eine
+Versagen, das sich dieses Produkt nicht leisten kann. Auch für sich erteilt eine
+Präferenz keine Erlaubnis: Externmodell-Gate, Freigabe je Lauf und Budget entscheiden
+weiterhin, und das Dossier nennt das tatsächlich gelaufene Modell und die Ebene, die es
+bestimmt hat.
+
+Manche Usecases lassen sich noch nicht bedienen. Sie werden trotzdem aufbewahrt, mit dem
+Instrument benannt, auf das sie warten, und getrennt von den lauffähigen gelistet — ein
+festgehaltener Wunsch ist mehr wert als ein abgelehnter, solange ihn niemand für etwas
+Lauffähiges hält.
 
 ## Das Captain's Desk fragen
 

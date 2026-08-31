@@ -280,3 +280,151 @@ def test_the_library_file_is_readable_json_on_disk(tmp_path) -> None:
 
     assert value["schema"] == VOYAGE_SCHEMA
     assert value["steps"][0]["note"] == "Erst die Fakten."
+
+
+# --------------------------------------------------------------------------- #
+# Reservations, chain authority, rights and policy references
+# --------------------------------------------------------------------------- #
+
+
+def test_a_wanted_but_impossible_use_case_is_kept_as_a_reservation(tmp_path) -> None:
+    store = _store(tmp_path)
+
+    saved = store.save(
+        _voyage(
+            tmp_path,
+            name="Marktrecherche zum Anbieter",
+            status="pending_capability",
+            missing_capability="web_research",
+        )
+    )
+
+    assert saved["status"] == "pending_capability"
+    assert saved["missing_capability"] == "web_research"
+    listed = next(
+        item for item in store.list() if item["voyage_id"] == saved["voyage_id"]
+    )
+    assert listed["status"] == "pending_capability"
+    assert listed["missing_capability"] == "web_research"
+
+
+def test_a_reservation_must_name_what_it_waits_for(tmp_path) -> None:
+    store = _store(tmp_path)
+
+    with pytest.raises(ValueError, match="must name the missing capability"):
+        store.save(_voyage(tmp_path, status="pending_capability"))
+    with pytest.raises(ValueError, match="cannot wait for a missing capability"):
+        store.save(_voyage(tmp_path, missing_capability="web_research"))
+
+
+def test_a_reservation_becomes_runnable_by_clearing_the_missing_piece(tmp_path) -> None:
+    store = _store(tmp_path)
+    reserved = store.save(
+        _voyage(tmp_path, status="pending_capability", missing_capability="web_research")
+    )
+
+    freed = store.save(
+        _voyage(tmp_path, voyage_id=reserved["voyage_id"], status="runnable")
+    )
+
+    assert freed["status"] == "runnable"
+    assert freed["missing_capability"] == ""
+
+
+def test_a_chain_that_overrides_its_links_is_flagged_with_its_reason(tmp_path) -> None:
+    store = _store(tmp_path)
+
+    saved = store.save(
+        _voyage(
+            tmp_path,
+            model_authority="chain_wins",
+            model_pref={"preferred": {"provider": "ollama", "model": "qwen3"}},
+            authority_reason="Datenschutzkritisch: laeuft immer lokal.",
+        )
+    )
+
+    assert saved["model_authority"] == "chain_wins"
+    assert saved["authority_reason"].startswith("Datenschutzkritisch")
+    listed = next(item for item in store.list() if item["voyage_id"] == saved["voyage_id"])
+    assert listed["overrides_links"] is True
+    assert listed["authority_reason"].startswith("Datenschutzkritisch")
+
+
+def test_an_overriding_chain_with_an_external_model_needs_confirmation_when_set(
+    tmp_path,
+) -> None:
+    store = _store(tmp_path)
+    external = {
+        "model_authority": "chain_wins",
+        "model_pref": {"preferred": {"provider": "openai", "model": "gpt-4o-mini"}},
+    }
+
+    with pytest.raises(ValueError, match="confirmed at set time"):
+        store.save(_voyage(tmp_path, **external))
+
+    confirmed = store.save(
+        _voyage(tmp_path, confirm_external_authority=True, **external)
+    )
+    assert confirmed["model_authority"] == "chain_wins"
+    # The confirmation authorises the setting, never a transfer.
+    assert confirmed["approval_state"]["external_transfer"] is False
+
+
+def test_a_local_chain_that_overrides_needs_no_confirmation(tmp_path) -> None:
+    store = _store(tmp_path)
+
+    saved = store.save(
+        _voyage(
+            tmp_path,
+            model_authority="chain_wins",
+            model_pref={"preferred": {"provider": "ollama", "model": "qwen3"}},
+        )
+    )
+
+    assert saved["model_authority"] == "chain_wins"
+
+
+def test_a_chain_can_declare_itself_local_only(tmp_path) -> None:
+    store = _store(tmp_path)
+
+    saved = store.save(_voyage(tmp_path, model_pref=LOCAL_ONLY))
+
+    assert saved["model_pref"] == LOCAL_ONLY
+
+
+def test_rights_and_policy_references_are_carried_on_both_levels(tmp_path) -> None:
+    store = _store(tmp_path)
+    voyage = _voyage(tmp_path, rights="send_with_confirmation", policy_refs=["gdpr_basic"])
+    voyage["steps"][0]["rights"] = "draft_only"
+    voyage["steps"][0]["policy_refs"] = ["gdpr_basic", "insurance_case"]
+
+    saved = store.save(voyage)
+
+    assert saved["rights"] == "send_with_confirmation"
+    assert saved["policy_refs"] == ["gdpr_basic"]
+    assert saved["steps"][0]["rights"] == "draft_only"
+    assert saved["steps"][0]["policy_refs"] == ["gdpr_basic", "insurance_case"]
+
+
+def test_rights_and_policy_references_default_to_nothing(tmp_path) -> None:
+    saved = _store(tmp_path).save(_voyage(tmp_path))
+
+    assert saved["rights"] is None
+    assert saved["policy_refs"] == []
+    assert saved["steps"][0]["rights"] is None
+    assert saved["steps"][0]["policy_refs"] == []
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("rights", "send_anything", "draft_only"),
+        ("policy_refs", ["a", "a"], "must not repeat"),
+        ("policy_refs", "gdpr", "must be a list"),
+        ("status", "someday", "runnable or pending_capability"),
+        ("model_authority", "steps_win", "links_win or chain_wins"),
+    ],
+)
+def test_the_new_fields_refuse_unusable_values(tmp_path, field, value, message) -> None:
+    with pytest.raises(ValueError, match=message):
+        _store(tmp_path).save(_voyage(tmp_path, **{field: value}))

@@ -1267,7 +1267,13 @@ def test_running_a_saved_voyage_returns_a_dossier_over_its_steps(tmp_path) -> No
     assert step["artifact_count"] >= 1
     # A chained step never escalates on its own, and says which model ran.
     assert step["model_used"] == "nemofold-local-core"
-    assert "No model preference" in step["model_note"]
+    # The note now covers all three levels, not just the step's own setting.
+    assert "No preference was set at any level" in step["model_note"]
+    assert step["model_level"] == "default"
+    assert step["rights"] == "draft_only"
+    assert step["rights_level"] == "default"
+    assert run["model_authority"] == "links_win"
+    assert run["run_level_override"] is None
     assert Path(run["dossier_path"]).is_file()
 
 
@@ -1341,3 +1347,52 @@ def test_library_edit_explains_an_unmappable_request(tmp_path) -> None:
     assert edit["applicable"] is False
     assert edit["before"] == edit["after"]
     assert any("privacy gate" in note for note in edit["notes"])
+
+
+def test_a_run_level_override_is_reported_and_changes_nothing_stored(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "police.txt").write_text("Beitrag: 148 Euro.", encoding="utf-8")
+
+    with running_server(tmp_path) as base_url:
+        copied = post_json(
+            base_url + "/api/voyage-preset",
+            {
+                "preset_id": "preset_fact_digest_pdf",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+            },
+        )
+        run = post_json(
+            base_url + "/api/voyage-run",
+            {
+                "voyage_id": copied["voyage"]["voyage_id"],
+                "model_override": {"provider": "ollama", "model": "qwen3"},
+            },
+        )
+        listed, _ = get_json(base_url + "/api/voyages")
+
+    assert run["run_level_override"] == "ollama:qwen3"
+    assert run["steps"][0]["model_used"] == "ollama:qwen3"
+    assert run["steps"][0]["model_level"] == "run-override"
+    assert "for this run only" in run["steps"][0]["model_note"]
+    # Nothing about the stored voyage moved.
+    entry = next(
+        item for item in listed["voyages"] if item["voyage_id"] == copied["voyage"]["voyage_id"]
+    )
+    assert entry["overrides_links"] is False
+
+
+def test_the_wizard_offers_to_keep_an_unfulfillable_plan_as_a_reservation(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        plan = post_json(
+            base_url + "/api/wizard",
+            {"text": "dokument das bilingual vorliegt regelmäßig abgleichen"},
+        )
+        simple = post_json(base_url + "/api/wizard", {"text": "bündle die unterlagen"})
+
+    assert plan["reservation"]["suggested"] is True
+    assert plan["reservation"]["missing_capability"] == "bilingual_sync"
+    assert "becomes runnable once that instrument exists" in plan["reservation"]["note"]
+    # A plan that needs nothing new is not turned into a reservation.
+    assert simple["reservation"]["suggested"] is False

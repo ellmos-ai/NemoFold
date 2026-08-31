@@ -263,12 +263,23 @@ there, so nothing downstream runs on an unfinished result. When it worked you ge
 quiet line and the detail one click away; when it did not, the steps, gates and models
 are open in front of you.
 
-A step may carry a model preference - a preferred provider and model, plus a fallback.
-The preference authorises nothing on its own: the external gate, the per-run approval
-and the budget still decide. One rule is enforced in code and cannot be configured
-away: a fallback may only lower exposure. External to local is fine; local to external
-is refused. A chained step therefore always runs the local engine, and the dossier
-names the model that actually ran together with the reason a preference was not used.
+A model preference can sit at three levels, and the most specific one wins: the step,
+the chain, then the local default. A chain may instead declare that it overrides its
+links - that exists for privacy-critical work that must stay local whatever a step
+says - and such a voyage is flagged in the library with a warning and the reason its
+owner gave. For a single run you can also pick one model for the whole voyage; the
+override applies once, appears in the dossier, and leaves the stored settings alone.
+
+Above all of that sits one rule no mode, override or setting can lift: a chain
+declared local-only is a cap. A more exposed setting underneath it neither wins nor
+quietly loses - it stops the chain and asks, because silently widening what sees your
+documents is the one failure this product cannot afford. A preference authorises
+nothing by itself either: the external gate, the per-run approval and the budget still
+decide, and the dossier names the model that actually ran and which level chose it.
+
+Some use cases cannot be served yet. Those are still kept, marked as waiting for the
+instrument they need, and listed apart from the runnable ones - a wish recorded is
+worth more than a wish refused, as long as nobody mistakes it for something that runs.
 
 ## Ask the Captain's Desk
 
