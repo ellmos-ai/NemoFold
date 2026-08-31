@@ -43,7 +43,7 @@ Remove-Item Env:\NEBIUS_API_KEY
 
 The approval flag, current provider rates, valid immutable package, official endpoint,
 and cost ceiling are all mandatory. The worker rejects redirects and duplicate
-attempt/result files. It atomically records `transfer-attempt.json` before network I/O,
+attempt/result files. It atomically records `transfer-attempt.json` before any job content leaves the host (only the authorized model-catalog metadata GET precedes it),
 so a connection loss cannot silently authorize a duplicate paid request. The result
 verifier recomputes the exact request from the package, checks output quotes against
 supplied chunks, and binds the attempt plus sanitized request/response logs to hashes.
