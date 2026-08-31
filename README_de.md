@@ -130,6 +130,28 @@ zuständig. Siehe [Provideradapter, lokale API und MCP](docs/providers-and-mcp.m
 
 ## Freigegebener Lauf über die Nebius Token Factory
 
+### Modellwahl und Beitrag der Token Factory
+
+Das konfigurierte Modell ist NVIDIA Nemotron 3 Super
+(`nvidia/nemotron-3-super-120b-a12b`), bereitgestellt über die
+[Nebius Token Factory](https://nebius.com/services/token-factory/nemotron). Die Wahl
+ist bewusst: Die Gewichte sind unter der NVIDIA Open License vollständig offen (der
+Hackathon verlangt ein offenes NVIDIA-Modell); das Agentic-Reasoning- und
+Instruction-Following-Profil passt zu NemoFolds striktem, JSON-gebundenem
+Evidenzvertrag; das lange Kontextfenster trägt ein komplettes begrenztes
+Evidenzpaket in einer Anfrage; und das hybride MoE-Design (rund 12B aktive von 120B
+Parametern) hält die konservative Kostenobergrenze pro Aufruf weit unter dem
+Job-Budget. Der Adapter erzwingt das Präfix `nvidia/nemotron-` doppelt — im
+Preflight und erneut vor dem Transport.
+
+Die Token Factory steuert den einen Schritt bei, den das Produkt lokal nicht leisten
+kann: einen starken gehosteten Reasoning-Durchgang über das vorbereitete
+Evidenzbündel. Alles andere — Originale, Pfade, Index, Richtlinien, Journal und
+Verifikation — bleibt auf dem lokalen Rechner; nur pseudonymisierte begrenzte Chunks
+passieren das Gate, und das bereinigte Ergebnis wird in die lokal verifizierte
+Belegkette zurückgebunden. Ein echter bezahlter Lauf bleibt ein ausdrückliches
+Nutzer-Gate und wird nirgends in diesem Repository behauptet.
+
 Der Live-Adapter ist ein getrenntes Gate für einen irreversiblen Datentransfer. Er
 akzeptiert nur den offiziellen HTTPS-Ursprung der Nebius Token Factory, lehnt
 Weiterleitungen ab, prüft vor der Anfrage eine konservative Kostengrenze, liest den

@@ -128,6 +128,27 @@ proof; the next section remains the only such route. See
 
 ## Approved Nebius Token Factory run
 
+### Model choice and what Token Factory contributes
+
+The configured model is NVIDIA Nemotron 3 Super
+(`nvidia/nemotron-3-super-120b-a12b`), served by
+[Nebius Token Factory](https://nebius.com/services/token-factory/nemotron). It was
+chosen deliberately for this product: the weights are fully open under the NVIDIA
+Open License (the hackathon requires an NVIDIA open-source model); its
+agentic-reasoning and instruction-following profile matches NemoFold's strict
+JSON-bound evidence contract; the long context window carries a whole bounded
+evidence package in one request; and the hybrid MoE design (about 12B active of
+120B parameters) keeps the conservative per-call cost ceiling far below the job
+budget. The adapter enforces the `nvidia/nemotron-` prefix twice, in preflight and
+again before transport.
+
+Token Factory contributes the one step the product cannot do locally: a strong
+hosted reasoning pass over the prepared evidence bundle. Everything else - the
+originals, paths, index, policies, journal, and verification - stays on the local
+machine; only pseudonymized bounded chunks cross the gate, and the sanitized result
+is bound back into the locally verified receipt chain. A real paid run remains an
+explicit user gate and has not been claimed anywhere in this repository.
+
 The live adapter is a separate, irreversible transfer gate. It accepts only the
 official Nebius Token Factory HTTPS origin, rejects redirects, checks a conservative
 cost ceiling before the request, reads the key only from `NEBIUS_API_KEY`, and refuses
