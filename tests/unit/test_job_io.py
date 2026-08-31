@@ -93,4 +93,4 @@ def test_checked_in_job_examples_follow_the_public_parser_contract() -> None:
     )
 
     assert {job.workflow for job in loaded} == {"evidence_analyst", "platform_proof"}
-    assert len(loaded) == 3
+    assert len(loaded) == 5

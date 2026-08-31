@@ -95,6 +95,9 @@ def test_local_provider_analysis_anonymizes_then_validates_every_quote(tmp_path)
     assert str(tmp_path) not in adapter.request.user_prompt
     assert "<TERM_001>" in adapter.request.user_prompt
     assert "<EMAIL_001>" in adapter.request.user_prompt
+    answers_schema = adapter.request.response_schema["properties"]["answers"]
+    assert answers_schema["maxItems"] == 1
+    assert answers_schema["items"]["properties"]["question_id"]["enum"] == ["q_001"]
     assert verify_run_report(result.report_path).valid is True
     report_text = (tmp_path / "output" / "ollama_analysis-provider.md").read_text(encoding="utf-8")
     assert "case.txt" in report_text

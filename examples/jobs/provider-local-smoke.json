@@ -1,0 +1,16 @@
+{
+  "schema": "nemofold.job.v1",
+  "workflow": "evidence_analyst",
+  "input_roots": ["../synthetic-home"],
+  "output_dir": "../../run-reports/provider-local-smoke",
+  "questions": [
+    "What exact coverage start dates are stated in the policy documents?"
+  ],
+  "privacy_mode": "local_only",
+  "action_mode": "dry_run",
+  "parameters": {
+    "max_chunks": 4,
+    "formats": ["md", "txt"],
+    "title": "Synthetic local-provider smoke"
+  }
+}

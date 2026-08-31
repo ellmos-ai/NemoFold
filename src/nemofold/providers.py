@@ -403,18 +403,29 @@ class OpenAICompatibleAdapter:
 
     def generate(self, request: ProviderRequest) -> ProviderResponse:
         base_url = _validated_local_base_url(self.config.resolved_base_url or "")
-        body = json.dumps(
-            {
-                "model": self.config.model,
-                "messages": [
-                    {"role": "system", "content": request.system_prompt},
-                    {"role": "user", "content": request.user_prompt},
-                ],
-                "temperature": 0,
-                "max_tokens": self.config.max_output_tokens,
-                "response_format": {"type": "json_object"},
-            }
-        ).encode()
+        payload: dict[str, Any] = {
+            "model": self.config.model,
+            "messages": [
+                {"role": "system", "content": request.system_prompt},
+                {"role": "user", "content": request.user_prompt},
+            ],
+            "temperature": 0,
+            "max_tokens": self.config.max_output_tokens,
+            "response_format": {
+                "type": "json_schema",
+                "json_schema": {
+                    "name": "nemofold_provider_analysis",
+                    "strict": True,
+                    "schema": request.response_schema,
+                },
+            },
+        }
+        if self.config.provider_id == "ollama":
+            # Evidence extraction benefits from bounded deterministic output, not a
+            # hidden reasoning trace. Ollama documents `none` for thinking control
+            # on its OpenAI-compatible chat-completions endpoint.
+            payload["reasoning_effort"] = "none"
+        body = json.dumps(payload).encode()
         exchange = self.transport.post(
             f"{base_url}/chat/completions",
             headers={"Content-Type": "application/json"},
@@ -572,6 +583,24 @@ class SubscriptionCLIAdapter:
                     "--ephemeral",
                     "--ignore-user-config",
                     "--ignore-rules",
+                    "--disable",
+                    "shell_tool",
+                    "--disable",
+                    "apps",
+                    "--disable",
+                    "browser_use",
+                    "--disable",
+                    "computer_use",
+                    "--disable",
+                    "image_generation",
+                    "--disable",
+                    "hooks",
+                    "--disable",
+                    "memories",
+                    "--disable",
+                    "plugins",
+                    "--disable",
+                    "skill_search",
                     "--skip-git-repo-check",
                     "--sandbox",
                     "read-only",

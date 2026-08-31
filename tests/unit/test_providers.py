@@ -145,7 +145,14 @@ def test_local_openai_compatible_adapters_use_only_the_loopback_chat_endpoint(
     response = adapter.generate(request())
 
     assert transport.calls[0]["url"] == f"{base_url}/chat/completions"
-    assert transport.calls[0]["body"]["response_format"] == {"type": "json_object"}
+    response_format = transport.calls[0]["body"]["response_format"]
+    assert response_format["type"] == "json_schema"
+    assert response_format["json_schema"]["strict"] is True
+    assert response_format["json_schema"]["schema"] == request().response_schema
+    if provider_id == "ollama":
+        assert transport.calls[0]["body"]["reasoning_effort"] == "none"
+    else:
+        assert "reasoning_effort" not in transport.calls[0]["body"]
     assert "Authorization" not in transport.calls[0]["headers"]
     assert response.usage == {"input_tokens": 5, "output_tokens": 2}
 
@@ -240,3 +247,19 @@ def test_subscription_bridges_use_temporary_read_only_processes_without_api_keys
         assert "--ephemeral" in call["args"]
         assert "--ignore-user-config" in call["args"]
         assert "read-only" in call["args"]
+        disabled = {
+            call["args"][index + 1]
+            for index, item in enumerate(call["args"][:-1])
+            if item == "--disable"
+        }
+        assert disabled >= {
+            "apps",
+            "browser_use",
+            "computer_use",
+            "hooks",
+            "image_generation",
+            "memories",
+            "plugins",
+            "shell_tool",
+            "skill_search",
+        }

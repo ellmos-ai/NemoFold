@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import json
 import re
@@ -181,6 +182,18 @@ def _json_object(text: str) -> dict[str, Any]:
 
 def _normalized(value: str) -> str:
     return re.sub(r"\s+", " ", value).strip()
+
+
+def _response_schema(question_count: int) -> dict[str, Any]:
+    question_ids = [f"q_{index:03d}" for index in range(1, question_count + 1)]
+    schema = copy.deepcopy(PROVIDER_RESPONSE_SCHEMA)
+    answers = schema["properties"]["answers"]
+    answers["maxItems"] = question_count
+    answers["items"]["properties"]["question_id"]["enum"] = question_ids
+    unanswered = schema["properties"]["unanswered_question_ids"]
+    unanswered["maxItems"] = question_count
+    unanswered["items"]["enum"] = question_ids
+    return schema
 
 
 def _matching_hit(
@@ -446,12 +459,17 @@ def analyze_with_provider(
         system_prompt = (
             "You are NemoFold's evidence analyst. Answer only from the supplied chunks. "
             "Every quote must be copied exactly from a chunk belonging to the same "
-            "question. Use source IDs only; never invent paths, names, or evidence."
+            "question. Return at most one answer object per question_id; combine all "
+            "evidence for one question in that object. Account for each question exactly "
+            "once, either in answers or unanswered_question_ids. Use source IDs only; "
+            "never invent paths, names, or evidence. Do not call tools, inspect the "
+            "filesystem, or access any network resource."
         )
+        response_schema = _response_schema(len(receipts))
         provider_request = ProviderRequest(
             system_prompt=system_prompt,
             user_prompt=context_text,
-            response_schema=PROVIDER_RESPONSE_SCHEMA,
+            response_schema=response_schema,
         )
         request_payload = {
             "schema": "nemofold.provider-request.v1",
@@ -459,7 +477,7 @@ def analyze_with_provider(
             "provider": provider_config.public_summary(),
             "system_prompt": system_prompt,
             "context": context,
-            "response_schema": PROVIDER_RESPONSE_SCHEMA,
+            "response_schema": response_schema,
             "transfer_performed": False,
             "competition_proof": False,
         }
