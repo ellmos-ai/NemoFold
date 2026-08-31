@@ -78,7 +78,7 @@ class DraftStore:
         name: str | None = None,
         source: str,
     ) -> dict[str, Any]:
-        if source not in {"api", "cli", "mcp"}:
+        if source not in {"api", "cli", "mcp", "wizard"}:
             raise ValueError("draft source is invalid")
         parsed = parse_job_payload(job, base_dir=self.base_dir)
         paths = (*parsed.input_roots, *parsed.target_roots, parsed.output_dir)

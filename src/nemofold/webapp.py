@@ -21,6 +21,7 @@ from .notebooks import ResearchNotebookStore
 from .provider_analysis import analyze_with_provider, preview_provider_context
 from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
+from .wizard import DEFAULT_OUTPUT_DIR, plan_to_primitive, plan_voyage
 from .workflow_graphs import workflow_graphs
 
 MAX_REQUEST_BYTES = 512 * 1024
@@ -311,6 +312,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "artifact_surface_enabled": provider_surface_enabled,
                     "draft_surface_enabled": provider_surface_enabled,
                     "notebook_surface_enabled": provider_surface_enabled,
+                    "wizard_surface_enabled": provider_surface_enabled,
                     "external_models_allowed": (
                         self.server.app_config.execution.external_models_allowed
                         if provider_surface_enabled
@@ -396,6 +398,8 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/drafts",
             "/api/notebooks",
             "/api/notebook-run",
+            "/api/wizard",
+            "/api/wizard-prepare",
         }:
             self._discard_bounded_request_body()
             self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -410,6 +414,8 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/drafts",
                 "/api/notebooks",
                 "/api/notebook-run",
+                "/api/wizard",
+                "/api/wizard-prepare",
             }:
                 self._discard_bounded_request_body()
                 self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -463,6 +469,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/notebook-run":
             self._handle_notebook_run_link()
+            return
+        if path in {"/api/wizard", "/api/wizard-prepare"}:
+            self._handle_wizard(prepare=path == "/api/wizard-prepare")
             return
         try:
             payload = self._read_json()
@@ -629,6 +638,86 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self._error(HTTPStatus.BAD_REQUEST, "corpus_glance_rejected", str(exc))
             return
         self._json({"ok": True, **result})
+
+    def _handle_wizard(self, *, prepare: bool) -> None:
+        """Plan a voyage, and on the prepare path write it to the draft inbox.
+
+        Planning has no side effect at all. Preparing writes drafts and nothing
+        else: the wizard never executes a job, so a plan can be wrong without
+        anything having happened.
+        """
+        if self.server.app_config.exposed_to_network:
+            self._reject_before_body_read(
+                HTTPStatus.FORBIDDEN,
+                "wizard_surface_loopback_only",
+                "the captain's desk is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            unknown = sorted(set(payload) - {"text", "context"})
+            if unknown:
+                raise ValueError(f"unknown request fields: {', '.join(unknown)}")
+            context = payload.get("context") or {}
+            if not isinstance(context, dict):
+                raise ValueError("context must be an object")
+            context_unknown = sorted(set(context) - {"input_roots", "output_dir"})
+            if context_unknown:
+                raise ValueError(f"unknown context fields: {', '.join(context_unknown)}")
+            input_roots = context.get("input_roots") or []
+            if not isinstance(input_roots, list) or any(
+                not isinstance(item, str) for item in input_roots
+            ):
+                raise ValueError("context input_roots must be a list of strings")
+            output_dir = context.get("output_dir", DEFAULT_OUTPUT_DIR)
+            if not isinstance(output_dir, str) or not output_dir.strip():
+                raise ValueError("context output_dir must be a non-empty string")
+            text = payload.get("text")
+            if not isinstance(text, str):
+                raise ValueError("text must be a string")
+            plan = plan_voyage(text, input_roots=tuple(input_roots), output_dir=output_dir)
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "wizard_request_rejected", str(exc))
+            return
+        result = plan_to_primitive(plan)
+        result["ok"] = True
+        result["prepared"] = False
+        result["drafts"] = []
+        if not prepare:
+            self._json(result)
+            return
+        if not plan.steps:
+            self._error(
+                HTTPStatus.BAD_REQUEST,
+                "wizard_nothing_to_prepare",
+                "this request produced no runnable step",
+            )
+            return
+        store = self._draft_store()
+        drafts: list[dict[str, object]] = []
+        try:
+            for step in plan.steps:
+                saved = store.save(
+                    step.job,
+                    name=f"Voyage {step.order}/{len(plan.steps)} · {step.title}",
+                    source="wizard",
+                )
+                drafts.append(
+                    {
+                        "draft_id": saved["draft_id"],
+                        "name": saved["name"],
+                        "workflow": saved["job"]["workflow"],
+                        "order": step.order,
+                    }
+                )
+        except (JobFileError, OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "wizard_draft_rejected", str(exc))
+            return
+        result["prepared"] = True
+        result["drafts"] = drafts
+        self._json(result)
 
     def _handle_artifact_catalog(self) -> None:
         if self.server.app_config.exposed_to_network:

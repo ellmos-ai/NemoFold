@@ -1022,3 +1022,98 @@ def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> No
     hero_and_cards = html.split('id="chartDetail"', 1)[0]
     assert 'class="product-areas"' in hero_and_cards
     assert "Command Bridge" in hero_and_cards
+
+
+def test_captains_desk_plans_and_prepares_drafts_without_running_anything(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    request = {
+        "text": (
+            "Unfall mit Hyundai und schreib mir eine mail an zuständigen "
+            "versicherungsberater füge bild ein als entwurf"
+        ),
+        "context": {"input_roots": [str(documents)]},
+    }
+
+    with running_server(tmp_path) as base_url:
+        status, _ = get_json(base_url + "/api/status")
+        plan = post_json(base_url + "/api/wizard", request)
+        prepared = post_json(base_url + "/api/wizard-prepare", request)
+        inbox, _ = get_json(base_url + "/api/drafts")
+
+    assert status["wizard_surface_enabled"] is True
+    # Planning alone writes nothing.
+    assert plan["ok"] is True
+    assert plan["prepared"] is False
+    assert plan["drafts"] == []
+    assert plan["executed"] is False
+    assert plan["cloud_proof"] is False
+    assert [step["workflow"] for step in plan["steps"]][-1] == "controlled_email"
+
+    # Preparing writes drafts and only drafts.
+    assert prepared["prepared"] is True
+    assert len(prepared["drafts"]) == len(plan["steps"])
+    assert prepared["drafts"][0]["name"].startswith("Voyage 1/")
+    prepared_ids = {item["draft_id"] for item in prepared["drafts"]}
+    assert prepared_ids <= {item["draft_id"] for item in inbox["drafts"]}
+    for entry in inbox["drafts"]:
+        if entry["draft_id"] in prepared_ids:
+            assert entry["source"] == "wizard"
+
+
+def test_captains_desk_refuses_a_request_it_cannot_turn_into_a_step(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        plan = post_json(
+            base_url + "/api/wizard",
+            {"text": "wie ist das wetter morgen in bernau"},
+        )
+        with pytest.raises(HTTPError) as refused:
+            post_json(
+                base_url + "/api/wizard-prepare",
+                {"text": "wie ist das wetter morgen in bernau"},
+            )
+
+    assert plan["steps"] == []
+    assert plan["matched"] is False
+    assert refused.value.code == 400
+    assert json.load(refused.value)["error"] == "wizard_nothing_to_prepare"
+
+
+def test_captains_desk_is_absent_in_the_public_demo(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
+
+    with running_public_demo(source_root) as (_, base_url):
+        status, _ = get_json(base_url + "/api/status")
+        with pytest.raises(HTTPError) as refused:
+            post_json(base_url + "/api/wizard", {"text": "bündle die unterlagen"})
+
+    assert status["wizard_surface_enabled"] is False
+    assert refused.value.code == 404
+
+
+def test_captains_desk_is_closed_on_a_network_exposed_server(tmp_path) -> None:
+    server = build_server(
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(tmp_path),)),
+            exposed_to_network=True,
+        ),
+        host="127.0.0.1",
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    try:
+        with pytest.raises(HTTPError) as refused:
+            post_json(f"http://{host}:{port}/api/wizard", {"text": "bündle die unterlagen"})
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+    assert refused.value.code == 403
+    assert json.load(refused.value)["error"] == "wizard_surface_loopback_only"
