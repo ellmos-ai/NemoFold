@@ -240,6 +240,36 @@ reversed with `nemofold undo <run-id> --output <dir> --allow-root <root>
 --approve-actions`. Failed or blocked jobs can be retried with `nemofold resume` while
 preserving the original job identity and journal.
 
+## My use cases: the voyage library
+
+A plan you keep gets a name. The overview holds the library: saved voyages next to
+five specialists that ship with NemoFold - fact digest as PDF, topic bundle with
+evidence, daily arrivals, registry table, and offer synopsis. A specialist is a
+read-only starting point that carries workflows and parameters but no path, so a
+shipped file can never name a folder on your machine and can never run by itself.
+Copying one binds it to your approved roots; from then on it is an ordinary entry you
+can edit.
+
+Editing works two ways, and both end in something you confirm. In the detail view you
+reorder or remove steps by hand and save. Or you ask the captain - "füge zwischen
+Schritt 2 und 3 einen Tagesbericht ein" - and get the step list before and after as a
+diff with an apply button. The library is written only when you apply, and a request
+the desk cannot map is answered rather than guessed: anonymization, for example, is
+part of every step's privacy gate and not a step of its own.
+
+Running a voyage runs its steps in order, each through the same gates and with its own
+ledger, and writes one dossier that links them. A step that blocks stops the chain
+there, so nothing downstream runs on an unfinished result. When it worked you get one
+quiet line and the detail one click away; when it did not, the steps, gates and models
+are open in front of you.
+
+A step may carry a model preference - a preferred provider and model, plus a fallback.
+The preference authorises nothing on its own: the external gate, the per-run approval
+and the budget still decide. One rule is enforced in code and cannot be configured
+away: a fallback may only lower exposure. External to local is fine; local to external
+is refused. A chained step therefore always runs the local engine, and the dossier
+names the model that actually ran together with the reason a preference was not used.
+
 ## Ask the Captain's Desk
 
 The console's overview opens with the Captain's Desk: one plain sentence in, a chain of

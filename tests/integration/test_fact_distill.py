@@ -151,3 +151,37 @@ def test_german_ordinals_do_not_cut_a_fact_in_half() -> None:
     assert "Die Deckung beginnt am 1. April 2026." in statements
     assert "Der Rest bleibt offen." in statements
     assert len(statements) == 2
+
+
+def test_a_filter_without_matches_still_writes_an_honest_report(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "police-a.txt").write_text(POLICY_A, encoding="utf-8")
+
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "fact_distill",
+            "input_roots": [str(documents)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {"focus_terms": ["Raumfahrt"], "formats": ["md"]},
+        },
+        base_dir=tmp_path,
+    )
+
+    report = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="distill_empty"
+    ).report
+
+    assert report.status is RunStatus.EXECUTED
+    assert report.metadata["facts_kept"] == 0
+    # An empty result is a finding, not a missing file.
+    findings = next(
+        Path(artifact.path)
+        for artifact in report.artifacts
+        if artifact.path.endswith("_facts.md")
+    ).read_text(encoding="utf-8")
+    assert 'No fact matched the focus filter "Raumfahrt".' in findings
+    assert "source(s) were read" in findings

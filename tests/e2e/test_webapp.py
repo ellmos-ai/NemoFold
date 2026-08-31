@@ -1269,3 +1269,75 @@ def test_running_a_saved_voyage_returns_a_dossier_over_its_steps(tmp_path) -> No
     assert step["model_used"] == "nemofold-local-core"
     assert "No model preference" in step["model_note"]
     assert Path(run["dossier_path"]).is_file()
+
+
+def test_library_edit_returns_a_diff_and_writes_only_on_a_separate_save(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "police.txt").write_text("Beitrag: 148 Euro", encoding="utf-8")
+
+    with running_server(tmp_path) as base_url:
+        copied = post_json(
+            base_url + "/api/voyage-preset",
+            {
+                "preset_id": "preset_fact_digest_pdf",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+            },
+        )
+        voyage_id = copied["voyage"]["voyage_id"]
+        edit = post_json(
+            base_url + "/api/voyage-edit",
+            {"voyage_id": voyage_id, "text": "füge am Ende einen Tagesbericht ein"},
+        )
+        listed_before, _ = get_json(base_url + "/api/voyages")
+        saved = post_json(
+            base_url + "/api/voyages",
+            {
+                "voyage_id": voyage_id,
+                "name": copied["voyage"]["name"],
+                "steps": edit["steps_after"],
+            },
+        )
+
+    # The edit is a proposal: it names the change and writes nothing.
+    assert edit["applied"] is False
+    assert edit["applicable"] is True
+    assert edit["before"] == ["fact_distill"]
+    assert edit["after"] == ["fact_distill", "daily_arrivals"]
+    unchanged = next(
+        item for item in listed_before["voyages"] if item["voyage_id"] == voyage_id
+    )
+    assert unchanged["workflows"] == ["fact_distill"]
+
+    # Applying is an ordinary save, so it passes the same validation.
+    assert [step["workflow"] for step in saved["voyage"]["steps"]] == [
+        "fact_distill",
+        "daily_arrivals",
+    ]
+
+
+def test_library_edit_explains_an_unmappable_request(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+
+    with running_server(tmp_path) as base_url:
+        copied = post_json(
+            base_url + "/api/voyage-preset",
+            {
+                "preset_id": "preset_fact_digest_pdf",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+            },
+        )
+        edit = post_json(
+            base_url + "/api/voyage-edit",
+            {
+                "voyage_id": copied["voyage"]["voyage_id"],
+                "text": "füge einen Anonymisierungsschritt ein",
+            },
+        )
+
+    assert edit["applicable"] is False
+    assert edit["before"] == edit["after"]
+    assert any("privacy gate" in note for note in edit["notes"])

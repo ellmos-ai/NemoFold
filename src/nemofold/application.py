@@ -1628,6 +1628,34 @@ def _execute_fact_distill(
                 formats=formats,
             )
         )
+    else:
+        # A focus filter that matches nothing is a result, not a missing file.
+        # Without this the run finished "executed" with no findings report at
+        # all, which reads like a failure the ledger never mentions.
+        focus_note = (
+            "No fact matched the focus filter "
+            + ", ".join(f'"{term}"' for term in focus)
+            + "."
+            if focus
+            else "No quotable fact was found in the approved sources."
+        )
+        artifacts.append(
+            write_text_artifact(
+                output / f"{run_id}_facts.md",
+                "\n".join(
+                    [
+                        f"# {title}",
+                        "",
+                        focus_note,
+                        "",
+                        f"{len(inventory.records)} source(s) were read and "
+                        f"{result.considered} sentence(s) were considered.",
+                        "",
+                    ]
+                ),
+                "markdown",
+            )
+        )
     if result.struck:
         # The appendix travels in the same formats as the findings, so a reader
         # who only opens the PDF still sees what was removed.

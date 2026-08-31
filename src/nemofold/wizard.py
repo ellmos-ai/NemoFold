@@ -330,12 +330,12 @@ class VoyagePlan:
         return bool(self.steps or self.unavailable)
 
 
-def _mentions(haystack: str, keyword: str) -> bool:
+def mentions(haystack: str, keyword: str) -> bool:
     """Match a keyword at a word start so German inflections still count."""
     return re.search(r"(?<!\w)" + re.escape(keyword), haystack) is not None
 
 
-def _normalize(text: str) -> str:
+def normalize_request(text: str) -> str:
     if not isinstance(text, str):
         raise ValueError("request text must be a string")
     stripped = text.strip()
@@ -386,7 +386,7 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
     if workflow == "controlled_email":
         questions.append("Which address should receive the draft?")
         questions.append("Which sender address should the draft carry?")
-        if any(_mentions(text, item) for item in ATTACHMENT_KEYWORDS):
+        if any(mentions(text, item) for item in ATTACHMENT_KEYWORDS):
             questions.append(
                 "Which approved file should be attached? It is attached and hashed, "
                 "not read as evidence."
@@ -415,7 +415,7 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
         "report_studio", "bundle_export", "fact_distill", "document_registry",
         "synopsis_merge",
     } and any(
-        _mentions(text, keyword) for keyword in OUTPUT_LOCATION_KEYWORDS
+        mentions(text, keyword) for keyword in OUTPUT_LOCATION_KEYWORDS
     ):
         questions.append(
             "Which approved folder should receive the file? A desktop or downloads folder "
@@ -496,7 +496,7 @@ def _why(workflow: str) -> str:
     }[workflow]
 
 
-def _parameters_for(workflow: str, text: str) -> dict[str, Any]:
+def parameters_for(workflow: str, text: str) -> dict[str, Any]:
     if workflow == "controlled_email":
         return {
             "to": [],
@@ -512,7 +512,7 @@ def _parameters_for(workflow: str, text: str) -> dict[str, Any]:
         return {"digest_depth": "full"}
     if workflow == "evidence_analyst":
         return {"analysis_mode": "local_extractive", "max_chunks": 64}
-    wants_pdf = _mentions(text.casefold(), "pdf")
+    wants_pdf = mentions(text.casefold(), "pdf")
     if workflow == "daily_arrivals":
         return {"summary_length": 3, "export_task_snippet": True, "formats": ["md"]}
     if workflow == "synopsis_merge":
@@ -532,31 +532,31 @@ def _parameters_for(workflow: str, text: str) -> dict[str, Any]:
     if workflow == "report_studio":
         # report_studio really renders PDF (report_studio.SUPPORTED_FORMATS), so a
         # request for a PDF is answered with the format, not with an apology.
-        wants_pdf = _mentions(text.casefold(), "pdf")
+        wants_pdf = mentions(text.casefold(), "pdf")
         return {"formats": ["pdf", "md"] if wants_pdf else ["md"], "include_coverage": True}
     return {}
 
 
-def _matched_workflows(haystack: str) -> set[str]:
+def matched_workflows(haystack: str) -> set[str]:
     matched = set()
     for workflow, keywords in WORKFLOW_KEYWORDS.items():
         if workflow not in SUPPORTED_WORKFLOWS:
             continue
-        if any(_mentions(haystack, keyword) for keyword in keywords):
+        if any(mentions(haystack, keyword) for keyword in keywords):
             matched.add(workflow)
     return matched
 
 
-def _matched_roadmap(haystack: str) -> list[RoadmapService]:
+def matched_roadmap(haystack: str) -> list[RoadmapService]:
     return [
         service
         for service in ROADMAP_SERVICES
-        if any(_mentions(haystack, keyword) for keyword in service.keywords)
+        if any(mentions(haystack, keyword) for keyword in service.keywords)
     ]
 
 
 def _recurring_note(haystack: str) -> RecurringNote | None:
-    if not any(_mentions(haystack, keyword) for keyword in RECURRENCE_KEYWORDS):
+    if not any(mentions(haystack, keyword) for keyword in RECURRENCE_KEYWORDS):
         return None
     return RecurringNote(
         requested=True,
@@ -580,13 +580,13 @@ def plan_voyage(
     output_dir: str = DEFAULT_OUTPUT_DIR,
 ) -> VoyagePlan:
     """Plan an ordered chain of job drafts for one plain-language request."""
-    request = _normalize(text)
+    request = normalize_request(text)
     haystack = request.casefold()
     roots = tuple(str(item).strip() for item in input_roots if str(item).strip())
     roots_missing = not roots
 
-    workflows = _matched_workflows(haystack)
-    roadmap = _matched_roadmap(haystack)
+    workflows = matched_workflows(haystack)
+    roadmap = matched_roadmap(haystack)
     for service in roadmap:
         workflows.update(service.alternative_workflows)
 
@@ -602,7 +602,7 @@ def plan_voyage(
         for service in roadmap
     ]
     if "controlled_email" in workflows and any(
-        _mentions(haystack, keyword) for keyword in SEND_KEYWORDS
+        mentions(haystack, keyword) for keyword in SEND_KEYWORDS
     ):
         unavailable.append(
             UnavailableIntent(
@@ -650,7 +650,7 @@ def plan_voyage(
                 if workflow in {"evidence_analyst", "platform_proof"}
                 else ()
             ),
-            parameters=_parameters_for(workflow, request),
+            parameters=parameters_for(workflow, request),
         )
         steps.append(
             VoyageStep(

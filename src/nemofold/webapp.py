@@ -21,6 +21,7 @@ from .notebooks import ResearchNotebookStore
 from .provider_analysis import analyze_with_provider, preview_provider_context
 from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
+from .voyage_edit import edit_to_primitive, plan_voyage_edit
 from .voyage_runs import run_voyage
 from .voyages import VoyageStore
 from .wizard import DEFAULT_OUTPUT_DIR, plan_to_primitive, plan_voyage
@@ -413,6 +414,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/voyage-preset",
             "/api/voyage-delete",
             "/api/voyage-run",
+            "/api/voyage-edit",
         }:
             self._discard_bounded_request_body()
             self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -433,6 +435,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/voyage-preset",
                 "/api/voyage-delete",
                 "/api/voyage-run",
+                "/api/voyage-edit",
             }:
                 self._discard_bounded_request_body()
                 self._error(HTTPStatus.NOT_FOUND, "not_found", path)
@@ -501,6 +504,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/voyage-run":
             self._handle_voyage_run()
+            return
+        if path == "/api/voyage-edit":
+            self._handle_voyage_edit()
             return
         try:
             payload = self._read_json()
@@ -893,6 +899,33 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             },
             HTTPStatus.OK if result.completed else HTTPStatus.CONFLICT,
         )
+
+    def _handle_voyage_edit(self) -> None:
+        """Plan one edit against a saved voyage and return the diff.
+
+        Applying it is a normal save of the proposed steps, so a confirmation
+        goes through the same validation as any other library write. There is
+        deliberately no endpoint that edits and writes in one call.
+        """
+        if self._reject_closed_voyage_surface():
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict) or set(payload) - {"voyage_id", "text"}:
+                raise ValueError("request body must carry voyage_id and text")
+            voyage_id = payload.get("voyage_id")
+            text = payload.get("text")
+            if not isinstance(voyage_id, str) or not isinstance(text, str):
+                raise ValueError("voyage_id and text must be strings")
+            voyage = self._voyage_store().load(voyage_id)
+            edit = plan_voyage_edit(text, voyage)
+        except (OSError, PermissionError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "voyage_edit_rejected", str(exc))
+            return
+        result = edit_to_primitive(edit)
+        result["ok"] = True
+        result["voyage_id"] = voyage_id
+        self._json(result)
 
     def _handle_artifact_catalog(self) -> None:
         if self.server.app_config.exposed_to_network:

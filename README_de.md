@@ -250,6 +250,39 @@ Aktionslauf kann mit `nemofold undo <run-id> --output <dir> --allow-root <root>
 lassen sich mit `nemofold resume` unter Beibehaltung der ursprünglichen Auftragsidentität
 und des Journals fortsetzen.
 
+## Meine Usecases: die Fahrten-Bibliothek
+
+Ein Plan, den Sie behalten, bekommt einen Namen. Die Übersicht trägt die Bibliothek:
+gespeicherte Fahrten neben fünf Spezialisten, die NemoFold mitbringt — Faktendestillat
+als PDF, Themenbündel mit Belegen, Tagesbericht, Verzeichnistabelle und
+Angebotssynopse. Ein Spezialist ist ein schreibgeschützter Ausgangspunkt: Er trägt
+Workflows und Parameter, aber keinen Pfad. Eine mitgelieferte Datei kann deshalb nie
+einen Ordner auf Ihrem Rechner benennen und nie von selbst laufen. Beim Kopieren wird
+sie an Ihre freigegebenen Roots gebunden und ist danach ein gewöhnlicher, bearbeitbarer
+Eintrag.
+
+Bearbeiten geht auf zwei Wegen, und beide enden in etwas, das Sie bestätigen. In der
+Detailansicht ordnen oder entfernen Sie Schritte von Hand und speichern. Oder Sie
+fragen den Kapitän — „füge zwischen Schritt 2 und 3 einen Tagesbericht ein" — und
+erhalten die Schrittliste vorher und nachher als Diff mit Übernehmen-Knopf. Geschrieben
+wird die Bibliothek erst beim Übernehmen, und was das Desk nicht zuordnen kann, wird
+beantwortet statt geraten: Anonymisierung etwa gehört zum Datenschutz-Gate jedes
+Schritts und ist kein eigener Schritt.
+
+Eine Fahrt auszuführen heißt: Schritte der Reihe nach, jeder durch dieselben Gates und
+mit eigenem Ledger, und ein Gesamt-Dossier verlinkt sie. Ein blockierter Schritt stoppt
+die Kette dort, damit nichts Nachgelagertes auf einem unfertigen Ergebnis läuft. Ging
+es gut, sehen Sie eine ruhige Zeile und die Details einen Klick entfernt; ging es
+schief, liegen Schritte, Gates und Modelle offen vor Ihnen.
+
+Ein Schritt kann eine Modellpräferenz tragen — bevorzugter Provider und Modell plus
+Fallback. Die Präferenz erteilt für sich keine Erlaubnis: Externmodell-Gate, Freigabe je
+Lauf und Budget entscheiden weiterhin. Eine Regel steckt fest im Code und lässt sich
+nicht wegkonfigurieren: Ein Fallback darf die Exponierung nur senken. Extern zu lokal
+ist in Ordnung, lokal zu extern wird abgelehnt. Ein Kettenschritt läuft deshalb immer
+auf der lokalen Engine, und das Dossier nennt das tatsächlich gelaufene Modell samt
+Grund, warum eine Präferenz nicht angewandt wurde.
+
 ## Das Captain's Desk fragen
 
 Die Übersicht der Konsole beginnt mit dem Captain's Desk: ein einfacher Satz hinein,

@@ -1833,6 +1833,7 @@ async function loadStatus() {
     draftSurfaceEnabled = status.draft_surface_enabled === true;
     notebookSurfaceEnabled = status.notebook_surface_enabled === true;
     wizardSurfaceEnabled = status.wizard_surface_enabled === true;
+    voyageSurfaceEnabled = status.voyage_surface_enabled === true;
     configureProviders(status);
     renderConnectionStatus(status);
     renderCommandBridge(status);
@@ -1872,6 +1873,7 @@ async function loadStatus() {
     await loadResearchNotebooks();
     await loadArtifacts();
     await loadHomeModules();
+    await loadLibrary();
     $("systemState").textContent = status.live_runtime_ready
       ? "Verified live runtime receipt"
       : publicDemo ? "Public synthetic demo · read-only" : "Local core responding · cloud proof absent";
@@ -1907,6 +1909,14 @@ if (requestedWorkflow && pageConfiguration[currentPage].workflows.includes(reque
 $("runId").value = "";
 $("workflow").addEventListener("change", () => { applyWorkflowDefaults(); renderTaskCards(); });
 if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
+if ($("libraryRefresh")) $("libraryRefresh").addEventListener("click", loadLibrary);
+if ($("libraryClose")) {
+  $("libraryClose").addEventListener("click", () => { openVoyage = null; renderVoyageDetail(); });
+}
+if ($("libraryRun")) $("libraryRun").addEventListener("click", runOpenVoyage);
+if ($("librarySave")) $("librarySave").addEventListener("click", saveVoyageChanges);
+if ($("libraryDelete")) $("libraryDelete").addEventListener("click", deleteOpenVoyage);
+if ($("libraryEditForm")) $("libraryEditForm").addEventListener("submit", askVoyageEdit);
 if ($("homeGlanceLook")) $("homeGlanceLook").addEventListener("click", loadHomeGlance);
 if ($("echoCheckRun")) $("echoCheckRun").addEventListener("click", loadEcho);
 $("executionMode").addEventListener("change", () => { resetPrivacyCenter(); updateProviderPanel(); });
@@ -1944,3 +1954,369 @@ $("notebookSave").addEventListener("click", saveResearchNotebook);
 $("inputRoots").addEventListener("input", updateNotebookSnapshot);
 $("questions").addEventListener("input", updateNotebookSnapshot);
 loadStatus();
+
+// --------------------------------------------------------------------------- //
+// My use cases: the saved voyage library
+// --------------------------------------------------------------------------- //
+
+let voyageSurfaceEnabled = false;
+let openVoyage = null;
+let pendingDiff = null;
+
+function libraryNote(parent, text) {
+  return deskLine(parent, "p", "desk-note", text);
+}
+
+async function loadLibrary() {
+  const list = $("libraryList");
+  if (!list) return;
+  if (!voyageSurfaceEnabled) {
+    list.textContent = "";
+    libraryNote(list, "The use-case library is a loopback-only surface and stays closed here.");
+    return;
+  }
+  try {
+    const response = await fetch("/api/voyages");
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    renderLibrary(payload.voyages || []);
+  } catch (error) {
+    list.textContent = "";
+    libraryNote(list, `The library could not be read: ${error.message}`);
+  }
+}
+
+function renderLibrary(entries) {
+  const list = $("libraryList");
+  list.textContent = "";
+  if (!entries.length) {
+    libraryNote(list, "Nothing saved yet. Copy a specialist to start your own library.");
+    return;
+  }
+  for (const entry of entries) {
+    const card = deskLine(list, "article", "library-card");
+    card.setAttribute("role", "listitem");
+    if (!entry.editable) card.dataset.shipped = "true";
+    deskLine(card, "span", "library-kind", entry.editable ? "SAVED" : "SPECIALIST · READ-ONLY");
+    deskLine(card, "b", null, entry.name);
+    deskLine(card, "p", null, entry.description || "");
+    deskLine(card, "small", "library-steps-line", entry.workflows.join(" → "));
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = entry.editable ? "card-open" : "card-open secondary";
+    button.append(
+      instrumentIcon("wheel"),
+      entry.editable ? "Open" : "Copy to my use cases"
+    );
+    button.addEventListener("click", () =>
+      entry.editable ? openLibraryEntry(entry.voyage_id) : copySpecialist(entry.voyage_id)
+    );
+    card.append(button);
+  }
+}
+
+async function copySpecialist(presetId) {
+  const list = $("libraryList");
+  try {
+    const response = await fetch("/api/voyage-preset", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        preset_id: presetId,
+        input_roots: lines($("deskRoots")?.value || $("inputRoots").value),
+        output_dir: $("outputDir").value
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    await loadLibrary();
+    await openLibraryEntry(payload.voyage.voyage_id);
+  } catch (error) {
+    libraryNote(list, `Not copied: ${error.message}`);
+  }
+}
+
+async function openLibraryEntry(voyageId) {
+  try {
+    const listed = await fetch("/api/voyages");
+    const payload = await listed.json();
+    if (!listed.ok) throw new Error(payload.detail || payload.error || "library unavailable");
+    const known = (payload.voyages || []).find((item) => item.voyage_id === voyageId);
+    if (!known) throw new Error("this voyage is no longer in the library");
+    // The edit endpoint returns the current step list without changing anything,
+    // so an unrecognised request is the cheapest honest way to read the detail.
+    const probe = await fetch("/api/voyage-edit", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: voyageId, text: "zeige die schritte"})
+    });
+    const detail = await probe.json();
+    openVoyage = {
+      voyage_id: voyageId,
+      name: known.name,
+      description: known.description,
+      workflows: detail.before || known.workflows,
+      steps: detail.steps_after || []
+    };
+    renderVoyageDetail();
+  } catch (error) {
+    libraryNote($("libraryList"), `Not opened: ${error.message}`);
+  }
+}
+
+function renderVoyageDetail() {
+  const panel = $("libraryDetail");
+  if (!openVoyage) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  $("libraryDetailTitle").textContent = openVoyage.name;
+  $("libraryDetailDescription").textContent = openVoyage.description || "";
+  const list = $("librarySteps");
+  list.textContent = "";
+  openVoyage.workflows.forEach((workflow, index) => {
+    const row = deskLine(list, "div", "library-step");
+    row.setAttribute("role", "listitem");
+    deskLine(row, "span", "library-step-order", `STEP ${index + 1}`);
+    deskLine(row, "b", null, workflowCards[workflow]?.title || workflow);
+    deskLine(row, "small", null, workflow);
+    const controls = deskLine(row, "div", "library-step-controls");
+    for (const [label, delta] of [["↑", -1], ["↓", 1]]) {
+      const move = document.createElement("button");
+      move.type = "button";
+      move.className = "secondary";
+      move.textContent = label;
+      move.setAttribute("aria-label", `Move step ${index + 1} ${delta < 0 ? "up" : "down"}`);
+      move.disabled = index + delta < 0 || index + delta >= openVoyage.workflows.length;
+      move.addEventListener("click", () => moveVoyageStep(index, delta));
+      controls.append(move);
+    }
+    const drop = document.createElement("button");
+    drop.type = "button";
+    drop.className = "secondary";
+    drop.textContent = "Remove";
+    drop.disabled = openVoyage.workflows.length < 2;
+    drop.addEventListener("click", () => removeVoyageStep(index));
+    controls.append(drop);
+  });
+}
+
+function moveVoyageStep(index, delta) {
+  const target = index + delta;
+  const workflows = openVoyage.workflows;
+  const steps = openVoyage.steps;
+  [workflows[index], workflows[target]] = [workflows[target], workflows[index]];
+  if (steps.length === workflows.length) {
+    [steps[index], steps[target]] = [steps[target], steps[index]];
+  }
+  renderVoyageDetail();
+}
+
+function removeVoyageStep(index) {
+  openVoyage.workflows.splice(index, 1);
+  if (openVoyage.steps.length > index) openVoyage.steps.splice(index, 1);
+  renderVoyageDetail();
+}
+
+async function saveOpenVoyage(steps, name) {
+  const response = await fetch("/api/voyages", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      voyage_id: openVoyage.voyage_id,
+      name: name || openVoyage.name,
+      description: openVoyage.description || "",
+      steps
+    })
+  });
+  const payload = await response.json();
+  if (!response.ok || payload.ok !== true) {
+    throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+  }
+  return payload.voyage;
+}
+
+function adoptSavedVoyage(saved) {
+  openVoyage.name = saved.name;
+  openVoyage.workflows = saved.steps.map((step) => step.workflow);
+  openVoyage.steps = saved.steps;
+}
+
+async function saveVoyageChanges() {
+  const diff = $("libraryDiff");
+  diff.textContent = "";
+  try {
+    adoptSavedVoyage(await saveOpenVoyage(openVoyage.steps));
+    libraryNote(diff, "Saved. The library now holds this order.");
+    renderVoyageDetail();
+    await loadLibrary();
+  } catch (error) {
+    libraryNote(diff, `Not saved: ${error.message}`);
+  }
+}
+
+async function deleteOpenVoyage() {
+  try {
+    const response = await fetch("/api/voyage-delete", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: openVoyage.voyage_id})
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || payload.error || "not deleted");
+    openVoyage = null;
+    renderVoyageDetail();
+    await loadLibrary();
+  } catch (error) {
+    libraryNote($("libraryDiff"), `Not deleted: ${error.message}`);
+  }
+}
+
+// D-033: a quiet line when it worked, full step transparency when it did not.
+function renderVoyageRun(result) {
+  const panel = $("libraryRunResult");
+  panel.textContent = "";
+  const success = result.status === "executed";
+  panel.dataset.mode = success ? "calm" : "explain";
+  const artifacts = result.steps.reduce((total, step) => total + step.artifact_count, 0);
+  if (success) {
+    deskLine(panel, "b", "run-calm", `Done · ${result.steps.length} step(s), ${artifacts} artifacts.`);
+    const anchor = document.createElement("button");
+    anchor.type = "button";
+    anchor.className = "instrument-anchor section-anchor";
+    anchor.setAttribute("aria-expanded", "false");
+    anchor.setAttribute("aria-controls", "libraryRunDetail");
+    anchor.dataset.collapse = "libraryRunDetail";
+    anchor.append(instrumentIcon("lifebuoy"));
+    deskLine(anchor, "span", null, "Show the steps, gates and models");
+    deskLine(anchor, "i", "chevron");
+    panel.append(anchor);
+  } else {
+    deskLine(panel, "b", "run-explain",
+      `Stopped at step ${result.stopped_at}. Later steps were not started.`);
+  }
+  const detail = deskLine(panel, "div", "collapse-panel run-detail");
+  detail.id = "libraryRunDetail";
+  detail.hidden = success;
+  for (const step of result.steps) {
+    const row = deskLine(detail, "div", "run-step");
+    row.dataset.status = step.status;
+    deskLine(row, "b", null, `Step ${step.order} · ${step.workflow} · ${step.status}`);
+    deskLine(row, "small", null, `${step.artifact_count} artifact(s) · model ${step.model_used}`);
+    deskLine(row, "small", "run-model-note", step.model_note);
+    if (step.errors && step.errors.length) {
+      deskLine(row, "small", "run-errors", step.errors.join(", "));
+    }
+  }
+  if (!success) {
+    libraryNote(panel,
+      "Ask the captain below what is missing; a proposed change always arrives as a diff you confirm.");
+  }
+}
+
+async function runOpenVoyage() {
+  const panel = $("libraryRunResult");
+  panel.textContent = "";
+  libraryNote(panel, "Running…");
+  try {
+    const response = await fetch("/api/voyage-run", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: openVoyage.voyage_id})
+    });
+    const result = await response.json();
+    if (result.steps === undefined) {
+      throw new Error(result.detail || result.error || `request failed (${response.status})`);
+    }
+    renderVoyageRun(result);
+  } catch (error) {
+    panel.textContent = "";
+    libraryNote(panel, `Not run: ${error.message}`);
+  }
+}
+
+async function askVoyageEdit(event) {
+  event?.preventDefault();
+  const diff = $("libraryDiff");
+  diff.textContent = "";
+  const text = $("libraryEditRequest").value.trim();
+  if (!text || !openVoyage) {
+    libraryNote(diff, "Open a voyage and describe the change you want.");
+    return;
+  }
+  try {
+    const response = await fetch("/api/voyage-edit", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: openVoyage.voyage_id, text})
+    });
+    const edit = await response.json();
+    if (!response.ok || edit.ok !== true) {
+      throw new Error(edit.detail || edit.error || `request failed (${response.status})`);
+    }
+    renderVoyageDiff(edit);
+  } catch (error) {
+    libraryNote(diff, `No change proposed: ${error.message}`);
+  }
+}
+
+function renderVoyageDiff(edit) {
+  const panel = $("libraryDiff");
+  panel.textContent = "";
+  deskLine(panel, "span", "diff-action", `PROPOSED ${edit.action.toUpperCase()}`);
+  deskLine(panel, "p", null, edit.summary);
+  // The diff is computed against the saved voyage. If the panel holds unsaved
+  // reordering, applying it would quietly discard that - so say it here rather
+  // than let the two versions diverge without a word.
+  const savedOrder = (edit.before || []).join(" ");
+  if (openVoyage && openVoyage.workflows.join(" ") !== savedOrder) {
+    libraryNote(
+      panel,
+      "This diff is based on the saved voyage. Your unsaved reordering is not part of "
+      + "it - save the changes first if you want to keep that order."
+    );
+  }
+  for (const note of edit.notes || []) deskLine(panel, "p", "desk-note", note);
+  if (!edit.applicable || !edit.changed) {
+    pendingDiff = null;
+    return;
+  }
+  const table = deskLine(panel, "div", "diff-table");
+  for (const pair of [["before", edit.before], ["after", edit.after]]) {
+    const column = deskLine(table, "div", `diff-column diff-${pair[0]}`);
+    deskLine(column, "span", null, pair[0].toUpperCase());
+    const items = deskLine(column, "ol", null);
+    for (const workflow of pair[1]) deskLine(items, "li", null, workflow);
+  }
+  pendingDiff = edit;
+  const confirm = document.createElement("button");
+  confirm.type = "button";
+  confirm.id = "libraryDiffConfirm";
+  confirm.className = "card-open";
+  confirm.append(instrumentIcon("wheel"), "Apply this change");
+  confirm.addEventListener("click", applyVoyageDiff);
+  panel.append(confirm);
+  deskLine(panel, "small", null,
+    "Nothing changed yet. The library is written only when you apply.");
+}
+
+async function applyVoyageDiff() {
+  if (!pendingDiff || !openVoyage) return;
+  const diff = $("libraryDiff");
+  try {
+    const saved = await saveOpenVoyage(pendingDiff.steps_after, pendingDiff.new_name);
+    adoptSavedVoyage(saved);
+    pendingDiff = null;
+    diff.textContent = "";
+    libraryNote(diff, "Applied. The library now holds the changed voyage.");
+    renderVoyageDetail();
+    await loadLibrary();
+  } catch (error) {
+    libraryNote(diff, `Not applied: ${error.message}`);
+  }
+}

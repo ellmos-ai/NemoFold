@@ -568,6 +568,43 @@ Which earlier wording changed?</textarea></label>
       </div>
     </section>
 
+    <section id="useCaseLibrary" class="use-case-library" aria-labelledby="libraryTitle" data-page-section="overview">
+      <div class="library-head">
+        <div>
+          <p class="kicker">MY USE CASES</p>
+          <h2 id="libraryTitle">The work you kept.</h2>
+          <p>Saved voyages and the specialists that ship with NemoFold. A specialist is a read-only starting point: copy it, bind it to your folders, then edit it here or ask the captain to change it.</p>
+        </div>
+        <button type="button" id="libraryRefresh" class="secondary">Refresh</button>
+      </div>
+      <div id="libraryList" class="library-list" aria-live="polite"></div>
+
+      <section id="libraryDetail" class="library-detail" aria-labelledby="libraryDetailTitle" hidden>
+        <div class="detail-head">
+          <div>
+            <span id="libraryDetailSource" class="detail-source">SAVED VOYAGE</span>
+            <h3 id="libraryDetailTitle">—</h3>
+            <p id="libraryDetailDescription"></p>
+          </div>
+          <button type="button" id="libraryClose" class="secondary">Close</button>
+        </div>
+        <div id="librarySteps" class="library-steps" role="list"></div>
+        <div class="library-actions">
+          <button type="button" id="libraryRun" class="card-open">Run voyage</button>
+          <button type="button" id="librarySave" class="secondary">Save changes</button>
+          <button type="button" id="libraryDelete" class="secondary">Delete</button>
+        </div>
+        <div id="libraryRunResult" class="library-run" role="status" aria-live="polite"></div>
+        <form id="libraryEditForm" class="library-edit">
+          <label>Ask the captain to change this voyage
+            <input id="libraryEditRequest" autocomplete="off" placeholder="füge zwischen Schritt 2 und 3 einen Tagesbericht ein">
+          </label>
+          <button type="submit" id="libraryEditAsk">Propose change</button>
+        </form>
+        <div id="libraryDiff" class="library-diff" aria-live="polite"></div>
+      </section>
+    </section>
+
     <section class="ships-chart" data-page-section="overview" data-open="false">
       <button type="button" id="chartToggle" class="chart-band" data-collapse="chartDetail" data-animated="true" aria-expanded="false" aria-controls="chartDetail">
         <span class="chart-legend">
