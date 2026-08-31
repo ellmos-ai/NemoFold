@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import threading
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -102,6 +103,9 @@ MAX_DEMO_QUESTION_CHARS = 500
 MAX_DEMO_SOURCE_FILES = 100
 MAX_DEMO_SOURCE_BYTES = 10 * 1024 * 1024
 MAX_FOLDER_CHOICES = 500
+MAX_GLANCE_FILES = 4000
+MAX_GLANCE_NEWEST = 5
+MAX_GLANCE_FORMATS = 12
 MAX_ARTIFACT_LEDGERS = 200
 MAX_LEDGER_BYTES = 4 * 1024 * 1024
 MAX_ARTIFACT_VIEW_BYTES = 64 * 1024 * 1024
@@ -359,6 +363,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/provider-analyze",
             "/api/provider-preview",
             "/api/folders",
+            "/api/corpus-glance",
             "/api/artifacts",
             "/api/drafts",
             "/api/notebooks",
@@ -372,6 +377,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/provider-analyze",
                 "/api/provider-preview",
                 "/api/folders",
+                "/api/corpus-glance",
                 "/api/artifacts",
                 "/api/drafts",
                 "/api/notebooks",
@@ -414,6 +420,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/folders":
             self._handle_folder_browser()
+            return
+        if path == "/api/corpus-glance":
+            self._handle_corpus_glance()
             return
         if path == "/api/artifacts":
             self._handle_artifact_catalog()
@@ -566,6 +575,30 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             )
         except (OSError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "folder_rejected", str(exc))
+            return
+        self._json({"ok": True, **result})
+
+    def _handle_corpus_glance(self) -> None:
+        if self.server.app_config.exposed_to_network:
+            self._reject_before_body_read(
+                HTTPStatus.FORBIDDEN,
+                "corpus_glance_loopback_only",
+                "corpus overview is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict):
+                raise ValueError("request body must be an object")
+            unknown = sorted(set(payload) - {"path"})
+            if unknown:
+                raise ValueError(f"unknown request fields: {', '.join(unknown)}")
+            path = payload.get("path")
+            if path is not None and not isinstance(path, str):
+                raise ValueError("path must be a string or null")
+            result = _corpus_glance(self.server.app_config, requested_path=path)
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "corpus_glance_rejected", str(exc))
             return
         self._json({"ok": True, **result})
 
@@ -822,6 +855,88 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             },
             status,
         )
+
+
+def _corpus_glance(
+    config: WebAppConfig,
+    *,
+    requested_path: str | None,
+) -> dict[str, object]:
+    """Bounded, read-only look at what lives inside one approved root.
+
+    Powers the per-area "home" modules of the console: counts and recency
+    only, never file contents; capped so a huge corpus cannot stall the
+    request thread.
+    """
+    roots = _allowed_folder_roots(config)
+    if requested_path is None:
+        if not roots:
+            raise ValueError("no approved corpus root is available")
+        candidate = roots[0]
+    else:
+        raw_candidate = Path(requested_path)
+        candidate = (
+            raw_candidate if raw_candidate.is_absolute() else config.base_dir / raw_candidate
+        ).resolve()
+    root = _matching_folder_root(candidate, roots)
+    if root is None:
+        raise PermissionError("folder is outside the server-approved roots")
+    if not candidate.is_dir():
+        raise ValueError("folder must be an existing directory")
+    total_files = 0
+    total_bytes = 0
+    by_format: dict[str, int] = {}
+    newest: list[tuple[float, dict[str, object]]] = []
+    truncated = False
+    pending: list[Path] = [candidate]
+    while pending:
+        current = pending.pop()
+        try:
+            entries = sorted(current.iterdir(), key=lambda path: path.name.casefold())
+        except OSError:
+            continue
+        for item in entries:
+            if item.is_symlink():
+                continue
+            if item.is_dir():
+                pending.append(item)
+                continue
+            if not item.is_file():
+                continue
+            if total_files >= MAX_GLANCE_FILES:
+                truncated = True
+                pending.clear()
+                break
+            try:
+                stat = item.stat()
+            except OSError:
+                continue
+            total_files += 1
+            total_bytes += stat.st_size
+            suffix = item.suffix.lower().lstrip(".") or "none"
+            by_format[suffix] = by_format.get(suffix, 0) + 1
+            record = {
+                "name": item.name,
+                "relative_path": str(item.relative_to(candidate)),
+                "modified": datetime.fromtimestamp(stat.st_mtime, tz=UTC).isoformat(
+                    timespec="seconds"
+                ),
+                "bytes": stat.st_size,
+            }
+            newest.append((stat.st_mtime, record))
+            newest.sort(key=lambda pair: pair[0], reverse=True)
+            del newest[MAX_GLANCE_NEWEST:]
+    formats = dict(
+        sorted(by_format.items(), key=lambda pair: (-pair[1], pair[0]))[:MAX_GLANCE_FORMATS]
+    )
+    return {
+        "root": str(candidate),
+        "total_files": total_files,
+        "total_bytes": total_bytes,
+        "by_format": formats,
+        "newest": [record for _, record in newest],
+        "truncated": truncated,
+    }
 
 
 def _allowed_folder_roots(config: WebAppConfig) -> tuple[Path, ...]:

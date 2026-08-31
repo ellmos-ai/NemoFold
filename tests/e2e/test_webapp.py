@@ -725,3 +725,26 @@ def test_request_handler_bounds_socket_reads_with_a_timeout() -> None:
     from nemofold.webapp import NemoFoldRequestHandler
 
     assert NemoFoldRequestHandler.timeout == 30
+
+
+def test_corpus_glance_reports_bounded_home_overview(tmp_path) -> None:
+    documents = tmp_path / "documents"
+    (documents / "nested").mkdir(parents=True)
+    (documents / "a.txt").write_text("alpha", encoding="utf-8")
+    (documents / "b.md").write_text("bravo", encoding="utf-8")
+    (documents / "nested" / "c.md").write_text("charlie", encoding="utf-8")
+
+    with running_server(tmp_path) as base_url:
+        result = post_json(base_url + "/api/corpus-glance", {"path": str(documents)})
+        default = post_json(base_url + "/api/corpus-glance", {})
+        with pytest.raises(HTTPError) as captured:
+            post_json(base_url + "/api/corpus-glance", {"path": str(tmp_path.parent)})
+
+    assert result["ok"] is True
+    assert result["total_files"] == 3
+    assert result["by_format"] == {"md": 2, "txt": 1}
+    assert [entry["name"] for entry in result["newest"]]
+    assert result["truncated"] is False
+    assert default["ok"] is True
+    assert captured.value.code == 400
+    assert json.load(captured.value)["error"] == "corpus_glance_rejected"
