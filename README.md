@@ -1,5 +1,7 @@
 # NemoFold
 
+English | [Deutsch](README_de.md)
+
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
 [MIT License](LICENSE) · Python 3.11+ · Local-first
 
@@ -32,8 +34,8 @@ engine, and artifact export. Local extraction supports text-family files, JSON, 
 HTML, PDF, DOCX, and ODT. Unsupported or unreadable files remain visible as coverage
 gaps.
 
-Cloud spend, uploads, live NemoClaw/Nebius execution, and Devpost submission are
-separate human approval gates.
+Cloud spend, uploads, live NemoClaw/Nebius execution, and further Devpost changes
+remain separate human approval gates.
 
 ![NemoFold Captain Nemo console](docs/media/nemofold-console.png)
 

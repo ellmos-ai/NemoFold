@@ -11,6 +11,7 @@ All notable changes to NemoFold are documented here.
   outputs, bounded concurrency, no model/action authority, and host-path redaction.
 - Evidence-console product UI with a visible authority ledger, bounded evidence chain,
   structured run dossier, responsive overflow rules, and accessible focus/contrast states.
+- Synchronized German README with language navigation and identical command examples.
 
 ## 0.1.0 - 2026-08-30
 

@@ -1,0 +1,216 @@
+# NemoFold
+
+[English](README.md) | Deutsch
+
+[![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
+[MIT-Lizenz](LICENSE) · Python 3.11+ · Local-first
+
+NemoFold ist ein privater, evidenzorientierter Dokumentenagent. Er verwandelt
+ausdrücklich freigegebene Ordner in ein dauerhaftes Arbeitsgedächtnis, hält Aussagen
+bis zu ihren Fundstellen rückverfolgbar und macht Dateiaktionen reversibel.
+
+Arbeitsslogan: **Your files. Your rules. Your agent.**
+
+Dieses Repository enthält die neue Wettbewerbsimplementierung für den Nebius x NVIDIA
+Global AI Hackathon. Der lokale Kern ist bewusst ohne Cloud-Konto nutzbar. Die
+Integration mit NemoClaw, OpenShell, Nemotron und Nebius wird erst dann als belegt
+gekennzeichnet, wenn ein echter, bereinigter Laufzeitnachweis vorliegt.
+
+## Was implementiert ist
+
+| Workflow | Lokales Ergebnis |
+|---|---|
+| Smart Inbox | Dateiendungsbasierter Ablageplan, Alles-oder-nichts-Kollisionsgate, protokollierte Verschiebungen, Fortsetzen und Rückgängig |
+| Naming, Format & Retention | Regelauflösung, Namens- und Aufbewahrungsprüfungen, Dry-Run, reversible Verschiebe-/Kopiervorgänge sowie Konvertierungskopien für TXT/MD/RST |
+| Universal Bundle | Deterministisches Textbündel, Manifest, ZIP, Hashes und explizite Einträge für nicht unterstützte oder unlesbare Dateien |
+| Continuous Folder Digest | Dauerhafte Bestands-Snapshots mit neuen, geänderten, unveränderten und gelöschten Quell-IDs |
+| Evidence Analyst | Persistenter SQLite-FTS-Index, mehrere Fragen, exakte Zitate, Quellenkatalog, Zeilen-/Seitenfundstellen, Abdeckung und Berichte |
+| Version Resolver | Auflösung je Dateifamilie, explizite Priorität für Gültigkeit/Datum/Version, benannter Dateizeit-Fallback und Zeilenvergleich |
+| Report & Artifact Studio | Validierter Analysevertrag, ausgegeben als Markdown, TXT, PDF, DOCX und ODT |
+| NemoClaw Platform & Proof | Pfadfreie, gehashte Auftragspakete mit Fail-closed-Adapter für die Nebius Token Factory und unabhängig prüfbarem Ergebnisbeleg; der echte Wettbewerbslauf ist weiterhin offen |
+
+Die gemeinsamen Kerne sind Laufzeit, Policy-/Privacy-Gate, Laufjournal und
+Wiederherstellung, Evidenz-Engine und Artefaktexport. Die lokale Extraktion unterstützt
+Textdateien, JSON, CSV, HTML, PDF, DOCX und ODT. Nicht unterstützte oder unlesbare
+Dateien bleiben als sichtbare Abdeckungslücken erhalten.
+
+Cloud-Kosten, Uploads, echte NemoClaw-/Nebius-Ausführung und weitere Änderungen an
+Devpost bleiben getrennte menschliche Freigabegates.
+
+![NemoFold Captain-Nemo-Konsole](docs/media/nemofold-console.png)
+
+## Installation
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install -e ".[dev]"
+.venv\Scripts\python -m nemofold --help
+```
+
+Jeder Nicht-Demo-Befehl verwendet denselben strikten JSON-Vertrag
+`nemofold.job.v1`. Siehe
+[`schemas/nemofold-job-v1.schema.json`](schemas/nemofold-job-v1.schema.json) und
+das Verzeichnis [`examples/jobs`](examples/jobs).
+
+## Offline-Nachweis
+
+```powershell
+$env:PYTHONPATH = "$PWD\src"
+python -m nemofold demo --input examples\synthetic-home --output run-reports\demo
+```
+
+Der Bericht weist bewusst `cloud_proof: false` aus. So lässt sich der
+Fail-closed-Pfad ausführen:
+
+```powershell
+python -m nemofold demo --input examples\synthetic-home --output run-reports\blocked `
+  --scenario blocked-external
+```
+
+Die normale Demo erzeugt ein Text-/Manifest-/ZIP-Bündel, einen Ordner-Digest,
+Kontextbelege, einen SQLite-FTS-Index, Markdown-/TXT-/PDF-/DOCX-/ODT-Berichte und ein
+Laufjournal. Sie verschiebt eine synthetische Inbox-Datei und macht den Vorgang wieder
+rückgängig, um die Reversibilität zu belegen.
+
+## Einen echten lokalen Auftrag ausführen
+
+```powershell
+$runId = "local_analysis_1"
+python -m nemofold preview --job examples\jobs\evidence-local.json `
+  --allow-root $PWD --run-id $runId
+python -m nemofold run --job examples\jobs\evidence-local.json `
+  --allow-root $PWD --run-id $runId
+python -m nemofold verify run-reports\evidence-local\ledger\$runId.json
+```
+
+`preview` ruft kein externes Modell auf und führt keine Dateiaktionen aus. Bei einem
+Auftrag mit externem Modell schreibt es das genaue pseudonymisierte Kontextpaket, das
+den Rechner verlassen dürfte, und protokolliert `transfer_performed: false`. Ein
+späteres `run` blockiert weiterhin, solange kein echter externer Laufzeitadapter und
+keine ausdrücklichen Datenschutz-, Modell- und Kostengates vorhanden sind.
+
+`nemofold package` verwandelt einen `allow_once`-Auftrag in ein gehashtes, pfadfreies
+lokales NemoClaw-Verzeichnis und validiert es sofort. Es führt weiterhin keinen Upload
+aus und protokolliert `transfer_performed: false`; siehe
+[NemoClaw-Integration](docs/nemoclaw-integration.md).
+
+## Freigegebener Lauf über die Nebius Token Factory
+
+Der Live-Adapter ist ein getrenntes Gate für einen irreversiblen Datentransfer. Er
+akzeptiert nur den offiziellen HTTPS-Ursprung der Nebius Token Factory, lehnt
+Weiterleitungen ab, prüft vor der Anfrage eine konservative Kostengrenze, liest den
+Schlüssel ausschließlich aus `NEBIUS_API_KEY` und verweigert die Wiederholung eines
+Pakets, das bereits `result.json` oder einen dauerhaften Übertragungsversuch enthält.
+
+```powershell
+$env:NEBIUS_API_KEY = "<session-only-key>"
+python -m nemofold token-factory-preflight <package-directory> `
+  --input-price-usd-per-million <current-input-rate> `
+  --output-price-usd-per-million <current-output-rate> `
+  --max-completion-tokens 1200
+python -m nemofold token-factory-run <package-directory> `
+  --approve-live-transfer `
+  --input-price-usd-per-million <current-input-rate> `
+  --output-price-usd-per-million <current-output-rate> `
+  --max-completion-tokens 1200 `
+  --declared-nemoclaw-version <captured-installed-version>
+python -m nemofold verify-result <package-directory>
+Remove-Item Env:\NEBIUS_API_KEY
+```
+
+Die beiden Preise sind Pflichtangaben, weil sich Preise ändern können. Sie müssen zum
+Ausführungszeitpunkt aus der aktuellen Preisliste des Anbieters übernommen werden. Die
+bereinigte `result.json` bindet die genaue Anfrage und Antwort, Nutzung, Preisangaben,
+Kosten, Endpunkt, Modell, Zeitstempel und Modellausgabe an das unveränderliche lokale
+Paket. Sie enthält weder Authorization-Header noch API-Schlüssel. Eine fehlgeschlagene
+Anbieterantwort protokolliert `transfer_performed: true`, aber niemals
+`cloud_proof: true`. Bricht die Verbindung ohne Antwort ab, bleibt die vor der Anfrage
+geschriebene `transfer-attempt.json` erhalten, meldet einen unklaren Übertragungsstand
+und blockiert eine unsichere automatische Wiederholung.
+
+`token-factory-preflight` führt keine Netzwerkanfrage aus und schreibt keinen
+Übertragungsbeleg. Es validiert das unveränderliche Paket, den Endpunkt, das explizite
+Nemotron-Modell, die JSON-Anfrage, die vom Aufrufer gelieferten aktuellen Preise, die
+konservativen Maximalkosten, das Auftragsbudget, die Schutzregeln gegen Doppelläufe und
+das Vorhandensein eines Sitzungsschlüssels. Seine Ausgabe hält `network_called`,
+`transfer_performed` und `cloud_proof` stets auf false; ein erfolgreicher Preflight ist
+Bereitschaft, kein Ausführungsnachweis und keine Transferfreigabe.
+
+Die Anfrage nutzt den dokumentierten `json_object`-Antwortmodus der Token Factory.
+NemoFold fügt sein vollständiges Ausgabeschema in die begrenzte Nutzer-Nutzlast ein
+und validiert das zurückgegebene Objekt lokal. Damit hängt der Evidenzvertrag nicht von
+modellspezifischer serverseitiger JSON-Schema-Erzwingung ab.
+
+Die optional angegebene NemoClaw-Version ist nur Metadatum. Das Ergebnis protokolliert
+`nemoclaw_proof: false`; nur ein separat erfasster, bereinigter Laufzeit-Log aus der
+tatsächlichen Sandbox kann eine NemoClaw-Ausführung belegen. Die frühere Pre-Release-
+Option `--nemoclaw-version` wurde bewusst entfernt, weil ihr Name einen Beleg
+suggerierte; Skripte müssen stattdessen `--declared-nemoclaw-version` verwenden.
+
+Aktionsaufträge verlangen zusätzlich `--approve-actions`. Ein abgeschlossener
+Aktionslauf kann mit `nemofold undo <run-id> --output <dir> --allow-root <root>
+--approve-actions` rückgängig gemacht werden. Fehlgeschlagene oder blockierte Aufträge
+lassen sich mit `nemofold resume` unter Beibehaltung der ursprünglichen Auftragsidentität
+und des Journals fortsetzen.
+
+## Lokale Webkonsole öffnen
+
+```powershell
+$env:PYTHONPATH = "$PWD\src"
+python -m nemofold serve --allow-root $PWD --base-dir $PWD
+```
+
+Öffne `http://127.0.0.1:8765`. Die Konsole verwendet denselben strikten Auftragsparser
+und Anwendungsdienst wie die CLI. Sie bindet nur an Loopback, lehnt Cross-Origin-POSTs
+ab und verlangt `--expose-network`, bevor sie eine Nicht-Loopback-Adresse verwendet.
+Preview ist der standardmäßige sichere Pfad; Aktionsworkflows benötigen zusätzlich das
+serverseitige Gate `--approve-actions`, bevor eine Apply-Anfrage erfolgreich sein kann.
+
+### Fähigkeitsminimale synthetische Demo starten
+
+Nutze den getrennten Demo-Befehl, wenn Personen die Konsole erreichen könnten, die
+keine lokale Dateibefugnis erhalten dürfen:
+
+```powershell
+$env:PYTHONPATH = "$PWD\src"
+python -m nemofold serve-demo --demo-root examples\synthetic-home
+```
+
+`serve-demo` akzeptiert nur fünf schreibgeschützte Workflows über dem eingecheckten
+synthetischen Korpus. Eingabe- und Ausgabe-Root, Workflow-Parameter, Datenschutzmodus,
+Aktionsmodus, Modellzugriff und Budget werden serverseitig gesteuert. Jede Anfrage
+erhält einen isolierten temporären Ausgabebereich, der nach Rückgabe der bereinigten
+Antwort entfernt wird. Der Befehl bietet weder Dateiaktions- noch externe Modellflags
+an und bindet weiterhin nur an Loopback, sofern nicht zugleich ein nicht lokaler Host
+und `--expose-network` angegeben sind. Dies ist eine fähigkeitsminimale Hosting-
+Oberfläche, kein Nachweis für einen Nebius-, Nemotron- oder NemoClaw-Lauf;
+`cloud_proof` bleibt false.
+
+## Vertrauensgrenze
+
+- Originaldateien, absolute Pfade, persistenter Index, Policies, Journal, Validierung
+  und Aktionen bleiben lokal.
+- Nur ausgewählte Abschnitte, Fragen, künstliche Quell-IDs, Schema und ein begrenztes
+  Budget dürfen in ein externes Paket gelangen.
+- Der Paketvalidator lehnt Hostpfade, Secrets, nicht deklarierte Dateien, geänderte
+  Hashes, Symlinks oder verbleibende sensible Muster ab – selbst wenn ein Manifest neu
+  gehasht wurde.
+- `cloud_proof: true` ist ohne erfolgreiche, schemakonforme Anbieterantwort, die an
+  Laufzeitevidenz gebunden ist, ungültig. Das Repository enthält den Adapter und
+  simulierte Tests, behauptet aber bewusst nicht, dass der noch offene echte
+  Wettbewerbslauf erfolgreich war.
+
+## Design und Integration
+
+- [Ausrichtung der Evidence-Console-Oberfläche](docs/design-direction.md)
+- [Architektur](docs/architecture.md)
+- [NemoClaw-Integration](docs/nemoclaw-integration.md)
+- [Produktgeschichte](docs/product-story.md)
+- [Dreiminütige Jury-Demo](docs/jury-demo.md)
+- [Jury-Designset und Nautilus-Markenkit](docs/media/designset/README.md)
+- [Einreichungsbereitschaft](docs/submission-readiness.md)
+- [Codekarte für den Wettbewerb](COMPETITION_CODE_MAP.md)
+- [Software von Drittanbietern](THIRD_PARTY_LICENSES.md)
+- [Sicherheitsrichtlinie](SECURITY.md)
+- [Mitwirken](CONTRIBUTING.md)
+- [Release-Gate](RELEASE_GATE.md)
