@@ -24,6 +24,7 @@ Issues = "https://github.com/ellmos-ai/NemoFold/issues"
 dev = [
   "build>=1.2",
   "mypy>=1.11",
+  "openpyxl>=3.1.0",
   "pytest>=8.0",
   "ruff>=0.6",
 ]
