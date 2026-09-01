@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/assets/app.css">
   <script src="/assets/app.js" defer></script>
 </head>
-<body data-page="overview">
+<body data-page="overview" data-tab="">
   <svg class="instrument-sprite" aria-hidden="true" focusable="false" width="0" height="0">
     <symbol id="icon-wheel" viewBox="0 0 32 32">
       <circle cx="16" cy="16" r="8.5"/><circle cx="16" cy="16" r="3"/>
@@ -41,12 +41,10 @@
         <span><strong>NemoFold</strong><small>Local evidence workspace</small></span>
       </a>
       <div class="nav-links" aria-label="Primary navigation">
-        <a href="/document-center" data-page-link="document">Documents</a>
-        <a href="/analysis" data-page-link="analysis">Analysis</a>
-        <a href="/routines" data-page-link="routines">Routines</a>
-        <a href="/artifacts" data-page-link="artifacts">Artifacts</a>
-        <a href="/connections" data-page-link="connections">Connections</a>
+        <a href="/folders" data-page-link="folders">Folders</a>
+        <a href="/processes" data-page-link="processes">Processes &amp; Workflows</a>
         <a href="/governance" data-page-link="governance">Governance</a>
+        <a href="/connections" data-page-link="connections">Connections</a>
       </div>
       <div class="masthead-state" role="note"><span aria-hidden="true"></span>DEFAULT: LOCAL AUTHORITY</div>
     </nav>
@@ -83,20 +81,18 @@
     </section>
 
     <nav class="product-areas" aria-label="NemoFold work areas" data-page-section="overview">
-      <a href="/document-center"><span>START</span><b>Document Center</b><small>Inbox · cleanup · mail cases · drafts</small><em>Open area →</em></a>
-      <a href="/analysis"><span>ANALYZE</span><b>Analysis Lab</b><small>Bundle Export → Evidence Analyst</small><em>Open area →</em></a>
-      <a href="/routines"><span>ROUTINES</span><b>Folder Routines</b><small>Digest · versions · contact monitor</small><em>Open area →</em></a>
-      <a href="/artifacts"><span>OUTPUT</span><b>Artifact Studio</b><small>Reports · ledgers · verified files</small><em>Open area →</em></a>
+      <a href="/folders"><span>HOME</span><b>Folders</b><small>Which folders are watched · what is on board</small><em>Open area →</em></a>
+      <a href="/processes"><span>WORK</span><b>Processes &amp; Workflows</b><small>Use cases · registry of instruments · artifacts</small><em>Open area →</em></a>
+      <a href="/governance"><span>BRIDGE</span><b>Governance</b><small>Policies · rules · the gates this server was started with</small><em>Open area →</em></a>
       <a href="/connections"><span>STATUS</span><b>Connections</b><small>Platform proof only</small><em>Open area →</em></a>
-      <a href="/governance"><span>BRIDGE</span><b>Command Bridge</b><small>Authority · gates · storage policy</small><em>Open area →</em></a>
     </nav>
 
-    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="document analysis routines artifacts connections governance">
+    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="folders processes governance connections">
       <div class="voyage-copy">
         <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
-        <h2 id="voyageSceneTitle">Document Center</h2>
-        <p id="voyageSceneText">Your protected home on board: intake, cleanup, local mail cases and controlled drafts remain inspectable before anything moves or leaves the Nautilus.</p>
-        <small id="voyageRoadmap">ACTIVE · inbox + policy + cleanup + mail cases + controlled drafts</small>
+        <h2 id="voyageSceneTitle">Folders</h2>
+        <p id="voyageSceneText">The home of your folders: which ones are watched, what is actually on board, and the use cases that work on them. Nothing moves or leaves the Nautilus without being inspectable first.</p>
+        <small id="voyageRoadmap">ACTIVE · watched roots + corpus at a glance + the use cases bound to them</small>
       </div>
       <svg class="porthole-life" viewBox="0 0 400 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
         <g transform="translate(330 108)"><g class="drifter jelly-a"><g transform="scale(0.42)">
@@ -119,7 +115,14 @@
       </svg>
     </section>
 
-    <section id="homeGlance" class="home-glance" aria-labelledby="homeGlanceTitle" data-page-section="document">
+    <nav class="area-tabs" aria-label="Processes and workflows" data-page-section="processes">
+      <span>Processes &amp; workflows</span>
+      <a href="/processes?tab=workflows" data-tab-link="workflows">Workflows</a>
+      <a href="/processes?tab=registry" data-tab-link="registry">Registry</a>
+      <a href="/processes?tab=artifacts" data-tab-link="artifacts">Artifacts</a>
+    </nav>
+
+    <section id="homeGlance" class="home-glance" aria-labelledby="homeGlanceTitle" data-page-section="folders">
       <div class="glance-head">
         <div>
           <p class="kicker">A LOOK AROUND THE HOLD</p>
@@ -143,15 +146,16 @@
       <p id="glanceState" class="glance-state" aria-live="polite">Counts and modification times only. No file is read and nothing leaves this host.</p>
     </section>
 
-    <section id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" data-page-section="document analysis routines governance">
+    <section id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" data-page-section="processes" data-page-tab="registry">
       <div class="task-cards-head">
-        <p class="kicker">WHAT YOU CAN DO HERE</p>
-        <h2 id="taskCardsTitle">Pick the task. The contract follows.</h2>
+        <p class="kicker">SINGLE INSTRUMENTS · ADVANCED</p>
+        <h2 id="taskCardsTitle">Every contract on its own, for when you want one.</h2>
+        <p>These are the individual job contracts a use case is built from. Reach for one to diagnose a step, to try a parameter, or to build something the library does not have yet.</p>
       </div>
       <div id="taskCardList" class="task-card-list" role="list"></div>
     </section>
 
-    <section id="echoCheck" class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="routines">
+    <section id="echoCheck" class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="processes" data-page-tab="workflows" hidden>
       <div class="glance-head">
         <div>
           <p class="kicker"><svg class="instrument-icon radar" aria-hidden="true"><use href="#icon-radar"></use></svg>ECHO SOUNDING</p>
@@ -164,30 +168,6 @@
       </div>
       <div id="echoList" class="echo-list" aria-live="polite"><p>No echo read yet. Check the output scope above.</p></div>
     </section>
-
-    <nav class="route-workflows" aria-label="Document Center workflows" data-page-section="document">
-      <span>Document workflows</span>
-      <a href="/document-center?workflow=smart_inbox" data-workflow-route="smart_inbox">Smart Inbox</a>
-      <a href="/document-center?workflow=cleanup_rules" data-workflow-route="cleanup_rules">Cleanup Rules</a>
-      <a href="/document-center?workflow=mail_to_case" data-workflow-route="mail_to_case">Mail-to-Case</a>
-      <a href="/document-center?workflow=controlled_email" data-workflow-route="controlled_email">Controlled Email</a>
-    </nav>
-    <nav class="route-workflows" aria-label="Analysis workflows" data-page-section="analysis">
-      <span>Analysis workflows</span>
-      <a href="/analysis?workflow=evidence_analyst" data-workflow-route="evidence_analyst">Evidence Analyst</a>
-      <a href="/analysis?workflow=bundle_export" data-workflow-route="bundle_export">Bundle Export</a>
-      <a href="/analysis?workflow=report_studio" data-workflow-route="report_studio">Report Studio</a>
-      <a href="/analysis?workflow=document_registry" data-workflow-route="document_registry">Document Registry</a>
-      <a href="/analysis?workflow=fact_distill" data-workflow-route="fact_distill">Fact Distill</a>
-      <a href="/analysis?workflow=synopsis_merge" data-workflow-route="synopsis_merge">Synopsis Merge</a>
-    </nav>
-    <nav class="route-workflows" aria-label="Folder routines" data-page-section="routines">
-      <span>Folder routines</span>
-      <a href="/routines?workflow=folder_digest" data-workflow-route="folder_digest">Folder Digest</a>
-      <a href="/routines?workflow=version_resolver" data-workflow-route="version_resolver">Version Resolver</a>
-      <a href="/routines?workflow=contact_monitor" data-workflow-route="contact_monitor">Contact Monitor</a>
-      <a href="/routines?workflow=daily_arrivals" data-workflow-route="daily_arrivals">Daily Arrivals</a>
-    </nav>
 
     <section id="commandBridge" class="command-bridge" aria-labelledby="commandBridgeTitle" data-page-section="governance">
       <div class="section-title bridge-title">
@@ -245,7 +225,36 @@
       </div>
     </section>
 
-    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="analysis" hidden>
+    <nav class="area-tabs" aria-label="Governance" data-page-section="governance">
+      <span>Governance</span>
+      <a href="/governance?tab=policies" data-tab-link="policies">Policies</a>
+      <a href="/governance?tab=rules" data-tab-link="rules">Rules</a>
+    </nav>
+
+    <section id="governanceRegister" class="governance-register" aria-labelledby="governanceRegisterTitle" data-page-section="governance">
+      <div class="section-title">
+        <p class="kicker" id="governanceRegisterKicker">POLICIES</p>
+        <div>
+          <h2 id="governanceRegisterTitle">What holds, in general.</h2>
+          <p id="governanceRegisterLede">A policy is a rule set you can bind to a voyage or to one of its steps. It is a written expectation, not a gate: allow roots, privacy mode, action mode and the per-run approvals still decide.</p>
+        </div>
+      </div>
+      <div class="register-toolbar">
+        <div><span>DEFAULT OUTBOUND RIGHT</span><b id="governanceDefaultRights">—</b></div>
+        <button type="button" id="governanceRefresh" class="secondary">Refresh</button>
+      </div>
+      <div id="governanceList" class="governance-list" aria-live="polite"></div>
+      <div class="section-title exceptions-title">
+        <p class="kicker">KNOWN EXCEPTIONS</p>
+        <div>
+          <h2 id="governanceExceptionsTitle">And where something deviates from it.</h2>
+          <p>Departures are made at the voyage that needed them, so that is where they are changed. This is the reverse index: what deviates, where, and from what.</p>
+        </div>
+      </div>
+      <div id="governanceExceptions" class="governance-exceptions" aria-live="polite"></div>
+    </section>
+
+    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="processes" data-page-tab="registry" hidden>
       <div class="notebook-head">
         <div>
           <p class="kicker">UC07 · RESEARCH NOTEBOOK</p>
@@ -276,7 +285,7 @@
       <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
     </section>
 
-    <aside id="engineRoom" class="engine-drawer" data-page-section="document analysis routines governance" aria-labelledby="consoleTitle" data-open="false">
+    <aside id="engineRoom" class="engine-drawer" data-page-section="processes" data-page-tab="registry" aria-labelledby="consoleTitle" data-open="false">
       <div class="drawer-shell">
         <div class="drawer-head">
           <div class="drawer-title">
@@ -477,7 +486,7 @@ Which earlier wording changed?</textarea></label>
       </div>
     </aside>
 
-    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="artifacts">
+    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="processes" data-page-tab="artifacts">
       <div class="section-title artifact-title">
         <p class="kicker">ARTIFACT STUDIO</p>
         <div>
@@ -542,33 +551,7 @@ Which earlier wording changed?</textarea></label>
       </div>
     </dialog>
 
-    <section class="trust-boundary" aria-labelledby="boundaryTitle" data-page-section="analysis connections">
-      <div class="section-title">
-        <p class="kicker">CONTROLLED AGENT LOOP</p>
-        <h2 id="boundaryTitle">Reasoning may travel. Authority does not.</h2>
-      </div>
-      <button type="button" class="instrument-anchor section-anchor" data-collapse="trustBoundaryDetail" aria-expanded="false" aria-controls="trustBoundaryDetail">
-        <svg class="instrument-icon lifebuoy" aria-hidden="true"><use href="#icon-lifebuoy"></use></svg>
-        <span>How the controlled agent loop works</span>
-        <i class="chevron" aria-hidden="true"></i>
-      </button>
-      <div id="trustBoundaryDetail" class="collapse-panel" hidden>
-      <div class="boundary-map" role="img" aria-label="Approved folders are inventoried locally. The policy gate may release selected pseudonymized chunks to a Nemotron worker. Returned claims are validated locally before reports or reversible actions.">
-        <div class="zone local-zone">
-          <span class="zone-label">LOCAL TRUST ZONE</span>
-          <div><b>Approved folders</b><small>originals + paths</small></div>
-          <i aria-hidden="true">→</i>
-          <div><b>Local memory</b><small>hash inventory + FTS</small></div>
-        </div>
-        <div class="gate-zone"><span>POLICY GATE</span><small>selection · pseudonyms · receipt · budget</small></div>
-        <div class="zone worker-zone"><span class="zone-label">ISOLATED WORKER</span><div><b>Nemotron</b><small>selected chunks only</small></div></div>
-        <div class="return-line"><span>validated return</span><b>quotes · coverage · report · undo journal</b></div>
-      </div>
-      <p class="text-alt">Text alternative: approved local files are inventoried and indexed locally. A privacy gate may prepare selected pseudonymized chunks for an isolated Nemotron worker. Every returned claim is checked against local sources before any report or reversible action is accepted.</p>
-      </div>
-    </section>
-
-    <section id="useCaseLibrary" class="use-case-library" aria-labelledby="libraryTitle" data-page-section="overview">
+    <section id="useCaseLibrary" class="use-case-library" aria-labelledby="libraryTitle" data-page-section="overview folders processes" data-page-tab="workflows">
       <div class="library-head">
         <div>
           <p class="kicker">MY USE CASES</p>
@@ -577,6 +560,7 @@ Which earlier wording changed?</textarea></label>
         </div>
         <button type="button" id="libraryRefresh" class="secondary">Refresh</button>
       </div>
+      <div id="libraryFilter" class="library-filter" role="group" aria-label="Filter use cases by topic"></div>
       <div id="libraryList" class="library-list" aria-live="polite"></div>
 
       <section id="libraryDetail" class="library-detail" aria-labelledby="libraryDetailTitle" hidden>
@@ -604,6 +588,32 @@ Which earlier wording changed?</textarea></label>
         </form>
         <div id="libraryDiff" class="library-diff" aria-live="polite"></div>
       </section>
+    </section>
+
+    <section class="trust-boundary" aria-labelledby="boundaryTitle" data-page-section="processes connections" data-page-tab="workflows">
+      <div class="section-title">
+        <p class="kicker">CONTROLLED AGENT LOOP</p>
+        <h2 id="boundaryTitle">Reasoning may travel. Authority does not.</h2>
+      </div>
+      <button type="button" class="instrument-anchor section-anchor" data-collapse="trustBoundaryDetail" aria-expanded="false" aria-controls="trustBoundaryDetail">
+        <svg class="instrument-icon lifebuoy" aria-hidden="true"><use href="#icon-lifebuoy"></use></svg>
+        <span>How the controlled agent loop works</span>
+        <i class="chevron" aria-hidden="true"></i>
+      </button>
+      <div id="trustBoundaryDetail" class="collapse-panel" hidden>
+      <div class="boundary-map" role="img" aria-label="Approved folders are inventoried locally. The policy gate may release selected pseudonymized chunks to a Nemotron worker. Returned claims are validated locally before reports or reversible actions.">
+        <div class="zone local-zone">
+          <span class="zone-label">LOCAL TRUST ZONE</span>
+          <div><b>Approved folders</b><small>originals + paths</small></div>
+          <i aria-hidden="true">→</i>
+          <div><b>Local memory</b><small>hash inventory + FTS</small></div>
+        </div>
+        <div class="gate-zone"><span>POLICY GATE</span><small>selection · pseudonyms · receipt · budget</small></div>
+        <div class="zone worker-zone"><span class="zone-label">ISOLATED WORKER</span><div><b>Nemotron</b><small>selected chunks only</small></div></div>
+        <div class="return-line"><span>validated return</span><b>quotes · coverage · report · undo journal</b></div>
+      </div>
+      <p class="text-alt">Text alternative: approved local files are inventoried and indexed locally. A privacy gate may prepare selected pseudonymized chunks for an isolated Nemotron worker. Every returned claim is checked against local sources before any report or reversible action is accepted.</p>
+      </div>
     </section>
 
     <section class="ships-chart" data-page-section="overview" data-open="false">
@@ -639,15 +649,15 @@ Which earlier wording changed?</textarea></label>
         <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle">
           <div class="section-title">
             <p class="kicker">PRODUCT MAP</p>
-            <h2 id="registerTitle">Six work areas. Sixteen technical contracts.</h2>
+            <h2 id="registerTitle">Four areas, six views, sixteen technical contracts.</h2>
           </div>
           <div class="register-table" role="list">
-            <a href="/document-center" role="listitem"><span>01 / START</span><h3>Document Center</h3><p>Intake plus readable cleanup rules, local mail cases and confirmation-bound email drafts.</p><b>smart_inbox · cleanup_rules · mail_to_case · controlled_email</b></a>
-            <a href="/analysis" role="listitem"><span>02 / ANALYZE</span><h3>Analysis Lab</h3><p>Build a traceable bundle, anonymize its selected context and analyze large corpora.</p><b>bundle_export → evidence_analyst · document_registry · fact_distill · synopsis_merge</b></a>
-            <a href="/routines" role="listitem"><span>03 / ROUTINES</span><h3>Folder Routines</h3><p>Recheck folders, resolve valid document versions and compare source-grounded contact responsibilities.</p><b>folder_digest · version_resolver · contact_monitor · daily_arrivals</b></a>
-            <a href="/artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifact Studio</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
-            <a href="/connections" role="listitem"><span>05 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
-            <a href="/governance" role="listitem"><span>06 / BRIDGE</span><h3>Command Bridge</h3><p>Read the authority this server was started with and set controlled routing and retention policy.</p><b>storage_policy · gates are read, not granted</b></a>
+            <a href="/folders" role="listitem"><span>01 / HOME</span><h3>Folders</h3><p>The home of your folders: which are watched, what is on board, and the use cases that work on them.</p><b>watched roots · corpus at a glance</b></a>
+            <a href="/processes?tab=workflows" role="listitem"><span>02 / WORK</span><h3>Workflows</h3><p>Every saved use case and every shipped specialist, filtered by topic. A routine is a workflow with a schedule, not a separate room.</p><b>my use cases · specialists · standing routines</b></a>
+            <a href="/processes?tab=registry" role="listitem"><span>03 / REGISTRY</span><h3>Registry</h3><p>All sixteen job contracts on their own, without a topic: the instruments a use case is built from.</p><b>smart_inbox · evidence_analyst · document_registry · fact_distill · synopsis_merge · daily_arrivals · …</b></a>
+            <a href="/processes?tab=artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifacts</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
+            <a href="/governance" role="listitem"><span>05 / BRIDGE</span><h3>Governance</h3><p>Named policies and single rules, the exceptions to them, and the gates this server was actually started with.</p><b>policies · rules · gates are read, not granted</b></a>
+            <a href="/connections" role="listitem"><span>06 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
           </div>
           <p class="text-alt"><b>ROADMAP:</b> UC10 remains the separate design track. Planned Document Services include synopses, bilingual sync, rich ingest and OCR, document redaction, RAG export, dossiers, templates, QA, forms, duplicate review and verified conversions; none are presented as active before their own acceptance gate.</p>
         </section>

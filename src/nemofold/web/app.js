@@ -1,27 +1,44 @@
 const $ = (id) => document.getElementById(id);
 const pageByPath = new Map([
   ["/", "overview"],
-  ["/document-center", "document"],
-  ["/analysis", "analysis"],
-  ["/routines", "routines"],
-  ["/artifacts", "artifacts"],
-  ["/connections", "connections"],
-  ["/governance", "governance"]
+  ["/folders", "folders"],
+  ["/processes", "processes"],
+  ["/governance", "governance"],
+  ["/connections", "connections"]
 ]);
+const pageTabs = {
+  processes: ["workflows", "registry", "artifacts"],
+  governance: ["policies", "rules"]
+};
 const normalizedPath = globalThis.location.pathname.replace(/\/+$/, "") || "/";
 const currentPage = pageByPath.get(normalizedPath) || "overview";
-const requestedWorkflow = new URLSearchParams(globalThis.location.search).get("workflow");
+const searchParameters = new URLSearchParams(globalThis.location.search);
+const requestedWorkflow = searchParameters.get("workflow");
+const availableTabs = pageTabs[currentPage] || [];
+const requestedTab = searchParameters.get("tab");
+const currentTab = availableTabs.includes(requestedTab) ? requestedTab : (availableTabs[0] || "");
+// A room shows the use cases that belong to it. The tag is the binding, so a
+// deep link can name one (/processes?tab=workflows&tag=scheduled is where the
+// old /routines route lands) and a room can prefer one without hiding the rest.
+const roomTag = {folders: "folder-watch"};
+let activeTag = searchParameters.get("tag") || roomTag[currentPage] || "";
+const tabTitles = {
+  workflows: "Workflows — NemoFold",
+  registry: "Registry — NemoFold",
+  artifacts: "Artifacts — NemoFold",
+  policies: "Policies — NemoFold",
+  rules: "Rules — NemoFold"
+};
 const pageConfiguration = {
-  overview: {title: "NemoFold — Local evidence workspace", scene: null, defaultWorkflow: "smart_inbox", workflows: []},
-  document: {title: "Document Center — NemoFold", scene: "document", defaultWorkflow: "smart_inbox", workflows: ["smart_inbox", "cleanup_rules", "mail_to_case", "controlled_email"]},
-  analysis: {title: "Analysis Lab — NemoFold", scene: "analysis", defaultWorkflow: "evidence_analyst", workflows: ["evidence_analyst", "document_registry", "fact_distill", "synopsis_merge", "bundle_export", "report_studio"]},
-  routines: {title: "Folder Routines — NemoFold", scene: "routines", defaultWorkflow: "folder_digest", workflows: ["folder_digest", "daily_arrivals", "version_resolver", "contact_monitor"]},
-  artifacts: {title: "Artifact Studio — NemoFold", scene: "artifacts", defaultWorkflow: "report_studio", workflows: []},
-  connections: {title: "Connections — NemoFold", scene: "connections", defaultWorkflow: "platform_proof", workflows: []},
-  governance: {title: "Command Bridge — NemoFold", scene: "governance", defaultWorkflow: "storage_policy", workflows: ["storage_policy"]}
+  overview: {title: "NemoFold — Local evidence workspace", defaultWorkflow: "smart_inbox", workflows: []},
+  folders: {title: "Folders — NemoFold", defaultWorkflow: "smart_inbox", workflows: []},
+  processes: {title: "Processes & Workflows — NemoFold", defaultWorkflow: "evidence_analyst", workflows: []},
+  governance: {title: "Governance — NemoFold", defaultWorkflow: "storage_policy", workflows: []},
+  connections: {title: "Connections — NemoFold", defaultWorkflow: "platform_proof", workflows: []}
 };
 document.body.dataset.page = currentPage;
-document.title = pageConfiguration[currentPage].title;
+document.body.dataset.tab = currentTab;
+document.title = tabTitles[currentTab] || pageConfiguration[currentPage].title;
 const lines = (value) => value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
 let publicDemo = false;
 let folderPickerEnabled = false;
@@ -35,6 +52,8 @@ let folderCurrentPath = null;
 let artifactSurfaceEnabled = false;
 let draftSurfaceEnabled = false;
 let notebookSurfaceEnabled = false;
+let voyageSurfaceEnabled = false;
+let policySurfaceEnabled = false;
 let currentNotebookId = null;
 let activeRequest = false;
 let promptLibraryView = "catalog";
@@ -165,38 +184,28 @@ const workflowDefaults = {
   }
 };
 
-function syncWorkflowRouteLinks() {
-  for (const link of document.querySelectorAll("[data-workflow-route]")) {
-    const active = link.dataset.workflowRoute === $("workflow").value;
-    link.classList.toggle("active", active);
-    if (active) link.setAttribute("aria-current", "page");
-    else link.removeAttribute("aria-current");
-  }
+function markCurrent(link, active) {
+  link.classList.toggle("active", active);
+  if (active) link.setAttribute("aria-current", "page");
+  else link.removeAttribute("aria-current");
 }
 
 function configureRoutedPage() {
   const configuration = pageConfiguration[currentPage];
   for (const link of document.querySelectorAll("[data-page-link]")) {
-    const active = link.dataset.pageLink === currentPage;
-    link.classList.toggle("active", active);
-    if (active) link.setAttribute("aria-current", "page");
-    else link.removeAttribute("aria-current");
+    markCurrent(link, link.dataset.pageLink === currentPage);
   }
+  for (const link of document.querySelectorAll("[data-tab-link]")) {
+    markCurrent(link, link.dataset.tabLink === currentTab);
+  }
+  // The registry is deliberately not filtered: it is the non-thematic list of
+  // every contract, which is exactly what someone comes to it for.
   const options = [...$("workflow").options];
-  if (configuration.workflows.length) {
-    for (const option of options) {
-      const inScope = configuration.workflows.includes(option.value);
-      option.hidden = !inScope;
-      option.disabled = !inScope;
-    }
-    const candidate = configuration.workflows.includes(requestedWorkflow)
-      ? requestedWorkflow
-      : configuration.defaultWorkflow;
-    const selected = options.find((option) => option.value === candidate && !option.disabled)
-      || options.find((option) => !option.disabled);
-    if (selected) $("workflow").value = selected.value;
-  }
-  syncWorkflowRouteLinks();
+  const candidate = options.some((option) => option.value === requestedWorkflow)
+    ? requestedWorkflow
+    : configuration.defaultWorkflow;
+  const selected = options.find((option) => option.value === candidate);
+  if (selected) $("workflow").value = selected.value;
 }
 
 function newRunId() {
@@ -408,31 +417,38 @@ function selectedWorkflowGraph() {
 }
 
 const voyageScenes = {
-  document: {
+  folders: {
     className: "document-center",
     kicker: "INSIDE THE NAUTILUS",
-    title: "Document Center",
-    text: "Your protected home on board: intake, cleanup, local mail cases and controlled drafts remain inspectable before anything moves or leaves the Nautilus.",
-    roadmap: "ACTIVE · smart_inbox + storage_policy + cleanup_rules + mail_to_case + controlled_email"
+    title: "Folders",
+    text: "The home of your folders: which ones are watched, what is actually on board, and the use cases that work on them. Nothing moves or leaves the Nautilus without being inspectable first.",
+    roadmap: "ACTIVE · watched roots + corpus at a glance + the use cases bound to them"
   },
-  analysis: {
+  workflows: {
     className: "analysis-lab",
     kicker: "THE GREAT OBSERVATION WINDOW",
-    title: "Analysis Lab",
-    text: "Build a traceable bundle, look into the deep corpus with Captain Nemo, and follow every luminous finding back to its exact source.",
-    roadmap: "ACTIVE · bundle_export → anonymize → evidence_analyst + UC07 Research Notebook"
+    title: "Workflows",
+    text: "Every use case you kept and every specialist that ships with NemoFold, filtered by topic. Look into the deep corpus with Captain Nemo and follow each finding back to its exact source.",
+    roadmap: "ACTIVE · my use cases + shipped specialists + standing routines"
   },
-  routines: {
+  scheduled: {
     className: "folder-routines",
     kicker: "SONAR AND ECHO ROUTINES",
-    title: "Folder Routines",
-    text: "Recurring folders return as sonar echoes: detect changes, resolve valid versions and surface contact or responsibility changes without automatic deletion.",
-    roadmap: "ACTIVE · folder_digest + version_resolver + contact_monitor"
+    title: "Standing routines",
+    text: "A routine is a workflow with a schedule, not a room of its own. NemoFold registers nothing and starts nothing by itself: the time is recorded, the task file is yours to install.",
+    roadmap: "ACTIVE · scheduled use cases · NemoFold installs no timer"
+  },
+  registry: {
+    className: "analysis-lab",
+    kicker: "THE INSTRUMENT REGISTRY",
+    title: "Registry",
+    text: "Every job contract on its own, without a topic: the instruments a use case is built from. Reach for one to diagnose a step, try a parameter, or build something the library does not have yet.",
+    roadmap: "ACTIVE · sixteen contracts · the engine room is their editor"
   },
   artifacts: {
     className: "artifact-library",
     kicker: "THE NAUTILUS LIBRARY",
-    title: "Artifact Studio",
+    title: "Artifacts",
     text: "Reports, ledgers and recovered knowledge are cataloged like shells and sea treasures, with a hash check before a finding receives a green state.",
     roadmap: "ACTIVE · report_studio + verified artifact catalog"
   },
@@ -446,31 +462,39 @@ const voyageScenes = {
   governance: {
     className: "command-bridge-deck",
     kicker: "THE BRIDGE OF THE NAUTILUS",
-    title: "Command Bridge",
+    title: "Governance",
     text: "Every lever this vessel answers to, read from the running server: which gates are open, which roots are approved and what the storage policy does with a file once it is filed.",
     roadmap: "ACTIVE · storage_policy + authority instruments"
   }
 };
 
+// The scenes did not move with the rooms: they moved to the tabs and filters.
+// Porthole for the workflows, echo sounder for the standing routines, library
+// for the artifacts, bridge for governance, home port for the folders.
+function currentSceneKey() {
+  if (currentPage === "processes") {
+    if (currentTab === "artifacts") return "artifacts";
+    if (currentTab === "registry") return "registry";
+    return activeTag === "scheduled" ? "scheduled" : "workflows";
+  }
+  return currentPage === "overview" ? null : currentPage;
+}
+
 function updateVoyageScene(area = null) {
-  const workflow = $("workflow").value;
-  const key = area || pageConfiguration[currentPage].scene || (
-    workflow === "storage_policy" ? "governance"
-      : ["smart_inbox", "cleanup_rules", "mail_to_case", "controlled_email"].includes(workflow) ? "document"
-        : ["bundle_export", "evidence_analyst"].includes(workflow) ? "analysis"
-          : ["folder_digest", "version_resolver", "contact_monitor"].includes(workflow) ? "routines"
-            : workflow === "report_studio" ? "artifacts" : "connections"
-  );
+  const key = area || currentSceneKey();
   const scene = voyageScenes[key];
   const container = $("voyageScene");
+  if (!scene || !container) return;
   container.className = `voyage-scene ${scene.className}`;
   $("voyageSceneKicker").textContent = scene.kicker;
   $("voyageSceneTitle").textContent = scene.title;
   $("voyageSceneText").textContent = scene.text;
   $("voyageRoadmap").textContent = scene.roadmap;
-  const notebookVisible = currentPage === "analysis" && $("workflow").value === "evidence_analyst";
+  const notebookVisible = currentTab === "registry" && $("workflow").value === "evidence_analyst";
   $("researchNotebook").hidden = !notebookVisible;
   if (notebookVisible) updateNotebookSnapshot();
+  // The echo sounder belongs to the routines, so it surfaces with their scene.
+  if ($("echoCheck")) $("echoCheck").hidden = key !== "scheduled";
 }
 
 const workflowCards = {
@@ -521,6 +545,10 @@ const workflowCards = {
   report_studio: {
     title: "Report Studio",
     benefit: "Render one verified analysis into Markdown, TXT, PDF, DOCX and ODT without changing its claims."
+  },
+  platform_proof: {
+    title: "Platform Proof",
+    benefit: "Produce offline evidence about this runtime, without turning local readiness into a cloud proof."
   },
   folder_digest: {
     title: "Folder Digest",
@@ -796,11 +824,15 @@ function prepareWorkflow(workflow) {
 function renderTaskCards() {
   const list = $("taskCardList");
   if (!list) return;
-  const workflows = pageConfiguration[currentPage].workflows.filter((item) => workflowCards[item]);
+  // Non-thematic on purpose: the registry lists every contract the server
+  // actually offers, in the order the contract dropdown holds them.
+  const workflows = [...$("workflow").options]
+    .map((option) => option.value)
+    .filter((item) => workflowCards[item]);
   list.textContent = "";
   if (!workflows.length) {
     const note = document.createElement("p");
-    note.textContent = "This area has no job contract of its own.";
+    note.textContent = "This server offers no job contract.";
     list.append(note);
     return;
   }
@@ -1275,7 +1307,6 @@ function applyWorkflowDefaults() {
   renderWorkflowMap();
   updateProviderAvailability();
   updateProviderPanel();
-  syncWorkflowRouteLinks();
 }
 
 async function execute(endpoint) {
@@ -1821,6 +1852,110 @@ async function loadHomeModules() {
   }
 }
 
+const governanceCopy = {
+  policies: {
+    kicker: "POLICIES",
+    title: "What holds, in general.",
+    lede: "A policy is a rule set you can bind to a voyage or to one of its steps."
+      + " It is a written expectation, not a gate: allow roots, privacy mode, action"
+      + " mode and the per-run approvals still decide."
+  },
+  rules: {
+    kicker: "RULES",
+    title: "One sentence at a time.",
+    lede: "A rule is a single sentence you can hold in your head. Bound to six"
+      + " voyages it stays one object, so changing it changes all six - and the"
+      + " rule itself shows you which six."
+  }
+};
+
+function renderPolicyCard(list, policy) {
+  const card = deskLine(list, "article", "policy-card");
+  card.dataset.form = policy.form;
+  card.setAttribute("role", "listitem");
+  deskLine(card, "span", null, `${policy.form.toUpperCase()} · ${policy.kind}`);
+  deskLine(card, "b", null, policy.name);
+  if (policy.description) deskLine(card, "p", null, policy.description);
+  const statements = deskLine(card, "ul", null);
+  for (const statement of policy.statements) deskLine(statements, "li", null, statement);
+  const bindings = policy.bindings || [];
+  deskLine(
+    card,
+    "p",
+    "policy-bindings",
+    bindings.length
+      ? `Bound to ${bindings.length} place(s): ` + bindings
+        .map((item) => item.target === "step"
+          ? `${item.voyage_id} step ${item.step_index}`
+          : item.voyage_id)
+        .join(" · ")
+      : "Not bound to anything yet."
+  );
+  if (policy.applies_by_default) {
+    deskLine(card, "span", "policy-default", "APPLIES BY DEFAULT");
+  }
+}
+
+function renderGovernanceRegister(payload) {
+  const copy = governanceCopy[currentTab] || governanceCopy.policies;
+  $("governanceRegisterKicker").textContent = copy.kicker;
+  $("governanceRegisterTitle").textContent = copy.title;
+  $("governanceRegisterLede").textContent = copy.lede;
+  $("governanceDefaultRights").textContent = payload.default_rights;
+  const list = $("governanceList");
+  list.textContent = "";
+  list.setAttribute("role", "list");
+  const wanted = currentTab === "rules" ? "rule" : "policy";
+  const shown = (payload.policies || []).filter((item) => item.form === wanted);
+  if (!shown.length) {
+    libraryNote(
+      list,
+      wanted === "rule"
+        ? "No rule written yet. A rule is one sentence that holds across voyages."
+        : "No policy written yet. A policy is a rule set you can bind to a voyage."
+    );
+  }
+  for (const policy of shown) renderPolicyCard(list, policy);
+  const exceptions = $("governanceExceptions");
+  exceptions.textContent = "";
+  if (!(payload.exceptions || []).length) {
+    libraryNote(exceptions, "Nothing deviates. Every saved voyage follows the defaults.");
+    return;
+  }
+  for (const row of payload.exceptions) {
+    const item = deskLine(exceptions, "div", "exception-row");
+    deskLine(item, "b", null, row.voyage_name || row.voyage_id);
+    deskLine(
+      item,
+      "span",
+      null,
+      row.scope === "step" ? `${row.subject} · step ${row.step_index}` : row.subject
+    );
+    deskLine(item, "small", null, `${row.note} (default: ${row.baseline})`);
+  }
+}
+
+async function loadGovernanceRegister() {
+  const list = $("governanceList");
+  if (!list || currentPage !== "governance") return;
+  if (!policySurfaceEnabled) {
+    list.textContent = "";
+    libraryNote(list, "The policy register is a loopback-only surface and stays closed here.");
+    return;
+  }
+  try {
+    const response = await fetch("/api/policies");
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    renderGovernanceRegister(payload);
+  } catch (error) {
+    list.textContent = "";
+    libraryNote(list, `The register could not be read: ${error.message}`);
+  }
+}
+
 async function loadStatus() {
   try {
     const response = await fetch("/api/status");
@@ -1834,6 +1969,7 @@ async function loadStatus() {
     notebookSurfaceEnabled = status.notebook_surface_enabled === true;
     wizardSurfaceEnabled = status.wizard_surface_enabled === true;
     voyageSurfaceEnabled = status.voyage_surface_enabled === true;
+    policySurfaceEnabled = status.policy_surface_enabled === true;
     configureProviders(status);
     renderConnectionStatus(status);
     renderCommandBridge(status);
@@ -1874,6 +2010,7 @@ async function loadStatus() {
     await loadArtifacts();
     await loadHomeModules();
     await loadLibrary();
+    await loadGovernanceRegister();
     $("systemState").textContent = status.live_runtime_ready
       ? "Verified live runtime receipt"
       : publicDemo ? "Public synthetic demo · read-only" : "Local core responding · cloud proof absent";
@@ -1903,13 +2040,16 @@ document.addEventListener("click", (event) => {
 });
 // A ?workflow= deep link names one task, so the contract opens with it. Focus
 // stays where the browser put it; the reader asked for a page, not a dialog.
-if (requestedWorkflow && pageConfiguration[currentPage].workflows.includes(requestedWorkflow)) {
+if (requestedWorkflow && currentTab === "registry") {
   setEngineDrawer(true, {moveFocus: false});
 }
 $("runId").value = "";
 $("workflow").addEventListener("change", () => { applyWorkflowDefaults(); renderTaskCards(); });
 if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
 if ($("libraryRefresh")) $("libraryRefresh").addEventListener("click", loadLibrary);
+if ($("governanceRefresh")) {
+  $("governanceRefresh").addEventListener("click", loadGovernanceRegister);
+}
 if ($("libraryClose")) {
   $("libraryClose").addEventListener("click", () => { openVoyage = null; renderVoyageDetail(); });
 }
@@ -1959,9 +2099,9 @@ loadStatus();
 // My use cases: the saved voyage library
 // --------------------------------------------------------------------------- //
 
-let voyageSurfaceEnabled = false;
 let openVoyage = null;
 let pendingDiff = null;
+let libraryEntries = [];
 
 function libraryNote(parent, text) {
   return deskLine(parent, "p", "desk-note", text);
@@ -1981,7 +2121,8 @@ async function loadLibrary() {
     if (!response.ok || payload.ok !== true) {
       throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
     }
-    renderLibrary(payload.voyages || []);
+    libraryEntries = payload.voyages || [];
+    renderLibrary(libraryEntries);
   } catch (error) {
     list.textContent = "";
     libraryNote(list, `The library could not be read: ${error.message}`);
@@ -2010,6 +2151,15 @@ function renderLibraryCards(list, entries) {
     }
     deskLine(card, "b", null, entry.name);
     deskLine(card, "p", null, entry.description || "");
+    if (entry.schedule) {
+      deskLine(
+        card,
+        "small",
+        "library-schedule",
+        `Standing routine · ${entry.schedule.cadence} at ${entry.schedule.at}`
+        + " · you install the task, NemoFold registers nothing"
+      );
+    }
     deskLine(card, "small", "library-steps-line", entry.workflows.join(" → "));
     const button = document.createElement("button");
     button.type = "button";
@@ -2025,12 +2175,70 @@ function renderLibraryCards(list, entries) {
   }
 }
 
+function tagLabel(tag) {
+  return tag.replace(/-/g, " ");
+}
+
+function setLibraryTag(tag) {
+  // Re-rendering replaces the chip that was just activated, so a keyboard user
+  // would be dropped back to the top of the document. Put them back on the
+  // chip they chose, but only if that is where they were.
+  const cameFromChip = document.activeElement?.dataset?.tagFilter !== undefined;
+  activeTag = tag;
+  // The scene follows the filter: choosing the standing routines is what turns
+  // the porthole into the echo sounder.
+  updateVoyageScene();
+  renderLibrary(libraryEntries);
+  if (cameFromChip) {
+    document.querySelector(`[data-tag-filter="${CSS.escape(tag)}"]`)?.focus();
+  }
+}
+
+function renderLibraryFilter(entries) {
+  const panel = $("libraryFilter");
+  if (!panel) return;
+  panel.textContent = "";
+  // Only on the tabs where a topic is the point. The registry is non-thematic
+  // and the overview shows everything someone kept.
+  if (!(currentPage === "processes" && currentTab === "workflows")) return;
+  const tags = [...new Set(entries.flatMap((entry) => entry.tags || []))].sort();
+  if (!tags.length) return;
+  for (const [tag, label] of [["", "All"], ...tags.map((tag) => [tag, tagLabel(tag)])]) {
+    const chip = document.createElement("button");
+    chip.type = "button";
+    chip.dataset.tagFilter = tag;
+    chip.textContent = label;
+    chip.setAttribute("aria-pressed", String(tag === activeTag));
+    chip.addEventListener("click", () => setLibraryTag(tag));
+    panel.append(chip);
+  }
+}
+
 function renderLibrary(entries) {
   const list = $("libraryList");
   list.textContent = "";
+  renderLibraryFilter(entries);
   if (!entries.length) {
     libraryNote(list, "Nothing saved yet. Copy a specialist to start your own library.");
     return;
+  }
+  if (activeTag) {
+    const matching = entries.filter((entry) => (entry.tags || []).includes(activeTag));
+    if (!matching.length) {
+      libraryNote(
+        list,
+        `No use case is tagged ${tagLabel(activeTag)} yet. `
+        + "The others are still there - clear the filter to see them."
+      );
+      const clear = document.createElement("button");
+      clear.type = "button";
+      clear.className = "secondary";
+      clear.textContent = "Show all use cases";
+      clear.addEventListener("click", () => setLibraryTag(""));
+      list.append(clear);
+      return;
+    }
+    entries = matching;
   }
   const pending = entries.filter((entry) => entry.status === "pending_capability");
   const ready = entries.filter((entry) => entry.status !== "pending_capability");

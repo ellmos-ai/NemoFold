@@ -67,6 +67,46 @@ STATIC_ROUTES: dict[str, tuple[Path, str]] = {
         "image/jpeg",
     ),
 }
+# D-036b: five areas. Analysis, Routines and Artifacts are no longer rooms of
+# their own - they are three tabs of one "Processes & Workflows" area, because
+# what a person picks first is a use case, not the room it was filed under.
+PAGE_ROUTES: dict[str, str] = {
+    "/": "overview",
+    "/folders": "folders",
+    "/processes": "processes",
+    "/governance": "governance",
+    "/connections": "connections",
+}
+PAGE_TABS: dict[str, tuple[str, ...]] = {
+    "processes": ("workflows", "registry", "artifacts"),
+    "governance": ("policies", "rules"),
+}
+# The old routes keep working. A link that names one technical contract lands in
+# the registry, where single instruments now live; a bare area link lands on the
+# tab that replaced it.
+ROUTE_ALIASES: dict[str, str] = {
+    "/document-center": "/folders",
+    "/analysis": "/processes?tab=workflows",
+    "/routines": "/processes?tab=workflows&tag=scheduled",
+    "/artifacts": "/processes?tab=artifacts",
+}
+
+
+def _active_tab(page: str, requested: str) -> str:
+    tabs = PAGE_TABS.get(page, ())
+    if not tabs:
+        return ""
+    return requested if requested in tabs else tabs[0]
+
+
+def _alias_target(page_path: str, query: str) -> str:
+    """Where an old link goes now, keeping a named workflow with it."""
+    workflow = parse_qs(query, keep_blank_values=True).get("workflow", [""])[0]
+    if workflow in SUPPORTED_WORKFLOWS:
+        return f"/processes?tab=registry&workflow={quote(workflow, safe='')}"
+    return ROUTE_ALIASES[page_path]
+
+
 CORE_NAMES = (
     "agent_runtime",
     "policy_privacy_gate",
@@ -239,6 +279,19 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             # resetting the connection before the 403 response can be read.
             self.rfile.read(length)
 
+    def _redirect(self, location: str) -> None:
+        """Send a moved page on to its new home.
+
+        302 and not 301 on purpose: a permanent redirect is cached hard by
+        browsers, and an information architecture that is one release old is a
+        bad thing to burn into somebody's cache.
+        """
+        self.send_response(HTTPStatus.FOUND)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+
     def _reject_before_body_read(self, status: HTTPStatus, code: str, detail: str) -> None:
         # A rejection sent while the declared request body is still unread can
         # reset the connection on Windows before the client reads the response;
@@ -262,16 +315,10 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         page_path = path.rstrip("/") or "/"
-        page_routes = {
-            "/": "overview",
-            "/document-center": "document",
-            "/analysis": "analysis",
-            "/routines": "routines",
-            "/artifacts": "artifacts",
-            "/connections": "connections",
-            "/governance": "governance",
-        }
-        if page_path in page_routes:
+        if page_path in ROUTE_ALIASES:
+            self._redirect(_alias_target(page_path, parsed_path.query))
+            return
+        if page_path in PAGE_ROUTES:
             try:
                 page = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
             except OSError:
@@ -281,9 +328,12 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     str(WEB_ROOT / "index.html"),
                 )
                 return
+            page_name = PAGE_ROUTES[page_path]
+            query = parse_qs(parsed_path.query, keep_blank_values=True)
             page = page.replace(
-                'data-page="overview"',
-                f'data-page="{page_routes[page_path]}"',
+                'data-page="overview" data-tab=""',
+                f'data-page="{page_name}" '
+                f'data-tab="{_active_tab(page_name, query.get("tab", [""])[0])}"',
                 1,
             )
             self._write(page.encode("utf-8"), "text/html; charset=utf-8")

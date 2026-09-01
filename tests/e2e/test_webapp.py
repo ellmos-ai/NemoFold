@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from urllib.error import HTTPError
 from urllib.parse import urlencode
-from urllib.request import Request, urlopen
+from urllib.request import HTTPRedirectHandler, Request, build_opener, urlopen
 
 import pytest
 
@@ -104,18 +104,17 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
             {"run_id": "web_preview", "job": job},
         )
 
-    assert 'href="/document-center"' in html
-    assert 'href="/analysis"' in html
-    assert 'href="/routines"' in html
-    assert 'href="/artifacts"' in html
+    assert 'href="/folders"' in html
+    assert 'href="/processes"' in html
+    assert 'href="/governance"' in html
     assert 'href="/connections"' in html
     assert "Know what your documents prove." in html
     assert "EVIDENCE CHAIN" in html
     assert "ORIGIN" in html
     assert "ACTION" in html
     assert "PRODUCT MAP" in html
-    assert "Document Center" in html
-    assert "Artifact Studio" in html
+    assert "Folders" in html
+    assert "Artifacts" in html
     assert 'id="targetRoots"' in html
     element_ids = re.findall(r'\sid="([^"]+)"', html)
     required_ids = {
@@ -196,17 +195,20 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
 
 
 @pytest.mark.parametrize(
-    ("route", "page"),
+    ("route", "page", "tab"),
     [
-        ("/document-center", "document"),
-        ("/analysis", "analysis"),
-        ("/routines", "routines"),
-        ("/artifacts", "artifacts"),
-        ("/connections", "connections"),
-        ("/governance", "governance"),
+        ("/", "overview", ""),
+        ("/folders", "folders", ""),
+        ("/processes", "processes", "workflows"),
+        ("/processes?tab=registry", "processes", "registry"),
+        ("/processes?tab=artifacts", "processes", "artifacts"),
+        ("/processes?tab=nonsense", "processes", "workflows"),
+        ("/governance", "governance", "policies"),
+        ("/governance?tab=rules", "governance", "rules"),
+        ("/connections", "connections", ""),
     ],
 )
-def test_web_console_serves_each_product_area_as_a_real_route(tmp_path, route, page) -> None:
+def test_web_console_serves_each_area_and_tab_as_a_real_route(tmp_path, route, page, tab) -> None:
     with (
         running_server(tmp_path) as base_url,
         urlopen(base_url + route, timeout=5) as response,  # noqa: S310
@@ -214,12 +216,40 @@ def test_web_console_serves_each_product_area_as_a_real_route(tmp_path, route, p
         html = response.read().decode()
 
     assert response.status == 200
-    assert f'<body data-page="{page}">' in html
-    assert 'data-page-link="document"' in html
-    assert 'data-page-link="governance"' in html
-    assert (
-        'data-page-section="document analysis routines artifacts connections governance"' in html
-    )
+    # Page and tab are stamped by the server, so a section is never briefly
+    # visible in the wrong room before the script runs.
+    assert f'<body data-page="{page}" data-tab="{tab}">' in html
+    assert 'data-page-link="folders"' in html
+    assert 'data-page-link="processes"' in html
+    assert 'data-page-section="folders processes governance connections"' in html
+
+
+@pytest.mark.parametrize(
+    ("old_route", "target"),
+    [
+        ("/document-center", "/folders"),
+        ("/analysis", "/processes?tab=workflows"),
+        ("/routines", "/processes?tab=workflows&tag=scheduled"),
+        ("/artifacts", "/processes?tab=artifacts"),
+        # A link that names one contract lands where single instruments live.
+        ("/analysis?workflow=fact_distill", "/processes?tab=registry&workflow=fact_distill"),
+        ("/document-center?workflow=smart_inbox", "/processes?tab=registry&workflow=smart_inbox"),
+        # An unknown workflow is not echoed back into a URL.
+        ("/analysis?workflow=../../etc", "/processes?tab=workflows"),
+    ],
+)
+def test_the_old_routes_still_lead_somewhere(tmp_path, old_route, target) -> None:
+    class KeepRedirect(HTTPRedirectHandler):
+        def redirect_request(self, *args, **kwargs):  # noqa: ANN002, ANN003
+            return None
+
+    opener = build_opener(KeepRedirect)
+    with running_server(tmp_path) as base_url, pytest.raises(HTTPError) as moved:
+        opener.open(base_url + old_route, timeout=5)
+
+    # 302 and not 301: an IA one release old should not be burned into a cache.
+    assert moved.value.code == 302
+    assert moved.value.headers["Location"] == target
 
 
 def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
@@ -265,8 +295,11 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert ".voyage-scene.analysis-lab" in stylesheet
     assert ".research-notebook" in stylesheet
     assert ".notebook-sonar" in stylesheet
-    assert 'body[data-page="analysis"]' in stylesheet
-    assert ".route-workflows" in stylesheet
+    assert 'body[data-tab="workflows"]' in stylesheet
+    assert ".area-tabs" in stylesheet
+    assert ".library-filter" in stylesheet
+    assert ".governance-register" in stylesheet
+    assert ".exception-row" in stylesheet
     assert ".connection-registry" in stylesheet
     assert ".command-bridge" in stylesheet
     assert ".task-card" in stylesheet
@@ -824,41 +857,58 @@ def test_public_demo_status_withholds_root_locations_but_keeps_the_count(tmp_pat
     assert status["max_external_cost_usd"] == 0.0
 
 
-def test_storage_policy_moved_from_document_center_to_the_bridge(tmp_path) -> None:
+def test_the_scene_follows_the_tab_and_the_schedule_filter(tmp_path) -> None:
     with (
         running_server(tmp_path) as base_url,
         urlopen(base_url + "/assets/app.js", timeout=5) as response,  # noqa: S310
     ):
         script = response.read().decode()
 
-    document_line = next(line for line in script.splitlines() if "document: {title:" in line)
-    governance_line = next(line for line in script.splitlines() if "governance: {title:" in line)
+    # D-036b: the scenes did not disappear with the rooms, they moved to the
+    # tabs and to the schedule filter.
+    assert 'if (currentTab === "artifacts") return "artifacts";' in script
+    assert 'if (currentTab === "registry") return "registry";' in script
+    assert 'return activeTag === "scheduled" ? "scheduled" : "workflows";' in script
+    # Line endings differ per checkout, so compare on normalised whitespace.
+    flat = " ".join(script.split())
+    for key, artwork in (
+        ("scheduled", "folder-routines"),
+        ("workflows", "analysis-lab"),
+        ("artifacts", "artifact-library"),
+        ("folders", "document-center"),
+    ):
+        assert f'{key}: {{ className: "{artwork}"' in flat, key
+    # A standing routine never claims NemoFold installed anything.
+    assert "NemoFold registers nothing and starts nothing by itself" in script
 
-    assert "storage_policy" not in document_line
-    assert "storage_policy" in governance_line
 
-
-def test_each_area_serves_its_own_home_module_and_task_cards(tmp_path) -> None:
+def test_use_cases_come_first_and_single_instruments_live_in_the_registry(tmp_path) -> None:
     with running_server(tmp_path) as base_url:
-        pages = {}
-        for route in ("/document-center", "/routines", "/analysis"):
-            with urlopen(base_url + route, timeout=5) as response:  # noqa: S310
-                pages[route] = response.read().decode()
+        with urlopen(base_url + "/folders", timeout=5) as response:  # noqa: S310
+            folders = response.read().decode()
         with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
             script = response.read().decode()
 
-    document_page = pages["/document-center"]
-    assert 'id="homeGlance"' in document_page
-    assert 'data-folder-target="homeGlanceRoot"' in document_page
-    assert 'id="echoCheck"' in document_page
-    assert 'data-page-section="document"' in document_page
-    assert 'id="taskCards"' in document_page
-    assert 'data-page-section="document analysis routines governance"' in document_page
+    # Folders keeps the corpus overview and the use cases bound to it.
+    assert 'id="homeGlance"' in folders
+    assert 'data-folder-target="homeGlanceRoot"' in folders
+    assert 'data-page-section="folders"' in folders
+    assert 'data-page-section="overview folders processes"' in folders
+    # The single instruments are one collapsed advanced view in the registry,
+    # not a card deck repeated in every room.
+    assert (
+        'id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" '
+        'data-page-section="processes" data-page-tab="registry"'
+    ) in folders
+    assert "SINGLE INSTRUMENTS · ADVANCED" in folders
+    # The engine room is their editor and follows them.
+    assert 'data-page-section="processes" data-page-tab="registry"' in folders
     assert "workflowCards" in script
     assert "renderTaskCards" in script
     assert "loadHomeGlance" in script
     assert "loadEcho" in script
     assert "prepareWorkflow" in script
+    assert "renderLibraryFilter" in script
 
 
 def test_artifact_catalog_reports_when_each_ledger_was_written(tmp_path) -> None:
@@ -1014,7 +1064,7 @@ def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> No
         "ORIGIN",
         "ACTION",
         "PRODUCT MAP",
-        "Six work areas.",  # the contract count moves as workflows activate
+        "technical contracts.",  # the counts move as workflows activate
         "ROADMAP:",
     ):
         assert marker in folded_away, marker
@@ -1025,7 +1075,7 @@ def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> No
     )
     hero_and_cards = html.split('id="chartDetail"', 1)[0]
     assert 'class="product-areas"' in hero_and_cards
-    assert "Command Bridge" in hero_and_cards
+    assert "Governance" in hero_and_cards
 
 
 def test_captains_desk_plans_and_prepares_drafts_without_running_anything(tmp_path) -> None:
@@ -1126,7 +1176,7 @@ def test_captains_desk_is_closed_on_a_network_exposed_server(tmp_path) -> None:
 def test_captains_desk_is_served_on_the_overview_only(tmp_path) -> None:
     with running_server(tmp_path) as base_url:
         pages = {}
-        for route in ("/", "/document-center"):
+        for route in ("/", "/folders"):
             with urlopen(base_url + route, timeout=5) as response:  # noqa: S310
                 pages[route] = response.read().decode()
         with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
@@ -1140,8 +1190,8 @@ def test_captains_desk_is_served_on_the_overview_only(tmp_path) -> None:
     assert 'aria-live="polite"' in overview
     assert "ASK THE CAPTAIN" in overview
     # One desk, one place: the markup is shared, the section is overview-scoped.
-    assert 'id="captainsDesk"' in pages["/document-center"]
-    assert 'data-page-section="overview"' in pages["/document-center"]
+    assert 'id="captainsDesk"' in pages["/folders"]
+    assert 'data-page-section="overview"' in pages["/folders"]
     # The desk states its limit in the surface itself, not only in the docs.
     assert "It plans only: nothing is executed" in overview
     for symbol in ("askTheCaptain", "prepareVoyage", "renderVoyagePlan", "wizardSurfaceEnabled"):
