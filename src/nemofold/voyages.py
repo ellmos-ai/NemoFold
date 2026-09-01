@@ -92,8 +92,10 @@ def validate_model_pref(value: Any) -> dict[str, Any] | None:
     if fallback == LOCAL_ONLY:
         return {"preferred": preferred, "fallback": LOCAL_ONLY}
     resolved = _endpoint(fallback, "fallback")
-    preferred_local = PROVIDER_DESCRIPTORS[preferred["provider"]].api_key_env is None
-    fallback_local = PROVIDER_DESCRIPTORS[resolved["provider"]].api_key_env is None
+    # Exposure is "does the content leave this host", not "is a key needed":
+    # the subscription bridges need no key and still send it away.
+    preferred_local = not PROVIDER_DESCRIPTORS[preferred["provider"]].external_transfer
+    fallback_local = not PROVIDER_DESCRIPTORS[resolved["provider"]].external_transfer
     if preferred_local and not fallback_local:
         raise ValueError(
             "a fallback may only lower exposure: falling back from a local model to an "

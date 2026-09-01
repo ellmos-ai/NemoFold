@@ -603,3 +603,62 @@ def test_every_shipped_specialist_carries_at_least_one_tag() -> None:
     assert listed
     for preset in listed:
         assert preset.get("tags"), preset["preset_id"]
+
+
+# --------------------------------------------------------------------------- #
+# Exposure means "does it leave this host", not "does it need a key"
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize("bridge", ["codex-cli", "claude-code"])
+def test_a_fallback_to_a_subscription_bridge_is_refused(bridge) -> None:
+    # These carry no API key of their own and still put the content on somebody
+    # else's machine, so falling back to one from a local model raises exposure.
+    with pytest.raises(ValueError, match="only lower exposure"):
+        validate_model_pref(
+            {
+                "preferred": {"provider": "ollama", "model": "qwen3"},
+                "fallback": {"provider": bridge, "model": "sonnet"},
+            }
+        )
+
+
+def test_a_local_only_chain_treats_a_subscription_bridge_as_external(tmp_path) -> None:
+    store = _store(tmp_path)
+
+    saved = store.save(
+        _voyage(
+            tmp_path,
+            model_pref=LOCAL_ONLY,
+            steps=_voyage(tmp_path)["steps"],
+        )
+    )
+    assert saved["model_pref"] == LOCAL_ONLY
+
+    from nemofold.model_authority import resolve_authority
+
+    resolution = resolve_authority(
+        step_pref={
+            "preferred": {"provider": "claude-code", "model": "sonnet"},
+            "fallback": LOCAL_ONLY,
+        },
+        chain_pref=LOCAL_ONLY,
+    )
+
+    assert resolution.needs_user_input is True
+    assert resolution.conflict == "local_only_cap"
+
+
+@pytest.mark.parametrize("bridge", ["codex-cli", "claude-code"])
+def test_chain_wins_with_a_subscription_bridge_is_confirmed_at_set_time(tmp_path, bridge) -> None:
+    with pytest.raises(ValueError, match="confirmed at set time"):
+        _store(tmp_path).save(
+            _voyage(
+                tmp_path,
+                model_authority="chain_wins",
+                model_pref={
+                    "preferred": {"provider": bridge, "model": "sonnet"},
+                    "fallback": LOCAL_ONLY,
+                },
+            )
+        )

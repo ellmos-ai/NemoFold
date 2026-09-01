@@ -70,11 +70,17 @@ def endpoint_label(endpoint: Any) -> str:
 
 
 def is_external(endpoint: Any) -> bool:
-    """True when the endpoint sends content off this host."""
+    """True when the endpoint sends content off this host.
+
+    The test is external_transfer, not "does it need an API key". A personal
+    subscription bridge such as codex-cli or claude-code carries no key of its
+    own and still puts the content on somebody else's machine, which is the
+    only thing this question is ever asked about.
+    """
     if not isinstance(endpoint, dict):
         return False
     descriptor = PROVIDER_DESCRIPTORS.get(str(endpoint.get("provider")))
-    return descriptor is not None and descriptor.api_key_env is not None
+    return descriptor is not None and descriptor.external_transfer
 
 
 def _preferred(pref: Any) -> dict[str, Any] | None:
