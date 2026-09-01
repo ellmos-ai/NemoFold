@@ -235,3 +235,42 @@ def test_the_payload_carries_both_sentences_and_its_own_limits() -> None:
     assert confirmed["confirmations"][0]["naming_quote"]
     assert confirmed["confirmations"][0]["context_quote"]
     assert "not proof of anything" in payload["reasoning_note"]
+
+
+# --------------------------------------------------------------------------- #
+# The figures have to fit inside the picture they claim to be
+# --------------------------------------------------------------------------- #
+
+
+def test_no_stroke_or_label_leaves_the_alibi_canvas() -> None:
+    import re
+
+    from nemofold.chronicle_svg import alibi_weave_svg
+
+    # Four positions spread over a wide window, so the right-most one is the
+    # dangerous case: it used to be drawn past the canvas with its label lost.
+    rows = tuple(
+        (f"Person {index}", "Uferstraße", 1_000_000 + index * 500, index % 2)
+        for index in range(4)
+    )
+    figure = alibi_weave_svg(rows, (("Person 9", "no source places this person"),))
+
+    width = int(re.search(r'\swidth="(\d+)"', figure.svg).group(1))
+    starts = [float(value) for value in re.findall(r'\sx1?="([\d.]+)"', figure.svg)]
+    ends = [float(value) for value in re.findall(r'x2="([\d.]+)"', figure.svg)]
+    # A label is drawn 54px right of the stroke and needs room for its word.
+    assert max(ends) + 152 <= width
+    assert max(starts) <= width
+
+
+def test_a_hatched_band_keeps_its_word_readable() -> None:
+    import re
+
+    from nemofold.chronicle_svg import alibi_weave_svg
+
+    figure = alibi_weave_svg((), (("Person 1", "no source places this person"),))
+
+    # The label sits on a plain backing rather than directly on the hatching.
+    backing = re.search(r'<rect x="[\d.]+" y="[\d.]+" width="196" height="14"', figure.svg)
+    assert backing is not None
+    assert "Lücke: keine Fremdbestätigung" in figure.svg

@@ -268,6 +268,9 @@ def timeline_svg(
                     f'width="{_round(right - left)}" height="16" fill="url(#nf-gap)" '
                     f'stroke="{MUTED}" stroke-width="0.8" stroke-dasharray="3 3">'
                     f"<title>{_text(label, 160)}</title></rect>\n"
+                    # The word has to be readable on top of the hatching.
+                    f'  <rect x="{_round((left + right) / 2 - 42)}" y="{_round(y - 7)}" '
+                    f'width="84" height="14" fill="{PAPER}"/>\n'
                     f'  <text x="{_round((left + right) / 2)}" y="{_round(y + 4)}" '
                     f'font-family="monospace" font-size="9" fill="{INK}" '
                     f'text-anchor="middle">unbestimmt</text>\n'
@@ -345,7 +348,15 @@ def alibi_weave_svg(
     top = 66.0
     row_height = 38.0
     height = int(top + (len(rows) + len(gaps)) * row_height + 84)
-    scale = _scale(tuple(value for _, _, value, _ in rows if value is not None), left, right)
+    # A position is a stroke with a word beside it, so the scale has to end early
+    # enough for both to fit. Mapping onto the full band put the right-most row
+    # and its label off the canvas entirely.
+    half, label_width = 46.0, 152.0
+    scale = _scale(
+        tuple(value for _, _, value, _ in rows if value is not None),
+        left + half,
+        right - half - label_width,
+    )
     body = [
         HATCH,
         f'  <text x="24" y="32" font-family="monospace" font-size="12" fill="{INK}">'
@@ -387,6 +398,9 @@ def alibi_weave_svg(
             f'width="{_round(right - left)}" height="18" fill="url(#nf-gap)" '
             f'stroke="{SIGNAL}" stroke-width="1" stroke-dasharray="4 3">'
             f"<title>{_text(reason, 160)}</title></rect>\n"
+            # The word has to be readable on top of the hatching.
+            f'  <rect x="{_round((left + right) / 2 - 98)}" y="{_round(y - 7)}" '
+            f'width="196" height="14" fill="{PAPER}"/>\n'
             f'  <text x="{_round((left + right) / 2)}" y="{_round(y + 4)}" '
             f'font-family="monospace" font-size="9" fill="{SIGNAL}" '
             f'text-anchor="middle">Lücke: keine Fremdbestätigung</text>\n'

@@ -298,6 +298,43 @@ Some use cases cannot be served yet. Those are still kept, marked as waiting for
 instrument they need, and listed apart from the runnable ones - a wish recorded is
 worth more than a wish refused, as long as nobody mistakes it for something that runs.
 
+## Case Chronicle
+
+Four deep-analysis cores turn a folder of statements, reports and contracts into
+structures you can follow back to a sentence: who appears, which links are actually
+written down, when each person is placed, and where nothing places them at all. Seven
+workflows compose them - Person Registry, Relation Model, Person Timeline, Coverage
+Timeline, Alibi Weave, Contradiction Synopsis and Corpus Query.
+
+None of them draws a legal conclusion, and every report says so in its own metadata.
+What they produce is what the documents state, who states it, and where they are
+silent. The interesting output is usually the silence.
+
+Four rules do most of the work, and each one is a refusal.
+
+A person exists in the registry because a document declares them under a named field,
+never because something looked like a name. An edge exists because a sentence states
+it; two people named in one sentence is shown as exactly that and nothing more, and
+every edge carries the sentence. A time the sources leave open stays undetermined and
+is drawn as a band, because a dot placed to make a chart look finished cannot be told
+apart afterwards from a dot that was written down. And a self-report stays one line: a
+second line appears only where a different source says the person was present and
+places itself at the same place inside the tolerance window, with both sentences shown
+so you can judge that inference rather than inherit it.
+
+The registry has an identified form, a pseudonymous form that carries no name, alias
+or quote, and a local identity map. The pseudonymous form is what may travel; the map
+is the one file that must not, and it says so about itself.
+
+Figures are deterministic SVG: the same input renders to the same bytes, which is what
+lets a run ledger hash an image and mean it. Each carries a legend in words as well as
+a stroke style, so nothing depends on colour.
+
+`examples/synthetic-case/` holds twelve short fictional documents - each marked as
+invented in its first line - with a blue VW Golf, a questionable weekend, one
+corroborated alibi, one person nothing outside confirms, and two contradictions. Every
+Case Chronicle test runs on it, and so does the demo.
+
 ## Ask the Captain's Desk
 
 The console's overview opens with the Captain's Desk: one plain sentence in, a chain of

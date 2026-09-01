@@ -315,6 +315,46 @@ Instrument benannt, auf das sie warten, und getrennt von den lauffähigen gelist
 festgehaltener Wunsch ist mehr wert als ein abgelehnter, solange ihn niemand für etwas
 Lauffähiges hält.
 
+## Fall-Chronik
+
+Vier Analysekerne machen aus einem Ordner voller Aussagen, Berichte und Verträge
+Strukturen, die sich bis zu einem Satz zurückverfolgen lassen: wer vorkommt, welche
+Verbindungen tatsächlich dastehen, wann jemand verortet ist und wo ihn gar nichts
+verortet. Sieben Workflows setzen darauf auf — Person Registry, Relation Model,
+Person Timeline, Coverage Timeline, Alibi Weave, Contradiction Synopsis und Corpus
+Query.
+
+Keiner davon zieht einen rechtlichen Schluss, und jeder Bericht sagt das in seinen
+eigenen Metadaten. Was entsteht, ist: was die Dokumente sagen, wer es sagt, und wo sie
+schweigen. Das Interessante ist meistens das Schweigen.
+
+Vier Regeln tragen das meiste, und jede ist eine Verweigerung.
+
+Eine Person steht im Register, weil ein Dokument sie unter einem benannten Feld
+deklariert — nie, weil etwas nach einem Namen aussah. Eine Kante existiert, weil ein
+Satz sie behauptet; zwei in einem Satz genannte Personen werden als genau das gezeigt
+und nicht mehr, und jede Kante trägt ihren Satz. Eine Zeit, die die Quellen offen
+lassen, bleibt unbestimmt und wird als Band gezeichnet: Ein Punkt, der gesetzt wurde,
+damit das Diagramm fertig aussieht, ist hinterher nicht mehr von einem Punkt zu
+unterscheiden, der wirklich dastand. Und eine Selbstauskunft bleibt eine Linie — eine
+zweite kommt nur dazu, wenn eine andere Quelle die Anwesenheit behauptet und sich
+selbst am selben Ort innerhalb des Toleranzfensters verortet; beide Sätze werden
+gezeigt, damit Sie diesen Schluss beurteilen statt ihn zu übernehmen.
+
+Das Register hat eine identifizierte Form, eine pseudonyme Form ohne Namen, Alias und
+Zitat, und eine lokale Identitätskarte. Die pseudonyme Form darf reisen; die Karte ist
+die eine Datei, die es nicht darf, und sie sagt das über sich selbst.
+
+Die Abbildungen sind deterministisches SVG: Gleiche Eingabe, gleiche Bytes — nur so
+kann ein Run-Ledger ein Bild hashen und es auch meinen. Jede trägt ihre Legende in
+Worten und nicht nur als Strichart, damit nichts an der Farbe hängt.
+
+In `examples/synthetic-case/` liegen zwölf kurze, frei erfundene Dokumente — jedes in
+der ersten Zeile als erfunden gekennzeichnet — mit einem blauen VW Golf, einem
+fraglichen Wochenende, einem fremdbestätigten Alibi, einer Person, die niemand
+bestätigt, und zwei Widersprüchen. Jeder Fall-Chronik-Test läuft darauf, und die Demo
+auch.
+
 ## Das Captain's Desk fragen
 
 Die Übersicht der Konsole beginnt mit dem Captain's Desk: ein einfacher Satz hinein,

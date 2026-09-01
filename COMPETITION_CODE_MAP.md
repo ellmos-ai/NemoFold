@@ -74,3 +74,10 @@ tag-filtered use cases, the instrument registry and the artifact catalog, Govern
 with its policy and rule registers) is captured in commits `13ffe46` through
 `a01a572`. All of the above was written for this competition after 26 August 2026;
 scene artwork provenance is recorded in docs/media/designset/README.md.
+The Case Chronicle - staged aggregation with anchor preservation, the declared-only
+person registry with its pseudonymous export and local identity map, timelines that
+carry undetermined times as undetermined, corroboration that keeps a self-report and an
+outside confirmation on separate lines, deterministic claim-safe SVG, seven composing
+workflows and the fictional synthetic case they are all tested on - is captured in the
+commits of the WP-CHRONICLE-1 series. The synthetic case in `examples/synthetic-case/`
+is invented in full; every document says so in its first line.
