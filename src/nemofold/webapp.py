@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -372,6 +373,18 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "wizard_surface_enabled": provider_surface_enabled,
                     "voyage_surface_enabled": provider_surface_enabled,
                     "policy_surface_enabled": provider_surface_enabled,
+                    # Configurable and unproven are different things, and the
+                    # status page is where somebody looks for the difference.
+                    "web_search_allowed": (
+                        self.server.app_config.execution.web_search_allowed
+                        if provider_surface_enabled
+                        else False
+                    ),
+                    "web_search_adapter": "tavily",
+                    "web_search_key_present": bool(
+                        os.environ.get("TAVILY_API_KEY", "").strip()
+                    ),
+                    "web_search_proven": False,
                     "external_models_allowed": (
                         self.server.app_config.execution.external_models_allowed
                         if provider_surface_enabled

@@ -16,7 +16,7 @@ from .artifacts import (
 )
 from .contracts import ArtifactRecord, Claim, Coverage
 
-SUPPORTED_FORMATS = frozenset({"md", "txt", "pdf", "docx", "odt"})
+SUPPORTED_FORMATS = frozenset({"md", "txt", "pdf", "docx", "odt", "xlsx"})
 
 
 @dataclass(frozen=True, slots=True)
@@ -210,4 +210,34 @@ def render_report_formats(
             records.append(
                 write_binary_artifact(output / f"{basename}.odt", _render_odt(plain), "odt")
             )
+        elif format_name == "xlsx":
+            records.append(
+                write_binary_artifact(
+                    output / f"{basename}.xlsx", _render_xlsx(document), "xlsx"
+                )
+            )
     return tuple(records)
+
+
+def _render_xlsx(document: ReportDocument) -> bytes:
+    """One row per claim, with its first source and quote.
+
+    A spreadsheet is a different reading of the same findings, not a different
+    set of them: every row is a claim that is already in the other formats, and
+    a claim with no evidence still gets its row rather than being dropped for
+    fitting badly into a grid.
+    """
+    from .delivery import workbook_bytes
+
+    rows = tuple(
+        (
+            claim.statement,
+            claim.evidence[0].source_id if claim.evidence else "",
+            claim.evidence[0].section or "" if claim.evidence else "",
+            claim.evidence[0].quote if claim.evidence else "",
+        )
+        for claim in document.claims
+    )
+    return workbook_bytes(
+        ("Aussage", "Quelle", "Fundstelle", "Zitat"), rows, sheet_name="Befunde"
+    )

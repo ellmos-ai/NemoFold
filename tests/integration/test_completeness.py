@@ -107,13 +107,13 @@ def test_a_format_that_cannot_be_produced_is_named() -> None:
         total_sources=1,
         read_sources=1,
         unread_source_ids=(),
-        required_formats=("md", "xlsx"),
+        required_formats=("md", "epub"),
         available_formats=("md",),
         required_parts={},
     )
 
     assert report.complete is False
-    assert "cannot produce: xlsx" in report.failed[0].detail
+    assert "cannot produce: epub" in report.failed[0].detail
 
 
 def test_an_empty_required_part_is_a_failure_not_a_pass() -> None:
@@ -172,7 +172,7 @@ def test_a_complete_bundle_passes_the_step(tmp_path) -> None:
 
 def test_an_incomplete_bundle_stops_the_chain_there(tmp_path) -> None:
     result = _check(
-        tmp_path, _bundle(tmp_path), "bad", required_formats=["xlsx"]
+        tmp_path, _bundle(tmp_path), "bad", required_formats=["epub"]
     )
 
     # A chain has to stop here, or the next step inherits the gap silently.

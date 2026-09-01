@@ -1064,7 +1064,7 @@ def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> No
         "ORIGIN",
         "ACTION",
         "PRODUCT MAP",
-        "technical contracts.",  # the counts move as workflows activate
+        "one contract per instrument.",  # a count here goes stale silently
         "ROADMAP:",
     ):
         assert marker in folded_away, marker
@@ -1677,3 +1677,68 @@ def test_the_registry_offers_every_contract_the_server_supports(tmp_path) -> Non
         assert f"  {workflow}: {{\n    title:" in script.replace("\r\n", "\n"), workflow
     assert "const registryGroups" in script
     assert "NOT YET GROUPED" in script
+
+
+def test_a_run_that_asked_back_is_rendered_with_answer_fields(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        with urlopen(base_url + "/processes?tab=registry", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    assert 'id="askBack"' in html
+    assert 'id="askBackList"' in html
+    assert 'id="askBackApply"' in html
+    assert "THE RUN ASKED BACK" in html
+    assert "It stopped rather than guess." in html
+    # The answers become declared parameters of the same contract rather than
+    # hidden state, so a draft would carry them like any other setting.
+    assert "renderAskBack" in script
+    assert "applyAnswers" in script
+    assert "parameters.answers" in script
+
+
+def test_the_connections_page_states_the_web_gate(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        status, _ = get_json(base_url + "/api/status")
+        with urlopen(base_url + "/connections", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    assert status["web_search_adapter"] == "tavily"
+    assert status["web_search_allowed"] is False
+    assert status["web_search_proven"] is False
+    assert "web_search_key_present" in status
+    assert 'id="connectionWeb"' in html
+    # Configurable and proven are different things, and the row says which.
+    assert "gate open" in script and "gate closed" in script
+    assert "unproven" in script
+
+
+def test_a_policy_can_be_bound_from_the_library_entry(tmp_path) -> None:
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/assets/app.js", timeout=5) as response,  # noqa: S310
+    ):
+        script = response.read().decode()
+
+    # A rule you can only attach from the register is one you attach less often
+    # than you meant to.
+    assert "renderEntryBinder" in script
+    assert "loadKnownPolicies" in script
+    assert "Bind a rule to this voyage" in script
+
+
+def test_the_surface_states_no_contract_count_that_can_go_stale(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        with urlopen(base_url + "/", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    # A spelled-out count goes quietly false the next time a contract is added,
+    # and it already had: the registry said sixteen while offering twenty-six.
+    for stale in ("sixteen", "Sixteen", "seventeen", "eighteen", "twenty"):
+        assert stale not in html, stale
+        assert stale not in script, stale

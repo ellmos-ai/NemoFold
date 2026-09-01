@@ -336,7 +336,7 @@
             <legend>01 · Mission</legend>
             <div class="form-grid">
               <div class="workflow-choice">
-                <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>document_registry</option><option>fact_distill</option><option>synopsis_merge</option><option>daily_arrivals</option><option>person_registry</option><option>relation_model</option><option>person_timeline</option><option>coverage_timeline</option><option>alibi_weave</option><option>contradiction_synopsis</option><option>corpus_query</option><option>web_research</option><option>dossier</option><option>bundle_completeness_check</option><option>platform_proof</option></select></label>
+                <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>document_registry</option><option>fact_distill</option><option>synopsis_merge</option><option>daily_arrivals</option><option>person_registry</option><option>relation_model</option><option>person_timeline</option><option>coverage_timeline</option><option>alibi_weave</option><option>contradiction_synopsis</option><option>corpus_query</option><option>web_research</option><option>dossier</option><option>bundle_completeness_check</option><option>print_action</option><option>platform_proof</option></select></label>
                 <p id="workflowHint" class="selection-description">Smart Inbox is the Document Center entry point. Storage Policies are its controlled routing and retention settings.</p>
               </div>
               <div class="prompt-field wide">
@@ -487,6 +487,16 @@ Which earlier wording changed?</textarea></label>
           </section>
           <div class="actions"><button type="button" id="previewButton" class="secondary"><svg class="instrument-icon stethoscope" aria-hidden="true"><use href="#icon-stethoscope"></use></svg>Diagnose exact scope</button><button type="submit" id="runButton">Run locally</button></div>
         </form>
+        <section id="askBack" class="ask-back" aria-labelledby="askBackTitle" hidden>
+          <div class="ask-back-head">
+            <p class="kicker">THE RUN ASKED BACK</p>
+            <h3 id="askBackTitle">It stopped rather than guess.</h3>
+            <p id="askBackNote"></p>
+          </div>
+          <div id="askBackList" class="ask-back-list" role="list"></div>
+          <button type="button" id="askBackApply" class="card-open">Take the answers into the contract</button>
+          <p id="askBackState" class="ask-back-state" aria-live="polite"></p>
+        </section>
         <section class="result-block" aria-labelledby="resultTitle">
           <div class="result-label"><span>RUN DOSSIER</span><h3 id="resultTitle">Evidence output</h3></div>
           <div id="result" class="result" aria-live="polite"><p>Nothing has run from this browser session yet.</p></div>
@@ -545,6 +555,7 @@ Which earlier wording changed?</textarea></label>
         <div><dt>Provider execution</dt><dd id="connectionProvider">Not verified</dd></div>
         <div><dt>External transfer</dt><dd id="connectionTransfer">No transfer recorded</dd></div>
         <div><dt>Cloud proof</dt><dd id="connectionCloud">False</dd></div>
+        <div><dt>Web research</dt><dd id="connectionWeb">Checking gate…</dd></div>
       </dl>
       <div class="connection-registry-head">
         <div><span>AVAILABLE ROUTES</span><b>Configured adapters</b></div>
@@ -626,6 +637,7 @@ Which earlier wording changed?</textarea></label>
           <button type="button" id="librarySave" class="secondary">Save changes</button>
           <button type="button" id="libraryDelete" class="secondary">Delete</button>
         </div>
+        <div id="libraryBinder" class="library-binder"></div>
         <div id="libraryRunResult" class="library-run" role="status" aria-live="polite"></div>
         <form id="libraryEditForm" class="library-edit">
           <label>Ask the captain to change this voyage
@@ -699,12 +711,12 @@ Which earlier wording changed?</textarea></label>
         <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle">
           <div class="section-title">
             <p class="kicker">PRODUCT MAP</p>
-            <h2 id="registerTitle">Four areas, six views, sixteen technical contracts.</h2>
+            <h2 id="registerTitle">Four areas, six views, one contract per instrument.</h2>
           </div>
           <div class="register-table" role="list">
             <a href="/folders" role="listitem"><span>01 / HOME</span><h3>Folders</h3><p>The home of your folders: which are watched, what is on board, and the use cases that work on them.</p><b>watched roots · corpus at a glance</b></a>
             <a href="/processes?tab=workflows" role="listitem"><span>02 / WORK</span><h3>Workflows</h3><p>Every saved use case and every shipped specialist, filtered by topic. A routine is a workflow with a schedule, not a separate room.</p><b>my use cases · specialists · standing routines</b></a>
-            <a href="/processes?tab=registry" role="listitem"><span>03 / REGISTRY</span><h3>Registry</h3><p>All sixteen job contracts on their own, without a topic: the instruments a use case is built from.</p><b>smart_inbox · evidence_analyst · document_registry · fact_distill · synopsis_merge · daily_arrivals · …</b></a>
+            <a href="/processes?tab=registry" role="listitem"><span>03 / REGISTRY</span><h3>Registry</h3><p>Every job contract on its own, without a topic: the instruments a use case is built from.</p><b>smart_inbox · evidence_analyst · document_registry · fact_distill · synopsis_merge · daily_arrivals · …</b></a>
             <a href="/processes?tab=artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifacts</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
             <a href="/governance" role="listitem"><span>05 / BRIDGE</span><h3>Governance</h3><p>Named policies and single rules, the exceptions to them, and the gates this server was actually started with.</p><b>policies · rules · gates are read, not granted</b></a>
             <a href="/connections" role="listitem"><span>06 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>

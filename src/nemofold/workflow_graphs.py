@@ -93,6 +93,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "be produced and whether a required part came out empty, concluding nothing "
         "about content."
     ),
+    "print_action": (
+        "Prepare a print-ready file and the exact command to print it, and state that "
+        "the printing itself is the person's step because no receipt comes back from it."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -249,6 +253,11 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Read", "every approved source"),
         ("gate", "Complete", "read, producible, non-empty"),
         ("operation", "Report", "what passed and what did not"),
+    ),
+    "print_action": (
+        ("operation", "Select", "one approved source"),
+        ("operation", "Prepare", "print-ready file"),
+        ("gate", "Not printed", "no receipt comes back"),
     ),
     "fact_distill": (
         ("operation", "Inventory", "approved corpus"),

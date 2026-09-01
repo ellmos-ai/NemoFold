@@ -43,8 +43,15 @@ POLICY_FORMS = (FORM_POLICY, FORM_RULE)
 KIND_CLEANUP = "cleanup_rules"
 KIND_DELIVERY = "delivery_rules"
 KIND_RIGHTS = "rights_profile"
+KIND_RECIPIENTS = "recipient_classes"
 KIND_CUSTOM = "custom"
-POLICY_KINDS = (KIND_CLEANUP, KIND_DELIVERY, KIND_RIGHTS, KIND_CUSTOM)
+POLICY_KINDS = (
+    KIND_CLEANUP,
+    KIND_DELIVERY,
+    KIND_RIGHTS,
+    KIND_RECIPIENTS,
+    KIND_CUSTOM,
+)
 TARGET_VOYAGE = "voyage"
 TARGET_STEP = "step"
 POLICY_TARGETS = (TARGET_VOYAGE, TARGET_STEP)
@@ -147,6 +154,30 @@ def validate_body(value: Any, *, kind: str) -> dict[str, Any]:
         return {"rights": rights}
     if kind == KIND_DELIVERY:
         return validate_delivery_body(value)
+    if kind == KIND_RECIPIENTS:
+        # Who may be written to under which right belongs to the register,
+        # not to each job that happens to send something. A job may still
+        # narrow it, which is why the job parameter stays.
+        if set(value) - {"contact_book", "class_rights"}:
+            raise ValueError(
+                "a recipient_classes body may only carry contact_book and class_rights"
+            )
+        classes = value.get("class_rights") or {}
+        if not isinstance(classes, dict):
+            raise ValueError("class_rights must be an object")
+        for name, right in classes.items():
+            if not isinstance(name, str) or right not in OUTBOUND_RIGHTS:
+                raise ValueError(
+                    "every recipient class must map to draft_only, "
+                    "send_with_confirmation or send_when_ordered"
+                )
+        return {
+            "contact_book": _text(
+                value.get("contact_book", ""), "contact_book", maximum=400,
+                required=False,
+            ),
+            "class_rights": {str(k): str(v) for k, v in sorted(classes.items())},
+        }
     if kind == KIND_CLEANUP:
         if set(value) - {"rules"}:
             raise ValueError("a cleanup_rules body may only carry rules")
@@ -419,3 +450,48 @@ def cleanup_rules_for_step(
         rules.extend(policy["body"]["rules"])
         names.append(policy["name"])
     return rules, f"policy {', '.join(names)}"
+
+
+def resolve_refs(
+    policies: tuple[dict[str, Any], ...],
+    *,
+    voyage_id: str,
+    policy_refs: tuple[str, ...] = (),
+    step_index: int | None = None,
+) -> tuple[tuple[dict[str, Any], ...], tuple[str, ...]]:
+    """Every policy that governs this place, however it was attached.
+
+    Two ways of saying the same thing grew side by side: a binding stored on the
+    policy, and a name listed on the voyage. Both are read here and folded into
+    one answer, so a person does not have to know which mechanism somebody used.
+    A name that matches nothing is reported rather than dropped - a reference to
+    a policy that was deleted is a finding, not a blank.
+    """
+    by_id = {item["policy_id"]: item for item in policies}
+    by_name = {item["name"].casefold(): item for item in policies}
+    found: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for policy in policies:
+        for binding in policy.get("bindings", []):
+            if binding.get("voyage_id") != voyage_id:
+                continue
+            target = binding.get("target")
+            if target == TARGET_VOYAGE and step_index is None:
+                break
+            if target == TARGET_STEP and binding.get("step_index") == step_index:
+                break
+        else:
+            continue
+        if policy["policy_id"] not in seen:
+            seen.add(policy["policy_id"])
+            found.append(policy)
+    unresolved: list[str] = []
+    for ref in policy_refs:
+        named = by_id.get(ref) or by_name.get(ref.casefold())
+        if named is None:
+            unresolved.append(ref)
+            continue
+        if named["policy_id"] not in seen:
+            seen.add(named["policy_id"])
+            found.append(named)
+    return tuple(found), tuple(unresolved)

@@ -25,7 +25,12 @@ from .case_chronicle import (
     execute_relation_model,
 )
 from .cleanup_rules import suggest_cleanup_rules
-from .completeness import check_completeness, completeness_payload
+from .completeness import (
+    Question,
+    check_completeness,
+    completeness_payload,
+    needs_input_payload,
+)
 from .contact_monitor import build_contact_monitor
 from .contracts import (
     ActionMode,
@@ -45,6 +50,13 @@ from .daily_arrivals import (
     arrivals_markdown,
     build_arrivals,
     windows_task_xml,
+)
+from .delivery import (
+    deliver_artifacts,
+    delivery_payload,
+    validate_delivery_body,
+    write_delivery_report,
+    write_print_package,
 )
 from .document_extract import extract_document_text
 from .document_index import DocumentIndex, SearchHit
@@ -1627,6 +1639,51 @@ def _execute_document_registry(
         topic_filter=tuple(job.parameters.get("topic_filter", [])),
     )
     output = Path(job.output_dir)
+    # A column a person declared as required and the sources do not answer is
+    # the one case where continuing would mean guessing. The run stops and asks,
+    # naming the column and the document, rather than shipping a table with a
+    # hole nobody notices.
+    required = tuple(str(item) for item in job.parameters.get("required_columns", []) or [])
+    questions = [
+        Question(
+            field=f"columns.{value.column}",
+            prompt=(
+                f"Welchen Wert hat '{value.column}' für {row.display_name}? "
+                "Die Quellen sagen dazu nichts."
+            ),
+            why=(
+                f"'{value.column}' ist als Pflichtspalte erklärt, und {row.source_id} "
+                "enthält keine Zeile dazu."
+            ),
+            kind="text",
+        )
+        for row in table.rows
+        for value in row.cells
+        if value.column in required and not value.filled
+    ]
+    if questions:
+        payload = needs_input_payload(tuple(questions[:20]), workflow=job.workflow)
+        raise WorkflowBlocked(
+            tuple(f"needs_user_input:{item.field}" for item in questions[:20]),
+            actions=("registry_built", "registry_needs_user_input"),
+            artifacts=(
+                write_text_artifact(
+                    output / f"{run_id}.needs-user-input.json",
+                    json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+                    "needs-user-input",
+                ),
+            ),
+            coverage=compute_coverage(
+                all_source_ids=(record.source_id for record in inventory.records),
+                read_source_ids=texts,
+                cited_source_ids=set(),
+            ),
+            metadata={
+                "needs_user_input": True,
+                "question_count": len(questions[:20]),
+                "outcome_note": payload["outcome_note"],
+            },
+        )
     artifacts: list[ArtifactRecord] = [
         write_text_artifact(
             output / f"{run_id}.registry.json",
@@ -2074,7 +2131,63 @@ def _dispatch_workflow(
         return _execute_web(job, inventory, run_id=run_id)
     if job.workflow == "bundle_completeness_check":
         return _execute_completeness(job, inventory, run_id=run_id)
+    if job.workflow == "print_action":
+        return _execute_print_action(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
+
+
+def _apply_delivery_rules(
+    job: JobEnvelope,
+    run_id: str,
+    artifacts: tuple[ArtifactRecord, ...],
+    *,
+    allowed_roots: tuple[str, ...],
+    apply_actions: bool,
+) -> tuple[ArtifactRecord, ...] | None:
+    """File what this run produced, if the job names a delivery policy.
+
+    The rules travel as the policy body rather than as job parameters, so the
+    same filing applies to every run that names the policy instead of being
+    retyped into each one.
+    """
+    declared = job.parameters.get("delivery_policy")
+    if not isinstance(declared, dict) or not declared:
+        return None
+    body = validate_delivery_body(declared)
+    receipts, notes = deliver_artifacts(
+        tuple((record.path, record.format) for record in artifacts),
+        body,
+        allowed_roots=allowed_roots,
+        apply_actions=apply_actions,
+    )
+    return (
+        write_delivery_report(
+            Path(job.output_dir), run_id, delivery_payload(receipts, notes)
+        ),
+    )
+
+
+def _execute_print_action(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Prepare a file for printing and say plainly that it was not printed."""
+    wanted = str(job.parameters.get("source_id", "")).strip()
+    records = [record for record in inventory.records if not wanted or record.source_id == wanted]
+    if not records:
+        raise ValueError(
+            "print_action needs one approved source; name it with source_id"
+        )
+    target = records[0]
+    note, metadata = write_print_package(Path(job.output_dir), run_id, target.path)
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids={target.source_id: ""},
+        cited_source_ids={target.source_id},
+    )
+    return (("print_package_written",), (note,), coverage, metadata)
 
 
 def _execute_completeness(
@@ -2229,6 +2342,7 @@ def _complete_running_job(
     inventory: InventoryResult,
     running: RunReport,
     ledger: RunLedger,
+    config: ExecutionConfig | None = None,
 ) -> JobCommandResult:
     run_id = running.run_id
     inventory_record = _write_inventory_snapshot(job, inventory, run_id=run_id)
@@ -2264,6 +2378,23 @@ def _complete_running_job(
         )
         ledger.update(failed)
         return JobCommandResult(failed, _report_path(job, run_id))
+    # A produced file is not finished until it is where a person will look, so
+    # a job that names a delivery policy files what it just made - through the
+    # same allow roots and the same action gate as any other write.
+    delivered = (
+        _apply_delivery_rules(
+            job,
+            run_id,
+            artifacts,
+            allowed_roots=config.allowed_roots,
+            apply_actions=config.apply_actions_allowed,
+        )
+        if config is not None
+        else None
+    )
+    if delivered:
+        artifacts = artifacts + delivered
+        metadata = {**metadata, "delivery_applied": True}
     final = replace(
         running,
         status=RunStatus.EXECUTED,
@@ -2368,7 +2499,7 @@ def run_job(
             },
         )
         ledger.update(running)
-    return _complete_running_job(prepared, inventory, running, ledger)
+    return _complete_running_job(prepared, inventory, running, ledger, config)
 
 
 def resume_job(
@@ -2430,7 +2561,7 @@ def resume_job(
         metadata={**current.metadata, "resume_attempted": True},
     )
     ledger.update(running)
-    return _complete_running_job(prepared, inventory, running, ledger)
+    return _complete_running_job(prepared, inventory, running, ledger, config)
 
 
 def undo_run(

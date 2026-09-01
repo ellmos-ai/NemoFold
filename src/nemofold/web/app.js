@@ -217,6 +217,11 @@ const workflowDefaults = {
     parameters: {formats: ["md"], required_formats: ["md"]},
     hint: "Completeness Check reports whether every source was read, whether the formats a later step needs can be produced, and whether a required part came out empty. It concludes nothing about content."
   },
+  print_action: {
+    questions: [],
+    parameters: {formats: ["md"], source_id: ""},
+    hint: "Print Action prepares a print-ready file and the exact command to print it. It does not invoke the printer: that call returns nothing this run could put in a receipt, so the printing stays your step."
+  },
   platform_proof: {
     questions: ["What is supported by the approved documents?"],
     parameters: {analysis_mode: "local_extractive", evidence_level: "offline", runtime: "offline", network_gate: "closed", max_chunks: 256, formats: ["md"]},
@@ -493,7 +498,7 @@ const voyageScenes = {
     kicker: "THE INSTRUMENT REGISTRY",
     title: "Registry",
     text: "Every job contract on its own, without a topic: the instruments a use case is built from. Reach for one to diagnose a step, try a parameter, or build something the library does not have yet.",
-    roadmap: "ACTIVE · sixteen contracts · the engine room is their editor"
+    roadmap: "ACTIVE · every job contract this server offers · the engine room is their editor"
   },
   artifacts: {
     className: "artifact-library",
@@ -635,6 +640,10 @@ const workflowCards = {
   bundle_completeness_check: {
     title: "Completeness Check",
     benefit: "Check a bundle is whole before a later step trusts it, and name what is missing."
+  },
+  print_action: {
+    title: "Print Action",
+    benefit: "Get a print-ready file and the exact command, with the printing left to you."
   },
   platform_proof: {
     title: "Platform Proof",
@@ -925,8 +934,79 @@ const registryGroups = [
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "version_resolver",
     "contact_monitor"]},
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
-  {title: "Checks and output", workflows: ["bundle_completeness_check", "report_studio"]}
+  {title: "Checks and output", workflows: ["bundle_completeness_check", "report_studio",
+    "print_action"]}
 ];
+
+
+// --------------------------------------------------------------------------- //
+// A run that asked back rather than guessing
+// --------------------------------------------------------------------------- //
+
+function renderAskBack(report) {
+  const panel = $("askBack");
+  if (!panel) return;
+  const path = (report?.artifacts || []).find(
+    (item) => item.format === "needs-user-input"
+  );
+  if (!report || report.metadata?.needs_user_input !== true || !path) {
+    panel.hidden = true;
+    return;
+  }
+  panel.hidden = false;
+  $("askBackNote").textContent = String(report.metadata.outcome_note || "");
+  const list = $("askBackList");
+  list.textContent = "";
+  $("askBackState").textContent = "";
+  // The questions travel in the artifact, so the surface reads them from there
+  // rather than re-deriving what the run already decided.
+  fetch(artifactViewUrl($("outputDir").value, path.path))
+    .then((reply) => reply.json())
+    .then((payload) => {
+      for (const question of payload.questions || []) {
+        const row = deskLine(list, "div", "ask-row");
+        row.setAttribute("role", "listitem");
+        const label = document.createElement("label");
+        label.textContent = question.prompt;
+        const input = document.createElement("input");
+        input.dataset.answerField = question.field;
+        input.autocomplete = "off";
+        input.placeholder = question.kind;
+        label.append(input);
+        row.append(label);
+        deskLine(row, "small", "ask-why", question.why || "");
+      }
+    })
+    .catch((error) => {
+      $("askBackState").textContent = `The questions could not be read: ${error.message}`;
+    });
+}
+
+function applyAnswers() {
+  const answers = {};
+  for (const input of document.querySelectorAll("[data-answer-field]")) {
+    const value = input.value.trim();
+    if (value) answers[input.dataset.answerField] = value;
+  }
+  if (!Object.keys(answers).length) {
+    $("askBackState").textContent = "Nothing to take over: no field was answered.";
+    return;
+  }
+  // The answers become declared parameters of the same contract, so the next
+  // run carries them the way any other setting is carried - visible, editable
+  // and part of what a draft would store.
+  let parameters = {};
+  try {
+    parameters = JSON.parse($("parameters").value || "{}");
+  } catch {
+    parameters = {};
+  }
+  parameters.answers = {...(parameters.answers || {}), ...answers};
+  $("parameters").value = JSON.stringify(parameters, null, 2);
+  $("askBackState").textContent =
+    `Taken over: ${Object.keys(answers).length} answer(s) are now in the contract. `
+    + "Run it again to continue.";
+}
 
 function renderTaskCards() {
   const list = $("taskCardList");
@@ -1164,6 +1244,21 @@ function renderCommandBridge(status) {
     row.append(label, value);
     list.append(row);
   }
+}
+
+function renderWebRoute(status) {
+  const cell = $("connectionWeb");
+  if (!cell) return;
+  if (status.web_search_adapter === undefined) {
+    cell.textContent = "Not offered on this server";
+    return;
+  }
+  const parts = [
+    status.web_search_allowed ? "gate open" : "gate closed",
+    status.web_search_key_present ? "key present" : "no key",
+    status.web_search_proven ? "proven" : "unproven",
+  ];
+  cell.textContent = `${status.web_search_adapter}: ${parts.join(" · ")}`;
 }
 
 function renderConnectionStatus(status) {
@@ -1521,6 +1616,7 @@ async function execute(endpoint) {
     const summary = document.createElement("div");
     summary.className = "result-summary";
     const report = data?.report;
+    renderAskBack(report);
     const errorStatus = typeof data?.error === "string"
       ? data.error
       : typeof data?.detail === "string" ? data.detail : "rejected";
@@ -2261,6 +2357,17 @@ function renderGovernanceRegister(payload) {
   }
 }
 
+async function loadKnownPolicies() {
+  // Only the list, so the library can offer bindings outside governance.
+  try {
+    const response = await fetch("/api/policies");
+    const payload = await response.json();
+    if (response.ok && payload.ok === true) knownPolicies = payload.policies || [];
+  } catch {
+    knownPolicies = [];
+  }
+}
+
 async function loadGovernanceRegister() {
   const list = $("governanceList");
   if (!list || currentPage !== "governance") return;
@@ -2304,6 +2411,7 @@ async function loadStatus() {
     configureProviders(status);
     fillOverrideProviders(status);
     renderConnectionStatus(status);
+    renderWebRoute(status);
     renderCommandBridge(status);
     if (publicDemo) {
       const supported = new Set(status.workflows);
@@ -2343,6 +2451,7 @@ async function loadStatus() {
     await loadHomeModules();
     await loadLibrary();
     await loadGovernanceRegister();
+    if (currentPage !== "governance" && policySurfaceEnabled) await loadKnownPolicies();
     $("systemState").textContent = status.live_runtime_ready
       ? "Verified live runtime receipt"
       : publicDemo ? "Public synthetic demo · read-only" : "Local core responding · cloud proof absent";
@@ -2409,6 +2518,7 @@ $("customRunId").addEventListener("change", () => {
 });
 $("jobForm").addEventListener("submit", (event) => { event.preventDefault(); execute("run"); });
 $("previewButton").addEventListener("click", () => execute("preview"));
+if ($("askBackApply")) $("askBackApply").addEventListener("click", applyAnswers);
 for (const button of document.querySelectorAll("[data-folder-target]")) {
   button.addEventListener("click", () => openFolderDialog(button.dataset.folderTarget));
 }
@@ -2667,6 +2777,7 @@ function renderVoyageDetail() {
     }
   }
   renderVoyageGovernance();
+  renderEntryBinder();
   const list = $("librarySteps");
   list.textContent = "";
   openVoyage.workflows.forEach((workflow, index) => {
@@ -2748,6 +2859,46 @@ function renderVoyageGovernance() {
       [...bound.map((policy) => policy.name), ...named].join(" · ")
     );
   }
+}
+
+function renderEntryBinder() {
+  // The same binding, reachable from the side a person happens to be on. A rule
+  // you can only attach from the register is a rule you attach less often than
+  // you meant to.
+  const panel = $("libraryBinder");
+  if (!panel || !openVoyage) return;
+  panel.textContent = "";
+  if (!knownPolicies.length) {
+    deskLine(panel, "small", null, "No policy or rule is written yet.");
+    return;
+  }
+  deskLine(panel, "small", null, "Bind a rule to this voyage:");
+  const select = document.createElement("select");
+  select.setAttribute("aria-label", "Policy or rule to bind to this voyage");
+  for (const policy of knownPolicies) {
+    const option = document.createElement("option");
+    option.value = policy.policy_id;
+    option.textContent = `${policy.form}: ${policy.name}`;
+    select.append(option);
+  }
+  const step = document.createElement("input");
+  step.type = "number";
+  step.min = "0";
+  step.value = "0";
+  step.setAttribute("aria-label", "Step number, 0 for the whole voyage");
+  const bind = document.createElement("button");
+  bind.type = "button";
+  bind.className = "secondary";
+  bind.textContent = "Bind";
+  bind.addEventListener("click", async () => {
+    const policy = knownPolicies.find((item) => item.policy_id === select.value);
+    if (!policy) return;
+    await bindPolicy(policy, openVoyage.voyage_id, Number(step.value) || 0, true);
+    await loadGovernanceRegister();
+    renderVoyageDetail();
+  });
+  panel.append(select, step, bind);
+  deskLine(panel, "small", null, "Step 0 binds the whole voyage.");
 }
 
 function moveVoyageStep(index, delta) {
