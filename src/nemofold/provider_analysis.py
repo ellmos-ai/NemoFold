@@ -38,6 +38,10 @@ from .policy import PolicyConfig, PolicyGate
 from .providers import ProviderAdapter, ProviderConfig, ProviderRequest, create_provider
 from .report_studio import ReportDocument, render_report_formats
 
+# Only this workflow has a reasoning worker. Everything else is deterministic,
+# so naming a model for it in a dossier would describe something that did not
+# happen.
+PROVIDER_WORKFLOWS = frozenset({"evidence_analyst"})
 PROVIDER_ANALYSIS_SCHEMA = "nemofold.provider-analysis.v1"
 PROVIDER_CONTEXT_SCHEMA = "nemofold.provider-context.v1"
 
@@ -109,7 +113,7 @@ def _provider_gate(
     ).evaluate(job)
     reasons = list(local_gate.reasons)
     descriptor = provider.descriptor
-    if job.workflow != "evidence_analyst":
+    if job.workflow not in PROVIDER_WORKFLOWS:
         reasons.append("provider_analysis_requires_evidence_analyst")
     if job.model_id is not None:
         reasons.append("generic_provider_job_must_not_declare_model_id")

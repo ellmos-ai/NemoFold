@@ -1423,9 +1423,12 @@ def test_a_run_level_override_is_reported_and_changes_nothing_stored(tmp_path) -
         listed, _ = get_json(base_url + "/api/voyages")
 
     assert run["run_level_override"] == "ollama:qwen3"
-    assert run["steps"][0]["model_used"] == "ollama:qwen3"
+    # The override was accepted at the run level, and fact_distill is
+    # deterministic, so the step reports the local core and says why - rather
+    # than crediting a model that was never asked anything.
     assert run["steps"][0]["model_level"] == "run-override"
-    assert "for this run only" in run["steps"][0]["model_note"]
+    assert run["steps"][0]["model_used"] == "nemofold-local-core"
+    assert "uses no model" in run["steps"][0]["model_note"]
     # Nothing about the stored voyage moved.
     entry = next(
         item for item in listed["voyages"] if item["voyage_id"] == copied["voyage"]["voyage_id"]

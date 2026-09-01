@@ -185,9 +185,12 @@ def test_the_dossier_names_the_model_and_the_level_that_decided(tmp_path) -> Non
     )
 
     first, second = result.steps
-    assert first.model_used == "ollama:qwen3"
+    # fact_distill is deterministic, so the dossier must not claim a model ran.
+    # The level that carried the preference is still named, and the note says
+    # why the preference did not apply here.
+    assert first.model_used == LOCAL_CORE
     assert first.model_level == LEVEL_LINK
-    assert "link level" in first.model_note
+    assert "fact_distill is deterministic and uses no model" in first.model_note
     # The step without a preference falls back to the local default.
     assert second.model_used == LOCAL_CORE
     assert second.model_level == "default"
@@ -200,6 +203,99 @@ def test_the_dossier_names_the_model_and_the_level_that_decided(tmp_path) -> Non
     markdown = Path(result.dossier_path).with_suffix(".md").read_text(encoding="utf-8")
     assert "level: link" in markdown
     assert "outbound rights: draft_only" in markdown
+
+
+def test_a_local_worker_actually_runs_the_step_that_names_it(tmp_path) -> None:
+    documents = _corpus(tmp_path)
+    store = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),))
+    chain = {
+        "name": "Beweislage",
+        "steps": [
+            {
+                "workflow": "evidence_analyst",
+                "model_pref": {
+                    "preferred": {"provider": "ollama", "model": "qwen3"},
+                    "fallback": LOCAL_ONLY,
+                },
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "evidence_analyst",
+                    "input_roots": [str(documents)],
+                    "output_dir": str(tmp_path / "out" / "01-evidence"),
+                    "questions": ["Wann beginnt die Deckung?"],
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {"max_chunks": 4, "formats": ["md"]},
+                },
+            }
+        ],
+    }
+    voyage = store.save(chain)
+
+    result = run_voyage(
+        voyage,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="chain_local_worker",
+        base_dir=tmp_path,
+    )
+
+    step = result.steps[0]
+    # evidence_analyst has a reasoning worker, and a local one needs no per-run
+    # transfer approval, so the named model is the one that is actually asked.
+    assert step.model_used == "ollama:qwen3"
+    assert step.model_level == LEVEL_LINK
+    # No local Ollama is running in this test environment, so the step reports a
+    # real failure of that provider rather than a silent fallback to the local
+    # core. Reaching the provider at all is the point being pinned here.
+    assert step.status in {"executed", "failed", "blocked"}
+    assert step.model_used != LOCAL_CORE
+
+
+def test_an_external_worker_stops_the_chain_instead_of_running_elsewhere(tmp_path) -> None:
+    documents = _corpus(tmp_path)
+    store = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),))
+    chain = {
+        "name": "Beweislage extern",
+        "steps": [
+            {
+                "workflow": "evidence_analyst",
+                "model_pref": {
+                    "preferred": {"provider": "openai", "model": "gpt-5.4"},
+                    "fallback": LOCAL_ONLY,
+                },
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "evidence_analyst",
+                    "input_roots": [str(documents)],
+                    "output_dir": str(tmp_path / "out" / "01-evidence"),
+                    "questions": ["Wann beginnt die Deckung?"],
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {"max_chunks": 4, "formats": ["md"]},
+                },
+            }
+        ],
+    }
+    voyage = store.save(chain)
+
+    # Even with external models allowed on the server, the chain refuses: the
+    # missing piece is the per-run approval, which a chain never grants.
+    result = run_voyage(
+        voyage,
+        ExecutionConfig(allowed_roots=(str(tmp_path),), external_models_allowed=True),
+        run_id="chain_external",
+        base_dir=tmp_path,
+    )
+
+    step = result.steps[0]
+    assert result.status == "needs_user_input"
+    assert step.status == "needs_user_input"
+    assert step.errors == ("chain_grants_no_transfer_approval",)
+    # It neither escalates nor silently drops to the local core behind the
+    # user's back; it says what to do instead.
+    assert step.model_used == LOCAL_CORE
+    assert "never grants a per-run transfer approval" in step.model_note
+    assert step.ledger_path is None
 
 
 def test_a_chain_that_overrides_its_links_says_so_in_the_dossier(tmp_path) -> None:
@@ -226,9 +322,11 @@ def test_a_chain_that_overrides_its_links_says_so_in_the_dossier(tmp_path) -> No
     )
 
     first = result.steps[0]
-    assert first.model_used == "ollama:qwen3"
+    # Deterministic step again: the chain's authority is still recorded as the
+    # deciding level, and the note explains why no model was asked.
+    assert first.model_used == LOCAL_CORE
     assert first.model_level == LEVEL_CHAIN
-    assert "overrides this step's own setting" in first.model_note
+    assert "deterministic and uses no model" in first.model_note
     dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
     assert dossier["model_authority"] == AUTHORITY_CHAIN_WINS
     assert dossier["authority_reason"] == "Datenschutzkritisch: laeuft immer lokal."
@@ -252,8 +350,9 @@ def test_a_run_level_override_applies_once_and_changes_nothing_stored(tmp_path) 
         model_override={"provider": "lm-studio", "model": "mistral"},
     )
 
-    assert all(step.model_used == "lm-studio:mistral" for step in result.steps)
     assert all(step.model_level == LEVEL_RUN_OVERRIDE for step in result.steps)
+    assert all(step.model_used == LOCAL_CORE for step in result.steps)
+    assert all("uses no model" in step.model_note for step in result.steps)
     dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
     assert dossier["run_level_override"] == "lm-studio:mistral"
 

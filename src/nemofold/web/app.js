@@ -2700,7 +2700,8 @@ function renderVoyageRun(result) {
       panel,
       "p",
       "run-override-line",
-      `This run used ${result.run_level_override}, chosen for this run only.`
+      `Chosen for this run only: ${result.run_level_override}.`
+      + " Each step below names the model it actually used."
     );
   }
   if (success) {

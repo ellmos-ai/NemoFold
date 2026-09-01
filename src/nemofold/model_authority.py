@@ -54,6 +54,9 @@ class ModelResolution:
     needs_user_input: bool = False
     conflict: str | None = None
     overridden: dict[str, Any] | None = None
+    # The endpoint itself, so a caller can actually route to it instead of
+    # printing its name and running something else.
+    endpoint: dict[str, Any] | None = None
 
     @property
     def runnable(self) -> bool:
@@ -124,6 +127,7 @@ def resolve_authority(
             needs_user_input=True,
             conflict="local_only_cap",
             overridden=overridden,
+            endpoint=candidate,
         )
 
     if candidate is None:
@@ -147,7 +151,7 @@ def resolve_authority(
     else:
         note = f"{label} was determined by the {level} level."
     return ModelResolution(
-        model=label, level=level, note=note, overridden=overridden
+        model=label, level=level, note=note, overridden=overridden, endpoint=candidate
     )
 
 

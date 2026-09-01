@@ -9,7 +9,7 @@ model really ran, which is never inferred from what the plan preferred.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -20,14 +20,18 @@ from .contracts import RunStatus
 from .job_io import parse_job_payload
 from .model_authority import (
     AUTHORITY_LINKS_WIN,
+    LOCAL_CORE,
     ModelResolution,
+    endpoint_label,
+    is_external,
     resolve_authority,
     resolve_rights,
 )
 from .policies import PolicyStore, cleanup_rules_for_step
+from .provider_analysis import PROVIDER_WORKFLOWS, analyze_with_provider
+from .providers import ProviderConfig
 
 VOYAGE_RUN_SCHEMA = "nemofold.voyage-run.v1"
-LOCAL_CORE = "nemofold-local-core"
 MAX_CHAIN_STEPS = 24
 
 
@@ -109,6 +113,47 @@ def _dossier_markdown(result: VoyageRunResult) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
+def _route_step(resolution: ModelResolution, workflow: str) -> ModelResolution:
+    """Decide how a step actually reaches the model its plan names.
+
+    Three outcomes, and the dossier has to be able to tell them apart:
+
+    - a deterministic workflow has no reasoning worker at all, so a named model
+      is a preference that cannot apply. Saying it ran would describe something
+      that did not happen;
+    - a local worker can run inside a chain, because a local endpoint needs no
+      per-run transfer approval;
+    - an external worker cannot. A chain never grants a per-run transfer
+      approval - that is the standing rule, not a limitation of this function -
+      so the step stops and asks instead of quietly running somewhere else.
+    """
+    if resolution.endpoint is None:
+        return resolution
+    if workflow not in PROVIDER_WORKFLOWS:
+        return replace(
+            resolution,
+            model=LOCAL_CORE,
+            note=(
+                f"{resolution.model} was set at the {resolution.level} level, but "
+                f"{workflow} is deterministic and uses no model. The preference is "
+                "kept and applies to steps that do."
+            ),
+        )
+    if is_external(resolution.endpoint):
+        return replace(
+            resolution,
+            model=LOCAL_CORE,
+            note=(
+                f"{endpoint_label(resolution.endpoint)} sends content off this host, "
+                "and a chain run never grants a per-run transfer approval. Run this "
+                "step on its own to approve the transfer, or choose a local model."
+            ),
+            needs_user_input=True,
+            conflict="chain_grants_no_transfer_approval",
+        )
+    return resolution
+
+
 def run_voyage(
     voyage: dict[str, Any],
     config: ExecutionConfig,
@@ -164,6 +209,7 @@ def run_voyage(
             authority=authority,
             run_override=model_override,
         )
+        resolution = _route_step(resolution, job.workflow)
         rights, rights_level = resolve_rights(step.get("rights"), chain_rights)
         if resolution.needs_user_input:
             # An unresolved exposure conflict stops the chain before the step
@@ -189,7 +235,21 @@ def run_voyage(
             )
             stopped_at = order
             break
-        outcome = run_job(job, config, run_id=step_run_id)
+        # A named local worker is actually used, not merely reported.
+        outcome = (
+            analyze_with_provider(
+                job,
+                config,
+                ProviderConfig(
+                    provider_id=str(resolution.endpoint["provider"]),
+                    model=str(resolution.endpoint["model"]),
+                ),
+                run_id=step_run_id,
+                approve_external_transfer=False,
+            )
+            if resolution.endpoint is not None and job.workflow in PROVIDER_WORKFLOWS
+            else run_job(job, config, run_id=step_run_id)
+        )
         report = outcome.report
         results.append(
             VoyageStepResult(
