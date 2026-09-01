@@ -120,6 +120,15 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Report which lines recur across a large set, with how often and from where, "
         "through the staged aggregation that keeps the anchors."
     ),
+    "document_compose": (
+        "Fill a declared .docx template through the optional report-forge engine, "
+        "reporting the exact install command when the extra is absent rather than "
+        "failing on an import."
+    ),
+    "mail_merge_compose": (
+        "Run the same template once per recipient from the local contact book, naming "
+        "each document after the person it was composed for."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -276,6 +285,16 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Read", "every approved source"),
         ("gate", "Complete", "read, producible, non-empty"),
         ("operation", "Report", "what passed and what did not"),
+    ),
+    "document_compose": (
+        ("gate", "Template", "inside the approved roots"),
+        ("gate", "Engine", "optional extra, named when absent"),
+        ("operation", "Fill", "through report-forge only"),
+    ),
+    "mail_merge_compose": (
+        ("operation", "Read", "the local contact book"),
+        ("operation", "Plan", "one document per recipient"),
+        ("gate", "Named", "each file carries its recipient"),
     ),
     "guide_compose": (
         ("operation", "Merge", "section by section"),

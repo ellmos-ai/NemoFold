@@ -27,6 +27,13 @@ dev = [
   "pytest>=8.0",
   "ruff>=0.6",
 ]
+# Filling somebody's own .docx template is a separate job with its own
+# accumulated knowledge, so it is a separate, optional dependency rather than
+# something reimplemented here. Pinned to a commit: the repository carries no
+# release tag, and pinning to one that does not exist would break every install.
+templates = [
+  "report-forge @ git+https://github.com/ellmos-ai/report-forge.git@d581596084037b0b3a4768cda1e9c938a8687eaa",
+]
 
 [project.scripts]
 nemofold = "nemofold.cli:main"
@@ -46,3 +53,9 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[[tool.mypy.overrides]]
+# The template engine is an optional extra. A checkout without it must still
+# type-check, or the optional dependency would be mandatory in practice.
+module = "report_forge.*"
+ignore_missing_imports = true

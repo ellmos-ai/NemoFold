@@ -66,6 +66,14 @@ from .delivery import (
     write_print_package,
     write_workbook,
 )
+from .document_compose import (
+    TemplateEngineUnavailable,
+    compose_documents,
+    compose_payload,
+    engine_status,
+    plan_merge,
+    validate_template,
+)
 from .document_extract import extract_document_text
 from .document_index import DocumentIndex, SearchHit
 from .document_registry import (
@@ -2164,7 +2172,90 @@ def _dispatch_workflow(
         return _execute_wiki_export(job, inventory, run_id=run_id)
     if job.workflow == "pattern_mining":
         return _execute_pattern_mining(job, inventory, run_id=run_id)
+    if job.workflow in {"document_compose", "mail_merge_compose"}:
+        return _execute_document_compose(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
+
+
+def _execute_document_compose(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Fill a template through report-forge, or say plainly that it is absent."""
+    gate = PolicyGate(PolicyConfig(allowed_roots=_allowed_roots_of(job)))
+    template = validate_template(job.parameters.get("template_path"), allowed=gate)
+    fields = job.parameters.get("fields") or {}
+    if not isinstance(fields, dict):
+        raise ValueError("fields must be an object of template values")
+    book = str(job.parameters.get("contact_book", "")).strip()
+    if book and not gate.path_allowed(book):
+        raise PermissionError("the contact book is outside the configured allow roots")
+    requests, contact_notes = plan_merge(
+        fields,
+        template,
+        job.output_dir,
+        contact_book=book,
+        basename=str(job.parameters.get("basename") or "dokument"),
+    )
+    status = engine_status()
+    output = Path(job.output_dir)
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids={},
+        cited_source_ids=set(),
+    )
+    if not status.available:
+        payload = compose_payload(requests, (), contact_notes, status)
+        artifact = write_text_artifact(
+            output / f"{run_id}.document-compose.json",
+            json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "document-compose-blocked",
+        )
+        # Not a failure: the run is complete and its outcome is that the optional
+        # engine is not installed, with the command that installs it.
+        raise WorkflowBlocked(
+            ("template_engine_unavailable",),
+            actions=("compose_planned", "template_engine_unavailable"),
+            artifacts=(artifact,),
+            coverage=coverage,
+            metadata={**status.as_metadata(), "planned_documents": len(requests)},
+        )
+    try:
+        written, notes = compose_documents(requests, status=status)
+    except TemplateEngineUnavailable as exc:
+        raise WorkflowBlocked(
+            ("template_engine_unavailable",),
+            actions=("compose_planned", "template_engine_unavailable"),
+            artifacts=(),
+            coverage=coverage,
+            metadata=status.as_metadata(),
+        ) from exc
+    payload = compose_payload(requests, written, (*contact_notes, *notes), status)
+    artifacts = [
+        write_text_artifact(
+            output / f"{run_id}.document-compose.json",
+            json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "document-compose",
+        )
+    ]
+    return (
+        (f"composed {len(written)} of {len(requests)} planned document(s)",),
+        tuple(artifacts),
+        coverage,
+        {
+            **status.as_metadata(),
+            "planned_documents": len(requests),
+            "written_documents": len(written),
+            "boundary_note": payload["boundary_note"],
+        },
+    )
+
+
+def _allowed_roots_of(job: JobEnvelope) -> tuple[str, ...]:
+    """The roots this job may read, for inputs that are not corpus sources."""
+    return (*job.input_roots, *job.target_roots, job.output_dir)
 
 
 def _display_names(inventory: InventoryResult) -> dict[str, str]:

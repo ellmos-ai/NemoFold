@@ -46,6 +46,8 @@ SUPPORTED_WORKFLOWS = frozenset(
         "guide_compose",
         "wiki_export",
         "pattern_mining",
+        "document_compose",
+        "mail_merge_compose",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -166,6 +168,12 @@ WORKFLOW_PARAMETER_FIELDS = {
     "pattern_mining": frozenset(
         {"focus_terms", "formats", "max_patterns", "min_support", "partition_size",
          "title"}
+    ),
+    "document_compose": frozenset(
+        {"basename", "fields", "formats", "template_path", "title"}
+    ),
+    "mail_merge_compose": frozenset(
+        {"basename", "contact_book", "fields", "formats", "template_path", "title"}
     ),
     "print_action": frozenset({"formats", "source_id", "title"}),
     "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),

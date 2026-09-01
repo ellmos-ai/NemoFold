@@ -217,6 +217,16 @@ const workflowDefaults = {
     parameters: {formats: ["md"], required_formats: ["md"]},
     hint: "Completeness Check reports whether every source was read, whether the formats a later step needs can be produced, and whether a required part came out empty. It concludes nothing about content."
   },
+  document_compose: {
+    questions: [],
+    parameters: {template_path: "", fields: {}, basename: "dokument"},
+    hint: "Document Compose fills your own .docx template through the optional report-forge engine. Without that extra installed the run ends blocked with the exact install command, rather than failing on an import."
+  },
+  mail_merge_compose: {
+    questions: [],
+    parameters: {template_path: "", contact_book: "", fields: {}, basename: "dokument"},
+    hint: "Mail Merge runs the same template once per recipient from your local contact book. Each file is named after the person it was composed for, so a folder of near-identical documents stays sortable."
+  },
   guide_compose: {
     questions: [],
     parameters: {formats: ["md"], dedupe_scope: "normalized"},
@@ -666,6 +676,14 @@ const workflowCards = {
     title: "Completeness Check",
     benefit: "Check a bundle is whole before a later step trusts it, and name what is missing."
   },
+  document_compose: {
+    title: "Document Compose",
+    benefit: "Fill your own .docx template, or hear exactly which extra is missing."
+  },
+  mail_merge_compose: {
+    title: "Mail Merge",
+    benefit: "One document per recipient from your contact book, each named after them."
+  },
   guide_compose: {
     title: "Guide Compose",
     benefit: "Fold many documents into one guide where every line still names its source."
@@ -980,7 +998,8 @@ const registryGroups = [
     "contact_monitor"]},
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
   {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check",
-    "rater_race", "report_studio", "guide_compose", "wiki_export", "print_action"]}
+    "rater_race", "report_studio", "guide_compose", "wiki_export",
+    "document_compose", "mail_merge_compose", "print_action"]}
 ];
 
 
