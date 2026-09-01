@@ -11,6 +11,35 @@ PLAIN_TEXT_SUFFIXES = frozenset(
 )
 
 
+MAX_XML_MEMBER_BYTES = 32 * 1024 * 1024
+
+
+def read_xml_member(archive: zipfile.ZipFile, name: str) -> bytes:
+    """Read one XML part of an office archive under two explicit limits.
+
+    Documents in an approved root are untrusted input - that is the whole point
+    of approving a root rather than trusting a folder - so a container format
+    gets both defences the format invites. A member that inflates beyond the
+    ceiling is refused before it is decompressed, and any document type
+    declaration is refused outright: a legitimate OOXML or ODF part has none,
+    while an entity declaration is how a small file becomes an out-of-memory
+    condition on somebody's laptop.
+    """
+    try:
+        info = archive.getinfo(name)
+    except KeyError as exc:
+        raise ValueError(f"archive part missing: {name}") from exc
+    if info.file_size > MAX_XML_MEMBER_BYTES:
+        raise ValueError(
+            f"archive part {name} declares {info.file_size} bytes, beyond the "
+            f"{MAX_XML_MEMBER_BYTES} byte ceiling"
+        )
+    data = archive.read(name)
+    if b"<!DOCTYPE" in data[:8192] or b"<!ENTITY" in data:
+        raise ValueError(f"archive part {name} carries a document type declaration")
+    return data
+
+
 class UnsupportedDocumentError(ValueError):
     """Raised when no local extractor is available for a document."""
 
@@ -40,7 +69,7 @@ def _xml_paragraphs(data: bytes, *, paragraph_names: frozenset[str]) -> str:
 def _extract_docx(path: Path) -> str:
     try:
         with zipfile.ZipFile(path) as archive:
-            data = archive.read("word/document.xml")
+            data = read_xml_member(archive, "word/document.xml")
     except (KeyError, OSError, zipfile.BadZipFile) as exc:
         raise ValueError(f"invalid DOCX document: {path.name}") from exc
     return _xml_paragraphs(data, paragraph_names=frozenset({"p"}))
@@ -49,7 +78,7 @@ def _extract_docx(path: Path) -> str:
 def _extract_odt(path: Path) -> str:
     try:
         with zipfile.ZipFile(path) as archive:
-            data = archive.read("content.xml")
+            data = read_xml_member(archive, "content.xml")
     except (KeyError, OSError, zipfile.BadZipFile) as exc:
         raise ValueError(f"invalid ODT document: {path.name}") from exc
     return _xml_paragraphs(data, paragraph_names=frozenset({"h", "p"}))

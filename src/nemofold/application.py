@@ -68,6 +68,7 @@ from .report_studio import ReportDocument, render_report_formats
 from .runtime import job_idempotency_key
 from .smart_inbox import RoutingRule, plan_inbox
 from .storage_policy import PolicyRule, PolicySet, StoragePlan, preview_storage
+from .structured_sources import STRUCTURED_SUFFIXES, read_structured
 from .synopsis_merge import merge_synopsis, synopsis_markdown
 from .version_resolver import (
     VersionCandidate,
@@ -381,12 +382,36 @@ def preview_job(
     return JobCommandResult(report, _save_if_output_allowed(prepared, report, gate))
 
 
-def _read_text_sources(inventory: InventoryResult) -> dict[str, str]:
+def _read_text_sources(
+    inventory: InventoryResult, job: JobEnvelope | None = None
+) -> dict[str, str]:
+    """Read every readable source as text, structured formats included.
+
+    A database row and a paragraph are the same kind of evidence, so a
+    structured source is rendered into labelled lines and joins the corpus
+    rather than getting a pipeline of its own. CSV keeps its plain-text reading
+    by default: its lines are already anchorable, and quietly changing what an
+    existing source says would change what earlier runs cite. Ask for
+    structured_sources to have it labelled as well.
+    """
+    tables: tuple[str, ...] = ()
+    labelled_csv = False
+    if job is not None:
+        raw_tables = job.parameters.get("source_tables") or ()
+        if isinstance(raw_tables, list):
+            tables = tuple(str(item) for item in raw_tables)
+        labelled_csv = bool(job.parameters.get("structured_sources", False))
     texts: dict[str, str] = {}
     for source in inventory.records:
         if source.extraction_status in {"unreadable", "excluded_symlink"}:
             continue
+        suffix = Path(source.path).suffix.casefold()
         try:
+            if suffix in STRUCTURED_SUFFIXES or (labelled_csv and suffix == ".csv"):
+                texts[source.source_id] = read_structured(
+                    source.path, tables=tables
+                ).text
+                continue
             texts[source.source_id] = extract_document_text(
                 source.path,
                 mime_type=source.mime_type,
@@ -1958,7 +1983,7 @@ def _execute_chronicle(
     """Read the sources once, then hand them to the chronicle contract."""
     data = ChronicleInput(
         source_ids=tuple(record.source_id for record in inventory.records),
-        texts=_read_text_sources(inventory),
+        texts=_read_text_sources(inventory, job),
     )
     return CHRONICLE_EXECUTORS[job.workflow](job, data, run_id)
 

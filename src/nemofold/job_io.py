@@ -96,26 +96,46 @@ WORKFLOW_PARAMETER_FIELDS = {
     # contested terms - is a declared parameter rather than a heuristic, so the
     # workflow can be told about a corpus instead of guessing at one.
     "person_registry": frozenset(
-        {"formats", "known_names", "match_surnames", "name_fields", "title"}
+        {
+        "source_tables",
+        "structured_sources",
+        "formats", "known_names", "match_surnames", "name_fields", "title"}
     ),
     "relation_model": frozenset(
-        {"formats", "known_names", "match_surnames", "name_fields", "pseudonymous", "title"}
+        {
+        "source_tables",
+        "structured_sources",
+        "formats", "known_names", "match_surnames", "name_fields", "pseudonymous", "title"}
     ),
     "person_timeline": frozenset(
-        {"formats", "known_names", "match_surnames", "name_fields", "title"}
+        {
+        "source_tables",
+        "structured_sources",
+        "formats", "known_names", "match_surnames", "name_fields", "title"}
     ),
     "coverage_timeline": frozenset(
-        {"end_field", "formats", "holder_field", "label_field", "start_field", "title"}
+        {
+        "source_tables",
+        "structured_sources",
+        "end_field", "formats", "holder_field", "label_field", "start_field", "title"}
     ),
     "alibi_weave": frozenset(
         {
+        "source_tables",
+        "structured_sources",
             "formats", "known_names", "match_surnames", "name_fields", "places", "title",
             "tolerance_minutes", "window",
         }
     ),
-    "contradiction_synopsis": frozenset({"contested_terms", "formats", "title"}),
+    "contradiction_synopsis": frozenset({
+        "source_tables",
+        "structured_sources",
+        "contested_terms", "formats", "title"}),
     "corpus_query": frozenset(
-        {"dedupe_scope", "formats", "max_per_source", "max_results", "partition_size",
+        {
+        "source_tables",
+        "structured_sources",
+        "dedupe_scope", "formats", "max_per_source", "max_results", "partition_size",
          "terms", "title"}
     ),
     "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),
@@ -133,11 +153,19 @@ WORKFLOW_PARAMETER_FIELDS = {
     ),
     "contact_monitor": frozenset({"contact_since_run_id"}),
     "bundle_export": frozenset(
-        {"bundle_format", "bundle_name", "include_manifest", "order", "recursive"}
+        {
+        "source_tables",
+        "structured_sources",
+        "bundle_format", "bundle_name", "include_manifest", "order", "recursive"}
     ),
-    "folder_digest": frozenset({"digest_depth", "since_run_id", "summary_length"}),
+    "folder_digest": frozenset({
+        "source_tables",
+        "structured_sources",
+        "digest_depth", "since_run_id", "summary_length"}),
     "evidence_analyst": frozenset(
         {
+        "source_tables",
+        "structured_sources",
             "analysis_mode",
             "citation_granularity",
             "conflict_scan",
@@ -151,7 +179,10 @@ WORKFLOW_PARAMETER_FIELDS = {
         {"as_of", "fallback_to_file_time", "family_hint", "validity_fields"}
     ),
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
-    "synopsis_merge": frozenset({"formats", "title"}),
+    "synopsis_merge": frozenset({
+        "source_tables",
+        "structured_sources",
+        "formats", "title"}),
     "daily_arrivals": frozenset(
         {
             "export_task_snippet",
@@ -166,10 +197,15 @@ WORKFLOW_PARAMETER_FIELDS = {
         }
     ),
     "fact_distill": frozenset(
-        {"dedupe_scope", "focus_terms", "formats", "max_facts_per_source", "title"}
+        {
+        "source_tables",
+        "structured_sources",
+        "dedupe_scope", "focus_terms", "formats", "max_facts_per_source", "title"}
     ),
     "document_registry": frozenset(
         {
+        "source_tables",
+        "structured_sources",
             "column_template",
             "columns",
             "due_column",
