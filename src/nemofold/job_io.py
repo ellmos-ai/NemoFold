@@ -39,6 +39,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "corpus_query",
         "web_research",
         "dossier",
+        "bundle_completeness_check",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -144,6 +145,9 @@ WORKFLOW_PARAMETER_FIELDS = {
     "web_research": frozenset({"formats", "max_results", "queries", "title", "web_adapter"}),
     "dossier": frozenset(
         {"formats", "max_results", "queries", "subject", "title", "web_adapter"}
+    ),
+    "bundle_completeness_check": frozenset(
+        {"formats", "required_formats", "required_parts", "title"}
     ),
     "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),
     "controlled_email": frozenset(

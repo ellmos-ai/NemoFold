@@ -25,6 +25,7 @@ from .case_chronicle import (
     execute_relation_model,
 )
 from .cleanup_rules import suggest_cleanup_rules
+from .completeness import check_completeness, completeness_payload
 from .contact_monitor import build_contact_monitor
 from .contracts import (
     ActionMode,
@@ -74,7 +75,7 @@ from .outbound import (
     send_payload,
 )
 from .policy import PolicyConfig, PolicyGate
-from .report_studio import ReportDocument, render_report_formats
+from .report_studio import SUPPORTED_FORMATS, ReportDocument, render_report_formats
 from .runtime import job_idempotency_key
 from .smart_inbox import RoutingRule, plan_inbox
 from .storage_policy import PolicyRule, PolicySet, StoragePlan, preview_storage
@@ -2071,7 +2072,70 @@ def _dispatch_workflow(
         return _execute_chronicle(job, inventory, run_id=run_id)
     if job.workflow in WEB_WORKFLOWS:
         return _execute_web(job, inventory, run_id=run_id)
+    if job.workflow == "bundle_completeness_check":
+        return _execute_completeness(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
+
+
+def _execute_completeness(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Say whether this material is complete enough for a next step to mean anything."""
+    texts = _read_text_sources(inventory, job)
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=texts,
+        cited_source_ids=set(texts),
+    )
+    required_formats = tuple(
+        str(item) for item in job.parameters.get("required_formats", []) or []
+    )
+    raw_parts = job.parameters.get("required_parts") or {}
+    if not isinstance(raw_parts, dict):
+        raise ValueError("required_parts must be an object of part names to counts")
+    parts = {
+        str(name): len(texts.get(str(name), "").strip())
+        if isinstance(value, str)
+        else int(value)
+        for name, value in raw_parts.items()
+    }
+    report = check_completeness(
+        total_sources=coverage.total_sources,
+        read_sources=coverage.read_sources,
+        unread_source_ids=tuple(coverage.unread_source_ids),
+        required_formats=required_formats,
+        available_formats=tuple(sorted(SUPPORTED_FORMATS)),
+        required_parts=parts,
+    )
+    payload = completeness_payload(report)
+    artifact = write_text_artifact(
+        Path(job.output_dir) / f"{run_id}.completeness.json",
+        json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        "completeness-check",
+    )
+    metadata: dict[str, object] = {
+        "complete": report.complete,
+        "failed_checks": [item.check for item in report.failed],
+        "scope_note": payload["scope_note"],
+    }
+    if not report.complete:
+        # A chain has to stop here, or the next step inherits a gap silently.
+        raise WorkflowBlocked(
+            tuple(f"{item.check}:{item.detail}" for item in report.failed),
+            actions=("completeness_checked", "bundle_incomplete"),
+            artifacts=(artifact,),
+            coverage=coverage,
+            metadata=metadata,
+        )
+    return (
+        ("completeness_checked",),
+        (artifact,),
+        coverage,
+        metadata,
+    )
 
 
 def _execute_web(

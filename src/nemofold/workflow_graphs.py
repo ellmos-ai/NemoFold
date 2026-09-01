@@ -88,6 +88,11 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Assemble cited search results on a declared subject into a reading list that "
         "says in the artifact that it is not a finding about anybody."
     ),
+    "bundle_completeness_check": (
+        "Report whether every approved source was read, whether the required formats can "
+        "be produced and whether a required part came out empty, concluding nothing "
+        "about content."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -239,6 +244,11 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Search", "through the same four gates"),
         ("operation", "Assemble", "a cited reading list"),
         ("gate", "No verdict", "nothing is weighed or concluded"),
+    ),
+    "bundle_completeness_check": (
+        ("operation", "Read", "every approved source"),
+        ("gate", "Complete", "read, producible, non-empty"),
+        ("operation", "Report", "what passed and what did not"),
     ),
     "fact_distill": (
         ("operation", "Inventory", "approved corpus"),
