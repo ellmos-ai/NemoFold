@@ -1,0 +1,24 @@
+{
+  "description": "Put disagreeing statements side by side in both wordings with their sources, and list every label two documents answer differently.",
+  "name": "Contradiction check",
+  "preset_id": "preset_contradiction_check",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "Add the contested words to contested_terms[] for your case.",
+      "parameters": {
+        "contested_terms": [],
+        "formats": [
+          "md",
+          "pdf"
+        ]
+      },
+      "questions": [],
+      "workflow": "contradiction_synopsis"
+    }
+  ],
+  "tags": [
+    "case-analysis",
+    "document-analysis"
+  ]
+}

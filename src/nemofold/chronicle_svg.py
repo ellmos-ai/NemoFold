@@ -173,3 +173,238 @@ def relation_graph_svg(
         "sentence it came from."
     )
     return _document(width, height, "Relation graph", description, "".join(body))
+
+
+# --------------------------------------------------------------------------- #
+# Shared scale for the two time figures
+# --------------------------------------------------------------------------- #
+
+HATCH = (
+    '  <defs><pattern id="nf-gap" width="8" height="8" patternUnits="userSpaceOnUse" '
+    'patternTransform="rotate(45)">'
+    f'<rect width="8" height="8" fill="{PAPER}"/>'
+    f'<line x1="0" y1="0" x2="0" y2="8" stroke="{MUTED}" stroke-width="1.4"/>'
+    "</pattern></defs>\n"
+)
+
+
+def _scale(values: tuple[int, ...], left: float, right: float):
+    """Map stated minutes onto x. A single moment sits in the middle, not at 0."""
+    if not values:
+        return lambda _: (left + right) / 2
+    low, high = min(values), max(values)
+    if high == low:
+        return lambda _: (left + right) / 2
+    span = high - low
+    return lambda value: left + (right - left) * (value - low) / span
+
+
+def _axis(low_label: str, high_label: str, left: float, right: float, y: float) -> str:
+    return (
+        f'  <line x1="{_round(left)}" y1="{_round(y)}" x2="{_round(right)}" '
+        f'y2="{_round(y)}" stroke="{LINE}" stroke-width="1"/>\n'
+        f'  <text x="{_round(left)}" y="{_round(y + 16)}" font-family="monospace" '
+        f'font-size="9" fill="{MUTED}">{escape(low_label)}</text>\n'
+        f'  <text x="{_round(right)}" y="{_round(y + 16)}" font-family="monospace" '
+        f'font-size="9" fill="{MUTED}" text-anchor="end">{escape(high_label)}</text>\n'
+    )
+
+
+# --------------------------------------------------------------------------- #
+# K4: the timeline
+# --------------------------------------------------------------------------- #
+
+
+def timeline_svg(
+    lanes: tuple[tuple[str, tuple[tuple[str, int, int | None, bool], ...]], ...],
+    *,
+    title: str = "Timeline",
+    width: int = 860,
+) -> Figure:
+    """Draw one lane per subject.
+
+    Each entry is (label, start_minutes, end_minutes or None, determined). An
+    undetermined entry is drawn as a hatched band across the whole lane rather
+    than as a point, because the sources did not say where the point would go.
+    """
+    if not lanes:
+        return _document(
+            width, 150, title,
+            "No event with a stated time was found in the approved sources.",
+            f'  <text x="24" y="86" font-family="monospace" font-size="13" fill="{MUTED}">'
+            "No event with a stated time.</text>\n",
+        )
+    left, right = 190.0, width - 40.0
+    top = 62.0
+    lane_height = 34.0
+    height = int(top + len(lanes) * lane_height + 74)
+    determined = tuple(
+        start for _, entries in lanes for _, start, _, ok in entries if ok
+        for start in (start,)
+    )
+    ends = tuple(
+        end for _, entries in lanes for _, _, end, ok in entries if ok and end is not None
+    )
+    scale = _scale((*determined, *ends), left, right)
+    body = [
+        HATCH,
+        f'  <text x="24" y="32" font-family="monospace" font-size="12" fill="{INK}">'
+        f"{escape(title.upper())}</text>\n",
+    ]
+    undetermined_total = 0
+    for index, (lane, entries) in enumerate(lanes):
+        y = top + index * lane_height
+        body.append(
+            f'  <text x="24" y="{_round(y + 4)}" font-family="monospace" font-size="10" '
+            f'fill="{INK}">{_text(lane, 22)}</text>\n'
+            f'  <line x1="{_round(left)}" y1="{_round(y)}" x2="{_round(right)}" '
+            f'y2="{_round(y)}" stroke="{LINE}" stroke-width="0.8"/>\n'
+        )
+        for label, start, end, ok in entries:
+            if not ok:
+                undetermined_total += 1
+                body.append(
+                    f'  <rect x="{_round(left)}" y="{_round(y - 8)}" '
+                    f'width="{_round(right - left)}" height="16" fill="url(#nf-gap)" '
+                    f'stroke="{MUTED}" stroke-width="0.8" stroke-dasharray="3 3">'
+                    f"<title>{_text(label, 160)}</title></rect>\n"
+                    f'  <text x="{_round((left + right) / 2)}" y="{_round(y + 4)}" '
+                    f'font-family="monospace" font-size="9" fill="{INK}" '
+                    f'text-anchor="middle">unbestimmt</text>\n'
+                )
+                continue
+            x1 = scale(start)
+            if end is None:
+                body.append(
+                    f'  <circle cx="{_round(x1)}" cy="{_round(y)}" r="4.5" '
+                    f'fill="{ACCENT}"><title>{_text(label, 160)}</title></circle>\n'
+                )
+            else:
+                x2 = max(scale(end), x1 + 3)
+                body.append(
+                    f'  <rect x="{_round(x1)}" y="{_round(y - 5)}" '
+                    f'width="{_round(x2 - x1)}" height="10" fill="{ACCENT}" '
+                    f'opacity="0.75"><title>{_text(label, 160)}</title></rect>\n'
+                )
+    axis_values = (*determined, *ends)
+    body.append(
+        _axis(
+            "earliest stated" if axis_values else "no stated time",
+            "latest stated" if axis_values else "",
+            left,
+            right,
+            top + len(lanes) * lane_height + 8,
+        )
+    )
+    body.append(
+        _legend(
+            (
+                ("●", "point in time stated by a source"),
+                ("▬", "interval stated by a source"),
+                ("▨", "time the sources leave undetermined"),
+            ),
+            24,
+            height - 46,
+        )
+    )
+    description = (
+        f"Timeline with {len(lanes)} lane(s). Points and bars are times the sources "
+        f"state; {undetermined_total} entr(y/ies) are hatched because the sources "
+        "leave the time undetermined and it is not placed at a guessed moment."
+    )
+    return _document(width, height, title, description, "".join(body))
+
+
+# --------------------------------------------------------------------------- #
+# K6: the alibi weave
+# --------------------------------------------------------------------------- #
+
+
+def alibi_weave_svg(
+    rows: tuple[tuple[str, str, int | None, int], ...],
+    gaps: tuple[tuple[str, str], ...],
+    *,
+    title: str = "Alibi weave",
+    width: int = 860,
+) -> Figure:
+    """Draw one line per stated position and a second line for each confirmation.
+
+    Each row is (subject, place, minutes or None, confirmation count). A second
+    line is drawn only where another source confirmed the position, so the
+    difference between "he says" and "somebody else says" is visible at a
+    glance and is never collapsed into one stroke.
+    """
+    if not rows and not gaps:
+        return _document(
+            width, 150, title,
+            "No stated position and no gap were found in the approved sources.",
+            f'  <text x="24" y="86" font-family="monospace" font-size="13" fill="{MUTED}">'
+            "Nothing stated, nothing missing.</text>\n",
+        )
+    left, right = 200.0, width - 40.0
+    top = 66.0
+    row_height = 38.0
+    height = int(top + (len(rows) + len(gaps)) * row_height + 84)
+    scale = _scale(tuple(value for _, _, value, _ in rows if value is not None), left, right)
+    body = [
+        HATCH,
+        f'  <text x="24" y="32" font-family="monospace" font-size="12" fill="{INK}">'
+        f"{escape(title.upper())}</text>\n",
+    ]
+    corroborated = 0
+    for index, (subject, place, minutes, confirmations) in enumerate(rows):
+        y = top + index * row_height
+        body.append(
+            f'  <text x="24" y="{_round(y)}" font-family="monospace" font-size="10" '
+            f'fill="{INK}">{_text(subject, 20)}</text>\n'
+            f'  <text x="24" y="{_round(y + 12)}" font-family="monospace" font-size="9" '
+            f'fill="{MUTED}">{_text(place, 20)}</text>\n'
+        )
+        centre = scale(minutes) if minutes is not None else (left + right) / 2
+        body.append(
+            f'  <line x1="{_round(centre - 46)}" y1="{_round(y)}" '
+            f'x2="{_round(centre + 46)}" y2="{_round(y)}" stroke="{INK}" '
+            f'stroke-width="2.4"><title>self-reported position</title></line>\n'
+            f'  <text x="{_round(centre + 54)}" y="{_round(y + 3)}" '
+            f'font-family="monospace" font-size="9" fill="{MUTED}">selbstauskunft</text>\n'
+        )
+        if confirmations:
+            corroborated += 1
+            body.append(
+                f'  <line x1="{_round(centre - 46)}" y1="{_round(y + 9)}" '
+                f'x2="{_round(centre + 46)}" y2="{_round(y + 9)}" stroke="{ACCENT}" '
+                f'stroke-width="2.4"><title>confirmed by another source</title></line>\n'
+                f'  <text x="{_round(centre + 54)}" y="{_round(y + 12)}" '
+                f'font-family="monospace" font-size="9" fill="{ACCENT}">'
+                f"fremdbestaetigt ({confirmations})</text>\n"
+            )
+    for index, (subject, reason) in enumerate(gaps):
+        y = top + (len(rows) + index) * row_height
+        body.append(
+            f'  <text x="24" y="{_round(y)}" font-family="monospace" font-size="10" '
+            f'fill="{INK}">{_text(subject, 20)}</text>\n'
+            f'  <rect x="{_round(left)}" y="{_round(y - 9)}" '
+            f'width="{_round(right - left)}" height="18" fill="url(#nf-gap)" '
+            f'stroke="{SIGNAL}" stroke-width="1" stroke-dasharray="4 3">'
+            f"<title>{_text(reason, 160)}</title></rect>\n"
+            f'  <text x="{_round((left + right) / 2)}" y="{_round(y + 4)}" '
+            f'font-family="monospace" font-size="9" fill="{SIGNAL}" '
+            f'text-anchor="middle">Lücke: keine Fremdbestätigung</text>\n'
+        )
+    body.append(
+        _legend(
+            (
+                ("———", "selbstauskunft: the person says so"),
+                ("———", "fremdbestaetigt: another source says so, at place and time"),
+                ("▨", "Lücke: nothing places this person in the window"),
+            ),
+            24,
+            height - 58,
+        )
+    )
+    description = (
+        f"Alibi weave with {len(rows)} stated position(s), of which {corroborated} carry "
+        f"a second line because another source confirms them, and {len(gaps)} hatched "
+        "gap(s) where no source places the person at all."
+    )
+    return _document(width, height, title, description, "".join(body))

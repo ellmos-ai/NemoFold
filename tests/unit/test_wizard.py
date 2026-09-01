@@ -248,3 +248,59 @@ def test_checking_a_folder_is_not_mistaken_for_an_evidence_analysis(tmp_path) ->
     # The specific evidence words still route to the analyst.
     analysis = plan_voyage("prüfe die verträge auf widersprüche", input_roots=(str(tmp_path),))
     assert "evidence_analyst" in [step.workflow for step in analysis.steps]
+
+
+# --------------------------------------------------------------------------- #
+# D-028: the four leading sentences, verbatim
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        (
+            "wo taucht ein blauer VW Golf in den akten auf",
+            "corpus_query",
+        ),
+        (
+            "übersicht aller vorkommenden personen anonymisiert bei mir wieder echte namen",
+            "person_registry",
+        ),
+        (
+            "wie hängen die beteiligten zusammen, wer kennt wen",
+            "relation_model",
+        ),
+        (
+            "zeitachse je person für das fragliche wochenende",
+            "person_timeline",
+        ),
+    ],
+)
+def test_the_four_case_sentences_reach_their_workflow(sentence, expected) -> None:
+    plan = plan_voyage(sentence, input_roots=("examples/synthetic-case",))
+
+    planned = [step.workflow for step in plan.steps]
+    assert expected in planned, planned
+
+
+def test_the_person_registry_plan_says_the_map_stays_local() -> None:
+    plan = plan_voyage(
+        "übersicht aller vorkommenden personen anonymisiert bei mir wieder echte namen",
+        input_roots=("examples/synthetic-case",),
+    )
+
+    step = next(item for item in plan.steps if item.workflow == "person_registry")
+    assert "stays here" in step.why or "identity map" in step.why
+
+
+def test_an_alibi_request_is_planned_without_inventing_places() -> None:
+    plan = plan_voyage(
+        "wer war wo am wochenende und wessen alibi ist bestätigt",
+        input_roots=("examples/synthetic-case",),
+    )
+
+    step = next(item for item in plan.steps if item.workflow == "alibi_weave")
+    # Guessing a place vocabulary is how a weave confirms the wrong people, so
+    # the planned job leaves it empty and the reason says the places are needed.
+    assert step.job["parameters"]["places"] == []
+    assert "places" in step.why

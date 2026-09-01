@@ -1,0 +1,54 @@
+{
+  "description": "Read a case folder end to end: who appears, which links a sentence states, when each person is placed, and whose whereabouts nothing confirms.",
+  "name": "Case chronicle",
+  "preset_id": "preset_case_chronicle",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "Everyone the documents declare, plus a pseudonymous form.",
+      "parameters": {
+        "formats": [
+          "md"
+        ]
+      },
+      "questions": [],
+      "workflow": "person_registry"
+    },
+    {
+      "note": "Only edges a sentence states.",
+      "parameters": {
+        "formats": [
+          "md"
+        ]
+      },
+      "questions": [],
+      "workflow": "relation_model"
+    },
+    {
+      "note": "Unstated times stay undetermined.",
+      "parameters": {
+        "formats": [
+          "md"
+        ]
+      },
+      "questions": [],
+      "workflow": "person_timeline"
+    },
+    {
+      "note": "Name the places in places[] before running this step.",
+      "parameters": {
+        "formats": [
+          "md"
+        ],
+        "places": [],
+        "tolerance_minutes": 90
+      },
+      "questions": [],
+      "workflow": "alibi_weave"
+    }
+  ],
+  "tags": [
+    "case-analysis",
+    "document-analysis"
+  ]
+}

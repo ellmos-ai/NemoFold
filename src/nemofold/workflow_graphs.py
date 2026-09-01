@@ -51,6 +51,35 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Extract declared columns from every approved document into one table, anchor each "
         "filled cell to its source and line, and leave a cell empty when the sources are silent."
     ),
+    "person_registry": (
+        "Resolve the people the approved documents declare under named fields, keep every "
+        "mention with its sentence, and write an identified, a pseudonymous and a local "
+        "identity-map artifact."
+    ),
+    "relation_model": (
+        "Derive links between declared people only from sentences that state them, mark "
+        "being named together as exactly that, and render a deterministic graph."
+    ),
+    "person_timeline": (
+        "Place every stated time on a lane per person, attribute a statement only where a "
+        "document declares its speaker, and keep an unstated time undetermined."
+    ),
+    "coverage_timeline": (
+        "Read declared coverage intervals out of contract documents, leave an unnamed end "
+        "open, and report a start date that cannot be read instead of inventing one."
+    ),
+    "alibi_weave": (
+        "Separate a self-reported position from one another source confirms at the same "
+        "place and time, and report every person nothing places as a gap."
+    ),
+    "contradiction_synopsis": (
+        "Put disagreeing statements side by side in both wordings with their anchors, and "
+        "name which sources disagree rather than deciding which is right."
+    ),
+    "corpus_query": (
+        "Answer one narrow question over a large corpus through staged aggregation, keeping "
+        "every match a quoted sentence with the sources it came from."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -148,6 +177,48 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Merge", "anchor per paragraph"),
         ("gate", "Conflicts", "both readings kept"),
         ("operation", "Export", "selected formats"),
+    ),
+    "person_registry": (
+        ("operation", "Inventory", "approved corpus"),
+        ("operation", "Declare", "named fields only"),
+        ("operation", "Resolve", "spellings and titles"),
+        ("gate", "Pseudonymize", "identity map stays local"),
+        ("operation", "Export", "identified and pseudonymous"),
+    ),
+    "relation_model": (
+        ("operation", "Resolve", "declared people"),
+        ("operation", "Read", "sentences naming two"),
+        ("gate", "Require quote", "no sentence, no edge"),
+        ("operation", "Render", "deterministic graph"),
+    ),
+    "person_timeline": (
+        ("operation", "Inventory", "approved corpus"),
+        ("operation", "Extract", "stated times"),
+        ("gate", "Undetermined", "never a guessed moment"),
+        ("operation", "Render", "one lane per person"),
+    ),
+    "coverage_timeline": (
+        ("operation", "Read", "declared contract fields"),
+        ("gate", "Open end", "unnamed end stays open"),
+        ("operation", "Render", "intervals over time"),
+    ),
+    "alibi_weave": (
+        ("operation", "Collect", "stated positions"),
+        ("gate", "Corroborate", "other source, place and time"),
+        ("operation", "Gaps", "nobody places this person"),
+        ("operation", "Render", "one line, two lines, hatching"),
+    ),
+    "contradiction_synopsis": (
+        ("operation", "Merge", "section by section"),
+        ("operation", "Compare", "declared contested terms"),
+        ("gate", "Keep both", "no reading is dropped"),
+        ("operation", "Export", "selected formats"),
+    ),
+    "corpus_query": (
+        ("operation", "Select", "sentences matching the question"),
+        ("operation", "Partition", "deterministic, fixed size"),
+        ("operation", "Fold", "twice, anchors preserved"),
+        ("gate", "Quote only", "no match means no answer"),
     ),
     "fact_distill": (
         ("operation", "Inventory", "approved corpus"),

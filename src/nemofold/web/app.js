@@ -167,6 +167,41 @@ const workflowDefaults = {
     parameters: {formats: ["md", "txt", "pdf", "docx", "odt"], include_coverage: true, language: "en", template: "default"},
     hint: "Artifact Studio expects one verified NemoFold analysis JSON as its input and renders five consistent formats."
   },
+  person_registry: {
+    questions: [],
+    parameters: {formats: ["md"], match_surnames: false},
+    hint: "Person Registry lists the people your documents declare under named fields, never a name a heuristic thought it saw. It writes an identified form, a pseudonymous form that may travel, and a local identity map that must not."
+  },
+  relation_model: {
+    questions: [],
+    parameters: {formats: ["md"], pseudonymous: false},
+    hint: "Relation Model draws an edge only where a sentence states one. Being named in the same sentence is shown as exactly that, and every edge carries the sentence it came from."
+  },
+  person_timeline: {
+    questions: [],
+    parameters: {formats: ["md"]},
+    hint: "Person Timeline puts every stated time on a lane. A time the sources leave open stays undetermined and is drawn as a band, never as a point that would look like a fact."
+  },
+  coverage_timeline: {
+    questions: [],
+    parameters: {formats: ["md"], start_field: "Deckung ab", end_field: "Deckung bis", label_field: "Tarif"},
+    hint: "Coverage Timeline reads declared contract fields to show when somebody was covered under which tariff. A contract without an end date is drawn with an open end."
+  },
+  alibi_weave: {
+    questions: [],
+    parameters: {formats: ["md"], places: [], tolerance_minutes: 90},
+    hint: "Alibi Weave keeps a self-report on one line and a confirmation from another source on a second. Name the places to compare; without them nothing is confirmed by time alone."
+  },
+  contradiction_synopsis: {
+    questions: [],
+    parameters: {formats: ["md"], contested_terms: []},
+    hint: "Contradiction Synopsis puts disagreeing statements side by side in both wordings with their anchors. It names which sources disagree; it never decides which is right."
+  },
+  corpus_query: {
+    questions: ["Wo taucht ein blauer VW Golf auf?"],
+    parameters: {formats: ["md"], terms: [], partition_size: 20, dedupe_scope: "normalized"},
+    hint: "Corpus Query answers one narrow question over a large bundle through staged aggregation. Every match is a quoted sentence with its sources; no match means the corpus does not contain one."
+  },
   platform_proof: {
     questions: ["What is supported by the approved documents?"],
     parameters: {analysis_mode: "local_extractive", evidence_level: "offline", runtime: "offline", network_gate: "closed", max_chunks: 256, formats: ["md"]},
@@ -545,6 +580,34 @@ const workflowCards = {
   report_studio: {
     title: "Report Studio",
     benefit: "Render one verified analysis into Markdown, TXT, PDF, DOCX and ODT without changing its claims."
+  },
+  person_registry: {
+    title: "Person Registry",
+    benefit: "List everyone your documents declare, with a pseudonymous form you can hand over."
+  },
+  relation_model: {
+    title: "Relation Model",
+    benefit: "See which links between people a sentence actually states, and read that sentence."
+  },
+  person_timeline: {
+    title: "Person Timeline",
+    benefit: "Put stated times on a lane per person and keep the unstated ones visibly open."
+  },
+  coverage_timeline: {
+    title: "Coverage Timeline",
+    benefit: "Show when somebody was covered under which tariff, straight from the contract fields."
+  },
+  alibi_weave: {
+    title: "Alibi Weave",
+    benefit: "Tell a self-report from an outside confirmation, and see who nothing places at all."
+  },
+  contradiction_synopsis: {
+    title: "Contradiction Synopsis",
+    benefit: "Put both wordings of a disagreement side by side with the sources that carry them."
+  },
+  corpus_query: {
+    title: "Corpus Query",
+    benefit: "Ask one narrow question of a large bundle and get quoted sentences, not a summary."
   },
   platform_proof: {
     title: "Platform Proof",

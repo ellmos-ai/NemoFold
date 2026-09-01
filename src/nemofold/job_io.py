@@ -30,6 +30,13 @@ SUPPORTED_WORKFLOWS = frozenset(
         "fact_distill",
         "synopsis_merge",
         "daily_arrivals",
+        "person_registry",
+        "relation_model",
+        "person_timeline",
+        "coverage_timeline",
+        "alibi_weave",
+        "contradiction_synopsis",
+        "corpus_query",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -84,6 +91,32 @@ WORKFLOW_PARAMETER_FIELDS = {
             "retention_action",
             "rules",
         }
+    ),
+    # Case Chronicle. Every vocabulary a caller can widen - names, places,
+    # contested terms - is a declared parameter rather than a heuristic, so the
+    # workflow can be told about a corpus instead of guessing at one.
+    "person_registry": frozenset(
+        {"formats", "known_names", "match_surnames", "name_fields", "title"}
+    ),
+    "relation_model": frozenset(
+        {"formats", "known_names", "match_surnames", "name_fields", "pseudonymous", "title"}
+    ),
+    "person_timeline": frozenset(
+        {"formats", "known_names", "match_surnames", "name_fields", "title"}
+    ),
+    "coverage_timeline": frozenset(
+        {"end_field", "formats", "holder_field", "label_field", "start_field", "title"}
+    ),
+    "alibi_weave": frozenset(
+        {
+            "formats", "known_names", "match_surnames", "name_fields", "places", "title",
+            "tolerance_minutes", "window",
+        }
+    ),
+    "contradiction_synopsis": frozenset({"contested_terms", "formats", "title"}),
+    "corpus_query": frozenset(
+        {"dedupe_scope", "formats", "max_per_source", "max_results", "partition_size",
+         "terms", "title"}
     ),
     "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),
     "controlled_email": frozenset(

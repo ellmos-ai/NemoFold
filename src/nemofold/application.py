@@ -13,6 +13,17 @@ from .action_journal import ActionJournal
 from .anonymizer import pseudonymize_questions_and_receipts
 from .artifacts import write_text_artifact
 from .bundle_export import create_text_bundle
+from .case_chronicle import (
+    CHRONICLE_WORKFLOWS,
+    ChronicleInput,
+    execute_alibi_weave,
+    execute_contradiction_synopsis,
+    execute_corpus_query,
+    execute_coverage_timeline,
+    execute_person_registry,
+    execute_person_timeline,
+    execute_relation_model,
+)
 from .cleanup_rules import suggest_cleanup_rules
 from .contact_monitor import build_contact_monitor
 from .contracts import (
@@ -1922,7 +1933,34 @@ def _dispatch_workflow(
         return _execute_controlled_email(job, inventory, run_id=run_id)
     if job.workflow == "contact_monitor":
         return _execute_contact_monitor(job, inventory, run_id=run_id)
+    if job.workflow in CHRONICLE_WORKFLOWS:
+        return _execute_chronicle(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
+
+
+CHRONICLE_EXECUTORS = {
+    "person_registry": execute_person_registry,
+    "relation_model": execute_relation_model,
+    "person_timeline": execute_person_timeline,
+    "coverage_timeline": execute_coverage_timeline,
+    "alibi_weave": execute_alibi_weave,
+    "contradiction_synopsis": execute_contradiction_synopsis,
+    "corpus_query": execute_corpus_query,
+}
+
+
+def _execute_chronicle(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Read the sources once, then hand them to the chronicle contract."""
+    data = ChronicleInput(
+        source_ids=tuple(record.source_id for record in inventory.records),
+        texts=_read_text_sources(inventory),
+    )
+    return CHRONICLE_EXECUTORS[job.workflow](job, data, run_id)
 
 
 def _complete_running_job(

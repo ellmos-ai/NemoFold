@@ -30,6 +30,13 @@ WORKFLOW_ORDER = {
     "daily_arrivals": 55,
     "version_resolver": 60,
     "contact_monitor": 70,
+    "person_registry": 74,
+    "relation_model": 76,
+    "corpus_query": 78,
+    "person_timeline": 80,
+    "coverage_timeline": 82,
+    "alibi_weave": 84,
+    "contradiction_synopsis": 86,
     "bundle_export": 80,
     "evidence_analyst": 90,
     "fact_distill": 92,
@@ -48,6 +55,13 @@ HANDOFFS = {
 }
 
 WORKFLOW_TITLES = {
+    "person_registry": "Person Registry",
+    "relation_model": "Relation Model",
+    "person_timeline": "Person Timeline",
+    "coverage_timeline": "Coverage Timeline",
+    "alibi_weave": "Alibi Weave",
+    "contradiction_synopsis": "Contradiction Synopsis",
+    "corpus_query": "Corpus Query",
     "smart_inbox": "Smart Inbox",
     "storage_policy": "Storage Policies",
     "cleanup_rules": "Cleanup Rules",
@@ -67,6 +81,34 @@ WORKFLOW_TITLES = {
 }
 
 WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "person_registry": (
+        "personen", "wer kommt vor", "wer taucht auf", "namensliste", "beteiligte",
+        "übersicht aller personen", "people involved", "who appears",
+    ),
+    "relation_model": (
+        "beziehung", "verbindung", "wer kennt wen", "netzwerk", "relation", "graph",
+        "wie hängen", "zusammenhang zwischen",
+    ),
+    "person_timeline": (
+        "zeitachse", "zeitstrahl", "chronologie", "wann war wer", "ablauf",
+        "timeline", "zeitlicher verlauf",
+    ),
+    "coverage_timeline": (
+        "abgedeckt", "versicherungsverlauf", "deckung", "wann war ich wie",
+        "policenverlauf", "coverage",
+    ),
+    "alibi_weave": (
+        "alibi", "wer war wo", "bestätigt", "belegt wo", "aufenthalt", "wochenende",
+        "corroborat",
+    ),
+    "contradiction_synopsis": (
+        "widerspruch", "widersprüche", "widerspr", "gegensätzlich", "abweichende aussage",
+        "contradiction", "aussagen vergleichen",
+    ),
+    "corpus_query": (
+        "wo taucht", "wo kommt", "finde alle stellen", "suche im bestand", "nadel",
+        "welche dokumente erwähnen", "where does", "find every mention",
+    ),
     "controlled_email": (
         "mail an", "email an", "e-mail an", "mail to", "email to", "write a mail",
         "schreib", "antworte", "antwort", "anschreiben", "reply", "draft a mail",
@@ -427,6 +469,34 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
 
 def _why(workflow: str) -> str:
     return {
+        "person_registry": (
+            "Lists the people the documents declare under named fields, with a "
+            "pseudonymous form that may travel and an identity map that stays here."
+        ),
+        "relation_model": (
+            "Draws a link only where a sentence states one, and keeps that sentence on "
+            "the edge so nothing rests on inference."
+        ),
+        "person_timeline": (
+            "Places the stated times on a lane per person. A time the sources leave open "
+            "stays undetermined instead of being placed."
+        ),
+        "coverage_timeline": (
+            "Reads declared coverage fields out of the contracts, leaving an unnamed end "
+            "date open rather than assuming one."
+        ),
+        "alibi_weave": (
+            "Keeps a self-report and an outside confirmation apart, and names everyone the "
+            "sources place nowhere. Needs the places to compare."
+        ),
+        "contradiction_synopsis": (
+            "Shows both wordings of a disagreement with their anchors, and names which "
+            "sources disagree rather than deciding."
+        ),
+        "corpus_query": (
+            "Answers one narrow question over a large bundle in quoted sentences, each with "
+            "the sources it came from."
+        ),
         "controlled_email": (
             "Writes the reply as a local RFC 822 draft with an approval digest. Nothing is "
             "sent: delivery needs a separately proven server adapter."
@@ -497,6 +567,20 @@ def _why(workflow: str) -> str:
 
 
 def parameters_for(workflow: str, text: str) -> dict[str, Any]:
+    if workflow == "person_registry":
+        return {"formats": ["md"], "match_surnames": False}
+    if workflow == "relation_model":
+        return {"formats": ["md"], "pseudonymous": False}
+    if workflow in {"person_timeline", "coverage_timeline"}:
+        return {"formats": ["md"]}
+    if workflow == "alibi_weave":
+        # Places stay empty until a person names them: guessing a place
+        # vocabulary is how a weave starts confirming the wrong people.
+        return {"formats": ["md"], "places": [], "tolerance_minutes": 90}
+    if workflow == "contradiction_synopsis":
+        return {"formats": ["md"], "contested_terms": []}
+    if workflow == "corpus_query":
+        return {"formats": ["md"], "terms": [], "dedupe_scope": "normalized"}
     if workflow == "controlled_email":
         return {
             "to": [],
