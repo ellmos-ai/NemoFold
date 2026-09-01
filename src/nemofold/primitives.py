@@ -98,6 +98,89 @@ class Anchor:
     line: int
 
 
+def is_field_line(line: str) -> bool:
+    """True for a labelled header field, false for prose that happens to hold a colon.
+
+    The distinction is a short label and no sentence ending: "Deckung ab:
+    01.01.2026" is a field, while "Vier Personen wurden befragt: A, B und C." is
+    a sentence that must stay joined with the line it wraps onto.
+    """
+    match = _LABELLED_LINE.match(line)
+    if match is None:
+        return False
+    if line.rstrip().endswith((".", "!", "?")):
+        return False
+    return len(match.group("label").split()) <= 3
+
+
+@dataclass(frozen=True, slots=True)
+class AnchoredSentence:
+    """A sentence plus the line it starts on."""
+
+    text: str
+    line: int
+
+
+def anchored_sentences(text: str, *, max_sentences: int = 2000) -> tuple[AnchoredSentence, ...]:
+    """Split a document into sentences that know which line they start on.
+
+    Line-by-line matching looks simpler and is quietly wrong: prose wraps, so a
+    name, a date or a place can straddle a line break and then matches nothing at
+    all. Missing a person because their surname moved to the next line is a
+    silent failure, which is the kind this corpus can least afford. Paragraphs of
+    consecutive non-empty lines are therefore joined before splitting, and each
+    sentence keeps the line where it begins so an anchor still points somewhere a
+    reader can look.
+    """
+    found: list[AnchoredSentence] = []
+    block: list[tuple[int, str]] = []
+
+    def flush() -> None:
+        if not block:
+            return
+        joined = " ".join(line for _, line in block)
+        # Walk the sentences against the joined text to find where each starts,
+        # then translate that offset back into the original line number.
+        offsets: list[int] = []
+        position = 0
+        for _, line in block:
+            offsets.append(position)
+            position += len(line) + 1
+        cursor = 0
+        for sentence in split_sentences(joined):
+            index = joined.find(sentence, cursor)
+            if index < 0:
+                index = cursor
+            cursor = index + len(sentence)
+            line_number = block[0][0]
+            for (number, _), start in zip(block, offsets, strict=True):
+                if start <= index:
+                    line_number = number
+                else:
+                    break
+            found.append(AnchoredSentence(text=sentence, line=line_number))
+        block.clear()
+
+    for number, raw in enumerate(text.splitlines(), start=1):
+        stripped = raw.strip()
+        if not stripped:
+            flush()
+            continue
+        if is_field_line(stripped):
+            # A header field is not prose. Joining "Versicherungsnehmer: A" and
+            # "Betreuer: B" into one running sentence would put two people in a
+            # sentence neither of them appears in, and anything reading
+            # co-occurrence would report a link the document never states.
+            flush()
+            found.append(AnchoredSentence(text=stripped, line=number))
+            continue
+        block.append((number, stripped))
+        if len(found) >= max_sentences:
+            break
+    flush()
+    return tuple(found[:max_sentences])
+
+
 # --------------------------------------------------------------------------- #
 # Primitive 1: schema-bound structure extraction
 # --------------------------------------------------------------------------- #
