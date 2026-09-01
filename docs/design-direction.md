@@ -47,9 +47,14 @@ Each stage has one job. Long labels must wrap inside their own cell; no label ma
 ### Navigation model
 
 - `/` is the short orientation and product map, not an execution form.
-- `/document-center` contains intake, policy, cleanup, mail-case and controlled-draft work.
-- `/analysis` contains large-corpus analysis, bundle creation, reports and the Research Notebook.
-- `/routines` contains recurring folder, version and contact checks.
+- `/folders` is the home of the folders: which are watched, what is on board, and the
+  use cases bound to them.
+- `/processes` holds three tabs: Workflows (all use cases, filtered by topic tag),
+  Registry (every job contract on its own) and Artifacts (the output catalogue).
+- `/governance` holds the gates this server was started with, plus the Policies and
+  Rules registers and the exceptions to them.
+- The former `/document-center`, `/analysis`, `/routines` and `/artifacts` routes
+  redirect to their replacement; a link naming one contract lands in the registry.
 - `/artifacts` opens the verified artifact catalog directly.
 - `/connections` is status-only and never upgrades configuration into runtime proof.
 

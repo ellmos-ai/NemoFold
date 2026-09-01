@@ -289,8 +289,23 @@ Einstellung darunter gewinnt nicht und verliert auch nicht still — sie stoppt 
 und fragt nach, denn still zu erweitern, wer Ihre Dokumente sieht, ist das eine
 Versagen, das sich dieses Produkt nicht leisten kann. Auch für sich erteilt eine
 Präferenz keine Erlaubnis: Externmodell-Gate, Freigabe je Lauf und Budget entscheiden
-weiterhin, und das Dossier nennt das tatsächlich gelaufene Modell und die Ebene, die es
-bestimmt hat.
+weiterhin.
+
+Das Dossier nennt das tatsächlich gelaufene Modell — nicht immer das bevorzugte — und
+sagt, welcher der drei Fälle vorlag. Die meisten Workflows arbeiten deterministisch und
+haben überhaupt keinen Reasoning-Worker; eine Präferenz darauf bleibt gespeichert und
+wird als nicht anwendbar ausgewiesen, statt ihr Arbeit zuzuschreiben, die sie nicht
+geleistet hat. Ein lokaler Worker beim Evidence Analyst wird wirklich gefragt, denn ein
+lokaler Endpunkt braucht keine Transferfreigabe je Lauf. Ein externer stoppt die Kette
+und verweist darauf, diesen Schritt einzeln zu starten, denn ein Kettenlauf erteilt nie
+eine Freigabe je Lauf.
+
+Jeder Eintrag trägt Themen-Tags — so findet ein Usecase den Raum, in den er gehört —
+und er kann einen Zeitplan tragen. Ein Zeitplan ist eine erklärte Absicht und nicht mehr:
+Er hält fest, wann Sie die Fahrt laufen lassen wollen, ergänzt das abgeleitete Tag
+`scheduled`, damit der Routinenfilter ihn findet, und sagt das in der gespeicherten Datei
+über sich selbst. NemoFold registriert keine Aufgabe in Ihrem Betriebssystem und startet
+nichts von allein.
 
 Manche Usecases lassen sich noch nicht bedienen. Sie werden trotzdem aufbewahrt, mit dem
 Instrument benannt, auf das sie warten, und getrennt von den lauffähigen gelistet — ein
@@ -342,33 +357,64 @@ Hosting für andere Personen läuft über `serve-demo`. Preview ist der standard
 sichere Pfad; Aktionsworkflows benötigen zusätzlich das serverseitige Gate
 `--approve-actions`, bevor eine Apply-Anfrage erfolgreich sein kann.
 
-Übersicht und sechs Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt
-Sprüngen innerhalb einer langen Seite: `/document-center`, `/analysis`, `/routines`,
-`/artifacts`, `/connections` und `/governance`. Die Übersicht selbst bleibt bewusst
-karg — eine Überschrift, ein Satz und die sechs Bereichskarten — und faltet
-Grenz-Kacheln, Evidenzkette, Vertragsregister und Roadmap hinter eine alte Seekarte,
-die sich per Klick oder Enter aufklappt. Nichts wird entfernt; die Dokumentation
-verschmutzt nur nicht mehr die Oberfläche. Jeder Bereich beginnt mit dem, was dort
-lebt, statt mit dem Jobformular: Das Document Center zählt den freigegebenen Korpus,
-Folder Routines liest die letzten Routineläufe, und jeder Bereich bietet Aufgabenkarten,
-die den Vertrag darunter vorbereiten. Die Command Bridge unter `/governance` zeigt die
-Autorität, mit der dieser Server gestartet wurde — Gates für Dateiaktionen, externe
-Modelle und Netzexposition, freigegebene Roots, Budgetgrenze und vertraglich erfasste
-Workflows — und beherbergt die Storage Policies. Gates werden dort gelesen, nicht
-erteilt: Ein geschlossenes Gate verlangt weiterhin einen Neustart mit dem passenden
-Flag. Jede Arbeitsseite zeigt nur die fachlich passenden Workflows. Artifact Studio
-öffnet unmittelbar den verifizierten Artefaktkatalog; Connections ist eine reine
-Statusseite und trennt konfigurierte Adapter, ausgeführte Providerläufe, Transfers und
-Cloud-Nachweise sichtbar voneinander.
+Übersicht und vier Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt
+Sprüngen innerhalb einer langen Seite: `/`, `/folders`, `/processes`, `/governance` und
+`/connections`. Analysis, Routines und Artifacts waren einmal eigene Räume — damit
+entschied die Tür, durch die man kam, darüber, was man sehen konnte. Sie sind jetzt drei
+Untertabs von Processes & Workflows: `?tab=workflows`, `?tab=registry` und
+`?tab=artifacts`. Die alten Routen führen weiterhin irgendwohin: `/document-center`,
+`/analysis`, `/routines` und `/artifacts` leiten auf ihren Nachfolger um, und ein Link,
+der einen einzelnen Vertrag nennt, landet im Register mit genau diesem Vertrag.
 
-Das Analysis Lab verbindet deterministische Bundle-Vorbereitung, Datenschutz-Preflight,
-Evidence Analyst, wiederverwendbare Prompt-Sammlungen und persistente Research Notebooks.
-Artifact Studio öffnet ausgeführte oder blockierte Ledger und prüft jeden erfassten
-Artefakthash. Das Document Center enthält außerdem erklärbare Cleanup Rules,
-schreibgeschützten Mail-to-Case-Ingest und kontrollierte E-Mail-Entwürfe; Folder Routines
-umfasst den quellengebundenen Contact Monitor. Ein Modell kann dieselben Einstellungen
-über `draft-save`, MCP oder die Loopback-Draft-API zur Browserprüfung vorbereiten;
-Freigaben werden dabei immer zurückgesetzt.
+Verändert hat sich, was vorn steht, nicht die Räume. Usecase-Kacheln sind das
+Primärobjekt, thematisch über Tags filterbar, und eine Routine ist schlicht ein Usecase
+mit Zeitplan und dem abgeleiteten Tag `scheduled` — dieser Filter macht aus dem Bullauge
+das Echolot und holt die letzten Routineläufe nach vorn. Die Einzelinstrumente, also die
+sechzehn Jobverträge für sich, leben in einem nicht-thematischen Register, dessen Editor
+der Maschinenraum ist. Folders ist das Zuhause der Ordner: welche überwacht werden, was
+tatsächlich an Bord ist, und welche Usecases daran hängen. Die Übersicht selbst bleibt
+bewusst karg — eine Überschrift, ein Satz und die Bereichskarten — und faltet
+Grenz-Kacheln, Evidenzkette, Vertragsregister und Roadmap hinter eine alte Seekarte, die
+sich per Klick oder Enter aufklappt. Nichts wird entfernt; die Dokumentation verschmutzt
+nur nicht mehr die Oberfläche.
+
+Governance zeigt die Autorität, mit der dieser Server gestartet wurde — Gates für
+Dateiaktionen, externe Modelle und Netzexposition, freigegebene Roots, Budgetgrenze und
+vertraglich erfasste Workflows. Gates werden dort gelesen, nicht erteilt: Ein
+geschlossenes Gate verlangt weiterhin einen Neustart mit dem passenden Flag. Darunter
+liegen die beiden Register aus dem nächsten Abschnitt. Artifacts öffnet ausgeführte oder
+blockierte Ledger und prüft jeden erfassten Artefakthash. Connections ist eine reine
+Statusseite und trennt konfigurierte Adapter, ausgeführte Providerläufe, Transfers und
+Cloud-Nachweise sichtbar voneinander. Das Register enthält weiterhin alles, was es immer
+enthielt: erklärbare Cleanup Rules, schreibgeschützten Mail-to-Case-Ingest, kontrollierte
+E-Mail-Entwürfe, den quellengebundenen Contact Monitor, deterministische
+Bundle-Vorbereitung, Datenschutz-Preflight, Evidence Analyst, wiederverwendbare
+Prompt-Sammlungen und persistente Research Notebooks. Ein Modell kann dieselben
+Einstellungen über `draft-save`, MCP oder die Loopback-Draft-API zur Browserprüfung
+vorbereiten; Freigaben werden dabei immer zurückgesetzt.
+
+### Regeln und Policies
+
+Eine Regel ist ein einzelner Satz, den man sich merken kann — „Anhänge verlassen das
+Haus nie ohne Bestätigung". Eine Policy ist ein Regelwerk, näher an einem kleinen Skill:
+mehrere Sätze und, wo ein Workflow sie konsumieren kann, zusätzlich ein maschinenlesbarer
+Körper. Beide liegen unter Governance auf den Untertabs Rules und Policies, und beide
+tragen die Liste der Stellen, an die sie gebunden sind. Genau darum geht es: Eine Regel,
+die an sechs Fahrten hängt, bleibt EIN Objekt — wer sie ändert, ändert alle sechs, und
+die Regel selbst zeigt, welche sechs das sind. Denselben Satz in sechs Fahrten zu
+kopieren ist der Weg, auf dem eine Regel still aufhört, eine Regel zu sein.
+
+Das Register zeigt, was in der Regel gilt, und darunter, wo eine gespeicherte Fahrt
+davon abweicht: eine Kette, die ihre Glieder überschreibt, Versandrechte oberhalb des
+Standardprofils, ein Schritt, der weiter senden darf als seine Kette. Die Abweichung
+bleibt bei der Fahrt, die sie gemacht hat, denn dort ändert man sie — und die Fahrt sagt
+es in Worten, bevor Sie sie starten.
+
+Eine Policy erteilt nichts. `cleanup_rules` ist der erste Workflow, der eine konsumiert,
+und er füllt nur, was der Jobvertrag leer gelassen hat: Im Vertrag stehende Regeln
+gewinnen weiterhin, und das Dossier nennt, welcher von beiden entschieden hat.
+Freigegebene Roots, Datenschutzmodus, Aktionsmodus und die Freigaben je Lauf bleiben
+das, was tatsächlich entscheidet.
 
 Controlled Email behauptet in der Standardlaufzeit keinen Netzwerkversand. Der Workflow
 schreibt den genauen Entwurf und Freigabedigest und blockiert eine Sendeanforderung, bis

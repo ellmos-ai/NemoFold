@@ -275,7 +275,21 @@ declared local-only is a cap. A more exposed setting underneath it neither wins 
 quietly loses - it stops the chain and asks, because silently widening what sees your
 documents is the one failure this product cannot afford. A preference authorises
 nothing by itself either: the external gate, the per-run approval and the budget still
-decide, and the dossier names the model that actually ran and which level chose it.
+decide.
+
+The dossier names the model that actually ran, which is not always the one that was
+preferred, and it says which of the three cases applied. Most workflows are
+deterministic and have no reasoning worker at all, so a preference on them is kept and
+reported as not applying rather than credited with work it did not do. A local worker
+on Evidence Analyst is really asked, because a local endpoint needs no per-run transfer
+approval. An external one stops the chain and points you at running that step on its
+own, because a chain run never grants a per-run transfer approval.
+
+Every entry carries topic tags, which is how a use case finds the room it belongs in,
+and it may carry a schedule. A schedule is a stated intention and nothing more: it
+records when you mean to run the voyage, adds the derived `scheduled` tag so the routine
+filter finds it, and says so about itself in the stored file. NemoFold registers no task
+with your operating system and starts nothing on its own.
 
 Some use cases cannot be served yet. Those are still kept, marked as waiting for the
 instrument they need, and listed apart from the runnable ones - a wish recorded is
@@ -324,27 +338,60 @@ hosting for other people goes through `serve-demo`. Preview is the default safe 
 action workflows additionally require the server-side `--approve-actions` gate before
 an apply request can succeed.
 
-The overview and six work areas use distinct, bookmarkable routes instead of in-page
-scroll jumps: `/document-center`, `/analysis`, `/routines`, `/artifacts`,
-`/connections`, and `/governance`. The overview itself stays deliberately bare — one
-headline, one sentence and the six area cards — and folds the boundary tiles, the
-evidence chain, the contract register and the roadmap behind an antique ship's chart
-that unfolds on click or Enter. Nothing is removed; documentation simply stops
-crowding the surface. Each area opens with what lives there rather than with the job
-form: Document Center counts the approved corpus, Folder Routines reads the
-last routine ledgers, and every area offers task cards that prepare the contract below.
-The Command Bridge at `/governance` renders the authority this server was started with —
-the file-action, external-model and network gates, approved roots, budget ceiling and
-contracted workflows — and holds Storage Policies. Gates are read there, never granted
-there: a closed gate still requires a restart with the matching flag. Analysis Lab
-combines deterministic bundle preparation, privacy preflight, Evidence Analyst, reusable
-prompt sets, and persistent
-Research Notebooks. Artifact Studio opens executed or blocked ledgers and verifies every
-recorded artifact hash. Connections is a pure status page that keeps configured
-adapters, executed provider runs, transfers, and cloud proof visibly separate. Document Center also contains explainable Cleanup Rules,
-read-only Mail-to-Case intake, and Controlled Email drafts; Folder Routines includes the
-source-grounded Contact Monitor. A model can prepare the same settings for browser review
+The overview and four work areas use distinct, bookmarkable routes instead of in-page
+scroll jumps: `/`, `/folders`, `/processes`, `/governance` and `/connections`. Analysis,
+Routines and Artifacts used to be rooms of their own, which meant the door you came
+through decided what you could see. They are now three tabs of Processes & Workflows —
+`?tab=workflows`, `?tab=registry` and `?tab=artifacts`. The old routes still lead
+somewhere: `/document-center`, `/analysis`, `/routines` and `/artifacts` redirect to
+their replacement, and a link that names one contract lands in the registry with that
+contract selected.
+
+What stands in front changed, not the rooms. Use-case tiles are the primary object,
+filtered by topic tags, and a routine is simply a use case that carries a schedule and
+the derived `scheduled` tag — choosing that filter is what turns the porthole into the
+echo sounder and surfaces the last routine ledgers. The single instruments, meaning the
+sixteen job contracts on their own, live in one non-thematic registry with the engine
+room as their editor. Folders is the home of your folders: which ones are watched, what
+is actually on board, and the use cases bound to them. The overview itself stays
+deliberately bare — one headline, one sentence and the area cards — and folds the
+boundary tiles, the evidence chain, the contract register and the roadmap behind an
+antique ship's chart that unfolds on click or Enter. Nothing is removed; documentation
+simply stops crowding the surface.
+
+Governance renders the authority this server was started with — the file-action,
+external-model and network gates, approved roots, budget ceiling and contracted
+workflows. Gates are read there, never granted there: a closed gate still requires a
+restart with the matching flag. Below them sit the two registers described in the next
+section. Artifacts opens executed or blocked ledgers and verifies every recorded
+artifact hash. Connections is a pure status page that keeps configured adapters,
+executed provider runs, transfers, and cloud proof visibly separate. The registry still
+holds everything it always did: explainable Cleanup Rules, read-only Mail-to-Case
+intake, Controlled Email drafts, the source-grounded Contact Monitor, deterministic
+bundle preparation, privacy preflight, Evidence Analyst, reusable prompt sets and
+persistent Research Notebooks. A model can prepare the same settings for browser review
 through `draft-save`, MCP, or the loopback draft API; approvals are always reset.
+
+### Rules and policies
+
+A rule is one sentence you can hold in your head — "attachments never leave
+unconfirmed". A policy is a rule set, closer to a small skill: several statements and,
+where a workflow can consume it, a machine body as well. Both live under Governance, on
+the Rules and Policies tabs, and both carry the list of places they are bound to. That
+list is the point: one rule bound to six voyages stays one object, so editing it edits
+all six and the rule itself shows you which six. Copying the sentence into six voyages
+is how a rule quietly stops being one rule.
+
+The register shows what holds in general and, beneath it, where a saved voyage departs
+from it: a chain that overrides its links, outbound rights above the default profile, a
+step that may send under a wider right than its chain. The departure stays at the voyage
+that made it, because that is where you change it, and the voyage says so in words
+before you run it.
+
+A policy grants nothing. `cleanup_rules` is the first workflow that consumes one, and it
+fills in only what the job contract left empty — rules written into the contract keep
+winning, and the dossier names which of the two decided. Allow roots, privacy mode,
+action mode and the per-run approvals remain the things that actually decide.
 
 Controlled Email does not claim network delivery in the default runtime. It writes the
 exact draft and approval digest, then blocks a send request until the same digest is
