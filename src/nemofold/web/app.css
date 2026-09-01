@@ -424,3 +424,5 @@ body[data-tab="workflows"] [data-page-tab]:not([data-page-tab~="workflows"]),bod
 .core-claim h2{margin:6px 0 0;font:400 clamp(24px,3.4vw,36px)/1.12 var(--serif)}
 .core-claim>p:last-child{margin:10px 0 0;max-width:720px;color:var(--muted);font-size:13px}
 .use-case-library .core-claim+.library-head{margin-top:26px}
+.task-group{grid-column:1/-1;margin:18px 0 2px!important;color:var(--sea)!important;font:800 9px var(--mono)!important;letter-spacing:.11em!important}
+.task-card-list .task-group:first-child{margin-top:4px!important}

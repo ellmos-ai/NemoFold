@@ -30,6 +30,9 @@ WORKFLOW_ORDER = {
     "daily_arrivals": 55,
     "version_resolver": 60,
     "contact_monitor": 70,
+    "web_research": 88,
+    "dossier": 90,
+    "bundle_completeness_check": 92,
     "person_registry": 74,
     "relation_model": 76,
     "corpus_query": 78,
@@ -55,6 +58,9 @@ HANDOFFS = {
 }
 
 WORKFLOW_TITLES = {
+    "web_research": "Web Research",
+    "dossier": "Dossier",
+    "bundle_completeness_check": "Completeness Check",
     "person_registry": "Person Registry",
     "relation_model": "Relation Model",
     "person_timeline": "Person Timeline",
@@ -81,6 +87,17 @@ WORKFLOW_TITLES = {
 }
 
 WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "web_research": (
+        "recherchier", "recherche", "im internet", "im netz", "online suchen",
+        "web suchen", "nachschlagen", "such im web", "research",
+    ),
+    "dossier": (
+        "dossier", "steckbrief", "profil zu", "hintergrund zu", "was gibt es über",
+    ),
+    "bundle_completeness_check": (
+        "vollständig", "vollstaendig", "ist alles da", "fehlt etwas", "lückenlos",
+        "completeness",
+    ),
     "person_registry": (
         "personen", "wer kommt vor", "wer taucht auf", "namensliste", "beteiligte",
         "übersicht aller personen", "people involved", "who appears",
@@ -469,6 +486,18 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
 
 def _why(workflow: str) -> str:
     return {
+        "web_research": (
+            "Searches the open web behind four separate gates and keeps only what came "
+            "back with an address. Nothing is sent until you approve that call."
+        ),
+        "dossier": (
+            "Collects cited search results on a subject you name into a reading list. It "
+            "is not a finding about anybody, and the artifact says so."
+        ),
+        "bundle_completeness_check": (
+            "Checks that every source was read, that the needed formats can be produced "
+            "and that no required part came out empty, before a later step trusts it."
+        ),
         "person_registry": (
             "Lists the people the documents declare under named fields, with a "
             "pseudonymous form that may travel and an identity map that stays here."
@@ -567,6 +596,14 @@ def _why(workflow: str) -> str:
 
 
 def parameters_for(workflow: str, text: str) -> dict[str, Any]:
+    if workflow == "web_research":
+        # Queries stay empty until a person writes them: a query this planner
+        # invented would be a question they never asked.
+        return {"formats": ["md"], "queries": [], "max_results": 5}
+    if workflow == "dossier":
+        return {"formats": ["md"], "queries": [], "subject": "", "max_results": 5}
+    if workflow == "bundle_completeness_check":
+        return {"formats": ["md"], "required_formats": ["md"]}
     if workflow == "person_registry":
         return {"formats": ["md"], "match_surnames": False}
     if workflow == "relation_model":

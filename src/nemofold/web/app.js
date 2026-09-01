@@ -884,6 +884,23 @@ function prepareWorkflow(workflow) {
   setEngineDrawer(true);
 }
 
+// D-036b: the registry lists every contract, and at two dozen of them a flat
+// deck stops being a list and becomes a wall. The groups are by what the
+// contract does to your files, which is the distinction a reader is actually
+// making when they scan it.
+const registryGroups = [
+  {title: "Intake and filing", workflows: ["smart_inbox", "cleanup_rules", "storage_policy"]},
+  {title: "Mail", workflows: ["mail_to_case", "controlled_email"]},
+  {title: "Reading a corpus", workflows: ["evidence_analyst", "bundle_export", "fact_distill",
+    "synopsis_merge", "document_registry", "corpus_query"]},
+  {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
+    "coverage_timeline", "alibi_weave", "contradiction_synopsis"]},
+  {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "version_resolver",
+    "contact_monitor"]},
+  {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
+  {title: "Checks and output", workflows: ["bundle_completeness_check", "report_studio"]}
+];
+
 function renderTaskCards() {
   const list = $("taskCardList");
   if (!list) return;
@@ -900,7 +917,33 @@ function renderTaskCards() {
     return;
   }
   const active = $("workflow").value;
-  for (const workflow of workflows) {
+  const grouped = new Set();
+  for (const group of registryGroups) {
+    const present = group.workflows.filter((item) => workflows.includes(item));
+    if (!present.length) continue;
+    const heading = document.createElement("p");
+    heading.className = "kicker task-group";
+    heading.textContent = group.title.toUpperCase();
+    list.append(heading);
+    for (const workflow of present) {
+      grouped.add(workflow);
+      list.append(taskCard(workflow, active));
+    }
+  }
+  // Anything a group forgot still shows, rather than disappearing because a
+  // list somewhere was not updated.
+  const ungrouped = workflows.filter((item) => !grouped.has(item));
+  if (ungrouped.length) {
+    const heading = document.createElement("p");
+    heading.className = "kicker task-group";
+    heading.textContent = "NOT YET GROUPED";
+    list.append(heading);
+    for (const workflow of ungrouped) list.append(taskCard(workflow, active));
+  }
+}
+
+function taskCard(workflow, active) {
+  {
     const card = document.createElement("article");
     card.className = "task-card";
     card.setAttribute("role", "listitem");
@@ -920,7 +963,7 @@ function renderTaskCards() {
     );
     button.addEventListener("click", () => prepareWorkflow(workflow));
     card.append(technical, title, benefit, button);
-    list.append(card);
+    return card;
   }
 }
 

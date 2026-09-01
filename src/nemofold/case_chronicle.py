@@ -20,7 +20,7 @@ from typing import Any
 from .artifacts import write_text_artifact
 from .chronicle_svg import alibi_weave_svg, relation_graph_svg, timeline_svg
 from .contracts import ArtifactRecord, Claim, Coverage, EvidenceLocator
-from .corroboration import _minutes, weave_alibis, weave_payload
+from .corroboration import _minutes, suggest_places, weave_alibis, weave_payload
 from .entity_relation import build_entity_graph, registry_payload
 from .evidence import compute_coverage
 from .primitives import AggregationBudget, AnchoredStatement, aggregate_mapreduce, merge_sections
@@ -474,7 +474,20 @@ def execute_alibi_weave(
         )
         for item in weave.supported
     )
+    suggestions = (
+        suggest_places(data.source_ids, data.texts)
+        if not _tuple_param(job, "places")
+        else ()
+    )
     metadata: dict[str, object] = {
+        "suggested_places": [
+            {"place": place, "mentions": count} for place, count in suggestions
+        ],
+        "suggestion_note": (
+            "These are candidates read out of the corpus, not a default. Confirm the "
+            "ones you mean in the places parameter; a vocabulary this run chose for "
+            "you would quietly decide who counts as corroborated."
+        ),
         "position_count": len(weave.supported),
         "corroborated_count": weave.corroborated_count,
         "gap_count": len(weave.gaps),

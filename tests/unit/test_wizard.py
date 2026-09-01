@@ -304,3 +304,34 @@ def test_an_alibi_request_is_planned_without_inventing_places() -> None:
     # the planned job leaves it empty and the reason says the places are needed.
     assert step.job["parameters"]["places"] == []
     assert "places" in step.why
+
+
+# --------------------------------------------------------------------------- #
+# Wave 2: the reservation becomes runnable
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("recherchier im internet was eine teilkasko abdeckt", "web_research"),
+        ("mach mir ein dossier zu hilde vandermolen", "dossier"),
+        ("ist das bündel vollständig oder fehlt etwas", "bundle_completeness_check"),
+    ],
+)
+def test_wave_two_intents_reach_their_workflow(sentence, expected) -> None:
+    plan = plan_voyage(sentence, input_roots=("examples/synthetic-case",))
+
+    assert expected in [step.workflow for step in plan.steps]
+
+
+def test_a_research_plan_writes_no_query_of_its_own() -> None:
+    plan = plan_voyage(
+        "recherchier im internet was eine teilkasko abdeckt",
+        input_roots=("examples/synthetic-case",),
+    )
+
+    step = next(item for item in plan.steps if item.workflow == "web_research")
+    # A query this planner invented would be a question the person never asked.
+    assert step.job["parameters"]["queries"] == []
+    assert "approve that call" in step.why

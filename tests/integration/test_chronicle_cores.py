@@ -274,3 +274,17 @@ def test_a_hatched_band_keeps_its_word_readable() -> None:
     backing = re.search(r'<rect x="[\d.]+" y="[\d.]+" width="196" height="14"', figure.svg)
     assert backing is not None
     assert "Lücke: keine Fremdbestätigung" in figure.svg
+
+
+def test_places_are_suggested_from_the_corpus_never_assumed() -> None:
+    from nemofold.corroboration import suggest_places
+
+    suggestions = suggest_places(*_case())
+
+    names = [place for place, _ in suggestions]
+    assert "Uferstraße" in names
+    assert all(count >= 1 for _, count in suggestions)
+    # Sorted by how often the corpus mentions them, so the first proposal is
+    # the one a reader would have picked anyway.
+    counts = [count for _, count in suggestions]
+    assert counts == sorted(counts, reverse=True)

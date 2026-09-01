@@ -40,6 +40,13 @@ PRESENCE_TERMS = (
     "abgeholt", "übergab", "vorbei",
 )
 
+# Word endings that mark a place in German prose. A declared list, so the
+# suggestion is explainable rather than a model's hunch.
+PLACE_MARKERS = (
+    "stra", "weg", "platz", "gasse", "allee", "ufer", "markt", "hof", "haus",
+    "werkstatt", "kiosk", "revier", "bahnhof", "brücke", "bruecke", "park",
+)
+
 MAX_POSITIONS = 400
 MAX_QUOTE_CHARS = 240
 DEFAULT_TOLERANCE_MINUTES = 90
@@ -330,3 +337,35 @@ def weave_payload(weave: Weave, *, window: str) -> dict[str, object]:
             "can be judged rather than inherited."
         ),
     }
+
+
+def suggest_places(
+    source_ids: tuple[str, ...],
+    texts: dict[str, str],
+    *,
+    max_suggestions: int = 12,
+) -> tuple[tuple[str, int], ...]:
+    """Propose place candidates from the corpus, sorted by how often they appear.
+
+    A proposal, never a default. The weave stays empty until a person confirms
+    these, because a place vocabulary this module invented would quietly decide
+    who counts as corroborated - and it would look exactly like one somebody
+    chose. What this does is save the typing, not make the decision.
+    """
+    counts: dict[str, int] = {}
+    for source_id in source_ids:
+        text = texts.get(source_id)
+        if text is None:
+            continue
+        for sentence in anchored_sentences(text):
+            for word in sentence.text.replace(",", " ").replace(".", " ").split():
+                token = word.strip("()\"'„“:;!?")
+                # German place words are capitalised and long enough to be more
+                # than an article; anything shorter is noise, not a place.
+                if len(token) < 5 or not token[0].isupper():
+                    continue
+                if not any(marker in token.casefold() for marker in PLACE_MARKERS):
+                    continue
+                counts[token] = counts.get(token, 0) + 1
+    ranked = sorted(counts.items(), key=lambda item: (-item[1], item[0]))
+    return tuple(ranked[:max_suggestions])
