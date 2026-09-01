@@ -31,6 +31,13 @@ from .completeness import (
     completeness_payload,
     needs_input_payload,
 )
+from .compose import (
+    compose_guide,
+    compose_wiki,
+    guide_markdown,
+    mine_patterns,
+    pattern_payload,
+)
 from .contact_monitor import build_contact_monitor
 from .contracts import (
     ActionMode,
@@ -2151,7 +2158,202 @@ def _dispatch_workflow(
         return _execute_reference_check(job, inventory, run_id=run_id)
     if job.workflow == "rater_race":
         return _execute_rater_race(job, inventory, run_id=run_id)
+    if job.workflow == "guide_compose":
+        return _execute_guide_compose(job, inventory, run_id=run_id)
+    if job.workflow == "wiki_export":
+        return _execute_wiki_export(job, inventory, run_id=run_id)
+    if job.workflow == "pattern_mining":
+        return _execute_pattern_mining(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
+
+
+def _display_names(inventory: InventoryResult) -> dict[str, str]:
+    return {record.source_id: record.display_name for record in inventory.records}
+
+
+def _execute_guide_compose(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Fold a corpus into one guide that stands in for its documents."""
+    texts = _read_text_sources(inventory, job)
+    source_ids = tuple(record.source_id for record in inventory.records)
+    guide = compose_guide(
+        source_ids,
+        texts,
+        title=str(job.parameters.get("title") or "Leitfaden"),
+        scope=str(job.parameters.get("dedupe_scope", "normalized")),
+    )
+    names = _display_names(inventory)
+    output = Path(job.output_dir)
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(
+            output / f"{run_id}.guide.md", guide_markdown(guide, names), "guide"
+        )
+    ]
+    claims = tuple(
+        Claim(
+            statement=text,
+            evidence=(
+                EvidenceLocator(source_id=source_id, quote=text, section=f"line {line}"),
+            ),
+        )
+        for section in guide.sections
+        for text, source_id, line in section.paragraphs
+    )
+    coverage = compute_coverage(
+        all_source_ids=source_ids,
+        read_source_ids=texts,
+        cited_source_ids=set(guide.replaces),
+    )
+    artifacts.extend(
+        render_report_formats(
+            ReportDocument(title=guide.title, claims=claims, coverage=coverage),
+            output,
+            basename=f"{run_id}_guide",
+            formats=tuple(job.parameters.get("formats", ["md"])),
+        )
+    )
+    return (
+        (
+            f"folded {len(guide.replaces)} document(s) into one guide with "
+            f"{guide.paragraph_count} paragraph(s); {guide.struck} repeat(s) folded",
+        ),
+        tuple(artifacts),
+        coverage,
+        {
+            "replaces": [names.get(item, item) for item in guide.replaces],
+            "paragraph_count": guide.paragraph_count,
+            "struck_repeats": guide.struck,
+            "compilation_note": (
+                "Every paragraph is a line from a source with its anchor. Nothing was "
+                "rewritten, so any paragraph can be checked against its original."
+            ),
+        },
+    )
+
+
+def _execute_wiki_export(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Write the corpus as a walkable wiki without summarising anything."""
+    texts = _read_text_sources(inventory, job)
+    source_ids = tuple(record.source_id for record in inventory.records)
+    names = _display_names(inventory)
+    pages, index = compose_wiki(
+        source_ids, texts, labels=names, title=str(job.parameters.get("title") or "Wiki")
+    )
+    folder = Path(job.output_dir) / str(job.parameters.get("wiki_dir") or f"{run_id}-wiki")
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(folder / "index.md", index, "wiki-index")
+    ]
+    artifacts.extend(
+        write_text_artifact(folder / f"{page.slug}.md", page.body, "wiki-page")
+        for page in pages
+    )
+    coverage = compute_coverage(
+        all_source_ids=source_ids,
+        read_source_ids=texts,
+        cited_source_ids={page.source_id for page in pages},
+    )
+    return (
+        (f"wrote {len(pages)} page(s) and an index",),
+        tuple(artifacts),
+        coverage,
+        {
+            "page_count": len(pages),
+            "wiki_dir": str(folder),
+            "fidelity_note": (
+                "Each page carries its document unchanged. A wiki whose pages disagree "
+                "with the files they came from would be worse than no wiki."
+            ),
+        },
+    )
+
+
+def _execute_pattern_mining(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Report what recurs across a large set, with how often and from where."""
+    texts = _read_text_sources(inventory, job)
+    source_ids = tuple(record.source_id for record in inventory.records)
+    report = mine_patterns(
+        source_ids,
+        texts,
+        min_support=int(job.parameters.get("min_support", 3)),
+        focus_terms=tuple(job.parameters.get("focus_terms", []) or []),
+        partition_size=int(job.parameters.get("partition_size", 40)),
+        max_patterns=int(job.parameters.get("max_patterns", 50)),
+    )
+    names = _display_names(inventory)
+    payload = pattern_payload(report, names)
+    output = Path(job.output_dir)
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(
+            output / f"{run_id}.patterns.json",
+            json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "pattern-mining",
+        )
+    ]
+    claims = tuple(
+        Claim(
+            statement=f"{item.text} ({item.support}x)",
+            evidence=tuple(
+                EvidenceLocator(source_id=source, quote=item.text, section="recurring")
+                for source in item.sources[:4]
+            ),
+        )
+        for item in report.patterns
+    )
+    coverage = compute_coverage(
+        all_source_ids=source_ids,
+        read_source_ids=texts,
+        cited_source_ids={source for item in report.patterns for source in item.sources},
+    )
+    artifacts.extend(
+        render_report_formats(
+            ReportDocument(
+                title=str(job.parameters.get("title") or "Wiederkehrende Muster"),
+                claims=claims
+                or (
+                    Claim(
+                        statement=(
+                            f"Nichts wiederholt sich mindestens {report.min_support}-mal. "
+                            "Das ist das Ergebnis, kein fehlender Bericht."
+                        ),
+                        evidence=(),
+                    ),
+                ),
+                coverage=coverage,
+            ),
+            output,
+            basename=f"{run_id}_patterns",
+            formats=tuple(job.parameters.get("formats", ["md"])),
+        )
+    )
+    return (
+        (
+            f"read {report.considered} statement(s) and kept {len(report.patterns)} "
+            f"pattern(s) at support {report.min_support} or more",
+        ),
+        tuple(artifacts),
+        coverage,
+        {
+            "pattern_count": len(report.patterns),
+            "considered_statements": report.considered,
+            "min_support": report.min_support,
+            "notes": list(report.notes),
+            "reading_note": payload["reading_note"],
+        },
+    )
 
 
 def _execute_rater_race(

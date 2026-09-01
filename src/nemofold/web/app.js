@@ -217,6 +217,21 @@ const workflowDefaults = {
     parameters: {formats: ["md"], required_formats: ["md"]},
     hint: "Completeness Check reports whether every source was read, whether the formats a later step needs can be produced, and whether a required part came out empty. It concludes nothing about content."
   },
+  guide_compose: {
+    questions: [],
+    parameters: {formats: ["md"], dedupe_scope: "normalized"},
+    hint: "Guide Compose folds a folder into one guide that stands in for its documents. Every paragraph stays a quoted line with its source, so any of them can be checked against the original, and the repeats it folded are counted."
+  },
+  wiki_export: {
+    questions: [],
+    parameters: {wiki_dir: ""},
+    hint: "Wiki Export writes the corpus as a walkable wiki: one page per document plus an index. Nothing is summarised, because a page that disagrees with the file it came from is worse than no page."
+  },
+  pattern_mining: {
+    questions: [],
+    parameters: {formats: ["md"], min_support: 3, focus_terms: []},
+    hint: "Pattern Mining reports which lines recur across a large set, with how often and from where. A recurring line is a finding about this corpus, never a rule about the world."
+  },
   rater_race: {
     questions: [],
     parameters: {formats: ["md"], coding_scheme: {}, scan_labels: [], rater_a: "", rater_b: ""},
@@ -651,6 +666,18 @@ const workflowCards = {
     title: "Completeness Check",
     benefit: "Check a bundle is whole before a later step trusts it, and name what is missing."
   },
+  guide_compose: {
+    title: "Guide Compose",
+    benefit: "Fold many documents into one guide where every line still names its source."
+  },
+  wiki_export: {
+    title: "Wiki Export",
+    benefit: "Turn a folder into a walkable wiki whose pages stay equal to their files."
+  },
+  pattern_mining: {
+    title: "Pattern Mining",
+    benefit: "See which lines recur across a big pile of logs, how often, and from where."
+  },
   rater_race: {
     title: "Rater Race",
     benefit: "Code the same material twice and see exactly where the two readings disagree."
@@ -946,14 +973,14 @@ const registryGroups = [
   {title: "Intake and filing", workflows: ["smart_inbox", "cleanup_rules", "storage_policy"]},
   {title: "Mail", workflows: ["mail_to_case", "controlled_email"]},
   {title: "Reading a corpus", workflows: ["evidence_analyst", "bundle_export", "fact_distill",
-    "synopsis_merge", "document_registry", "corpus_query"]},
+    "synopsis_merge", "document_registry", "corpus_query", "pattern_mining"]},
   {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
     "coverage_timeline", "alibi_weave", "contradiction_synopsis"]},
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "version_resolver",
     "contact_monitor"]},
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
   {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check",
-    "rater_race", "report_studio", "print_action"]}
+    "rater_race", "report_studio", "guide_compose", "wiki_export", "print_action"]}
 ];
 
 

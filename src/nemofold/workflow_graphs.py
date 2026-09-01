@@ -107,6 +107,19 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "with percent agreement and kappa side by side because the first number "
         "alone is misleading whenever one code dominates."
     ),
+    "guide_compose": (
+        "Fold a corpus into one guide that stands in for its documents, keeping every "
+        "paragraph a quoted line with its source and reporting how many repeats were "
+        "folded."
+    ),
+    "wiki_export": (
+        "Write the corpus as a walkable wiki with one page per document and an index, "
+        "carrying each document unchanged rather than summarising it."
+    ),
+    "pattern_mining": (
+        "Report which lines recur across a large set, with how often and from where, "
+        "through the staged aggregation that keeps the anchors."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -263,6 +276,21 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Read", "every approved source"),
         ("gate", "Complete", "read, producible, non-empty"),
         ("operation", "Report", "what passed and what did not"),
+    ),
+    "guide_compose": (
+        ("operation", "Merge", "section by section"),
+        ("operation", "Fold", "repeated paragraphs"),
+        ("gate", "Quoted only", "nothing is rewritten"),
+    ),
+    "wiki_export": (
+        ("operation", "Page", "one per document"),
+        ("operation", "Index", "links every page"),
+        ("gate", "Unchanged", "no page disagrees with its file"),
+    ),
+    "pattern_mining": (
+        ("operation", "Lift", "quotable statements"),
+        ("operation", "Aggregate", "staged, anchors kept"),
+        ("gate", "Support", "below the threshold is not a pattern"),
     ),
     "rater_race": (
         ("operation", "Declare", "the coding scheme"),

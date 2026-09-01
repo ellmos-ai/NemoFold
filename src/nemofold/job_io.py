@@ -43,6 +43,9 @@ SUPPORTED_WORKFLOWS = frozenset(
         "print_action",
         "reference_check",
         "rater_race",
+        "guide_compose",
+        "wiki_export",
+        "pattern_mining",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -157,6 +160,12 @@ WORKFLOW_PARAMETER_FIELDS = {
     ),
     "rater_race": frozenset(
         {"coding_scheme", "formats", "rater_a", "rater_b", "scan_labels", "title"}
+    ),
+    "guide_compose": frozenset({"dedupe_scope", "formats", "title"}),
+    "wiki_export": frozenset({"formats", "title", "wiki_dir"}),
+    "pattern_mining": frozenset(
+        {"focus_terms", "formats", "max_patterns", "min_support", "partition_size",
+         "title"}
     ),
     "print_action": frozenset({"formats", "source_id", "title"}),
     "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),
