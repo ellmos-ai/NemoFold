@@ -57,6 +57,7 @@ from .delivery import (
     validate_delivery_body,
     write_delivery_report,
     write_print_package,
+    write_workbook,
 )
 from .document_extract import extract_document_text
 from .document_index import DocumentIndex, SearchHit
@@ -71,6 +72,13 @@ from .evidence import compute_coverage, validate_claim
 from .evidence_analyst import build_context_receipts
 from .fact_distill import distil_facts, struck_markdown
 from .folder_digest import build_digest
+from .interrater import (
+    code_corpus,
+    interrater_diff,
+    interrater_payload,
+    interrater_rows,
+    validate_codes,
+)
 from .inventory import InventoryResult, scan_paths
 from .job_io import job_snapshot_payload, load_job_snapshot, validate_workflow_parameters
 from .ledger import RunLedger, validate_run_id
@@ -2141,7 +2149,120 @@ def _dispatch_workflow(
         return _execute_print_action(job, inventory, run_id=run_id)
     if job.workflow == "reference_check":
         return _execute_reference_check(job, inventory, run_id=run_id)
+    if job.workflow == "rater_race":
+        return _execute_rater_race(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
+
+
+def _execute_rater_race(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Code the same material twice and report where the two readings part."""
+    scheme = validate_codes(job.parameters.get("coding_scheme"))
+    labels = tuple(str(item) for item in job.parameters.get("scan_labels", []) or [])
+    texts = _read_text_sources(inventory, job)
+    source_ids = tuple(record.source_id for record in inventory.records)
+    first = code_corpus(
+        source_ids,
+        texts,
+        scheme,
+        strategy="first_match",
+        rater=str(job.parameters.get("rater_a", "") or "first_match"),
+        scan_labels=labels,
+    )
+    second = code_corpus(
+        source_ids,
+        texts,
+        scheme,
+        strategy="last_match",
+        rater=str(job.parameters.get("rater_b", "") or "last_match"),
+        scan_labels=labels,
+    )
+    report = interrater_diff(first, second)
+    names = {record.source_id: record.display_name for record in inventory.records}
+    payload = interrater_payload(report, names)
+    output = Path(job.output_dir)
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(
+            output / f"{run_id}.interrater.json",
+            json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "interrater",
+        ),
+        write_workbook(
+            output / f"{run_id}.interrater.xlsx",
+            ("Dokument", report.rater_a, report.rater_b, "einig"),
+            interrater_rows(report, names),
+        ),
+    ]
+    claims = tuple(
+        Claim(
+            statement=(
+                f"{names.get(cell.item_id, cell.item_id)}: {report.rater_a} sagt "
+                f"{cell.code_a}, {report.rater_b} sagt {cell.code_b}"
+            ),
+            evidence=tuple(
+                EvidenceLocator(
+                    source_id=anchor.source_id,
+                    quote=f"codiert als {code}",
+                    section=f"line {anchor.line}",
+                )
+                for code, anchor in (
+                    (cell.code_a, first.anchors.get(cell.item_id)),
+                    (cell.code_b, second.anchors.get(cell.item_id)),
+                )
+                if anchor is not None
+            ),
+        )
+        for cell in report.disagreements
+    )
+    coverage = compute_coverage(
+        all_source_ids=source_ids,
+        read_source_ids=texts,
+        cited_source_ids={cell.item_id for cell in report.cells},
+    )
+    artifacts.extend(
+        render_report_formats(
+            ReportDocument(
+                title=str(job.parameters.get("title") or "Doppelcodierung"),
+                claims=claims
+                or (
+                    Claim(
+                        statement=(
+                            "Beide Lesarten stimmen bei jedem Dokument überein. Das ist "
+                            "das Ergebnis, kein fehlender Bericht."
+                        ),
+                        evidence=(),
+                    ),
+                ),
+                coverage=coverage,
+            ),
+            output,
+            basename=f"{run_id}_interrater",
+            formats=tuple(job.parameters.get("formats", ["md"])),
+        )
+    )
+    metadata: dict[str, object] = {
+        "rater_a": report.rater_a,
+        "rater_b": report.rater_b,
+        "item_count": report.agreement.items,
+        "percent_agreement": report.agreement.percent,
+        "cohens_kappa": report.agreement.kappa,
+        "kappa_note": report.agreement.kappa_note,
+        "disagreed": report.agreement.disagreed,
+        "reading_note": payload["reading_note"],
+    }
+    return (
+        (
+            f"coded {report.agreement.items} document(s) twice; "
+            f"{report.agreement.disagreed} disagreement(s)",
+        ),
+        tuple(artifacts),
+        coverage,
+        metadata,
+    )
 
 
 def _execute_reference_check(

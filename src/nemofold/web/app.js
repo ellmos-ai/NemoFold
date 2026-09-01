@@ -217,6 +217,11 @@ const workflowDefaults = {
     parameters: {formats: ["md"], required_formats: ["md"]},
     hint: "Completeness Check reports whether every source was read, whether the formats a later step needs can be produced, and whether a required part came out empty. It concludes nothing about content."
   },
+  rater_race: {
+    questions: [],
+    parameters: {formats: ["md"], coding_scheme: {}, scan_labels: [], rater_a: "", rater_b: ""},
+    hint: "Rater Race codes the same material twice under two readings and shows where they part. It reports percent agreement and Cohen's kappa side by side, because the first number alone flatters any scheme where one code dominates."
+  },
   reference_check: {
     questions: [],
     parameters: {formats: ["md"], reference_grid: "bescheid_formal", require_complete: false},
@@ -646,6 +651,10 @@ const workflowCards = {
     title: "Completeness Check",
     benefit: "Check a bundle is whole before a later step trusts it, and name what is missing."
   },
+  rater_race: {
+    title: "Rater Race",
+    benefit: "Code the same material twice and see exactly where the two readings disagree."
+  },
   reference_check: {
     title: "Reference Check",
     benefit: "See which items of a checklist your documents answer, and read the line that does."
@@ -943,8 +952,8 @@ const registryGroups = [
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "version_resolver",
     "contact_monitor"]},
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
-  {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check", "report_studio",
-    "print_action"]}
+  {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check",
+    "rater_race", "report_studio", "print_action"]}
 ];
 
 

@@ -42,6 +42,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "bundle_completeness_check",
         "print_action",
         "reference_check",
+        "rater_race",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -153,6 +154,9 @@ WORKFLOW_PARAMETER_FIELDS = {
     ),
     "reference_check": frozenset(
         {"formats", "reference_grid", "reference_items", "require_complete", "title"}
+    ),
+    "rater_race": frozenset(
+        {"coding_scheme", "formats", "rater_a", "rater_b", "scan_labels", "title"}
     ),
     "print_action": frozenset({"formats", "source_id", "title"}),
     "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),

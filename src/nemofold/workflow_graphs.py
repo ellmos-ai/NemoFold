@@ -102,6 +102,11 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "answers each item, and list what is missing without judging whether the "
         "document is correct or sufficient."
     ),
+    "rater_race": (
+        "Code the same material twice under two readings and report where they part, "
+        "with percent agreement and kappa side by side because the first number "
+        "alone is misleading whenever one code dominates."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -258,6 +263,12 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Read", "every approved source"),
         ("gate", "Complete", "read, producible, non-empty"),
         ("operation", "Report", "what passed and what did not"),
+    ),
+    "rater_race": (
+        ("operation", "Declare", "the coding scheme"),
+        ("operation", "Code twice", "two independent readings"),
+        ("operation", "Diff", "cell by cell"),
+        ("gate", "Two numbers", "agreement and kappa, never one"),
     ),
     "reference_check": (
         ("operation", "Declare", "the checklist to compare against"),
