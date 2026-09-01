@@ -80,6 +80,14 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Answer one narrow question over a large corpus through staged aggregation, keeping "
         "every match a quoted sentence with the sources it came from."
     ),
+    "web_research": (
+        "Search the open web behind four separate gates and keep only what came back "
+        "with an address, refusing any query that would carry private content out."
+    ),
+    "dossier": (
+        "Assemble cited search results on a declared subject into a reading list that "
+        "says in the artifact that it is not a finding about anybody."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -219,6 +227,18 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Partition", "deterministic, fixed size"),
         ("operation", "Fold", "twice, anchors preserved"),
         ("gate", "Quote only", "no match means no answer"),
+    ),
+    "web_research": (
+        ("gate", "Preflight", "no private content in a query"),
+        ("gate", "Approve", "server, call, adapter key"),
+        ("operation", "Search", "declared queries only"),
+        ("operation", "Keep", "results with an address"),
+    ),
+    "dossier": (
+        ("gate", "Subject", "declared, never inferred"),
+        ("operation", "Search", "through the same four gates"),
+        ("operation", "Assemble", "a cited reading list"),
+        ("gate", "No verdict", "nothing is weighed or concluded"),
     ),
     "fact_distill": (
         ("operation", "Inventory", "approved corpus"),

@@ -76,6 +76,12 @@ from .version_resolver import (
     infer_family_key,
     resolve_current,
 )
+from .web_research import (
+    WEB_WORKFLOWS,
+    WebSearchAdapter,
+    execute_dossier,
+    execute_web_research,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,6 +90,9 @@ class ExecutionConfig:
     external_models_allowed: bool = False
     max_external_cost_usd: float = 0.0
     apply_actions_allowed: bool = False
+    # Searching the web and sending chunks to a model are different permissions:
+    # one leaves with a question a person wrote, the other with their documents.
+    web_search_allowed: bool = False
 
     def __post_init__(self) -> None:
         if (
@@ -1960,7 +1969,70 @@ def _dispatch_workflow(
         return _execute_contact_monitor(job, inventory, run_id=run_id)
     if job.workflow in CHRONICLE_WORKFLOWS:
         return _execute_chronicle(job, inventory, run_id=run_id)
+    if job.workflow in WEB_WORKFLOWS:
+        return _execute_web(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
+
+
+def _execute_web(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Run a gated web contract.
+
+    The per-call approval is deliberately not something a job can carry: a
+    stored job that approved its own search would be an approval nobody gave.
+    A plain run therefore always ends blocked here, with the reasons named,
+    until an approving caller passes one in.
+    """
+    runner = execute_web_research if job.workflow == "web_research" else execute_dossier
+    actions, artifacts, metadata = runner(
+        job,
+        job.output_dir,
+        run_id,
+        server_allows=_WEB_SEARCH_ALLOWED.get(run_id, False),
+        approved=_WEB_SEARCH_APPROVED.get(run_id, False),
+        adapter=_WEB_ADAPTERS.get(run_id),
+    )
+    # A web contract reads no approved root, so coverage is about the sources it
+    # was pointed at, which is honestly zero of them.
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids={},
+        cited_source_ids=set(),
+    )
+    metadata["reads_local_sources"] = False
+    return actions, artifacts, coverage, metadata
+
+
+# Per-run web permissions, set by the caller that actually holds the approval and
+# cleared when the run ends. They are keyed by run_id rather than stored on the
+# job so that no saved job can carry an approval forward into a later run.
+_WEB_SEARCH_ALLOWED: dict[str, bool] = {}
+_WEB_SEARCH_APPROVED: dict[str, bool] = {}
+_WEB_ADAPTERS: dict[str, WebSearchAdapter] = {}
+
+
+def authorize_web_search(
+    run_id: str,
+    *,
+    server_allows: bool,
+    approved: bool,
+    adapter: WebSearchAdapter | None = None,
+) -> None:
+    """Grant one run its web permissions. Never persisted, never inherited."""
+    _WEB_SEARCH_ALLOWED[run_id] = server_allows
+    _WEB_SEARCH_APPROVED[run_id] = approved
+    if adapter is not None:
+        _WEB_ADAPTERS[run_id] = adapter
+
+
+def release_web_search(run_id: str) -> None:
+    _WEB_SEARCH_ALLOWED.pop(run_id, None)
+    _WEB_SEARCH_APPROVED.pop(run_id, None)
+    _WEB_ADAPTERS.pop(run_id, None)
 
 
 CHRONICLE_EXECUTORS = {

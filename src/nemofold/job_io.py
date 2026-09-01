@@ -37,6 +37,8 @@ SUPPORTED_WORKFLOWS = frozenset(
         "alibi_weave",
         "contradiction_synopsis",
         "corpus_query",
+        "web_research",
+        "dossier",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -137,6 +139,11 @@ WORKFLOW_PARAMETER_FIELDS = {
         "structured_sources",
         "dedupe_scope", "formats", "max_per_source", "max_results", "partition_size",
          "terms", "title"}
+    ),
+    # The web contracts take no source_tables: they read no folder at all.
+    "web_research": frozenset({"formats", "max_results", "queries", "title", "web_adapter"}),
+    "dossier": frozenset(
+        {"formats", "max_results", "queries", "subject", "title", "web_adapter"}
     ),
     "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),
     "controlled_email": frozenset(
