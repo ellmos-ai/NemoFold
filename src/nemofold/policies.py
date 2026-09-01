@@ -28,6 +28,7 @@ from typing import Any
 from uuid import uuid4
 
 from .artifacts import write_text_artifact
+from .delivery import validate_delivery_body
 from .model_authority import (
     AUTHORITY_CHAIN_WINS,
     OUTBOUND_RIGHTS,
@@ -144,6 +145,8 @@ def validate_body(value: Any, *, kind: str) -> dict[str, Any]:
                 "rights must be draft_only, send_with_confirmation or send_when_ordered"
             )
         return {"rights": rights}
+    if kind == KIND_DELIVERY:
+        return validate_delivery_body(value)
     if kind == KIND_CLEANUP:
         if set(value) - {"rules"}:
             raise ValueError("a cleanup_rules body may only carry rules")

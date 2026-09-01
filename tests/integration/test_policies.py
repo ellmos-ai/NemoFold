@@ -67,7 +67,41 @@ def test_a_policy_may_hold_several_statements(tmp_path) -> None:
 
 
 def test_a_kind_without_a_machine_body_says_so(tmp_path) -> None:
+    # rights_profile and cleanup_rules and delivery_rules have bodies; custom
+    # does not, and says so rather than swallowing a field nothing will read.
     with pytest.raises(ValueError, match="no machine body yet"):
+        _store(tmp_path).save(
+            {
+                "name": "Hausordnung",
+                "form": "policy",
+                "kind": "custom",
+                "statements": ["Alles bleibt lesbar."],
+                "body": {"channel": "email"},
+            }
+        )
+
+
+def test_a_delivery_policy_carries_its_routes(tmp_path) -> None:
+    saved = _store(tmp_path).save(
+        {
+            "name": "Ablage der Berichte",
+            "form": "policy",
+            "kind": "delivery_rules",
+            "statements": ["Berichte wandern in den Berichtsordner."],
+            "body": {
+                "routes": [{"artifact_kind": "findings", "target_root": "berichte"}],
+                "default_target": "ablage",
+            },
+        }
+    )
+
+    assert saved["body"]["routes"][0]["target_root"] == "berichte"
+    assert saved["body"]["routes"][0]["file_format"] == "as-is"
+    assert saved["body"]["default_target"] == "ablage"
+
+
+def test_a_delivery_policy_refuses_an_unknown_field(tmp_path) -> None:
+    with pytest.raises(ValueError, match="only carry routes and default_target"):
         _store(tmp_path).save(
             {
                 "name": "Versand",
