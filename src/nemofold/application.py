@@ -87,6 +87,12 @@ from .outbound import (
     send_payload,
 )
 from .policy import PolicyConfig, PolicyGate
+from .reference import (
+    grid_named,
+    reference_payload,
+    validate_against_reference,
+    validate_items,
+)
 from .report_studio import SUPPORTED_FORMATS, ReportDocument, render_report_formats
 from .runtime import job_idempotency_key
 from .smart_inbox import RoutingRule, plan_inbox
@@ -2133,7 +2139,135 @@ def _dispatch_workflow(
         return _execute_completeness(job, inventory, run_id=run_id)
     if job.workflow == "print_action":
         return _execute_print_action(job, inventory, run_id=run_id)
+    if job.workflow == "reference_check":
+        return _execute_reference_check(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
+
+
+def _execute_reference_check(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Check the corpus against a declared checklist and quote what answers it."""
+    declared = job.parameters.get("reference_items")
+    grid_name = str(job.parameters.get("reference_grid", "")).strip()
+    if declared:
+        items = validate_items(declared)
+        grid_name = grid_name or "custom"
+    elif grid_name:
+        items = grid_named(grid_name)
+    else:
+        raise ValueError(
+            "reference_check needs reference_items or a reference_grid to check against"
+        )
+    texts = _read_text_sources(inventory, job)
+    report = validate_against_reference(
+        tuple(record.source_id for record in inventory.records),
+        texts,
+        items,
+        grid=grid_name,
+    )
+    payload = reference_payload(report)
+    output = Path(job.output_dir)
+    artifacts: list[ArtifactRecord] = [
+        write_text_artifact(
+            output / f"{run_id}.reference-check.json",
+            json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "reference-check",
+        )
+    ]
+    claims = tuple(
+        Claim(
+            statement=(
+                f"{finding.item.label}: answered"
+                if finding.present
+                else f"{finding.item.label}: not answered by these sources"
+            ),
+            evidence=(
+                (
+                    EvidenceLocator(
+                        source_id=finding.anchor.source_id,
+                        quote=finding.quote,
+                        section=f"line {finding.anchor.line}",
+                    ),
+                )
+                if finding.present and finding.anchor is not None
+                else ()
+            ),
+        )
+        for finding in report.findings
+    )
+    coverage = compute_coverage(
+        all_source_ids=(record.source_id for record in inventory.records),
+        read_source_ids=texts,
+        cited_source_ids={
+            finding.anchor.source_id for finding in report.present if finding.anchor
+        },
+    )
+    artifacts.extend(
+        render_report_formats(
+            ReportDocument(
+                title=str(job.parameters.get("title") or "Referenzabgleich"),
+                claims=claims,
+                coverage=coverage,
+            ),
+            output,
+            basename=f"{run_id}_reference",
+            formats=tuple(job.parameters.get("formats", ["md"])),
+        )
+    )
+    metadata: dict[str, object] = {
+        "grid": grid_name,
+        "present_count": len(report.present),
+        "missing_count": len(report.missing),
+        "complete": report.complete,
+        "missing_keys": [item.item.key for item in report.missing],
+        "no_judgement_note": payload["no_judgement_note"],
+    }
+    # As a review step in a chain, an incomplete result has to stop the chain, or
+    # the next step works on material a person was never told was short.
+    if job.parameters.get("require_complete", False) is True and not report.complete:
+        questions = tuple(
+            Question(
+                field=f"reference.{item.item.key}",
+                prompt=f"Wo steht '{item.item.label}'? Die Quellen beantworten es nicht.",
+                why=(
+                    f"'{item.item.label}' ist im Raster '{grid_name}' als Pflichtpunkt "
+                    "erklärt."
+                ),
+                kind="text",
+            )
+            for item in report.missing_required
+        )
+        asked = needs_input_payload(questions[:20], workflow=job.workflow)
+        artifacts.append(
+            write_text_artifact(
+                output / f"{run_id}.needs-user-input.json",
+                json.dumps(asked, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+                "needs-user-input",
+            )
+        )
+        metadata["needs_user_input"] = True
+        metadata["question_count"] = len(questions[:20])
+        metadata["outcome_note"] = asked["outcome_note"]
+        raise WorkflowBlocked(
+            tuple(f"reference_missing:{item.item.key}" for item in report.missing_required),
+            actions=("reference_checked", "reference_incomplete"),
+            artifacts=tuple(artifacts),
+            coverage=coverage,
+            metadata=metadata,
+        )
+    return (
+        (
+            f"checked {len(report.findings)} declared item(s): {len(report.present)} "
+            f"answered, {len(report.missing)} not",
+        ),
+        tuple(artifacts),
+        coverage,
+        metadata,
+    )
 
 
 def _apply_delivery_rules(

@@ -97,6 +97,11 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Prepare a print-ready file and the exact command to print it, and state that "
         "the printing itself is the person's step because no receipt comes back from it."
     ),
+    "reference_check": (
+        "Check the approved sources against a declared checklist, quote the line that "
+        "answers each item, and list what is missing without judging whether the "
+        "document is correct or sufficient."
+    ),
     "report_studio": (
         "Render an already validated analysis into consistent Markdown, text, PDF, DOCX, and "
         "ODT artifacts with the same source references."
@@ -253,6 +258,11 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Read", "every approved source"),
         ("gate", "Complete", "read, producible, non-empty"),
         ("operation", "Report", "what passed and what did not"),
+    ),
+    "reference_check": (
+        ("operation", "Declare", "the checklist to compare against"),
+        ("operation", "Match", "quote the answering line"),
+        ("gate", "No verdict", "present or absent, never correct"),
     ),
     "print_action": (
         ("operation", "Select", "one approved source"),

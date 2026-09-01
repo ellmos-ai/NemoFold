@@ -217,6 +217,11 @@ const workflowDefaults = {
     parameters: {formats: ["md"], required_formats: ["md"]},
     hint: "Completeness Check reports whether every source was read, whether the formats a later step needs can be produced, and whether a required part came out empty. It concludes nothing about content."
   },
+  reference_check: {
+    questions: [],
+    parameters: {formats: ["md"], reference_grid: "bescheid_formal", require_complete: false},
+    hint: "Reference Check compares your documents against a declared checklist and quotes the line that answers each item. It says present or absent; it never says the document is correct, valid or sufficient, and it is not advice."
+  },
   print_action: {
     questions: [],
     parameters: {formats: ["md"], source_id: ""},
@@ -641,6 +646,10 @@ const workflowCards = {
     title: "Completeness Check",
     benefit: "Check a bundle is whole before a later step trusts it, and name what is missing."
   },
+  reference_check: {
+    title: "Reference Check",
+    benefit: "See which items of a checklist your documents answer, and read the line that does."
+  },
   print_action: {
     title: "Print Action",
     benefit: "Get a print-ready file and the exact command, with the printing left to you."
@@ -934,7 +943,7 @@ const registryGroups = [
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "version_resolver",
     "contact_monitor"]},
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
-  {title: "Checks and output", workflows: ["bundle_completeness_check", "report_studio",
+  {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check", "report_studio",
     "print_action"]}
 ];
 
