@@ -493,3 +493,213 @@ def snapshot_delta(
         else sorted(unresolved)[0]
     )
     return tuple(entries), overall
+
+
+# --------------------------------------------------------------------------- #
+# Primitive 5: staged aggregation that keeps its anchors
+# --------------------------------------------------------------------------- #
+
+MAX_ANCHORS_PER_RESULT = 50
+
+
+@dataclass(frozen=True, slots=True)
+class AggregationBudget:
+    """Ceilings for a staged run. Every one of them is reported when it bites."""
+
+    partition_size: int = 20
+    max_partitions: int = 64
+    max_per_partition: int = 40
+    max_results: int = 200
+
+    def __post_init__(self) -> None:
+        for name in ("partition_size", "max_partitions", "max_per_partition", "max_results"):
+            value = getattr(self, name)
+            if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+                raise ValueError(f"{name} must be a positive integer")
+
+
+@dataclass(frozen=True, slots=True)
+class AggregatedStatement:
+    """One folded statement and every place it came from.
+
+    ``anchors`` is a list, not a single anchor: that is the whole difference
+    between an aggregate you can follow home and a summary you have to trust.
+    """
+
+    text: str
+    anchors: tuple[Anchor, ...]
+    support: int
+    anchor_total: int
+    partitions: tuple[int, ...]
+
+    @property
+    def anchors_truncated(self) -> bool:
+        return self.anchor_total > len(self.anchors)
+
+
+@dataclass(frozen=True, slots=True)
+class AggregationStage:
+    name: str
+    inputs: int
+    outputs: int
+    dropped: int = 0
+
+
+@dataclass(frozen=True, slots=True)
+class AggregationOutcome:
+    results: tuple[AggregatedStatement, ...]
+    stages: tuple[AggregationStage, ...]
+    partition_count: int
+    notes: tuple[str, ...]
+
+    @property
+    def within_budget(self) -> bool:
+        return not self.notes
+
+
+def partition_statements(
+    statements: tuple[AnchoredStatement, ...], size: int
+) -> tuple[tuple[AnchoredStatement, ...], ...]:
+    """Split into fixed-size partitions in input order.
+
+    Deterministic by construction: same input, same partitions, every run. A
+    partitioning that depended on hashing or on set iteration would make two
+    runs over the same corpus disagree about what was aggregated with what.
+    """
+    if isinstance(size, bool) or not isinstance(size, int) or size < 1:
+        raise ValueError("partition size must be a positive integer")
+    return tuple(
+        tuple(statements[start:start + size]) for start in range(0, len(statements), size)
+    )
+
+
+def _fold(
+    items: tuple[tuple[str, tuple[Anchor, ...], int, tuple[int, ...]], ...],
+    scope: str,
+    limit: int,
+) -> tuple[list[AggregatedStatement], int]:
+    """Fold equal statements, unioning their anchors and their partitions."""
+    order: list[str] = []
+    seen: dict[str, tuple[str, list[Anchor], int, list[int], int]] = {}
+    for text, anchors, support, partitions in items:
+        key = fingerprint(text, scope)
+        if not key:
+            continue
+        found = seen.get(key)
+        if found is None:
+            order.append(key)
+            seen[key] = (text, list(anchors), support, list(partitions), len(anchors))
+            continue
+        kept_text, kept_anchors, kept_support, kept_partitions, total = found
+        known = {(anchor.source_id, anchor.line) for anchor in kept_anchors}
+        for anchor in anchors:
+            if (anchor.source_id, anchor.line) in known:
+                continue
+            known.add((anchor.source_id, anchor.line))
+            kept_anchors.append(anchor)
+            total += 1
+        for partition in partitions:
+            if partition not in kept_partitions:
+                kept_partitions.append(partition)
+        seen[key] = (
+            kept_text, kept_anchors, kept_support + support, kept_partitions, total
+        )
+    folded = [
+        AggregatedStatement(
+            text=text,
+            anchors=tuple(anchors[:MAX_ANCHORS_PER_RESULT]),
+            support=support,
+            anchor_total=total,
+            partitions=tuple(partitions),
+        )
+        for text, anchors, support, partitions, total in (seen[key] for key in order)
+    ]
+    return folded[:limit], max(0, len(folded) - limit)
+
+
+def aggregate_mapreduce(
+    statements: tuple[AnchoredStatement, ...],
+    *,
+    scope: str = "normalized",
+    budget: AggregationBudget | None = None,
+) -> AggregationOutcome:
+    """Aggregate a large statement set in two stages without losing provenance.
+
+    Stage one folds inside each partition, stage two folds the partial results
+    against each other. An anchor list only ever grows on the way through, so a
+    statement that survived both stages can still name every source it came
+    from - which is what makes an aggregate over a big corpus quotable instead
+    of merely plausible.
+
+    The local extractive fold is the reducer used here. A model stage is meant
+    to replace it at the partition level and goes through the existing provider
+    gates; this function stays provider-agnostic, so swapping the reducer cannot
+    quietly change what happens to the anchors.
+
+    Results keep input order rather than being ranked. Ranking is a decision for
+    the workflow that knows what the question was.
+    """
+    ceiling = budget or AggregationBudget()
+    partitions = partition_statements(statements, ceiling.partition_size)
+    notes: list[str] = []
+    dropped_partitions = 0
+    if len(partitions) > ceiling.max_partitions:
+        dropped_partitions = len(partitions) - ceiling.max_partitions
+        skipped = sum(len(part) for part in partitions[ceiling.max_partitions:])
+        partitions = partitions[:ceiling.max_partitions]
+        notes.append(
+            f"{dropped_partitions} partition(s) holding {skipped} statement(s) were not "
+            f"aggregated: the run reached the ceiling of {ceiling.max_partitions} "
+            "partitions."
+        )
+
+    partial: list[tuple[str, tuple[Anchor, ...], int, tuple[int, ...]]] = []
+    per_partition_dropped = 0
+    for index, part in enumerate(partitions):
+        folded, dropped = _fold(
+            tuple((item.text, (item.anchor,), 1, (index,)) for item in part),
+            scope,
+            ceiling.max_per_partition,
+        )
+        per_partition_dropped += dropped
+        partial.extend(
+            (item.text, item.anchors, item.support, item.partitions) for item in folded
+        )
+    if per_partition_dropped:
+        notes.append(
+            f"{per_partition_dropped} partial result(s) were cut by the per-partition "
+            f"ceiling of {ceiling.max_per_partition}."
+        )
+
+    results, final_dropped = _fold(tuple(partial), scope, ceiling.max_results)
+    if final_dropped:
+        notes.append(
+            f"{final_dropped} aggregated statement(s) were cut by the result ceiling of "
+            f"{ceiling.max_results}."
+        )
+    stages = (
+        AggregationStage(
+            name="partition",
+            inputs=len(statements),
+            outputs=sum(len(part) for part in partitions),
+            dropped=dropped_partitions,
+        ),
+        AggregationStage(
+            name="fold-partition",
+            inputs=sum(len(part) for part in partitions),
+            outputs=len(partial),
+            dropped=per_partition_dropped,
+        ),
+        AggregationStage(
+            name="fold-final",
+            inputs=len(partial),
+            outputs=len(results),
+            dropped=final_dropped,
+        ),
+    )
+    return AggregationOutcome(
+        results=tuple(results),
+        stages=stages,
+        partition_count=len(partitions),
+        notes=tuple(notes),
+    )
