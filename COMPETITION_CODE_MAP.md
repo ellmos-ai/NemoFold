@@ -90,3 +90,11 @@ and D-035 rights evaluated in the mail path with recipient classes and a
 class-break rule - is captured in the commits of the WP-DOCSERV-2 series. No test
 in that series reaches the network or opens a mail socket; real transmission
 remains a user gate.
+Wave four - the reference check that quotes what answers each item and refuses to
+judge the document, the two-reading rater race with percent agreement and Cohen's
+kappa side by side, guide and wiki composition on the existing primitives, pattern
+mining over the staged aggregation, and the optional report-forge adapter for filling
+.docx templates - is captured in the commits of the WP-FINISH-1 series. report-forge
+is a dependency behind the `templates` extra and is not vendored; it is pinned to a
+commit because the repository publishes no release tags. The synthetic questionnaire
+and log fixtures are invented in full and say so in their first line.

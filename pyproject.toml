@@ -39,6 +39,13 @@ templates = [
 nemofold = "nemofold.cli:main"
 nemofold-mcp = "nemofold.mcp_server:main"
 
+[tool.hatch.metadata]
+# The templates extra points at a git commit, which the backend refuses to write
+# into metadata unless this says so. The consequence is worth stating plainly:
+# a distribution carrying a direct reference cannot be uploaded to PyPI, so this
+# repository stays installable from source and from git, not from the index.
+allow-direct-references = true
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/nemofold"]
 

@@ -406,6 +406,51 @@ zurück, was ein Lauf in eine Quittung schreiben könnte. NemoFold schreibt die
 druckfertige Datei plus den genauen Befehl und sagt, dass das Drucken Ihr Schritt
 ist.
 
+## Prüfen, vergleichen, verfassen
+
+Welle vier ergänzt die Workflows, die etwas *gegen* etwas anderes lesen, und
+jene, die aus einem Bestand ein Dokument machen, das man weitergibt.
+
+**Reference Check** vergleicht Ihre Dokumente mit einer erklärten Checkliste und
+zitiert die Zeile, die jeden Punkt beantwortet. Vorhanden heißt zitiert, denn
+ein Haken ohne Zitat ist eine Meinung; fehlende Punkte stehen mit den Begriffen
+da, nach denen gesucht wurde — so sehen Sie, ob überhaupt das Richtige gesucht
+wurde, bevor Sie schließen, dass es fehlt. Der Bericht sagt vorhanden oder
+fehlend und nie, ob ein Dokument richtig, gültig, ausreichend oder rechtmäßig
+ist; ob ein fehlender Punkt zählt, ist eine Frage für jemanden mit der nötigen
+Qualifikation. Drei Raster liegen als Ausgangspunkte bei, darunter eines für die
+Prüfung eines Fahrtenplans — wo der übliche Befund ist, dass der Plan nie gesagt
+hat, was er nicht tun wird.
+
+**Rater Race** codiert denselben Bestand zweimal und zeigt, wo die beiden
+Lesarten auseinandergehen. Zwei Zahlen, nie eine: Prozentuale Übereinstimmung
+schmeichelt jedem Schema, in dem ein Code dominiert — zwei Codierer, die neunzig
+Prozent mit „sonstiges" belegen, sind sich zu neunzig Prozent einig und sagen
+damit nichts. Cohens Kappa steht daneben, und wo Kappa undefiniert ist, sagt der
+Bericht das, statt eine Zahl zu drucken, die als Ergebnis gelesen würde. Die
+Abweichungen sind das Lesenswerte: Sie markieren, wo das Codierschema mehrdeutig
+ist, nicht wo ein Codierer falsch lag. Der Zellvergleich geht als Arbeitsmappe
+heraus.
+
+**Guide Compose** faltet einen Ordner zu einem Leitfaden, der seine Dokumente
+ersetzt — jeder Absatz bleibt eine zitierte Zeile mit ihrer Quelle, und die
+gefalteten Wiederholungen werden gezählt. **Wiki Export** schreibt denselben
+Bestand als eine Seite je Dokument plus Index und trägt jedes Dokument
+unverändert: Ein Wiki, dessen Seiten ihren Dateien widersprechen, ist schlimmer
+als keines. **Pattern Mining** lässt die gestufte Aggregation über einen Stapel
+Protokolle laufen und meldet, welche Zeilen wiederkehren, wie oft und woher;
+unterhalb der Schwelle wird nichts gemeldet, denn eine Liste, in der alles ein
+Muster ist, ist eine Liste, in der nichts eins ist. Eine wiederkehrende Zeile
+ist eine Tatsache über diesen Bestand, nie eine Regel über die Welt.
+
+**Document Compose** füllt Ihre eigene .docx-Vorlage über report-forge, ein
+optionales Extra: Vorlagen zu füllen ist ein eigener Beruf mit eigenem
+angesammeltem Wissen, also liegt hier kein Zeilencode davon und nur seine
+Finish-Stufe wird aufgerufen. Ohne das Extra endet ein Lauf blockiert mit dem
+genauen Installationsbefehl statt mit einem Importfehler. **Mail Merge** ist
+dieselbe Stufe je Empfänger aus Ihrem Kontaktbestand, jedes Dokument benannt
+nach der Person, für die es ist.
+
 ## Das Captain's Desk fragen
 
 Die Übersicht der Konsole beginnt mit dem Captain's Desk: ein einfacher Satz hinein,

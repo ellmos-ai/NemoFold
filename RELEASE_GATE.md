@@ -1,17 +1,20 @@
 # Public release gate
 
-Gate date: 2026-08-31
+Gate date: 2026-09-01
 
 ## Local acceptance
 
 - `python -m ruff check src tests`: pass
-- `python -m mypy src`: pass for 33 source files
-- `python -m pytest -q`: 182 passed, one Windows privilege-dependent symlink test skipped
+- `python -m mypy src`: pass for 64 source files
+- `python -m pytest -q`: 737 passed, one Windows privilege-dependent symlink test skipped
+- Every registered job contract runs end to end: all 34 names in `SUPPORTED_WORKFLOWS`
+  reach either a completed or a blocked outcome with a stated reason, write nothing
+  outside their output directory, and leave the read corpus unchanged.
 - `python -m compileall -q src tests`: pass
 - `node --check src/nemofold/web/app.js`: pass
 - `python -m build`: source and wheel distributions built
 - `git diff --check`: pass
-- Ruff format check for all 13 changed Python source and test files: pass
+- Ruff format check for the Python files changed in this slice: pass
 - Local Token Factory preflight over the immutable synthetic package: pass with
   `network_called=false`, `transfer_performed=false`, and `cloud_proof=false`; API key,
   current provider prices, explicit user approval, model-catalog readback, and the real
@@ -43,8 +46,13 @@ Gate date: 2026-08-31
   monthly spend limit before producing a review result; no source file was changed by
   that incomplete attempt, and no Fable pass is claimed for this provider slice.
 
-The repository-wide format check is not asserted because 21 unchanged pre-existing
-files are outside the current formatting slice.
+The repository-wide format check is not asserted: 76 unchanged pre-existing files are
+outside the current formatting slice, and reformatting them would bury this slice's
+changes in unrelated churn.
+
+`python -m build` produces a distribution carrying a direct git reference, which PyPI
+refuses to accept. NemoFold is installable from source and from git; publishing to the
+index would first require the optional templates dependency to be released there.
 
 ## Privacy and security acceptance
 

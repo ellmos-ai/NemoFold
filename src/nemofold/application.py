@@ -235,6 +235,29 @@ def prepare_nemoclaw_package(
     return package
 
 
+def _failure_reason(exc: BaseException) -> str:
+    """The error a person reads when a run fails.
+
+    A message we wrote ourselves is a sentence about the job - which parameter
+    is missing, which rule does not parse - and repeating it is the difference
+    between a fixable mistake and "workflow_error:ValueError". A message from
+    somewhere else may quote whatever it happened to be handed, so only the
+    class name goes into the report, and the traceback stays in the log.
+    """
+    if isinstance(exc, NotImplementedError):
+        return str(exc)
+    frame = exc.__traceback__
+    origin = ""
+    while frame is not None:
+        origin = str(frame.tb_frame.f_globals.get("__name__", ""))
+        frame = frame.tb_next
+    label = f"workflow_error:{type(exc).__name__}"
+    message = " ".join(str(exc).split())
+    if message and (origin == "nemofold" or origin.startswith("nemofold.")):
+        return f"{label}: {message[:400]}"
+    return label
+
+
 class WorkflowBlocked(RuntimeError):
     def __init__(
         self,
@@ -2985,11 +3008,7 @@ def _complete_running_job(
         ledger.update(blocked)
         return JobCommandResult(blocked, _report_path(job, run_id))
     except Exception as exc:
-        reason = (
-            str(exc)
-            if isinstance(exc, NotImplementedError)
-            else f"workflow_error:{type(exc).__name__}"
-        )
+        reason = _failure_reason(exc)
         failed = replace(
             running,
             status=RunStatus.FAILED,

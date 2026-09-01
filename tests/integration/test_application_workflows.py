@@ -518,3 +518,51 @@ def test_contact_monitor_keeps_source_quotes_and_never_deletes(tmp_path) -> None
     assert snapshot["candidates"][0]["evidence"][0]["quote"].startswith(
         "Alice Example"
     )
+
+
+# --------------------------------------------------------------------------- #
+# A failure says what went wrong, when the sentence is one we wrote
+# --------------------------------------------------------------------------- #
+
+
+def test_a_failed_run_repeats_the_message_the_workflow_raised(tmp_path) -> None:
+    current = job(
+        tmp_path,
+        "dossier",
+        parameters={"queries": ["Praxis Nord"], "formats": ["md"]},
+    )
+    (tmp_path / "documents" / "note.txt").write_text("Eine Notiz.", encoding="utf-8")
+
+    result = run_job(current, config(tmp_path), run_id="dossier_missing_subject")
+
+    # "workflow_error:ValueError" alone leaves the reader guessing at a mistake
+    # they could have corrected in a second.
+    assert result.report.status.value == "failed"
+    assert result.report.errors == (
+        "workflow_error:ValueError: a dossier needs a declared subject",
+    )
+
+
+def test_a_message_from_outside_the_project_is_reported_by_class_only() -> None:
+    from nemofold.application import _failure_reason
+
+    def raise_from_stdlib() -> None:
+        int("keine zahl, sondern etwas aus einem dokument")
+
+    try:
+        raise_from_stdlib()
+    except ValueError as exc:
+        reason = _failure_reason(exc)
+
+    # A stdlib message quotes whatever it was handed, which here is document
+    # text; the report says the class and the log keeps the traceback.
+    assert reason == "workflow_error:ValueError"
+    assert "dokument" not in reason
+
+
+def test_a_not_implemented_workflow_still_names_itself() -> None:
+    from nemofold.application import _failure_reason
+
+    reason = _failure_reason(NotImplementedError("workflow_not_implemented:erfunden"))
+
+    assert reason == "workflow_not_implemented:erfunden"

@@ -29,6 +29,19 @@ All notable changes to NemoFold are documented here.
   showing the routed Analysis workspace while preserving the no-burn-in and no-upload
   approval boundary.
 
+- Grow the shared job contract to thirty-four workflows, adding the case chronicle,
+  structured and gated-web sources, delivery and completeness checks, and the checking
+  and composing set: reference check, rater race, guide compose, wiki export, pattern
+  mining, and template-filled documents and mail merges.
+- Quote the line that answers each checklist item and never judge the document; report
+  percent agreement and Cohen's kappa side by side, and say when kappa is undefined.
+- Fill .docx templates through report-forge as an optional `templates` extra rather than
+  reimplementing it, and name the install command instead of failing on an import.
+- Repeat the message a workflow raised in the run report, so a failed run says which
+  parameter is missing instead of only `workflow_error:ValueError`.
+- Run every registered contract end to end in the test suite, so a declared workflow
+  without an executor fails a gate rather than a user.
+
 ## 0.1.0 - 2026-08-30
 
 - Eight local-first document and folder workflows behind one strict job contract.

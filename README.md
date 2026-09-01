@@ -381,6 +381,47 @@ program is registered for its type returns nothing a run could put in a receipt,
 so NemoFold writes the print-ready file plus the exact command and says the
 printing is your step.
 
+## Checking, comparing, composing
+
+Wave four adds the workflows that read something *against* something else, and
+the ones that turn a corpus into a document somebody hands over.
+
+**Reference Check** compares your documents against a declared checklist and
+quotes the line that answers each item. Present means quoted, because a
+checkmark without a quote is an opinion; missing items are listed with the terms
+that were looked for, so you can see whether the check searched for the right
+thing before concluding the document lacks it. It says present or absent and
+never that a document is correct, valid, sufficient or lawful - whether a
+missing item matters is a question for somebody qualified to answer it. Three
+grids ship as starting points, including one that reviews a voyage plan, where
+the usual finding is that the plan never said what it would not do.
+
+**Rater Race** codes the same material twice and shows where the two readings
+part. Two numbers, never one: percent agreement flatters any scheme where a
+single code dominates - two raters calling ninety per cent of items "other"
+agree ninety per cent of the time while telling you nothing - so Cohen's kappa
+stands beside it, and where kappa is undefined it says so instead of printing a
+number that would be read as a result. The disagreements are the output worth
+reading: they mark where the coding scheme is ambiguous, not where a rater was
+wrong. The cell diff exports as a workbook.
+
+**Guide Compose** folds a folder into one guide that stands in for its
+documents, with every paragraph still a quoted line naming its source and a
+count of the repeats it folded. **Wiki Export** writes the same corpus as one
+page per document plus an index, carrying each document unchanged - a wiki whose
+pages disagree with their files is worse than no wiki. **Pattern Mining** runs
+the staged aggregation over a pile of logs and reports which lines recur, how
+often and from where; below the support threshold nothing is reported, because a
+list where everything is a pattern is a list where nothing is. A recurring line
+is a fact about that corpus, never a rule about the world.
+
+**Document Compose** fills your own .docx template through report-forge, which
+is an optional extra: filling templates is a separate job with its own
+accumulated knowledge, so none of its code lives here and only its finish stage
+is called. Without the extra a run ends blocked with the exact install command
+rather than an import error. **Mail Merge** is the same stage once per recipient
+from your contact book, each document named after the person it is for.
+
 ## Ask the Captain's Desk
 
 The console's overview opens with the Captain's Desk: one plain sentence in, a chain of

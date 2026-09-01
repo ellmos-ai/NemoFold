@@ -821,3 +821,7 @@ def _print_demo_summary(report: RunReport, output_root: Path) -> None:
             sort_keys=True,
         )
     )
+
+
+if __name__ == "__main__":  # pragma: no cover - module entry point
+    raise SystemExit(main())
