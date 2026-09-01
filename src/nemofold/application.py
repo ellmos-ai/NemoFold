@@ -149,6 +149,10 @@ class ExecutionConfig:
     # Searching the web and sending chunks to a model are different permissions:
     # one leaves with a question a person wrote, the other with their documents.
     web_search_allowed: bool = False
+    # Where the policy register lives. Named rather than derived from the output
+    # path: guessing at a layout is how a run silently reads the wrong register,
+    # or none at all, and reports neither.
+    policy_root: str = ""
 
     def __post_init__(self) -> None:
         if (
@@ -1472,11 +1476,34 @@ def _execute_mail_to_case(
     )
 
 
+def _recipient_policy(config: ExecutionConfig | None) -> dict[str, object]:
+    """The recipient_classes policy from the register, if a register is named.
+
+    Who may be written to under which right belongs in one place, not retyped
+    into every job. A job may still narrow it; nothing here can widen it.
+    """
+    if config is None or not config.policy_root:
+        return {}
+    try:
+        from .policies import KIND_RECIPIENTS, PolicyStore
+
+        store = PolicyStore(Path(config.policy_root), config.allowed_roots)
+        for policy in store.list():
+            if policy["kind"] == KIND_RECIPIENTS and policy["body"]:
+                body = policy["body"]
+                assert isinstance(body, dict)
+                return body
+    except (OSError, PermissionError, ValueError):
+        return {}
+    return {}
+
+
 def _execute_controlled_email(
     job: JobEnvelope,
     inventory: InventoryResult,
     *,
     run_id: str,
+    config: ExecutionConfig | None = None,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     result = build_controlled_draft(
         inventory.records, job.output_dir, job.parameters, run_id=run_id
@@ -1490,7 +1517,8 @@ def _execute_controlled_email(
     recipients = tuple(str(item) for item in job.parameters.get("to", []))
     contacts: tuple[Any, ...] = ()
     contact_notes: tuple[str, ...] = ()
-    book = job.parameters.get("contact_book")
+    register = _recipient_policy(config)
+    book = job.parameters.get("contact_book") or register.get("contact_book")
     if isinstance(book, str) and book.strip():
         try:
             contacts, contact_notes = read_contacts(book)
@@ -1499,7 +1527,9 @@ def _execute_controlled_email(
     decided = resolve_recipients(
         recipients,
         contacts,
-        class_rights_from(job.parameters.get("recipient_class_rights")),
+        class_rights_from(
+            job.parameters.get("recipient_class_rights") or register.get("class_rights")
+        ),
         declared_right=str(job.parameters.get("rights", "draft_only")),
     )
     adapter: OutboundAdapter = _OUTBOUND_ADAPTERS.get(run_id) or SmtpAdapter()
@@ -1520,6 +1550,7 @@ def _execute_controlled_email(
         "send_requested": send_requested,
         "mail_adapter_configured": ready,
         "mail_adapter": adapter.name,
+        "recipient_policy_used": bool(register),
         "contact_notes": list(contact_notes),
         **decision.as_metadata(),
     }
@@ -2120,8 +2151,11 @@ def _dispatch_workflow(
     inventory: InventoryResult,
     *,
     run_id: str,
+    config: ExecutionConfig | None = None,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     validate_workflow_parameters(job)
+    if job.workflow == "controlled_email":
+        return _execute_controlled_email(job, inventory, run_id=run_id, config=config)
     if job.workflow == "bundle_export":
         return _execute_bundle(job, inventory)
     if job.workflow == "folder_digest":
@@ -2728,6 +2762,43 @@ def _execute_print_action(
         raise ValueError(
             "print_action needs one approved source; name it with source_id"
         )
+    if not wanted and len(records) > 1:
+        # Printing the first of several is a choice this run has no basis for,
+        # and the wrong document is not something a receipt would catch.
+        question = Question(
+            field="source_id",
+            prompt="Welches Dokument soll druckfertig vorbereitet werden?",
+            why=(
+                f"Der freigegebene Ordner enthält {len(records)} Dokumente, und ein "
+                "beliebiges davon auszuwählen wäre geraten."
+            ),
+            kind="choice",
+            choices=tuple(record.source_id for record in records[:20]),
+        )
+        payload = needs_input_payload((question,), workflow=job.workflow)
+        raise WorkflowBlocked(
+            ("needs_user_input:source_id",),
+            actions=("print_needs_user_input",),
+            artifacts=(
+                write_text_artifact(
+                    Path(job.output_dir) / f"{run_id}.needs-user-input.json",
+                    json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False)
+                    + "\n",
+                    "needs-user-input",
+                ),
+            ),
+            coverage=compute_coverage(
+                all_source_ids=(record.source_id for record in inventory.records),
+                read_source_ids={},
+                cited_source_ids=set(),
+            ),
+            metadata={
+                "needs_user_input": True,
+                "question_count": 1,
+                "candidate_count": len(records),
+                "outcome_note": payload["outcome_note"],
+            },
+        )
     target = records[0]
     note, metadata = write_print_package(Path(job.output_dir), run_id, target.path)
     coverage = compute_coverage(
@@ -2899,6 +2970,7 @@ def _complete_running_job(
             job,
             inventory,
             run_id=run_id,
+            config=config,
         )
     except WorkflowBlocked as exc:
         blocked = replace(

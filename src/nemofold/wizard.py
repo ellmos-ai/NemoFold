@@ -30,6 +30,13 @@ WORKFLOW_ORDER = {
     "daily_arrivals": 55,
     "version_resolver": 60,
     "contact_monitor": 70,
+    "reference_check": 94,
+    "rater_race": 95,
+    "pattern_mining": 96,
+    "guide_compose": 97,
+    "wiki_export": 98,
+    "document_compose": 99,
+    "mail_merge_compose": 100,
     "web_research": 88,
     "dossier": 90,
     "bundle_completeness_check": 92,
@@ -58,6 +65,13 @@ HANDOFFS = {
 }
 
 WORKFLOW_TITLES = {
+    "reference_check": "Reference Check",
+    "rater_race": "Rater Race",
+    "guide_compose": "Guide Compose",
+    "wiki_export": "Wiki Export",
+    "pattern_mining": "Pattern Mining",
+    "document_compose": "Document Compose",
+    "mail_merge_compose": "Mail Merge",
     "web_research": "Web Research",
     "dossier": "Dossier",
     "bundle_completeness_check": "Completeness Check",
@@ -87,6 +101,36 @@ WORKFLOW_TITLES = {
 }
 
 WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
+    "reference_check": (
+        # "prüf" alone is far too greedy in German: it catches "prüfe neue Files
+        # im Ordner", which is a folder routine and not a checklist comparison.
+        "checkliste", "abgleich mit", "bescheid prüfen", "bescheid pruefen",
+        "formal prüfen", "formal pruefen", "enthält alles", "gegen die vorgaben",
+        "vollständigkeit des schreibens",
+    ),
+    "rater_race": (
+        "doppelt codier", "zwei modelle", "übereinstimmung", "uebereinstimmung",
+        "interrater", "codieren lassen", "fragebögen auswerten", "fragebogen auswerten",
+    ),
+    "guide_compose": (
+        "leitfaden", "handbuch", "eine anleitung aus", "zusammenfassen zu einem",
+        "ersetzt die dokumente",
+    ),
+    "wiki_export": (
+        "wiki", "nachschlagewerk", "seitenstruktur", "als seiten",
+    ),
+    "pattern_mining": (
+        "muster", "wiederkehrend", "was passiert immer", "häufige", "haeufige",
+        "protokolle auswerten", "abläufe erkennen",
+    ),
+    "document_compose": (
+        "vorlage füllen", "vorlage ausfüllen", "docx erzeugen", "aus der vorlage",
+        "serienbrief vorlage",
+    ),
+    "mail_merge_compose": (
+        "serienbrief", "an alle gäste", "an alle kontakte", "einladungen",
+        "je empfänger ein",
+    ),
     "web_research": (
         "recherchier", "recherche", "im internet", "im netz", "online suchen",
         "web suchen", "nachschlagen", "such im web", "research",
@@ -486,6 +530,34 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
 
 def _why(workflow: str) -> str:
     return {
+        "reference_check": (
+            "Compares the documents against a declared checklist and quotes the line "
+            "that answers each item. It never says whether the document is correct."
+        ),
+        "rater_race": (
+            "Codes the same material twice and shows where the two readings part, with "
+            "percent agreement and kappa side by side."
+        ),
+        "guide_compose": (
+            "Folds the folder into one guide whose every paragraph is still a quoted "
+            "line with its source, and counts the repeats it folded."
+        ),
+        "wiki_export": (
+            "Writes one page per document plus an index, carrying each document "
+            "unchanged rather than summarising it."
+        ),
+        "pattern_mining": (
+            "Reports which lines recur across a large set, how often and from where. "
+            "Recurring is a fact about the corpus, not a rule."
+        ),
+        "document_compose": (
+            "Fills your own .docx template through the optional template engine, and "
+            "names the missing extra rather than failing on an import."
+        ),
+        "mail_merge_compose": (
+            "Runs the same template once per recipient from your contact book, naming "
+            "each document after the person it is for."
+        ),
         "web_research": (
             "Searches the open web behind four separate gates and keeps only what came "
             "back with an address. Nothing is sent until you approve that call."
@@ -596,6 +668,21 @@ def _why(workflow: str) -> str:
 
 
 def parameters_for(workflow: str, text: str) -> dict[str, Any]:
+    if workflow == "reference_check":
+        return {"formats": ["md"], "reference_grid": "bescheid_formal",
+                "require_complete": False}
+    if workflow == "rater_race":
+        # The scheme stays empty: codes this planner invented would be somebody
+        # else's categories applied to your material.
+        return {"formats": ["md"], "coding_scheme": {}, "scan_labels": []}
+    if workflow == "guide_compose":
+        return {"formats": ["md"], "dedupe_scope": "normalized"}
+    if workflow == "wiki_export":
+        return {"wiki_dir": ""}
+    if workflow == "pattern_mining":
+        return {"formats": ["md"], "min_support": 3, "focus_terms": []}
+    if workflow in {"document_compose", "mail_merge_compose"}:
+        return {"template_path": "", "fields": {}, "basename": "dokument"}
     if workflow == "web_research":
         # Queries stay empty until a person writes them: a query this planner
         # invented would be a question they never asked.

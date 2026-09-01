@@ -335,3 +335,46 @@ def test_a_research_plan_writes_no_query_of_its_own() -> None:
     # A query this planner invented would be a question the person never asked.
     assert step.job["parameters"]["queries"] == []
     assert "approve that call" in step.why
+
+
+# --------------------------------------------------------------------------- #
+# Wave four: the last intents, and the one that was too greedy
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize(
+    ("sentence", "expected"),
+    [
+        ("gleich den bescheid mit der checkliste ab", "reference_check"),
+        ("lass die fragebögen doppelt codieren und vergleich das", "rater_race"),
+        ("mach aus dem ordner einen leitfaden", "guide_compose"),
+        ("exportier den bestand als wiki", "wiki_export"),
+        ("welche abläufe wiederkehrend in den protokollen sind", "pattern_mining"),
+        ("serienbrief an alle gäste aus der vorlage", "mail_merge_compose"),
+    ],
+)
+def test_wave_four_intents_reach_their_workflow(sentence, expected) -> None:
+    plan = plan_voyage(sentence, input_roots=("examples/synthetic-case",))
+
+    assert expected in [step.workflow for step in plan.steps], [
+        step.workflow for step in plan.steps
+    ]
+
+
+def test_a_folder_check_is_still_not_a_checklist_comparison() -> None:
+    plan = plan_voyage("Prüfe neue Files im Ordner", input_roots=("examples/synthetic-home",))
+
+    # "prüf" on its own catches every folder routine, which is why the terms for
+    # a reference check are phrases rather than a stem.
+    assert [step.workflow for step in plan.steps] == ["daily_arrivals"]
+
+
+def test_a_coding_plan_invents_no_categories() -> None:
+    plan = plan_voyage(
+        "lass die fragebögen doppelt codieren", input_roots=("examples/synthetic-survey",)
+    )
+
+    step = next(item for item in plan.steps if item.workflow == "rater_race")
+    # Codes this planner made up would be somebody else's categories applied to
+    # your material.
+    assert step.job["parameters"]["coding_scheme"] == {}

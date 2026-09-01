@@ -1,0 +1,24 @@
+{
+  "description": "Codiert denselben Bestand zweimal und zeigt, wo die beiden Lesarten auseinandergehen — mit Übereinstimmung und Kappa nebeneinander.",
+  "name": "Doppelt codieren und vergleichen",
+  "preset_id": "preset_rater_race",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "coding_scheme und scan_labels vor dem Lauf eintragen.",
+      "parameters": {
+        "coding_scheme": {},
+        "formats": [
+          "md"
+        ],
+        "scan_labels": []
+      },
+      "questions": [],
+      "workflow": "rater_race"
+    }
+  ],
+  "tags": [
+    "review",
+    "document-analysis"
+  ]
+}

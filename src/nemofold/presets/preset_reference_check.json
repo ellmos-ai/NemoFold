@@ -1,0 +1,25 @@
+{
+  "description": "Prüft ein Schreiben gegen die formalen Bestandteile und zeigt, welche Zeile jeden Punkt beantwortet. Sagt nichts darüber, ob das Schreiben richtig ist.",
+  "name": "Checkliste gegen einen Bescheid",
+  "preset_id": "preset_reference_check",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "Eigene Punkte über reference_items statt des Rasters möglich.",
+      "parameters": {
+        "formats": [
+          "md",
+          "pdf"
+        ],
+        "reference_grid": "bescheid_formal",
+        "require_complete": false
+      },
+      "questions": [],
+      "workflow": "reference_check"
+    }
+  ],
+  "tags": [
+    "document-analysis",
+    "review"
+  ]
+}

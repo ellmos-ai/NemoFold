@@ -179,3 +179,85 @@ def test_an_incomplete_bundle_stops_the_chain_there(tmp_path) -> None:
     assert result.report.status is RunStatus.BLOCKED
     assert any("formats_available" in error for error in result.report.errors)
     assert result.report.metadata["failed_checks"] == ["formats_available"]
+
+
+def test_printing_asks_which_document_rather_than_taking_the_first(tmp_path) -> None:
+    documents = tmp_path / "post"
+    documents.mkdir()
+    for name in ("a.md", "b.md", "c.md"):
+        (documents / name).write_text(f"# {name}", encoding="utf-8")
+
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "print_action",
+            "input_roots": [str(documents)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {"formats": ["md"]},
+        },
+        base_dir=tmp_path,
+    )
+    result = run_job(job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="which")
+
+    # Printing the first of several is a choice this run has no basis for, and
+    # the wrong document is not something a receipt would catch.
+    assert result.report.status is RunStatus.BLOCKED
+    assert result.report.metadata["needs_user_input"] is True
+    assert result.report.metadata["candidate_count"] == 3
+    asked = json.loads(
+        (tmp_path / "out" / "which.needs-user-input.json").read_text(encoding="utf-8")
+    )
+    question = asked["questions"][0]
+    assert question["field"] == "source_id"
+    assert question["kind"] == "choice"
+    assert len(question["choices"]) == 3
+
+
+def test_printing_one_named_document_does_not_ask(tmp_path) -> None:
+    documents = tmp_path / "post"
+    documents.mkdir()
+    (documents / "a.md").write_text("# a", encoding="utf-8")
+    (documents / "b.md").write_text("# b", encoding="utf-8")
+
+    listing = run_job(
+        parse_job_payload(
+            {
+                "schema": "nemofold.job.v1",
+                "workflow": "print_action",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+                "privacy_mode": "local_only",
+                "action_mode": "dry_run",
+                "parameters": {},
+            },
+            base_dir=tmp_path,
+        ),
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="ask",
+    )
+    chosen = json.loads(
+        (tmp_path / "out" / "ask.needs-user-input.json").read_text(encoding="utf-8")
+    )["questions"][0]["choices"][0]
+    assert listing.report.status is RunStatus.BLOCKED
+
+    result = run_job(
+        parse_job_payload(
+            {
+                "schema": "nemofold.job.v1",
+                "workflow": "print_action",
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out"),
+                "privacy_mode": "local_only",
+                "action_mode": "dry_run",
+                "parameters": {"source_id": chosen},
+            },
+            base_dir=tmp_path,
+        ),
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="named",
+    )
+
+    assert result.report.status is RunStatus.EXECUTED
+    assert result.report.metadata["printed"] is False

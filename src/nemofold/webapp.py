@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import os
 import threading
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -187,6 +187,14 @@ class WebAppConfig:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "base_dir", Path(self.base_dir).resolve())
+        # The server knows where its policy register is, so runs it starts can
+        # read it instead of each job repeating what the register already says.
+        if not self.execution.policy_root:
+            object.__setattr__(
+                self,
+                "execution",
+                replace(self.execution, policy_root=str(self.base_dir)),
+            )
         if (
             isinstance(self.max_parallel_jobs, bool)
             or not isinstance(self.max_parallel_jobs, int)

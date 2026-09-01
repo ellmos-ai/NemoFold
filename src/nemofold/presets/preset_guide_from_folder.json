@@ -1,0 +1,33 @@
+{
+  "description": "Faltet einen Ordner zu einem Leitfaden, der die Einzeldokumente ersetzt — jede Zeile bleibt zitiert und behält ihre Quelle.",
+  "name": "Leitfaden aus einem Ordner",
+  "preset_id": "preset_guide_from_folder",
+  "schema": "nemofold.voyage-preset.v1",
+  "steps": [
+    {
+      "note": "Ergibt einen Leitfaden plus Bericht in den gewählten Formaten.",
+      "parameters": {
+        "dedupe_scope": "normalized",
+        "formats": [
+          "md",
+          "pdf"
+        ]
+      },
+      "questions": [],
+      "workflow": "guide_compose"
+    },
+    {
+      "note": "Zusätzlich der unveränderte Bestand als begehbares Wiki.",
+      "parameters": {
+        "wiki_dir": ""
+      },
+      "questions": [],
+      "reads_previous_output": false,
+      "workflow": "wiki_export"
+    }
+  ],
+  "tags": [
+    "document-analysis",
+    "reporting"
+  ]
+}

@@ -88,6 +88,8 @@ def _mail_job(tmp_path: Path, book: Path, to: list[str], **parameters):
         "recipient_class_rights": CLASS_RIGHTS,
     }
     payload.update(parameters)
+    # A test may drop a parameter entirely by passing None for it.
+    payload = {key: value for key, value in payload.items() if value is not None}
     return parse_job_payload(
         {
             "schema": "nemofold.job.v1",
@@ -377,3 +379,69 @@ def test_a_job_that_declares_no_right_may_never_send(tmp_path, contact_book) -> 
     assert result.report.status is RunStatus.BLOCKED
     assert "right_is_draft_only" in result.report.errors
     assert adapter.sent == []
+
+
+def test_the_mail_path_reads_the_recipient_policy_from_the_register(
+    tmp_path, contact_book
+) -> None:
+    from nemofold.policies import PolicyStore
+
+    PolicyStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(
+        {
+            "name": "Empfängerklassen",
+            "form": "policy",
+            "kind": "recipient_classes",
+            "statements": ["Familie darf auf Anweisung."],
+            "body": {"contact_book": str(contact_book), "class_rights": CLASS_RIGHTS},
+        }
+    )
+    # The job names neither the book nor the class rights: they live in the
+    # register now, written once instead of retyped into every job.
+    job = _mail_job(
+        tmp_path,
+        contact_book,
+        ["ines@example.invalid"],
+        send_requested=True,
+        action_mode="apply",
+        rights="send_when_ordered",
+        contact_book=None,
+        recipient_class_rights=None,
+    )
+    adapter = MockSmtp()
+    authorize_send("from_register", allowed=True, adapter=adapter)
+    try:
+        result = run_job(
+            job,
+            ExecutionConfig(
+                allowed_roots=(str(tmp_path),),
+                apply_actions_allowed=True,
+                policy_root=str(tmp_path),
+            ),
+            run_id="from_register",
+        )
+    finally:
+        release_send("from_register")
+
+    assert result.report.metadata["recipient_policy_used"] is True
+    assert result.report.status is RunStatus.EXECUTED
+    assert len(adapter.sent) == 1
+
+
+def test_without_a_named_register_the_job_still_decides_alone(tmp_path, contact_book) -> None:
+    job = _mail_job(tmp_path, contact_book, ["ines@example.invalid"], send_requested=True,
+                    action_mode="apply", rights="send_when_ordered")
+    adapter = MockSmtp()
+    authorize_send("no_register", allowed=True, adapter=adapter)
+    try:
+        result = run_job(
+            job,
+            ExecutionConfig(allowed_roots=(str(tmp_path),), apply_actions_allowed=True),
+            run_id="no_register",
+        )
+    finally:
+        release_send("no_register")
+
+    # No register named, so nothing was read from one, and the job's own
+    # parameters still govern.
+    assert result.report.metadata["recipient_policy_used"] is False
+    assert result.report.status is RunStatus.EXECUTED
