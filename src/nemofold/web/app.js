@@ -1258,6 +1258,19 @@ function updateProviderPanel({resetModel = false} = {}) {
     : "The local provider must be running on its loopback endpoint. Privacy mode must remain local_only.";
 }
 
+function fillOverrideProviders(status) {
+  const select = $("libraryOverrideProvider");
+  if (!select) return;
+  for (const provider of status.providers || []) {
+    const option = document.createElement("option");
+    option.value = provider.provider_id;
+    option.textContent = provider.external_transfer
+      ? `${provider.label} · sends off this host`
+      : provider.label;
+    select.append(option);
+  }
+}
+
 function configureProviders(status) {
   publicDemo = status.public_demo === true;
   providerSurfaceEnabled = status.provider_surface_enabled === true;
@@ -1869,6 +1882,163 @@ const governanceCopy = {
   }
 };
 
+let editingPolicy = null;
+let knownPolicies = [];
+
+function policyFormKind() {
+  return $("policyKind").value;
+}
+
+function syncPolicyFormKind() {
+  $("policyRightsRow").hidden = policyFormKind() !== "rights_profile";
+  $("policyBodyRow").hidden = policyFormKind() !== "cleanup_rules";
+}
+
+function resetPolicyForm() {
+  editingPolicy = null;
+  $("policyFormMode").textContent = "NEW ENTRY";
+  $("policyFormTitle").textContent = "Write it down once.";
+  $("policyName").value = "";
+  $("policyDescription").value = "";
+  $("policyStatements").value = "";
+  $("policyKind").value = "custom";
+  $("policyRights").value = "draft_only";
+  $("policyDefault").checked = false;
+  $("policyFormState").textContent = "";
+  syncPolicyFormKind();
+}
+
+function editPolicy(policy) {
+  editingPolicy = policy;
+  $("policyFormMode").textContent = `EDITING ${policy.form.toUpperCase()}`;
+  $("policyFormTitle").textContent = policy.name;
+  $("policyName").value = policy.name;
+  $("policyDescription").value = policy.description || "";
+  $("policyStatements").value = policy.statements.join("\n");
+  $("policyKind").value = policy.kind;
+  if (policy.kind === "rights_profile") {
+    $("policyRights").value = policy.body.rights || "draft_only";
+  }
+  if (policy.kind === "cleanup_rules") {
+    $("policyBody").value = JSON.stringify(policy.body.rules || [], null, 2);
+  }
+  $("policyDefault").checked = policy.applies_by_default === true;
+  $("policyFormState").textContent = "";
+  syncPolicyFormKind();
+  $("policyName").focus();
+}
+
+function policyPayload() {
+  const statements = lines($("policyStatements").value);
+  const payload = {
+    name: $("policyName").value.trim(),
+    // The tab decides the shape: the Rules tab writes rules, Policies writes
+    // rule sets. Nobody has to learn a discriminator to write one sentence.
+    form: currentTab === "rules" ? "rule" : "policy",
+    kind: policyFormKind(),
+    description: $("policyDescription").value.trim(),
+    statements,
+    applies_by_default: $("policyDefault").checked
+  };
+  if (editingPolicy) payload.policy_id = editingPolicy.policy_id;
+  if (payload.kind === "rights_profile") payload.body = {rights: $("policyRights").value};
+  if (payload.kind === "cleanup_rules") payload.body = {rules: JSON.parse($("policyBody").value)};
+  return payload;
+}
+
+async function savePolicy(event) {
+  event?.preventDefault();
+  const state = $("policyFormState");
+  try {
+    const response = await fetch("/api/policies", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(policyPayload())
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    resetPolicyForm();
+    state.textContent = "Saved.";
+    await loadGovernanceRegister();
+  } catch (error) {
+    state.textContent = `Not saved: ${error.message}`;
+  }
+}
+
+async function deletePolicy(policy) {
+  const state = $("policyFormState");
+  try {
+    const response = await fetch("/api/policy-delete", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({policy_id: policy.policy_id})
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    if (editingPolicy && editingPolicy.policy_id === policy.policy_id) resetPolicyForm();
+    state.textContent = `Deleted ${policy.name}.`;
+    await loadGovernanceRegister();
+  } catch (error) {
+    state.textContent = `Not deleted: ${error.message}`;
+  }
+}
+
+async function bindPolicy(policy, voyageId, stepIndex, bound) {
+  const state = $("policyFormState");
+  try {
+    const response = await fetch("/api/policy-bind", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        policy_id: policy.policy_id,
+        target: stepIndex ? "step" : "voyage",
+        voyage_id: voyageId,
+        step_index: stepIndex || null,
+        bound
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    state.textContent = bound ? "Bound." : "Binding released.";
+    await loadGovernanceRegister();
+  } catch (error) {
+    state.textContent = `Not bound: ${error.message}`;
+  }
+}
+
+function renderPolicyBinder(card, policy) {
+  const bindable = libraryEntries.filter((entry) => entry.editable);
+  if (!bindable.length) return;
+  const row = deskLine(card, "div", "policy-binder");
+  const select = document.createElement("select");
+  select.setAttribute("aria-label", `Bind ${policy.name} to a voyage`);
+  for (const entry of bindable) {
+    const option = document.createElement("option");
+    option.value = entry.voyage_id;
+    option.textContent = entry.name;
+    select.append(option);
+  }
+  const step = document.createElement("input");
+  step.type = "number";
+  step.min = "0";
+  step.value = "0";
+  step.setAttribute("aria-label", "Step number, 0 for the whole voyage");
+  const bind = document.createElement("button");
+  bind.type = "button";
+  bind.className = "secondary";
+  bind.textContent = "Bind";
+  bind.addEventListener("click", () =>
+    bindPolicy(policy, select.value, Number(step.value) || 0, true));
+  row.append(select, step, bind);
+  deskLine(row, "small", null, "Step 0 binds the whole voyage.");
+}
+
 function renderPolicyCard(list, policy) {
   const card = deskLine(list, "article", "policy-card");
   card.dataset.form = policy.form;
@@ -1894,6 +2064,28 @@ function renderPolicyCard(list, policy) {
   if (policy.applies_by_default) {
     deskLine(card, "span", "policy-default", "APPLIES BY DEFAULT");
   }
+  const actions = deskLine(card, "div", "policy-actions");
+  for (const [label, handler] of [["Edit", () => editPolicy(policy)],
+                                  ["Delete", () => deletePolicy(policy)]]) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "secondary";
+    button.textContent = label;
+    button.addEventListener("click", handler);
+    actions.append(button);
+  }
+  for (const binding of bindings) {
+    const release = document.createElement("button");
+    release.type = "button";
+    release.className = "secondary";
+    release.textContent = binding.target === "step"
+      ? `Release step ${binding.step_index}`
+      : "Release voyage binding";
+    release.addEventListener("click", () =>
+      bindPolicy(policy, binding.voyage_id, binding.step_index || 0, false));
+    actions.append(release);
+  }
+  renderPolicyBinder(card, policy);
 }
 
 function renderGovernanceRegister(payload) {
@@ -1905,8 +2097,9 @@ function renderGovernanceRegister(payload) {
   const list = $("governanceList");
   list.textContent = "";
   list.setAttribute("role", "list");
+  knownPolicies = payload.policies || [];
   const wanted = currentTab === "rules" ? "rule" : "policy";
-  const shown = (payload.policies || []).filter((item) => item.form === wanted);
+  const shown = knownPolicies.filter((item) => item.form === wanted);
   if (!shown.length) {
     libraryNote(
       list,
@@ -1944,6 +2137,11 @@ async function loadGovernanceRegister() {
     return;
   }
   try {
+    if (!libraryEntries.length && voyageSurfaceEnabled) {
+      const listed = await fetch("/api/voyages");
+      const known = await listed.json();
+      if (listed.ok && known.ok === true) libraryEntries = known.voyages || [];
+    }
     const response = await fetch("/api/policies");
     const payload = await response.json();
     if (!response.ok || payload.ok !== true) {
@@ -1971,6 +2169,7 @@ async function loadStatus() {
     voyageSurfaceEnabled = status.voyage_surface_enabled === true;
     policySurfaceEnabled = status.policy_surface_enabled === true;
     configureProviders(status);
+    fillOverrideProviders(status);
     renderConnectionStatus(status);
     renderCommandBridge(status);
     if (publicDemo) {
@@ -2049,6 +2248,12 @@ if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
 if ($("libraryRefresh")) $("libraryRefresh").addEventListener("click", loadLibrary);
 if ($("governanceRefresh")) {
   $("governanceRefresh").addEventListener("click", loadGovernanceRegister);
+}
+if ($("policyForm")) {
+  $("policyForm").addEventListener("submit", savePolicy);
+  $("policyKind").addEventListener("change", syncPolicyFormKind);
+  $("policyReset").addEventListener("click", resetPolicyForm);
+  syncPolicyFormKind();
 }
 if ($("libraryClose")) {
   $("libraryClose").addEventListener("click", () => { openVoyage = null; renderVoyageDetail(); });
@@ -2328,6 +2533,7 @@ function renderVoyageDetail() {
       deskLine(banner, "small", null, openVoyage.authority_reason);
     }
   }
+  renderVoyageGovernance();
   const list = $("librarySteps");
   list.textContent = "";
   openVoyage.workflows.forEach((workflow, index) => {
@@ -2355,6 +2561,60 @@ function renderVoyageDetail() {
     drop.addEventListener("click", () => removeVoyageStep(index));
     controls.append(drop);
   });
+}
+
+function governanceRow(parent, label, value, warn = false) {
+  const row = deskLine(parent, "div", warn ? "governance-row warn" : "governance-row");
+  deskLine(row, "dt", null, label);
+  deskLine(row, "dd", null, value);
+  return row;
+}
+
+// Rights above draft_only mean this voyage may reach outward. That is a
+// property worth reading before running it, so it is stated in words - the
+// colour is decoration, the sentence is the badge.
+function renderVoyageGovernance() {
+  const panel = $("libraryGovernance");
+  if (!panel) return;
+  panel.textContent = "";
+  const rights = openVoyage.rights || "draft_only";
+  const inherited = openVoyage.rights ? "set on this voyage" : "default";
+  governanceRow(
+    panel,
+    "Outbound rights",
+    `${rights} (${inherited})`,
+    rights !== "draft_only"
+  );
+  if (rights !== "draft_only") {
+    governanceRow(
+      panel,
+      "What that means",
+      "This voyage may send on your behalf once a delivery adapter exists. Until"
+      + " then every step still stops at a draft.",
+      true
+    );
+  }
+  if (openVoyage.tags && openVoyage.tags.length) {
+    governanceRow(panel, "Tags", openVoyage.tags.join(" · "));
+  }
+  if (openVoyage.schedule) {
+    governanceRow(
+      panel,
+      "Standing routine",
+      `${openVoyage.schedule.cadence} at ${openVoyage.schedule.at}`
+      + " · you install the task; NemoFold registers nothing"
+    );
+  }
+  const bound = knownPolicies.filter((policy) =>
+    (policy.bindings || []).some((item) => item.voyage_id === openVoyage.voyage_id));
+  const named = openVoyage.policy_refs || [];
+  if (bound.length || named.length) {
+    governanceRow(
+      panel,
+      "Policies",
+      [...bound.map((policy) => policy.name), ...named].join(" · ")
+    );
+  }
 }
 
 function moveVoyageStep(index, delta) {
@@ -2435,6 +2695,14 @@ function renderVoyageRun(result) {
   const success = result.status === "executed";
   panel.dataset.mode = success ? "calm" : "explain";
   const artifacts = result.steps.reduce((total, step) => total + step.artifact_count, 0);
+  if (result.run_level_override) {
+    deskLine(
+      panel,
+      "p",
+      "run-override-line",
+      `This run used ${result.run_level_override}, chosen for this run only.`
+    );
+  }
   if (success) {
     deskLine(panel, "b", "run-calm", `Done · ${result.steps.length} step(s), ${artifacts} artifacts.`);
     const anchor = document.createElement("button");
@@ -2481,6 +2749,7 @@ function renderVoyageRun(result) {
         + ` (level: ${step.model_level}) · rights ${step.rights}`
     );
     deskLine(row, "small", "run-model-note", step.model_note);
+    if (step.policy_note) deskLine(row, "small", "run-policy-note", step.policy_note);
     if (step.errors && step.errors.length) {
       deskLine(row, "small", "run-errors", step.errors.join(", "));
     }
@@ -2491,15 +2760,25 @@ function renderVoyageRun(result) {
   }
 }
 
+function runOverride() {
+  const provider = $("libraryOverrideProvider")?.value || "";
+  const model = ($("libraryOverrideModel")?.value || "").trim();
+  if (!provider || !model) return null;
+  return {provider, model};
+}
+
 async function runOpenVoyage() {
   const panel = $("libraryRunResult");
   panel.textContent = "";
   libraryNote(panel, "Running…");
   try {
+    const override = runOverride();
+    const request = {voyage_id: openVoyage.voyage_id};
+    if (override) request.model_override = override;
     const response = await fetch("/api/voyage-run", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({voyage_id: openVoyage.voyage_id})
+      body: JSON.stringify(request)
     });
     const result = await response.json();
     if (result.steps === undefined) {

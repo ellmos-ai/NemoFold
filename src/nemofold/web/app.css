@@ -387,3 +387,36 @@ body[data-tab="workflows"] [data-page-tab]:not([data-page-tab~="workflows"]),bod
 .exception-row small{color:#684234;font-size:11px}
 .exceptions-title{margin-top:44px}
 @media(max-width:680px){.area-tabs>span{display:none}.area-tabs a{padding:12px 14px}.exception-row{grid-template-columns:1fr;gap:7px}}
+.policy-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;border:1px solid var(--line-dark);background:var(--surface);padding:16px 15px}
+.policy-form>*{min-width:0}
+.policy-form-head{grid-column:1/-1}
+.policy-form-head h3{margin:5px 0 0;font:400 20px var(--serif)}
+.policy-form label{display:flex;flex-direction:column;gap:5px;color:var(--sea);font:800 8px var(--mono);letter-spacing:.09em;text-transform:uppercase}
+.policy-form label span{color:var(--muted);font:400 9px var(--mono);letter-spacing:0;text-transform:none}
+.policy-form label.wide{grid-column:1/-1}
+.policy-form input,.policy-form select,.policy-form textarea{border:1px solid var(--line-dark);background:var(--white);padding:9px 10px;color:var(--ink);font:12px var(--mono)}
+.policy-form textarea{resize:vertical}
+.policy-default-toggle{grid-column:1/-1;flex-direction:row!important;align-items:center;gap:9px!important;text-transform:none!important;letter-spacing:.02em!important;font:11px var(--mono)!important;color:var(--ink)!important}
+.policy-form-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+#policyFormState{color:var(--muted);font:10px var(--mono)}
+.policy-actions,.policy-binder{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:11px}
+.policy-binder select,.policy-binder input{border:1px solid var(--line-dark);background:var(--white);padding:6px 8px;font:11px var(--mono)}
+.policy-binder input{width:64px}
+.policy-binder small{color:var(--muted);font:9px var(--mono)}
+.library-governance{display:grid;gap:0;margin:14px 0 0;border:1px solid var(--line-dark);background:var(--surface)}
+.governance-row{display:grid;grid-template-columns:minmax(120px,.4fr) 1fr;gap:14px;border-bottom:1px solid var(--line);padding:10px 12px}
+.governance-row:last-child{border-bottom:0}
+.governance-row.warn{border-left:4px solid var(--signal);background:#fff7f3}
+.governance-row dt{color:var(--sea);font:800 8px var(--mono);letter-spacing:.08em;text-transform:uppercase}
+.governance-row dd{margin:0;font-size:11px;overflow-wrap:anywhere}
+.library-run-options{margin-top:14px;border:1px solid var(--line-dark);background:var(--surface);padding:11px 13px}
+.library-run-options summary{cursor:pointer;color:var(--deep);font:800 10px var(--mono);letter-spacing:.05em}
+.run-override-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:12px}
+.run-override-grid>*{min-width:0}
+.run-override-grid label{display:flex;flex-direction:column;gap:5px;color:var(--sea);font:800 8px var(--mono);letter-spacing:.09em;text-transform:uppercase}
+.run-override-grid select,.run-override-grid input{border:1px solid var(--line-dark);background:var(--white);padding:8px 9px;font:12px var(--mono)}
+.run-override-note{grid-column:1/-1;margin:0;color:var(--muted);font:10px/1.5 var(--mono)}
+.run-override-line{margin:8px 0 0!important;color:var(--deep)!important;font:800 10px var(--mono)!important}
+.run-policy-note{display:block;margin-top:3px;color:var(--muted);font:10px var(--mono)}
+.library-schedule{display:block;margin-top:7px!important;color:var(--sea)!important;font:10px/1.45 var(--mono)!important}
+@media(max-width:680px){.policy-form,.run-override-grid{grid-template-columns:1fr}.governance-row{grid-template-columns:1fr;gap:5px}}

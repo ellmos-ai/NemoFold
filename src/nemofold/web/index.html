@@ -243,6 +243,37 @@
         <div><span>DEFAULT OUTBOUND RIGHT</span><b id="governanceDefaultRights">—</b></div>
         <button type="button" id="governanceRefresh" class="secondary">Refresh</button>
       </div>
+      <form id="policyForm" class="policy-form">
+        <div class="policy-form-head">
+          <p class="kicker" id="policyFormMode">NEW ENTRY</p>
+          <h3 id="policyFormTitle">Write it down once.</h3>
+        </div>
+        <label>Name<input id="policyName" maxlength="120" autocomplete="off" placeholder="e.g. Attachments never leave unconfirmed"></label>
+        <label>Kind
+          <select id="policyKind">
+            <option value="custom">custom · read by people only</option>
+            <option value="delivery_rules">delivery_rules · how something is sent</option>
+            <option value="rights_profile">rights_profile · the default outbound right</option>
+            <option value="cleanup_rules">cleanup_rules · consumed by the cleanup step</option>
+          </select>
+        </label>
+        <label class="wide">Description <span>optional</span><input id="policyDescription" maxlength="300" autocomplete="off"></label>
+        <label class="wide" id="policyStatementsRow">Statements <span>one sentence per line · a rule is exactly one</span><textarea id="policyStatements" rows="3"></textarea></label>
+        <label id="policyRightsRow" hidden>Default outbound right
+          <select id="policyRights">
+            <option value="draft_only">draft_only</option>
+            <option value="send_with_confirmation">send_with_confirmation</option>
+            <option value="send_when_ordered">send_when_ordered</option>
+          </select>
+        </label>
+        <label class="wide" id="policyBodyRow" hidden>Cleanup rules <span>strict JSON · a list of suffixes and a target root</span><textarea id="policyBody" rows="3">[{"suffixes": [".txt", ".md"], "target_root": 0}]</textarea></label>
+        <label class="policy-default-toggle"><input id="policyDefault" type="checkbox"> This is what applies when nobody said otherwise</label>
+        <div class="policy-form-actions">
+          <button type="submit" id="policySave">Save</button>
+          <button type="button" id="policyReset" class="secondary">New entry</button>
+          <span id="policyFormState" aria-live="polite"></span>
+        </div>
+      </form>
       <div id="governanceList" class="governance-list" aria-live="polite"></div>
       <div class="section-title exceptions-title">
         <p class="kicker">KNOWN EXCEPTIONS</p>
@@ -573,7 +604,18 @@ Which earlier wording changed?</textarea></label>
           </div>
           <button type="button" id="libraryClose" class="secondary">Close</button>
         </div>
+        <dl id="libraryGovernance" class="library-governance"></dl>
         <div id="librarySteps" class="library-steps" role="list"></div>
+        <details id="libraryRunOptions" class="library-run-options">
+          <summary>Run this once with a different model</summary>
+          <div class="run-override-grid">
+            <label>Provider
+              <select id="libraryOverrideProvider"><option value="">Use the stored setting</option></select>
+            </label>
+            <label>Model<input id="libraryOverrideModel" autocomplete="off" placeholder="qwen3:4b"></label>
+            <p class="run-override-note">This applies to this run only. Stored link and chain settings stay as they are, and a chain declared local-only still refuses an external model instead of quietly allowing it.</p>
+          </div>
+        </details>
         <div class="library-actions">
           <button type="button" id="libraryRun" class="card-open">Run voyage</button>
           <button type="button" id="librarySave" class="secondary">Save changes</button>

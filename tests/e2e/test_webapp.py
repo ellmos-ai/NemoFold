@@ -1599,3 +1599,42 @@ def test_governance_and_library_reads_refuse_a_network_exposed_server(tmp_path) 
 
     # Present but refused over the network, unlike the demo where they are absent.
     assert set(codes.values()) == {403}
+
+
+def test_governance_can_be_written_from_the_surface_it_is_read_on(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        with urlopen(base_url + "/governance?tab=rules", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    # Writing a rule, binding it and taking the binding back are all on the page
+    # that shows the register, not in a separate admin surface.
+    for control in ('id="policyForm"', 'id="policyName"', 'id="policyKind"',
+                    'id="policyStatements"', 'id="policyDefault"', 'id="policySave"'):
+        assert control in html, control
+    for symbol in ("savePolicy", "deletePolicy", "bindPolicy", "renderPolicyBinder",
+                   "editPolicy", "resetPolicyForm"):
+        assert symbol in script, symbol
+    # The tab decides the shape, so nobody has to learn a discriminator.
+    assert 'form: currentTab === "rules" ? "rule" : "policy"' in script
+
+
+def test_a_voyage_states_what_governs_it_and_can_run_once_with_another_model(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        with urlopen(base_url + "/processes?tab=workflows", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    assert 'id="libraryGovernance"' in html
+    assert 'id="libraryRunOptions"' in html
+    assert 'id="libraryOverrideProvider"' in html
+    assert 'id="libraryOverrideModel"' in html
+    # The raised right is stated in words, not only as a coloured row.
+    assert "This voyage may send on your behalf once a delivery adapter exists" in script
+    assert "renderVoyageGovernance" in script
+    assert "runOverride" in script
+    # A per-run choice never rewrites what is stored, and the page says so.
+    assert "This applies to this run only" in html
+    assert "run_level_override" in script
