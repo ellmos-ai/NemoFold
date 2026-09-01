@@ -355,6 +355,57 @@ fraglichen Wochenende, einem fremdbestätigten Alibi, einer Person, die niemand
 bestätigt, und zwei Widersprüchen. Jeder Fall-Chronik-Test läuft darauf, und die Demo
 auch.
 
+## Quellen, Außenwelt und Versand
+
+Welle zwei ergänzt drei Dinge, die ein Dokumenten-Arbeitsplatz irgendwann
+braucht — jedes hinter dem Gate, das dazu passt.
+
+**Strukturierte Quellen.** Eine Datenbankzeile und ein Absatz sind dieselbe Art
+Beleg: etwas, das eine Quelle sagt, an einer Stelle, auf die man zeigen kann.
+SQLite, XLSX und CSV werden in deterministische, beschriftete Zeilen gerendert
+und treten dem Korpus bei, wo Feldextraktion, Entitätenauflösung, Zeitachsen und
+Korroboration sie unverändert lesen — mit der Zeilennummer als Anker. SQLite wird
+schreibgeschützt geöffnet und liest nur die Tabellen, die ein Auftrag benennt;
+eine benannte Tabelle, die nicht in der Datei liegt, wird gemeldet statt still
+übersprungen.
+
+**Das offene Netz.** Suchen ist das Erste hier, das Worte an Fremde schickt.
+Deshalb müssen vier Bedingungen zusammen gelten: Der Server erlaubt es, der
+Aufrufer hat diesen Aufruf freigegeben, der Adapter meldet sich bereit, und die
+Suchanfragen überstehen den Pseudonymisierungs-Preflight. Eine Anfrage mit
+E-Mail-Adresse, Pfad oder Telefonnummer wird abgelehnt, nicht umgeschrieben — eine
+still veränderte Anfrage ist eine, die niemand gestellt hat, und die Antwort
+läse sich, als hätte man sie gestellt. Jedes Ergebnis behält seine Adresse; ein
+Treffer ohne wird verworfen. Der Tavily-Schlüssel wird zur Aufrufzeit aus der
+Umgebung gelesen und steht in keinem Auftrag, keinem Entwurf, keinem
+Bibliothekseintrag und keinem Bericht. Fehlt eine der vier Bedingungen, endet der
+Lauf blockiert — mit allen Gründen auf einmal.
+
+**Versand.** Die D-035-Rechte entscheiden jetzt, statt nur gespeichert zu sein.
+`draft_only` endet beim Entwurf, `send_with_confirmation` erreicht den Adapter
+erst, wenn der exakte Freigabedigest zurückkommt, `send_when_ordered` auf die
+Anweisung hin. Ein Recht gehört zu einer Nachricht *an jemanden*, also kommen die
+Empfängerklassen aus Ihrem Kontaktbestand — und eine Nachricht über zwei Klassen
+hinweg wird von der strengeren regiert. Eine Mail an eine Familienadresse und
+einen öffentlichen Verteiler unter der Familienregel ist genau der Fehler, den
+das verhindert, und es ist die Sorte, die hinterher niemand bemerkt. Ein
+Empfänger, den niemand klassifiziert hat, gilt als der strengste Fall, und ein
+Auftrag ohne eigenes erklärtes Recht darf nie senden, was auch immer die Klasse
+erlauben würde.
+
+Echter Versand bleibt aus. Ein konfigurierter SMTP-Adapter verweigert in diesem
+Build weiterhin, denn einen Socket zu öffnen, ohne dass ein Mensch diesen Server
+freigegeben hat, ist der eine Schritt, den NemoFold nicht von allein tut — und
+der Status nennt, welches Stück fehlt, statt allgemeiner Unverfügbarkeit.
+
+Zwei kleinere Stücke runden es ab. `delivery_rules` ist eine Policy, die
+Artefakte in erklärte Ordner ablegt, geprüft gegen dieselben freigegebenen Roots
+wie jeder andere Schreibvorgang. Und gedruckt wird bewusst nicht für Sie: Eine
+Datei an das für ihren Typ registrierte Programm zu übergeben liefert nichts
+zurück, was ein Lauf in eine Quittung schreiben könnte. NemoFold schreibt die
+druckfertige Datei plus den genauen Befehl und sagt, dass das Drucken Ihr Schritt
+ist.
+
 ## Das Captain's Desk fragen
 
 Die Übersicht der Konsole beginnt mit dem Captain's Desk: ein einfacher Satz hinein,

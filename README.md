@@ -335,6 +335,52 @@ invented in its first line - with a blue VW Golf, a questionable weekend, one
 corroborated alibi, one person nothing outside confirms, and two contradictions. Every
 Case Chronicle test runs on it, and so does the demo.
 
+## Sources, the outside world, and sending
+
+Wave two adds three things a document workspace eventually needs, each behind the
+gate that fits it.
+
+**Structured sources.** A database row and a paragraph are the same kind of
+evidence: something a source says, at a place you can point at. SQLite, XLSX and
+CSV are rendered into deterministic labelled lines and join the corpus, where
+field extraction, entity resolution, timelines and corroboration read them
+unchanged with the line number as the anchor. SQLite is opened read-only and
+reads only the tables a job declares; a declared table that is not in the file is
+reported rather than silently skipped.
+
+**The open web.** Searching is the first thing here that sends words to a
+stranger, so four conditions have to hold together: the server allows it, the
+caller approved this call, the adapter reports itself ready, and the queries
+survive a pseudonymization preflight. A query carrying an email address, a path
+or a phone number is refused rather than rewritten - a silently edited query is
+one the person never asked, and they would read the answer as if they had. Every
+result keeps the address it came from, and a hit without one is dropped. The
+Tavily key is read from the environment at call time and appears in no job,
+draft, library entry or report. Without any of the four, the run ends blocked
+with all the reasons named at once.
+
+**Sending.** D-035 rights now decide rather than merely being stored. draft_only
+stops at the draft, send_with_confirmation reaches the adapter only after the
+exact approval digest comes back, and send_when_ordered reaches it on the order.
+A right is a property of a message *to somebody*, so recipient classes come from
+your contact book - and a message addressed across two classes is governed by the
+strictest of them. One mail to a family address and a public list under the
+family rule is the mistake this prevents, and it is the kind nobody notices
+afterwards. A recipient nobody classified counts as the strictest case, and a job
+declaring no right of its own may never send whatever the class would allow.
+
+Real transmission stays off. A configured SMTP adapter still refuses on this
+build, because wiring a socket without a person having allowed this server is the
+one step NemoFold does not take on its own, and the status names which piece is
+missing rather than reporting a general unavailability.
+
+Two smaller pieces round it out. delivery_rules is a policy that files artifacts
+into declared folders, checked against the same approved roots as every other
+write. And printing is deliberately not done for you: handing a file to whatever
+program is registered for its type returns nothing a run could put in a receipt,
+so NemoFold writes the print-ready file plus the exact command and says the
+printing is your step.
+
 ## Ask the Captain's Desk
 
 The console's overview opens with the Captain's Desk: one plain sentence in, a chain of

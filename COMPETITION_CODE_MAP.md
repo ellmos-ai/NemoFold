@@ -81,3 +81,12 @@ outside confirmation on separate lines, deterministic claim-safe SVG, seven comp
 workflows and the fictional synthetic case they are all tested on - is captured in the
 commits of the WP-CHRONICLE-1 series. The synthetic case in `examples/synthetic-case/`
 is invented in full; every document says so in its first line.
+Wave two of the Document Services - structured local sources read as anchored
+corpus text, a gated web-research schiene with a Tavily adapter that is only ever
+exercised against local mocks in tests, delivery rules that file artifacts inside
+the approved roots, a byte-stable workbook writer, a print-ready export that does
+not invoke a printer, structured needs_user_input, a bundle completeness check,
+and D-035 rights evaluated in the mail path with recipient classes and a
+class-break rule - is captured in the commits of the WP-DOCSERV-2 series. No test
+in that series reaches the network or opens a mail socket; real transmission
+remains a user gate.

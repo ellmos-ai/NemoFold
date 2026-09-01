@@ -1659,3 +1659,21 @@ def test_the_workflows_tab_leads_with_what_the_product_is_for(tmp_path) -> None:
     assert "<h2 id=\"boundaryTitle\">Reasoning may travel. Authority does not.</h2>" not in html
     assert "Reasoning may travel. Authority does not: a worker receives selected" in html
     assert "Reasoning may travel; authority does not." in html
+
+
+def test_the_registry_offers_every_contract_the_server_supports(tmp_path) -> None:
+    from nemofold.job_io import SUPPORTED_WORKFLOWS
+
+    with running_server(tmp_path) as base_url:
+        with urlopen(base_url + "/processes?tab=registry", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    # The registry claims to hold every contract, so a contract without a card
+    # or without an option would be one this claim quietly excludes.
+    for workflow in sorted(SUPPORTED_WORKFLOWS):
+        assert f">{workflow}</option>" in html, workflow
+        assert f"  {workflow}: {{\n    title:" in script.replace("\r\n", "\n"), workflow
+    assert "const registryGroups" in script
+    assert "NOT YET GROUPED" in script

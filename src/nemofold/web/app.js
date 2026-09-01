@@ -202,6 +202,21 @@ const workflowDefaults = {
     parameters: {formats: ["md"], terms: [], partition_size: 20, dedupe_scope: "normalized"},
     hint: "Corpus Query answers one narrow question over a large bundle through staged aggregation. Every match is a quoted sentence with its sources; no match means the corpus does not contain one."
   },
+  web_research: {
+    questions: [],
+    parameters: {formats: ["md"], queries: [], max_results: 5},
+    hint: "Web Research searches the open web behind four gates that all have to hold: this server allows it, you approve the call, the adapter has its key, and no query carries private content. Every result keeps the address it came from."
+  },
+  dossier: {
+    questions: [],
+    parameters: {formats: ["md"], queries: [], subject: "", max_results: 5},
+    hint: "Dossier collects cited search results on a subject you name into a reading list. It is not a finding about anybody, and the artifact says so about itself."
+  },
+  bundle_completeness_check: {
+    questions: [],
+    parameters: {formats: ["md"], required_formats: ["md"]},
+    hint: "Completeness Check reports whether every source was read, whether the formats a later step needs can be produced, and whether a required part came out empty. It concludes nothing about content."
+  },
   platform_proof: {
     questions: ["What is supported by the approved documents?"],
     parameters: {analysis_mode: "local_extractive", evidence_level: "offline", runtime: "offline", network_gate: "closed", max_chunks: 256, formats: ["md"]},
@@ -608,6 +623,18 @@ const workflowCards = {
   corpus_query: {
     title: "Corpus Query",
     benefit: "Ask one narrow question of a large bundle and get quoted sentences, not a summary."
+  },
+  web_research: {
+    title: "Web Research",
+    benefit: "Search the open web behind four gates and keep only what came back with an address."
+  },
+  dossier: {
+    title: "Dossier",
+    benefit: "Collect cited results on a subject into a reading list that refuses to be a verdict."
+  },
+  bundle_completeness_check: {
+    title: "Completeness Check",
+    benefit: "Check a bundle is whole before a later step trusts it, and name what is missing."
   },
   platform_proof: {
     title: "Platform Proof",
