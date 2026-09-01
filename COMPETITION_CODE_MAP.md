@@ -52,3 +52,25 @@ Claude Code bridges, official OpenAI and Anthropic API adapters, shared CLI/loop
 HTTP/MCP surfaces, finite budget gates, quote-bound receipts, and 182-test local
 acceptance are captured in commit
 `9cc9d4380725a5f707517cc28b6a5ed8a3d9dfc2`.
+
+The independent review hardening (network-exposed job surfaces refused, DNS-rebinding
+host check, bounded socket reads, scoped report verification, packaged theme scenes,
+drained early rejections) spans commits `966cf50` through `7fa6777`.
+The live model-catalog confirmation before the durable transfer receipt and the
+documented-parameters-only request body are captured in commit `5b1ccd5`.
+The routed room redesign (per-area home modules, engine-room drawer, instrument
+sprite, ship's-chart fold-out, scene artwork with recorded provenance) spans commits
+`d59f0be` through `f6ef7e2` and `24fb23c` through `5b701b8`.
+The Captain's Desk planner (deterministic intent tables, voyage drafts that plan but
+never execute) is captured in commits `fd3213d` through `5e1abdb`.
+Wave one of the document services (document_registry, fact_distill, synopsis_merge,
+daily_arrivals) and the shared anchored primitives layer are captured in commits
+`1e75668` through `d984fbf`.
+The use-case library (shipped path-free specialists, model-preference authority with
+its hard exposure cap, kept reservations, chain runs with one dossier) is captured in
+commits `d0fee5c` through `e5ee10e`.
+The consolidated information architecture (Folders, Processes and Workflows with
+tag-filtered use cases, the instrument registry and the artifact catalog, Governance
+with its policy and rule registers) is captured in commits `13ffe46` through
+`a01a572`. All of the above was written for this competition after 26 August 2026;
+scene artwork provenance is recorded in docs/media/designset/README.md.
