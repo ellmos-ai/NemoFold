@@ -5,6 +5,10 @@ English | [Deutsch](README_de.md)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
 [MIT License](LICENSE) · Python 3.11+ · Local-first
 
+**Documents become data. NemoFold makes knowledge usable.**
+
+NemoFold adapts to your use cases — a growing library, not fine-tuning.
+
 NemoFold is a private, evidence-first document agent. It turns explicitly approved
 folders into a persistent working memory, keeps claims traceable to source locations,
 and makes file actions reversible.
@@ -16,8 +20,7 @@ AI Hackathon. The local core is deliberately usable without a cloud account. Nem
 OpenShell, Nemotron, and Nebius integration will be marked as proven only after a real,
 sanitized runtime test exists.
 
-NemoFold turns documents into data - it makes knowledge usable in the first place.
-Twelve document workflows are compositions of four shared primitives: schema-bound
+Its document workflows are compositions of four shared primitives: schema-bound
 field extraction, deduplication that keeps what it strikes, section-wise merging with
 visible conflicts, and a delta against a named snapshot. Because those primitives are
 shared rather than private to one workflow, the same building blocks can be chained

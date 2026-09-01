@@ -420,3 +420,7 @@ body[data-tab="workflows"] [data-page-tab]:not([data-page-tab~="workflows"]),bod
 .run-policy-note{display:block;margin-top:3px;color:var(--muted);font:10px var(--mono)}
 .library-schedule{display:block;margin-top:7px!important;color:var(--sea)!important;font:10px/1.45 var(--mono)!important}
 @media(max-width:680px){.policy-form,.run-override-grid{grid-template-columns:1fr}.governance-row{grid-template-columns:1fr;gap:5px}}
+.core-claim{margin-top:0;border-bottom:2px solid var(--deep);padding-bottom:16px}
+.core-claim h2{margin:6px 0 0;font:400 clamp(24px,3.4vw,36px)/1.12 var(--serif)}
+.core-claim>p:last-child{margin:10px 0 0;max-width:720px;color:var(--muted);font-size:13px}
+.use-case-library .core-claim+.library-head{margin-top:26px}

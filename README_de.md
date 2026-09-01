@@ -5,6 +5,10 @@
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
 [MIT-Lizenz](LICENSE) · Python 3.11+ · Local-first
 
+**Aus Dokumenten werden Daten. NemoFold macht Wissen nutzbar.**
+
+NemoFold passt sich Ihren Usecases an — eine wachsende Bibliothek, kein Finetuning.
+
 NemoFold ist ein privater, evidenzorientierter Dokumentenagent. Er verwandelt
 ausdrücklich freigegebene Ordner in ein dauerhaftes Arbeitsgedächtnis, hält Aussagen
 bis zu ihren Fundstellen rückverfolgbar und macht Dateiaktionen reversibel.
@@ -16,8 +20,7 @@ Global AI Hackathon. Der lokale Kern ist bewusst ohne Cloud-Konto nutzbar. Die
 Integration mit NemoClaw, OpenShell, Nemotron und Nebius wird erst dann als belegt
 gekennzeichnet, wenn ein echter, bereinigter Laufzeitnachweis vorliegt.
 
-NemoFold macht aus Dokumenten Daten — es macht Wissen überhaupt erst nutzbar. Die
-Dokument-Workflows sind Kompositionen aus vier geteilten Bausteinen: schemagebundene
+Die Dokument-Workflows sind Kompositionen aus vier geteilten Bausteinen: schemagebundene
 Feldextraktion, Deduplikation, die das Gestrichene behält, abschnittsweise
 Zusammenführung mit sichtbaren Konflikten und ein Delta gegen einen benannten
 Snapshot. Weil diese Bausteine geteilt sind statt in einem Workflow eingeschlossen,

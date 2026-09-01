@@ -1641,3 +1641,21 @@ def test_a_voyage_states_what_governs_it_and_can_run_once_with_another_model(tmp
     # A per-run choice never rewrites what is stored, and the page says so.
     assert "This applies to this run only" in html
     assert "run_level_override" in script
+
+
+def test_the_workflows_tab_leads_with_what_the_product_is_for(tmp_path) -> None:
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/processes?tab=workflows", timeout=5) as response,  # noqa: S310
+    ):
+        html = response.read().decode()
+
+    # D-037: the room where work is chosen leads with the core sentence, and the
+    # library sits under it.
+    assert "Documents become data. NemoFold makes knowledge usable." in html
+    assert "NemoFold adapts to your use cases — a growing library, not fine-tuning." in html
+    assert html.index("Documents become data") < html.index("The work you kept.")
+    # The boundary claim did not disappear; it stopped being the headline.
+    assert "<h2 id=\"boundaryTitle\">Reasoning may travel. Authority does not.</h2>" not in html
+    assert "Reasoning may travel. Authority does not: a worker receives selected" in html
+    assert "Reasoning may travel; authority does not." in html
