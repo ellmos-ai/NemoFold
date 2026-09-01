@@ -486,8 +486,13 @@ def test_controlled_email_writes_draft_and_blocks_unavailable_send_adapter(tmp_p
     result = run_job(current, config(tmp_path), run_id="mail_draft_1")
 
     assert result.report.status.value == "blocked"
-    assert "mail_confirmation_required" in result.report.errors
-    assert "mail_adapter_unavailable" in result.report.errors
+    # The reasons are now the evaluated D-035 ones rather than one flat
+    # "adapter unavailable": no declared right, no server permission, no
+    # configured adapter, all named at once.
+    assert "right_is_draft_only" in result.report.errors
+    assert "send_requires_apply_mode" in result.report.errors
+    assert "send_not_allowed_on_this_server" in result.report.errors
+    assert any(item.startswith("smtp_not_configured:") for item in result.report.errors)
     assert result.report.metadata["send_performed"] is False
     assert (tmp_path / "output" / "mail-drafts" / "mail_draft_1" / "draft.eml").is_file()
 

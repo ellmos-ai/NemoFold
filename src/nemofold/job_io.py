@@ -148,6 +148,9 @@ WORKFLOW_PARAMETER_FIELDS = {
     "mail_to_case": frozenset({"case_id", "case_title", "include_attachments"}),
     "controlled_email": frozenset(
         {
+            "contact_book",
+            "recipient_class_rights",
+            "rights",
             "attachment_source_ids",
             "body",
             "cc",

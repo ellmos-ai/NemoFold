@@ -63,12 +63,26 @@ from .job_io import job_snapshot_payload, load_job_snapshot, validate_workflow_p
 from .ledger import RunLedger, validate_run_id
 from .mail_workflows import build_controlled_draft, build_mail_case, parse_eml
 from .nemoclaw_package import NemoClawPackage, export_job_package
+from .outbound import (
+    OutboundAdapter,
+    OutboundError,
+    SmtpAdapter,
+    class_rights_from,
+    evaluate_send,
+    now,
+    resolve_recipients,
+    send_payload,
+)
 from .policy import PolicyConfig, PolicyGate
 from .report_studio import ReportDocument, render_report_formats
 from .runtime import job_idempotency_key
 from .smart_inbox import RoutingRule, plan_inbox
 from .storage_policy import PolicyRule, PolicySet, StoragePlan, preview_storage
-from .structured_sources import STRUCTURED_SUFFIXES, read_structured
+from .structured_sources import (
+    STRUCTURED_SUFFIXES,
+    read_contacts,
+    read_structured,
+)
 from .synopsis_merge import merge_synopsis, synopsis_markdown
 from .version_resolver import (
     VersionCandidate,
@@ -1430,35 +1444,121 @@ def _execute_controlled_email(
         read_source_ids=result.attachment_source_ids,
         cited_source_ids=(),
     )
+    # D-035 evaluated: the right is no longer a stored field here, it decides.
+    recipients = tuple(str(item) for item in job.parameters.get("to", []))
+    contacts: tuple[Any, ...] = ()
+    contact_notes: tuple[str, ...] = ()
+    book = job.parameters.get("contact_book")
+    if isinstance(book, str) and book.strip():
+        try:
+            contacts, contact_notes = read_contacts(book)
+        except OSError as exc:
+            contact_notes = (f"the contact book could not be read: {exc}",)
+    decided = resolve_recipients(
+        recipients,
+        contacts,
+        class_rights_from(job.parameters.get("recipient_class_rights")),
+        declared_right=str(job.parameters.get("rights", "draft_only")),
+    )
+    adapter: OutboundAdapter = _OUTBOUND_ADAPTERS.get(run_id) or SmtpAdapter()
+    ready, adapter_reason = adapter.readiness()
+    send_requested = job.parameters.get("send_requested", False) is True
+    decision = evaluate_send(
+        recipients=decided,
+        send_requested=send_requested,
+        apply_mode=job.action_mode is ActionMode.APPLY,
+        approval_digest=result.approval_digest,
+        confirmation_digest=str(job.parameters.get("confirmation_digest", "")),
+        adapter_ready=ready,
+        adapter_reason=adapter_reason,
+        user_allows_send=_OUTBOUND_ALLOWED.get(run_id, False),
+    )
     metadata: dict[str, object] = {
         "approval_digest": result.approval_digest,
-        "send_requested": job.parameters.get("send_requested", False) is True,
-        "send_performed": False,
-        "mail_adapter_configured": False,
+        "send_requested": send_requested,
+        "mail_adapter_configured": ready,
+        "mail_adapter": adapter.name,
+        "contact_notes": list(contact_notes),
+        **decision.as_metadata(),
     }
-    if job.parameters.get("send_requested", False) is True:
-        reasons: list[str] = []
-        if job.action_mode is not ActionMode.APPLY:
-            reasons.append("mail_send_requires_apply")
-        confirmation = job.parameters.get("confirmation_digest")
-        if not confirmation:
-            reasons.append("mail_confirmation_required")
-        elif confirmation != result.approval_digest:
-            reasons.append("mail_confirmation_mismatch")
-        reasons.append("mail_adapter_unavailable")
+    records = list(result.records)
+
+    def _decision_artifact(receipt: object = None):
+        return write_text_artifact(
+            Path(job.output_dir) / f"{run_id}.outbound.json",
+            json.dumps(
+                send_payload(decision, receipt),  # type: ignore[arg-type]
+                indent=2,
+                sort_keys=True,
+                ensure_ascii=False,
+            )
+            + "\n",
+            "outbound-decision" if receipt is None else "outbound-receipt",
+        )
+
+    if not decision.allowed:
+        records.append(_decision_artifact())
+        if send_requested:
+            raise WorkflowBlocked(
+                decision.reasons,
+                actions=("mail_draft_written", "mail_send_blocked"),
+                artifacts=tuple(records),
+                coverage=coverage,
+                metadata=metadata,
+            )
+        return (
+            ("mail_draft_written", "mail_confirmation_receipt_written"),
+            tuple(records),
+            coverage,
+            metadata,
+        )
+    try:
+        receipt = adapter.send(
+            recipients=recipients,
+            subject=str(job.parameters.get("subject", "")),
+            body=str(job.parameters.get("body", "")),
+            digest=result.approval_digest,
+        )
+    except OutboundError as exc:
+        metadata["outbound_blocked_reasons"] = [*decision.reasons, str(exc)]
+        records.append(_decision_artifact())
         raise WorkflowBlocked(
-            tuple(reasons),
+            (str(exc),),
             actions=("mail_draft_written", "mail_send_blocked"),
-            artifacts=result.records,
+            artifacts=tuple(records),
             coverage=coverage,
             metadata=metadata,
-        )
+        ) from exc
+    metadata["send_performed"] = receipt.accepted
+    metadata["sent_at"] = receipt.sent_at or now()
+    records.append(_decision_artifact(receipt))
     return (
-        ("mail_draft_written", "mail_confirmation_receipt_written"),
-        result.records,
+        ("mail_draft_written", "mail_sent_under_" + decision.right),
+        tuple(records),
         coverage,
         metadata,
     )
+
+
+# Per-run outbound permissions. Like the web approval, they are held by the
+# caller and keyed to the run, so no stored job can carry a send permission it
+# was never given.
+_OUTBOUND_ALLOWED: dict[str, bool] = {}
+_OUTBOUND_ADAPTERS: dict[str, OutboundAdapter] = {}
+
+
+def authorize_send(
+    run_id: str, *, allowed: bool, adapter: OutboundAdapter | None = None
+) -> None:
+    """Grant one run permission to send. Never persisted, never inherited."""
+    _OUTBOUND_ALLOWED[run_id] = allowed
+    if adapter is not None:
+        _OUTBOUND_ADAPTERS[run_id] = adapter
+
+
+def release_send(run_id: str) -> None:
+    _OUTBOUND_ALLOWED.pop(run_id, None)
+    _OUTBOUND_ADAPTERS.pop(run_id, None)
 
 
 def _execute_contact_monitor(
