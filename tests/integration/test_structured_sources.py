@@ -120,15 +120,151 @@ def test_a_subscription_registry_csv_becomes_labelled_rows(tmp_path) -> None:
     assert "Turnus: monatlich" in rendering.text
 
 
-def test_a_workbook_is_read_without_a_spreadsheet_dependency(tmp_path) -> None:
-    import openpyxl
+def _shared_string_workbook(path: Path, rows: tuple[tuple[str, ...], ...]) -> Path:
+    """A workbook in the shape Excel writes: text in a shared string table.
 
-    book = tmp_path / "register.xlsx"
-    workbook = openpyxl.Workbook()
-    sheet = workbook.active
-    sheet.append(["Police", "Tarif", "Beitrag"])
-    sheet.append(["KV-2026-0447", "Teilkasko", 148])
-    workbook.save(book)
+    Built by hand rather than with a spreadsheet library, because a test whose
+    subject is reading without that dependency cannot need it to produce its own
+    input - which is exactly how this one passed locally and failed on a runner
+    that had never installed one.
+    """
+    values: list[str] = []
+    for row in rows:
+        for cell in row:
+            if not cell.isdigit() and cell not in values:
+                values.append(cell)
+
+    def cell_xml(column: int, line: int, text: str) -> str:
+        reference = f"{chr(ord('A') + column)}{line}"
+        if text.isdigit():
+            return f'<c r="{reference}"><v>{text}</v></c>'
+        return f'<c r="{reference}" t="s"><v>{values.index(text)}</v></c>'
+
+    sheet = "".join(
+        f'<row r="{line}">'
+        + "".join(cell_xml(column, line, cell) for column, cell in enumerate(row))
+        + "</row>"
+        for line, row in enumerate(rows, start=1)
+    )
+    parts = {
+        "[Content_Types].xml": (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            '<Default Extension="xml" ContentType="application/xml"/>'
+            '<Default Extension="rels" ContentType='
+            '"application/vnd.openxmlformats-package.relationships+xml"/>'
+            '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-'
+            'officedocument.spreadsheetml.sheet.main+xml"/>'
+            '<Override PartName="/xl/worksheets/sheet1.xml" ContentType='
+            '"application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+            '<Override PartName="/xl/sharedStrings.xml" ContentType='
+            '"application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>'
+            "</Types>"
+        ),
+        "_rels/.rels": (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<Relationships xmlns='
+            '"http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/'
+            '2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>'
+        ),
+        "xl/workbook.xml": (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            '<sheets><sheet name="Register" sheetId="1" r:id="rId1"/></sheets></workbook>'
+        ),
+        "xl/_rels/workbook.xml.rels": (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<Relationships xmlns='
+            '"http://schemas.openxmlformats.org/package/2006/relationships">'
+            '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/'
+            '2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+            '<Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/'
+            '2006/relationships/sharedStrings" Target="sharedStrings.xml"/></Relationships>'
+        ),
+        "xl/sharedStrings.xml": (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '
+            f'count="{len(values)}" uniqueCount="{len(values)}">'
+            + "".join(f"<si><t>{value}</t></si>" for value in values)
+            + "</sst>"
+        ),
+        "xl/worksheets/sheet1.xml": (
+            '<?xml version="1.0" encoding="UTF-8"?>'
+            '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            f"<sheetData>{sheet}</sheetData></worksheet>"
+        ),
+    }
+    with zipfile.ZipFile(path, "w", zipfile.ZIP_DEFLATED) as archive:
+        for name, payload in parts.items():
+            archive.writestr(name, payload)
+    return path
+
+
+def test_a_workbook_is_read_without_a_spreadsheet_dependency(tmp_path) -> None:
+    book = _shared_string_workbook(
+        tmp_path / "register.xlsx",
+        (("Police", "Tarif", "Beitrag"), ("KV-2026-0447", "Teilkasko", "148")),
+    )
+
+    rendering = read_xlsx(book)
+
+    assert rendering.row_count == 1
+    assert "Police: KV-2026-0447" in rendering.text
+    assert "Beitrag: 148" in rendering.text
+
+
+def test_a_shared_string_table_is_resolved_and_not_read_as_a_number(tmp_path) -> None:
+    """The index into the table looks exactly like a numeric cell value."""
+    book = _shared_string_workbook(
+        tmp_path / "indexe.xlsx",
+        (("Feld",), ("Erster",), ("Zweiter",)),
+    )
+
+    rendering = read_xlsx(book)
+
+    # Reading these as 0 and 1 would be a plausible-looking table of nonsense,
+    # which is worse than a workbook that refuses to open.
+    assert "Feld: Erster" in rendering.text
+    assert "Feld: Zweiter" in rendering.text
+
+
+def test_the_hand_built_fixture_is_a_workbook_a_real_reader_accepts(tmp_path) -> None:
+    """Guards the replacement itself, wherever a spreadsheet library exists.
+
+    A fixture our own reader happens to tolerate would prove nothing about
+    reading what people actually have, so this checks the shape against an
+    independent reader instead of against ourselves.
+    """
+    openpyxl = pytest.importorskip("openpyxl")
+    book = _shared_string_workbook(
+        tmp_path / "register.xlsx",
+        (("Police", "Tarif", "Beitrag"), ("KV-2026-0447", "Teilkasko", "148")),
+    )
+
+    sheet = openpyxl.load_workbook(book).active
+
+    assert [list(row) for row in sheet.iter_rows(values_only=True)] == [
+        ["Police", "Tarif", "Beitrag"],
+        ["KV-2026-0447", "Teilkasko", 148],
+    ]
+
+
+def test_what_this_workspace_writes_it_can_also_read_back(tmp_path) -> None:
+    """The floor that holds where no spreadsheet library is installed.
+
+    Our own writer uses inline strings rather than a shared table, so this is a
+    different path through the reader than the fixture above. It proves the two
+    halves agree; whether a real spreadsheet application agrees is what the
+    openpyxl cross-checks establish, wherever that package is present.
+    """
+    from nemofold.delivery import workbook_bytes
+
+    book = tmp_path / "eigen.xlsx"
+    book.write_bytes(
+        workbook_bytes(("Police", "Beitrag"), (("KV-2026-0447", "148"),))
+    )
 
     rendering = read_xlsx(book)
 

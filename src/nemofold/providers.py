@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
@@ -307,7 +308,14 @@ class SubprocessRunner:
         timeout_seconds: float,
         env: Mapping[str, str],
     ) -> ProcessResult:
-        creationflags = subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        # A console window flashing up on every local provider call is the kind
+        # of thing that makes a workspace feel like it is doing something behind
+        # your back. The check is on sys.platform rather than os.name because
+        # that is the one a type checker narrows: on Linux the attribute does
+        # not exist, and os.name told it nothing.
+        creationflags = 0
+        if sys.platform == "win32":
+            creationflags = subprocess.CREATE_NO_WINDOW
         completed = subprocess.run(  # noqa: S603 - argv only, no shell
             list(args),
             input=input_text,

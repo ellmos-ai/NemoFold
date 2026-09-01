@@ -5,8 +5,13 @@ Gate date: 2026-09-01
 ## Local acceptance
 
 - `python -m ruff check src tests`: pass
-- `python -m mypy src`: pass for 64 source files
-- `python -m pytest -q`: 737 passed, one Windows privilege-dependent symlink test skipped
+- `python -m mypy src`: pass for 64 source files, and separately with
+  `--platform linux` and `--platform darwin`. Type checking only the host platform
+  hides every Windows-only attribute behind a guard the checker cannot narrow, which
+  is how a green local run met a red Linux job.
+- `python -m pytest -q`: 741 passed, one Windows privilege-dependent symlink test
+  skipped. Rerun with openpyxl hidden from the import system, standing in for a runner
+  that never installed it: 737 passed, five skipped, no failure.
 - Every registered job contract runs end to end: all 34 names in `SUPPORTED_WORKFLOWS`
   reach either a completed or a blocked outcome with a stated reason, write nothing
   outside their output directory, and leave the read corpus unchanged.

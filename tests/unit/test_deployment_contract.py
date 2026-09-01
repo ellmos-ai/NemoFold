@@ -83,3 +83,47 @@ def test_a_direct_reference_stays_buildable() -> None:
             assert len(revision) == 40 and all(
                 character in "0123456789abcdef" for character in revision
             ), f"not pinned to a commit: {requirement}"
+
+
+def test_no_test_reaches_for_an_undeclared_package_at_import_time() -> None:
+    """CI installs what pyproject declares; this workstation had more than that.
+
+    A bare `import openpyxl` in a test named for reading *without* a spreadsheet
+    dependency passed here for exactly that reason and failed on the runner.
+    Wrapping such an import in `pytest.importorskip` is what turns "not
+    installed" into a skip instead of a red build.
+    """
+    import sys
+    import tomllib
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[2]
+    pyproject = tomllib.loads(root.joinpath("pyproject.toml").read_text(encoding="utf-8"))
+    declared = {
+        requirement.split(">")[0].split("=")[0].split("[")[0].split("@")[0].strip().replace(
+            "-", "_"
+        )
+        for group in (
+            pyproject["project"].get("dependencies", []),
+            *pyproject["project"].get("optional-dependencies", {}).values(),
+        )
+        for requirement in group
+    }
+    allowed = declared | set(sys.stdlib_module_names) | {"nemofold", "pytest", "tests"}
+
+    offenders = []
+    for module in sorted(root.joinpath("tests").rglob("test_*.py")):
+        for number, line in enumerate(
+            module.read_text(encoding="utf-8").splitlines(), start=1
+        ):
+            stripped = line.strip()
+            if not stripped.startswith(("import ", "from ")):
+                continue
+            name = stripped.split()[1].split(".")[0]
+            if name in allowed:
+                continue
+            offenders.append(f"{module.relative_to(root)}:{number} {stripped}")
+
+    assert not offenders, "undeclared imports outside pytest.importorskip: " + "; ".join(
+        offenders
+    )
