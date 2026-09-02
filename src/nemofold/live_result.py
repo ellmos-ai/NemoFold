@@ -180,14 +180,24 @@ def _context_contract(
         if not isinstance(receipt, dict) or not isinstance(receipt.get("chunks"), list):
             errors.append("receipt_invalid")
             continue
+        # Uniqueness is scoped per receipt: one source chunk may legitimately
+        # serve several questions, so the same chunk_id reappearing in another
+        # receipt is expected reuse, not a duplicate (proven live 2026-09-02,
+        # two-question run nemotron_proof_20260902c). A repeat within one
+        # receipt, or the same id carrying different text, stays an error.
+        seen_in_receipt: set[str] = set()
         for chunk in receipt["chunks"]:
             if not isinstance(chunk, dict):
                 errors.append("chunk_invalid")
                 continue
             chunk_id = chunk.get("chunk_id")
-            if not isinstance(chunk_id, str) or chunk_id in chunks:
+            if not isinstance(chunk_id, str) or chunk_id in seen_in_receipt:
                 errors.append("chunk_id_invalid_or_duplicate")
                 continue
+            if chunk_id in chunks and chunks[chunk_id].get("text") != chunk.get("text"):
+                errors.append("chunk_id_invalid_or_duplicate")
+                continue
+            seen_in_receipt.add(chunk_id)
             chunks[chunk_id] = chunk
     return questions, source_ids, chunks, errors
 

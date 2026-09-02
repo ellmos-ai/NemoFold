@@ -763,3 +763,62 @@ def test_catalog_failure_aborts_without_a_receipt(tmp_path, catalog_failure) -> 
     assert transport.calls == []
     assert not (package / TRANSFER_ATTEMPT_FILENAME).exists()
     assert not (package / "result.json").exists()
+
+
+def test_chunk_reuse_across_receipts_is_expected_not_duplicate() -> None:
+    from nemofold.live_result import validate_model_output
+
+    chunk = {
+        "chunk_id": "src_a:000000",
+        "source_id": "src_a",
+        "text": "Der Zeuge stand am Kiosk.",
+        "char_start": 0,
+        "char_end": 25,
+        "line_start": 1,
+        "line_end": 1,
+        "page_start": None,
+        "page_end": None,
+    }
+    job = {
+        "questions": ["Frage eins?", "Frage zwei?"],
+        "sources": [{"source_id": "src_a"}],
+    }
+    receipts = [
+        {"question": "Frage eins?", "chunks": [chunk]},
+        {"question": "Frage zwei?", "chunks": [dict(chunk)]},
+    ]
+    output = {
+        "answers": [
+            {
+                "question": "Frage eins?",
+                "status": "insufficient_evidence",
+                "claims": [],
+            },
+            {
+                "question": "Frage zwei?",
+                "status": "insufficient_evidence",
+                "claims": [],
+            },
+        ],
+        "read_source_ids": ["src_a"],
+    }
+
+    shared = validate_model_output(job, receipts, output)
+    assert "chunk_id_invalid_or_duplicate" not in shared
+
+    within = validate_model_output(
+        job, [{"question": "Frage eins?", "chunks": [chunk, dict(chunk)]}], output
+    )
+    assert "chunk_id_invalid_or_duplicate" in within
+
+    twisted = dict(chunk)
+    twisted["text"] = "Ein anderer Text unter derselben ID."
+    conflicting = validate_model_output(
+        job,
+        [
+            {"question": "Frage eins?", "chunks": [chunk]},
+            {"question": "Frage zwei?", "chunks": [twisted]},
+        ],
+        output,
+    )
+    assert "chunk_id_invalid_or_duplicate" in conflicting
