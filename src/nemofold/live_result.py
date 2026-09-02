@@ -337,6 +337,19 @@ def _provider_content(response_body: Any) -> Any:
         return None
 
 
+def _usage_counters_match(body_usage: Any, usage: Any) -> bool:
+    """Bind the three token counters exactly; tolerate additive provider fields.
+
+    Providers may attach detail sub-objects (prompt_tokens_details etc., seen
+    live 2026-09-02) - additive fields must not break the receipt, but any
+    differing counter still does.
+    """
+    if not isinstance(body_usage, dict) or not isinstance(usage, dict):
+        return False
+    counters = ("prompt_tokens", "completion_tokens", "total_tokens")
+    return all(body_usage.get(key) == usage.get(key) for key in counters)
+
+
 def validate_result_package(path: str | Path) -> ResultValidation:
     package_path = Path(path)
     package_validation = validate_job_package(package_path)
@@ -636,7 +649,7 @@ def validate_result_package(path: str | Path) -> ResultValidation:
     if (
         status == "executed"
         and isinstance(response_body, dict)
-        and response_body.get("usage") != usage
+        and not _usage_counters_match(response_body.get("usage"), usage)
     ):
         errors.append("provider_usage_mismatch")
     content_candidates: list[str] = []

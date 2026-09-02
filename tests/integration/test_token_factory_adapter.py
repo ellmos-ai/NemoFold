@@ -822,3 +822,19 @@ def test_chunk_reuse_across_receipts_is_expected_not_duplicate() -> None:
         output,
     )
     assert "chunk_id_invalid_or_duplicate" in conflicting
+
+
+def test_usage_binding_tolerates_additive_provider_detail_fields() -> None:
+    from nemofold.live_result import _usage_counters_match
+
+    usage = {"prompt_tokens": 10, "completion_tokens": 5, "total_tokens": 15}
+    with_details = {
+        **usage,
+        "prompt_tokens_details": {"cached_tokens": 0, "audio_tokens": None},
+        "completion_tokens_details": None,
+    }
+
+    assert _usage_counters_match(with_details, usage)
+    assert not _usage_counters_match({**usage, "total_tokens": 16}, usage)
+    assert not _usage_counters_match(None, usage)
+    assert not _usage_counters_match(with_details, None)
