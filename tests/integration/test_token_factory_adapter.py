@@ -631,8 +631,10 @@ def test_request_carries_only_documented_chat_completion_parameters(tmp_path) ->
     request = json.loads(transport.calls[0]["body"])
 
     assert "store" not in request
+    # Token Factory: extra_forbidden (live 400, 2026-09-02)
+    assert "max_completion_tokens" not in request
     assert set(request) == {
-        "max_completion_tokens",
+        "max_tokens",
         "messages",
         "model",
         "n",

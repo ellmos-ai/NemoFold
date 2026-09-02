@@ -135,7 +135,10 @@ def expected_token_factory_request(
                 "content": json.dumps(task, sort_keys=True, separators=(",", ":")),
             },
         ],
-        "max_completion_tokens": max_completion_tokens,
+        # Wire name is max_tokens: Token Factory's stricter OpenAI dialect
+        # rejects max_completion_tokens as extra_forbidden (HTTP 400, proven
+        # live 2026-09-02, x-request-id d614c4bae464d91a8047f4c8fa7cff69).
+        "max_tokens": max_completion_tokens,
         "temperature": 0,
         "n": 1,
         "stream": False,
