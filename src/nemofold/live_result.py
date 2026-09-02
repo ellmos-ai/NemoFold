@@ -90,8 +90,11 @@ TOKEN_FACTORY_SYSTEM_PROMPT = (
     "claim must cite an exact substring from one declared chunk, with the matching "
     "chunk_id and source_id. If the chunks do not support an answer, return "
     "insufficient_evidence with no claims. Never infer paths, identities, missing "
-    "facts, or outside knowledge. The user payload contains an output_schema field. "
-    "Return only one JSON object matching that schema."
+    "facts, or outside knowledge. Copy each quote character-for-character from the "
+    "single chunk whose chunk_id you name; similar sentences may exist in several "
+    "chunks, so re-read the named chunk before quoting, and never reuse one "
+    "chunk_id twice within the same claim. The user payload contains an "
+    "output_schema field. Return only one JSON object matching that schema."
 )
 
 
