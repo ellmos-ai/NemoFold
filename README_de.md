@@ -17,8 +17,9 @@ Arbeitsslogan: **Your files. Your rules. Your agent.**
 
 Dieses Repository enthält die neue Wettbewerbsimplementierung für den Nebius x NVIDIA
 Global AI Hackathon. Der lokale Kern ist bewusst ohne Cloud-Konto nutzbar. Die
-Integration mit NemoClaw, OpenShell, Nemotron und Nebius wird erst dann als belegt
-gekennzeichnet, wenn ein echter, bereinigter Laufzeitnachweis vorliegt.
+Nemotron-auf-Nebius-Integration ist durch einen echten, bereinigten Token-Factory-Lauf
+belegt, dessen vollständige Belegkette unter `examples/proven-run/` eingecheckt ist und
+offline nachgeprüft werden kann (siehe „Der belegte Lauf" unten).
 
 Die Dokument-Workflows sind Kompositionen aus vier geteilten Bausteinen: schemagebundene
 Feldextraktion, Deduplikation, die das Gestrichene behält, abschnittsweise
@@ -57,7 +58,7 @@ großen Korpus richtet. Der Evidenzvertrag ändert sich dabei nicht — nur der 
 | Fact Distill | Zitierfähige Sätze je Quelle; wiederholte Aussagen werden aus den Befunden gestrichen, jede gestrichene Fundstelle bleibt in einem eigenen Anhang sichtbar |
 | Synopsis Merge | Abschnittsweise Zusammenführung mehrerer Dokumente mit Quellanker je Absatz; abweichende Labels erscheinen als Konfliktblöcke statt als stille Entscheidung |
 | Daily Arrivals | Vergleich gegen einen benannten Snapshot mit Name, Größe, Zeit und Kurzinhalt je neuer Datei, Eigentümer wo die Plattform ihn nennen kann, plus selbst zu installierende Aufgabendatei |
-| NemoClaw Platform & Proof | Pfadfreie, gehashte Auftragspakete mit Fail-closed-Adapter für die Nebius Token Factory und unabhängig prüfbarem Ergebnisbeleg; der echte Wettbewerbslauf ist weiterhin offen |
+| NemoClaw Platform & Proof | Pfadfreie, gehashte Auftragspakete mit Fail-closed-Adapter für die Nebius Token Factory und unabhängig prüfbarem Ergebnisbeleg; belegt durch einen echten Token-Factory-Lauf, eingecheckt unter `examples/proven-run/` |
 
 Die gemeinsamen Kerne sind Laufzeit, Policy-/Privacy-Gate, Laufjournal und
 Wiederherstellung, Evidenz-Engine, providerneutraler Adapterkern, MCP-Oberfläche und
@@ -175,8 +176,35 @@ kann: einen starken gehosteten Reasoning-Durchgang über das vorbereitete
 Evidenzbündel. Alles andere — Originale, Pfade, Index, Richtlinien, Journal und
 Verifikation — bleibt auf dem lokalen Rechner; nur pseudonymisierte begrenzte Chunks
 passieren das Gate, und das bereinigte Ergebnis wird in die lokal verifizierte
-Belegkette zurückgebunden. Ein echter bezahlter Lauf bleibt ein ausdrückliches
-Nutzer-Gate und wird nirgends in diesem Repository behauptet.
+Belegkette zurückgebunden. Ein echter bezahlter Lauf ist ein ausdrückliches
+Nutzer-Gate; es wurde einmal erteilt, und der entstandene Beleg ist unten eingecheckt.
+
+### Der belegte Lauf (2026-09-02)
+
+Ein echter bezahlter Token-Factory-Lauf über das fiktive synthetische Aktenkorpus
+schloss mit `status: executed` und `cloud_proof: true` ab. Das Modell beantwortete
+zwei Evidenzfragen (der blaue VW Golf, das bestätigte Alibi); jede Aussage trägt
+exakte Zitate, die der lokale Verifier Byte für Byte gegen die pseudonymisierten
+Chunks abgeglichen hat. Verbrauch: 4550 Prompt- + 3657 Completion- = 8207 Tokens,
+Kosten 0,0047 USD gegen eine Obergrenze von 1,00 USD.
+
+Das vollständige Paket — Job, Manifest, Privacy-Receipt, Context-Receipts,
+Transferversuch und Ergebnis — liegt unter `examples/proven-run/`, ohne Geheimnisse
+und ohne echte personenbezogene Daten (das Korpus ist das fiktive
+`examples/synthetic-case/`). Juroren können es offline und ohne Konto nachprüfen:
+
+```bash
+python -m nemofold verify-result examples/proven-run
+```
+
+Ehrlichkeitsnotiz: Es brauchte fünf Anläufe, und genau das ist der Punkt. Die ersten
+vier schlossen fail-closed bei nahezu null Kosten — ein Wire-Format-400 des
+Endpunkts, der lokale Verifier fing zwei falsch zugeordnete Zitate in einer sonst
+perfekt aussehenden Antwort, eine überstrenge eigene Receipt-Regel und ein
+Provider-Usage-Echo mit zusätzlichen Detailfeldern. Jede Ablehnung ist ein Bugfix in
+dieser Historie — und dass der Verifier eine flüssige Modellantwort wegen
+Zitat-Zuordnung zurückwies, ist das Kernversprechen des Produkts (Evidenz vor
+Inferenz) im Betrieb gegen ein echtes Frontier-Modell, kein Slogan.
 
 Der Live-Adapter ist ein getrenntes Gate für einen irreversiblen Datentransfer. Er
 akzeptiert nur den offiziellen HTTPS-Ursprung der Nebius Token Factory, lehnt

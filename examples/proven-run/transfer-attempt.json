@@ -1,0 +1,12 @@
+{
+  "completed_at": "2026-09-02T08:42:52.989208+00:00",
+  "endpoint_origin": "https://api.tokenfactory.nebius.com",
+  "http_status": 200,
+  "model_id": "nvidia/nemotron-3-super-120b-a12b",
+  "request_sha256": "1906410306195724bfdddbe77cfb9d34457b448183ae8edce29421abe43f8f81",
+  "response_sha256": "3145c416364c56f53abeb5083a42d9fa954564b854a91acc2fe88a9de366b74f",
+  "run_id": "nemotron_proof_20260902e",
+  "schema": "nemofold.transfer-attempt.v1",
+  "started_at": "2026-09-02T08:42:29.632572+00:00",
+  "status": "response_received"
+}

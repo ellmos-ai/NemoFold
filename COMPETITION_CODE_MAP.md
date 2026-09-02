@@ -98,3 +98,12 @@ mining over the staged aggregation, and the optional report-forge adapter for fi
 is a dependency behind the `templates` extra and is not vendored; it is pinned to a
 commit because the repository publishes no release tags. The synthetic questionnaire
 and log fixtures are invented in full and say so in their first line.
+The proven Token Factory run of 2026-09-02 - the real paid call to
+`nvidia/nemotron-3-super-120b-a12b` over the fictional synthetic case - is captured
+in commits `cff7355` through `a1080ba` (four live-run fixes, each provoked by an
+actual fail-closed rejection: the endpoint's `max_tokens` wire field, a prompt
+hardening after the verifier caught two misattributed quotes, per-receipt scoping of
+the chunk-uniqueness rule, and binding the three usage counters while tolerating
+additive provider detail fields) plus the committed receipt chain in
+`examples/proven-run/`, which `python -m nemofold verify-result examples/proven-run`
+re-verifies offline. The package contains no secrets and no real personal data.

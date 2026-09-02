@@ -1,0 +1,10 @@
+{
+  "raw_mapping_stored": false,
+  "replacement_counts": {
+    "PHONE": 18,
+    "TERM": 7
+  },
+  "schema": "nemofold.privacy-receipt.v1",
+  "source_names_removed": true,
+  "transfer_performed": false
+}

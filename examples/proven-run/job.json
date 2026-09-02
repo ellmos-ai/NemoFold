@@ -1,0 +1,83 @@
+{
+  "contract_version": "nemofold.contracts.v1",
+  "model": {
+    "id": "nvidia/nemotron-3-super-120b-a12b",
+    "max_cost_usd": 1.0
+  },
+  "questions": [
+    "Is a blue VW Golf mentioned anywhere in this case file, and in which context?",
+    "Which person has an alibi that is confirmed by another witness, and by whom?"
+  ],
+  "response_schema": "nemofold.claims.v1",
+  "run_id": "nemotron_proof_20260902e",
+  "sources": [
+    {
+      "mime_type": "text/markdown",
+      "sha256": "e2ee91b3ed6e1677396908244680edc8236a680bd2041f1a2bd9f5833b911fb3",
+      "source_id": "src_71b6a7d2560d2162"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "51953b26529819068dfcd877703241c2521e8aca43022a7c66a0b9aa31a1cfe1",
+      "source_id": "src_6f87199602c2a50c"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "e6af3400f839d6c2360b4c0cf960b8369ec09a7b0b1672059937ca74e2857fff",
+      "source_id": "src_718f533eae9f5219"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "a074607acb29445a7f787428b5d81f0a95009446f1b254d85dfbd4e7464fd358",
+      "source_id": "src_6e3f80a5dbab7ff7"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "2a0cc11e6f8c3ea54d7dacac10bec67f1f29f19e9770382d9aa433fd04b6cc0c",
+      "source_id": "src_899262d2f279bc7b"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "a08ad6be05559e06dfd70cd0db1a4150a1d96dfc1b6af399373f81c488905f85",
+      "source_id": "src_4bcfa33c3d0f3766"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "87b26db24ef1fdc4ee250c533d2701bfb92e0bdabd9e4beb1b78c820b215b21d",
+      "source_id": "src_139432661f913d8f"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "bc8dc6cd35141df5ec68e11c6ba634802994a9285c11b861bc28c041321c65f3",
+      "source_id": "src_ebd0174c351d541c"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "c413312ec22bf8f842ae1e91cc18405021188b206637540096e4ec9db4193bb3",
+      "source_id": "src_0b26000dbf81407c"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "26f82cf0a1ddccb2650856042aa3909eaf945fc84269ce130f4ad580e45a15fc",
+      "source_id": "src_fd612dc276db06ff"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "8774075eb6b6aad4bf93b19b50a15cbd1ec1c879c4a5b60567dacdf2c693d309",
+      "source_id": "src_c4af37f834460995"
+    },
+    {
+      "mime_type": "text/markdown",
+      "sha256": "9a999302709ba6263a0ed70a0be3b5af4e244b29a7a5e8f88fdaebc329d0a64a",
+      "source_id": "src_205c8f92c17fc375"
+    }
+  ],
+  "validation_command": [
+    "python",
+    "-m",
+    "nemofold",
+    "verify-job",
+    "."
+  ],
+  "workflow": "platform_proof"
+}

@@ -1,0 +1,11 @@
+{
+  "expected_attempt": "transfer-attempt.json",
+  "expected_result": "result.json",
+  "files": {
+    "context-receipts.json": "d2f534ec50a6d407f24ef3611e06767a065c3857a4b78e165a0fad524a2a88f9",
+    "job.json": "90c4024c1c3bceb6858be6f1736cc58a6b034072b93d89cd80b4460c4701604b",
+    "privacy-receipt.json": "3d2660585d82553ae04a881bc2a2bdf3992e708de3bd196509a94c789bda4219"
+  },
+  "run_id": "nemotron_proof_20260902e",
+  "schema": "nemofold.nemoclaw-job.v1"
+}

@@ -16,9 +16,10 @@ and makes file actions reversible.
 Working tagline: **Your files. Your rules. Your agent.**
 
 This repository is the new competition implementation for the Nebius x NVIDIA Global
-AI Hackathon. The local core is deliberately usable without a cloud account. NemoClaw,
-OpenShell, Nemotron, and Nebius integration will be marked as proven only after a real,
-sanitized runtime test exists.
+AI Hackathon. The local core is deliberately usable without a cloud account. The
+Nemotron-on-Nebius integration is proven by a real, sanitized Token Factory run whose
+complete receipt chain is committed under `examples/proven-run/` and can be re-verified
+offline (see "The proven run" below).
 
 Its document workflows are compositions of four shared primitives: schema-bound
 field extraction, deduplication that keeps what it strikes, section-wise merging with
@@ -55,7 +56,7 @@ corpus. The evidence contract does not change between them - only the worker doe
 | Fact Distill | Quotable sentences per source with repeated statements struck from the findings and every struck occurrence kept visible in its own appendix |
 | Synopsis Merge | Section-wise merge of several documents with a source anchor per paragraph and disagreeing labels shown as conflict blocks instead of a silent choice |
 | Daily Arrivals | Comparison against a named snapshot with name, size, time and short content per new file, the owner where the platform can name one, and a task file you install yourself |
-| NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; the real competition run remains open |
+| NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; proven by a real Token Factory run committed under `examples/proven-run/` |
 
 The Analysis Lab also includes the local **Research Notebook** workspace. It keeps an
 investigation goal, approved roots, reusable questions/prompts, provider configuration,
@@ -170,8 +171,33 @@ Token Factory contributes the one step the product cannot do locally: a strong
 hosted reasoning pass over the prepared evidence bundle. Everything else - the
 originals, paths, index, policies, journal, and verification - stays on the local
 machine; only pseudonymized bounded chunks cross the gate, and the sanitized result
-is bound back into the locally verified receipt chain. A real paid run remains an
-explicit user gate and has not been claimed anywhere in this repository.
+is bound back into the locally verified receipt chain. A real paid run is an explicit
+user gate; it was granted once, and the resulting proof is committed below.
+
+### The proven run (2026-09-02)
+
+A real paid Token Factory run over the fictional synthetic case corpus completed with
+`status: executed` and `cloud_proof: true`. The model answered two evidence questions
+(the blue VW Golf, the confirmed alibi); every claim carries exact quotes that the
+local verifier matched against the pseudonymized chunks byte for byte. Usage:
+4550 prompt + 3657 completion = 8207 tokens, cost $0.0047 against a $1.00 ceiling.
+
+The complete package — job, manifest, privacy receipt, context receipts, transfer
+attempt, and result — is committed at `examples/proven-run/` with no secrets and no
+real personal data (the corpus is the fictional `examples/synthetic-case/`). Judges
+can re-verify it offline, without any account:
+
+```bash
+python -m nemofold verify-result examples/proven-run
+```
+
+Honesty note: it took five attempts, and that is the point. The first four each
+fail-closed at near-zero cost — a wire-format 400 from the endpoint, the local
+verifier catching two misattributed quotes in an otherwise perfect-looking answer,
+an over-strict receipt rule of our own, and a provider usage echo with extra detail
+fields. Every rejection is a bug fix in this history, and the verifier rejecting a
+fluent model answer on quote-attribution grounds is the product's core promise
+(evidence before inference) working against a live frontier model, not a slogan.
 
 The live adapter is a separate, irreversible transfer gate. It accepts only the
 official Nebius Token Factory HTTPS origin, rejects redirects, checks a conservative

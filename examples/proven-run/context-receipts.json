@@ -1,0 +1,168 @@
+[
+  {
+    "chunks": [
+      {
+        "char_end": 536,
+        "char_start": 0,
+        "chunk_id": "src_ebd0174c351d541c:000000",
+        "line_end": 16,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_ebd0174c351d541c",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Tobias <TERM_001> Person: Tobias <TERM_001> Rolle: Halter Kennzeichen: B-TL 4471 Vernehmung am: <PHONE_001>## Angaben Mein blauer VW Golf stand das ganze Wochenende in der Werkstatt. Ich war am Samstag, <PHONE_002>, den ganzen Abend zu Hause. Am Sonntag, <PHONE_003>, war ich ebenfalls zu Hause. Es kann niemand best\u00e4tigen, dass ich zu Hause war, ich lebe allein. Nadja <TERM_002> leitet die Werkstatt <TERM_002> und Sohn."
+      },
+      {
+        "char_end": 567,
+        "char_start": 0,
+        "chunk_id": "src_4bcfa33c3d0f3766:000000",
+        "line_end": 16,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_4bcfa33c3d0f3766",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Marek <TERM_003> Person: Marek <TERM_003> Rolle: Zeuge Vernehmung am: <PHONE_004> Ort der Vernehmung: Revier Nord ## Angaben Ich war am Samstag, <PHONE_002>, gegen 21:30 Uhr am Kiosk in der Uferstra\u00dfe. Dort sah ich einen blauen VW Golf, der langsam vorbeifuhr. Das Fahrzeug hielt kurz an der Ecke Uferstra\u00dfe und Lindenweg. Ines <TERM_004> ist die Nachbarin von Marek <TERM_003>. Ich blieb bis etwa 22:00 Uhr am Kiosk und ging dann nach Hause."
+      },
+      {
+        "char_end": 794,
+        "char_start": 0,
+        "chunk_id": "src_6e3f80a5dbab7ff7:000000",
+        "line_end": 21,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_6e3f80a5dbab7ff7",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Kurzbericht Aktenzeichen: SYN-<PHONE_005> Berichtsdatum: <PHONE_004> Sachbearbeiter: Kommissar <TERM_005> Wieduwilt Zeitfenster: <PHONE_002> bis <PHONE_006>## Sachverhalt Am Wochenende vom 14. bis 15. M\u00e4rz 2026 ging ein Hinweis auf ein Fahrzeug in der Uferstra\u00dfe ein. Beschrieben wurde ein blauer VW Golf mit dem Kennzeichen B-TL 4471. Tobias <TERM_001> ist Halter des Fahrzeugs mit dem Kennzeichen B-TL 4471. Vier Personen wurden befragt: Marek <TERM_003>, Ines <TERM_004>, Tobias <TERM_001> und Nadja <TERM_002>. Sabine <TERM_006> war im fraglichen Zeitraum nicht erreichbar. ## Offene Punkte Die Angaben zur Fahrzeugfarbe gehen auseinander. F\u00fcr Tobias <TERM_001> liegt keine Best\u00e4tigung durch Dritte vor."
+      },
+      {
+        "char_end": 621,
+        "char_start": 0,
+        "chunk_id": "src_6f87199602c2a50c:000000",
+        "line_end": 19,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_6f87199602c2a50c",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Chronologie, Entwurf Aktenzeichen: SYN-<PHONE_005> Stand: <PHONE_007> Bearbeitung: Kommissar <TERM_005> Wieduwilt ## Ablauf <PHONE_008>:00 Fahrzeug wird in der Werkstatt angenommen. <PHONE_009>:30 Beobachtung in der Uferstra\u00dfe durch zwei Zeugen. <PHONE_003> unbestimmt Keine gesicherten Beobachtungen. <PHONE_010>:00 Fahrzeug wird abgeholt. ## Hinweis Die Beobachtung vom <PHONE_002> und der Werkstattbeleg lassen sich nicht ohne Weiteres zusammenbringen. Beides bleibt vorerst nebeneinander stehen."
+      },
+      {
+        "char_end": 374,
+        "char_start": 0,
+        "chunk_id": "src_c4af37f834460995:000000",
+        "line_end": 14,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_c4af37f834460995",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Kfz-Police Policennummer: KV-<PHONE_011> Versicherungsnehmer: Tobias <TERM_001> Fahrzeug: VW Golf Kennzeichen: B-TL 4471 Tarif: Teilkasko Deckung ab: <PHONE_012> Deckung bis: <PHONE_013> Betreuer: Robert <TERM_007> Robert <TERM_007> betreut die Police von Tobias <TERM_001>."
+      },
+      {
+        "char_end": 427,
+        "char_start": 0,
+        "chunk_id": "src_139432661f913d8f:000000",
+        "line_end": 13,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_139432661f913d8f",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Sabine <TERM_006> Person: Sabine <TERM_006> Rolle: Nachbarin Vernehmung am: <PHONE_014>## Angaben Ich war das Wochenende \u00fcber verreist und kann nichts zum Vorfall sagen. Ich bin am Freitagnachmittag abgefahren und am Montag zur\u00fcckgekommen. Zum Fahrzeug in der Uferstra\u00dfe kann ich keine Angaben machen."
+      },
+      {
+        "char_end": 413,
+        "char_start": 0,
+        "chunk_id": "src_205c8f92c17fc375:000000",
+        "line_end": 13,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_205c8f92c17fc375",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Werkstattbeleg Betrieb: Werkstatt <TERM_002> und Sohn Belegnummer: WS-<PHONE_015> Fahrzeug: VW Golf, Farbe blau Kennzeichen: B-TL 4471 Annahme: <PHONE_008>:00 Ausgabe: <PHONE_010>:00 Auftrag: Bremsen hinten, Sichtpr\u00fcfung Das Fahrzeug verblieb zwischen Annahme und Ausgabe auf dem Betriebshof."
+      },
+      {
+        "char_end": 559,
+        "char_start": 0,
+        "chunk_id": "src_899262d2f279bc7b:000000",
+        "line_end": 16,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_899262d2f279bc7b",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Ines <TERM_004> Person: Ines <TERM_004> Rolle: Zeugin Vernehmung am: <PHONE_004> Ort der Vernehmung: Revier Nord ## Angaben Ich war am Samstag, <PHONE_002>, gegen 21:30 Uhr am Kiosk in der Uferstra\u00dfe. Marek <TERM_003> stand dort ebenfalls, wir haben kurz miteinander gesprochen. Der Wagen, der vorbeifuhr, war dunkelgr\u00fcn. Ich bin mir bei der Farbe sicher, weil die Laterne direkt dar\u00fcber steht. Um 22:00 Uhr bin ich nach Hause gegangen."
+      }
+    ],
+    "question": "Is a blue VW Golf mentioned anywhere in this case file, and in which context?",
+    "response_schema": "nemofold.claims.v1"
+  },
+  {
+    "chunks": [
+      {
+        "char_end": 567,
+        "char_start": 0,
+        "chunk_id": "src_4bcfa33c3d0f3766:000000",
+        "line_end": 16,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_4bcfa33c3d0f3766",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Marek <TERM_003> Person: Marek <TERM_003> Rolle: Zeuge Vernehmung am: <PHONE_004> Ort der Vernehmung: Revier Nord ## Angaben Ich war am Samstag, <PHONE_002>, gegen 21:30 Uhr am Kiosk in der Uferstra\u00dfe. Dort sah ich einen blauen VW Golf, der langsam vorbeifuhr. Das Fahrzeug hielt kurz an der Ecke Uferstra\u00dfe und Lindenweg. Ines <TERM_004> ist die Nachbarin von Marek <TERM_003>. Ich blieb bis etwa 22:00 Uhr am Kiosk und ging dann nach Hause."
+      },
+      {
+        "char_end": 644,
+        "char_start": 0,
+        "chunk_id": "src_0b26000dbf81407c:000000",
+        "line_end": 17,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_0b26000dbf81407c",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Nadja <TERM_002> Person: Nadja <TERM_002> Rolle: Werkstattleiterin Vernehmung am: <PHONE_016> Betrieb: Werkstatt <TERM_002> und Sohn ## Angaben Der blaue VW Golf mit dem Kennzeichen B-TL 4471 stand bei uns auf dem Hof. Das Fahrzeug kam am Freitag, <PHONE_017>, um 17:00 Uhr zu uns. Es wurde am Montag, <PHONE_004>, um 08:00 Uhr abgeholt. Tobias <TERM_001> hat den Wagen am Montagmorgen pers\u00f6nlich abgeholt. Nadja <TERM_002> \u00fcbergab den Wagen an Tobias <TERM_001>. Der Hof ist nachts abgeschlossen, niemand kann ein Fahrzeug herausfahren."
+      },
+      {
+        "char_end": 396,
+        "char_start": 0,
+        "chunk_id": "src_718f533eae9f5219:000000",
+        "line_end": 13,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_718f533eae9f5219",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Aktennotiz Person: Robert <TERM_007> Rolle: Sachbearbeiter Notiz vom: <PHONE_018>## Notiz Der Versicherungsnehmer meldete den Vorgang irgendwann am Wochenende telefonisch. Ein genauer Zeitpunkt liegt mir nicht vor. Die Police KV-<PHONE_011> war zum Zeitpunkt des Vorgangs aktiv."
+      },
+      {
+        "char_end": 427,
+        "char_start": 0,
+        "chunk_id": "src_139432661f913d8f:000000",
+        "line_end": 13,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_139432661f913d8f",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Sabine <TERM_006> Person: Sabine <TERM_006> Rolle: Nachbarin Vernehmung am: <PHONE_014>## Angaben Ich war das Wochenende \u00fcber verreist und kann nichts zum Vorfall sagen. Ich bin am Freitagnachmittag abgefahren und am Montag zur\u00fcckgekommen. Zum Fahrzeug in der Uferstra\u00dfe kann ich keine Angaben machen."
+      },
+      {
+        "char_end": 536,
+        "char_start": 0,
+        "chunk_id": "src_ebd0174c351d541c:000000",
+        "line_end": 16,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_ebd0174c351d541c",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Tobias <TERM_001> Person: Tobias <TERM_001> Rolle: Halter Kennzeichen: B-TL 4471 Vernehmung am: <PHONE_001>## Angaben Mein blauer VW Golf stand das ganze Wochenende in der Werkstatt. Ich war am Samstag, <PHONE_002>, den ganzen Abend zu Hause. Am Sonntag, <PHONE_003>, war ich ebenfalls zu Hause. Es kann niemand best\u00e4tigen, dass ich zu Hause war, ich lebe allein. Nadja <TERM_002> leitet die Werkstatt <TERM_002> und Sohn."
+      },
+      {
+        "char_end": 559,
+        "char_start": 0,
+        "chunk_id": "src_899262d2f279bc7b:000000",
+        "line_end": 16,
+        "line_start": 1,
+        "page_end": null,
+        "page_start": null,
+        "source_id": "src_899262d2f279bc7b",
+        "text": "SYNTHETISCHER FALL \u2014 FREI ERFUNDEN. Keine echten Personen, Fahrzeuge, Orte oder Ereignisse. Nur f\u00fcr Tests und Demos. # Vernehmung Ines <TERM_004> Person: Ines <TERM_004> Rolle: Zeugin Vernehmung am: <PHONE_004> Ort der Vernehmung: Revier Nord ## Angaben Ich war am Samstag, <PHONE_002>, gegen 21:30 Uhr am Kiosk in der Uferstra\u00dfe. Marek <TERM_003> stand dort ebenfalls, wir haben kurz miteinander gesprochen. Der Wagen, der vorbeifuhr, war dunkelgr\u00fcn. Ich bin mir bei der Farbe sicher, weil die Laterne direkt dar\u00fcber steht. Um 22:00 Uhr bin ich nach Hause gegangen."
+      }
+    ],
+    "question": "Which person has an alibi that is confirmed by another witness, and by whom?",
+    "response_schema": "nemofold.claims.v1"
+  }
+]
