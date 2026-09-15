@@ -18,7 +18,7 @@ from typing import Any
 from .application import ExecutionConfig, run_job
 from .artifacts import write_text_artifact
 from .contracts import RunReport, RunStatus
-from .job_io import parse_job_payload
+from .job_io import load_job_snapshot, parse_job_payload
 from .model_authority import (
     AUTHORITY_LINKS_WIN,
     LOCAL_CORE,
@@ -31,6 +31,7 @@ from .model_authority import (
 from .policies import PolicyStore, cleanup_rules_for_step
 from .provider_analysis import PROVIDER_WORKFLOWS, analyze_with_provider
 from .providers import ProviderConfig
+from .runtime import job_idempotency_key
 
 VOYAGE_RUN_SCHEMA = "nemofold.voyage-run.v1"
 MAX_CHAIN_STEPS = 24
@@ -53,7 +54,7 @@ class VoyageStepResult:
     rights_level: str
     policy_note: str = ""
     errors: tuple[str, ...] = ()
-    handoff: dict[str, str] | None = None
+    handoff: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -210,6 +211,93 @@ def _verified_handoff(
     }
 
 
+def _selected_registry_sources(
+    receipt: dict[str, str], report: RunReport, *, output_dir: str
+) -> tuple[list[str], dict[str, Any]]:
+    """Resolve selected registry rows back to unchanged original source files.
+
+    The registry artifact alone holds source IDs, not file paths. A saved job
+    snapshot supplies the paths and source hashes, and its idempotency key must
+    match the producer report before any path is accepted.
+    """
+    try:
+        registry = json.loads(Path(receipt["path"]).read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise ValueError("handoff_registry_unreadable") from exc
+    if not isinstance(registry, dict) or registry.get("schema") != (
+        "nemofold.document-registry.v1"
+    ):
+        raise ValueError("handoff_registry_schema_invalid")
+    rows = registry.get("rows")
+    skipped = registry.get("skipped_source_ids")
+    if (
+        not isinstance(rows, list)
+        or not isinstance(skipped, list)
+        or any(not isinstance(row, dict) or not isinstance(row.get("source_id"), str)
+               for row in rows)
+        or any(not isinstance(source_id, str) for source_id in skipped)
+    ):
+        raise ValueError("handoff_registry_selection_invalid")
+    selected_ids = [row["source_id"] for row in rows]
+    if not selected_ids:
+        raise ValueError("handoff_selection_empty")
+    if len(set(selected_ids)) != len(selected_ids) or len(set(skipped)) != len(skipped):
+        raise ValueError("handoff_registry_selection_invalid")
+
+    snapshot_path = Path(output_dir) / "jobs" / f"{report.run_id}.json"
+    try:
+        snapshot = load_job_snapshot(snapshot_path)
+    except ValueError as exc:
+        raise ValueError("handoff_producer_snapshot_invalid") from exc
+    if (
+        snapshot.workflow != "document_registry"
+        or job_idempotency_key(snapshot) != report.idempotency_key
+        or not snapshot.parameters.get("topic_filter")
+    ):
+        raise ValueError("handoff_producer_snapshot_mismatch")
+    sources = {source.source_id: source for source in snapshot.sources}
+    if (
+        len(sources) != len(snapshot.sources)
+        or set(selected_ids) & set(skipped)
+        or set(selected_ids) | set(skipped) != set(sources)
+    ):
+        raise ValueError("handoff_registry_selection_incomplete")
+
+    roots = [Path(root).resolve() for root in snapshot.input_roots]
+    paths: list[str] = []
+    source_hashes: dict[str, str] = {}
+    for source_id in selected_ids:
+        source = sources[source_id]
+        path = Path(source.path)
+        if path.is_symlink() or not path.is_file():
+            raise ValueError(f"handoff_source_unavailable:{source_id}")
+        resolved = path.resolve()
+        if not any(
+            (root.is_dir() and resolved.is_relative_to(root))
+            or (root.is_file() and resolved == root)
+            for root in roots
+        ):
+            raise ValueError(f"handoff_source_outside_producer:{source_id}")
+        digest = hashlib.sha256()
+        try:
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(chunk)
+        except OSError as exc:
+            raise ValueError(f"handoff_source_unreadable:{source_id}") from exc
+        if digest.hexdigest() != source.sha256:
+            raise ValueError(f"handoff_source_hash_mismatch:{source_id}")
+        paths.append(str(resolved))
+        source_hashes[source_id] = source.sha256
+    return paths, {
+        **receipt,
+        "mode": "selected_sources",
+        "selected_source_ids": selected_ids,
+        "selected_source_sha256": source_hashes,
+        "topic_filter": list(snapshot.parameters["topic_filter"]),
+    }
+
+
 def run_voyage(
     voyage: dict[str, Any],
     config: ExecutionConfig,
@@ -243,7 +331,7 @@ def run_voyage(
     for order, step in enumerate(steps, start=1):
         job_payload = dict(step["job"])
         step_run_id = f"{run_id}_{order:02d}"
-        handoff_receipt: dict[str, str] | None = None
+        handoff_receipt: dict[str, Any] | None = None
         if step.get("reads_previous_output") and previous_output is not None:
             # Declared in the saved plan, applied here - never guessed.
             job_payload["input_roots"] = [previous_output]
@@ -259,6 +347,14 @@ def run_voyage(
                     artifact_format=artifact_format,
                     privacy_mode=previous_privacy_mode or "local_only",
                 )
+                if spec.get("mode") == "selected_sources":
+                    job_payload["input_roots"], handoff_receipt = (
+                        _selected_registry_sources(
+                            handoff_receipt,
+                            previous_report,
+                            output_dir=previous_output or "",
+                        )
+                    )
             except ValueError as exc:
                 rights, rights_level = resolve_rights(step.get("rights"), chain_rights)
                 results.append(
@@ -280,7 +376,8 @@ def run_voyage(
                 )
                 stopped_at = order
                 break
-            job_payload["input_roots"] = [handoff_receipt["path"]]
+            if spec.get("mode") != "selected_sources":
+                job_payload["input_roots"] = [handoff_receipt["path"]]
         policy_note = ""
         if policy_store is not None and job_payload.get("workflow") == "cleanup_rules":
             # A bound policy fills in only what the contract left empty, and the

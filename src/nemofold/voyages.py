@@ -224,7 +224,9 @@ def _step(value: Any, index: int, *, base_dir: Path, gate: PolicyGate) -> dict[s
             raise ValueError("the first step has no previous artifact to receive")
         if reads_previous:
             raise ValueError("handoff and reads_previous_output are mutually exclusive")
-        if not isinstance(handoff, dict) or set(handoff) != {"format"}:
+        if not isinstance(handoff, dict) or set(handoff) not in (
+            {"format"}, {"format", "mode"}
+        ):
             raise ValueError("handoff must name exactly one artifact format")
         format_name = handoff["format"]
         if not isinstance(format_name, str) or not re.fullmatch(
@@ -232,10 +234,23 @@ def _step(value: Any, index: int, *, base_dir: Path, gate: PolicyGate) -> dict[s
         ):
             raise ValueError("handoff format must be a lowercase artifact label")
         handoff = {"format": format_name}
+        if "mode" in value["handoff"]:
+            if (
+                value["handoff"]["mode"] != "selected_sources"
+                or format_name != "document-registry"
+            ):
+                raise ValueError(
+                    "selected_sources requires document-registry to synopsis_merge"
+                )
+            handoff["mode"] = "selected_sources"
     raw_job = value.get("job")
     if not isinstance(raw_job, dict):
         raise ValueError(f"step {index} requires a job object")
     parsed = parse_job_payload(raw_job, base_dir=base_dir)
+    if (handoff or {}).get("mode") == "selected_sources" and (
+        parsed.workflow != "synopsis_merge"
+    ):
+        raise ValueError("selected_sources requires document-registry to synopsis_merge")
     for path in (*parsed.input_roots, *parsed.target_roots, parsed.output_dir):
         if not gate.path_allowed(path):
             raise PermissionError(f"step {index} points outside the configured allow roots")
@@ -367,6 +382,13 @@ class VoyageStore:
             _step(item, index, base_dir=self.base_dir, gate=self.gate)
             for index, item in enumerate(raw_steps, start=1)
         ]
+        for previous_step, next_step in zip(steps, steps[1:], strict=False):
+            if (next_step.get("handoff") or {}).get("mode") == "selected_sources" and (
+                previous_step["workflow"] != "document_registry"
+            ):
+                raise ValueError(
+                    "selected_sources requires the immediately preceding document_registry"
+                )
         source = kept("source", "manual")
         if source not in VOYAGE_SOURCES:
             raise ValueError("voyage source must be wizard, manual or preset")
