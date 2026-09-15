@@ -4,6 +4,21 @@ All notable changes to NemoFold are documented here.
 
 ## Unreleased
 
+- Execute saved voyages through the CLI and MCP as well as loopback HTTP, using
+  the same chain runner and a shared response that includes verified handoff
+  receipts. A one-run model override is validated identically on all surfaces;
+  deterministic steps never claim to have called the requested model.
+- Revalidate saved voyage steps on load so post-save changes to a typed edge,
+  job, or allowed path cannot bypass the library contract.
+- Bind each newly saved voyage to a SHA-256 receipt. Missing legacy receipts
+  permit reading and resaving but block execution; altered top-level rights or
+  model authority fail the receipt check. Pending-capability reservations cannot
+  run even when their current steps happen to be implemented.
+- Bind Voyage artifact edges to one written producer artifact with an in-root
+  path and current SHA-256, and resolve topic-filtered document-registry rows
+  to unchanged originals for synopsis merge. The full Ellmos application
+  gates are still open.
+
 - Expand the shared job contract from eight to twelve workflows with explainable
   Cleanup Rules, local Mail-to-Case intake, confirmation-bound Controlled Email
   drafts, and a source-grounded Contact Monitor.

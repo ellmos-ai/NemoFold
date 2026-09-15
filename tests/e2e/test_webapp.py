@@ -1327,6 +1327,44 @@ def test_running_a_saved_voyage_returns_a_dossier_over_its_steps(tmp_path) -> No
     assert Path(run["dossier_path"]).is_file()
 
 
+def test_web_voyage_result_exposes_the_same_verified_handoff_as_cli_and_mcp(
+    tmp_path,
+) -> None:
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "case.txt").write_text("Befund: Schilddrüse unauffällig.", encoding="utf-8")
+    steps = []
+    for order, workflow in enumerate(("fact_distill", "folder_digest"), start=1):
+        step = {
+            "workflow": workflow,
+            "job": {
+                "schema": "nemofold.job.v1",
+                "workflow": workflow,
+                "input_roots": [str(documents)],
+                "output_dir": str(tmp_path / "out" / f"0{order}-{workflow}"),
+                "privacy_mode": "local_only",
+                "action_mode": "dry_run",
+                "parameters": {"formats": ["md"]} if order == 1 else {},
+            },
+        }
+        if order == 2:
+            step["handoff"] = {"format": "markdown"}
+        steps.append(step)
+
+    with running_server(tmp_path) as base_url:
+        saved = post_json(base_url + "/api/voyages", {"name": "Verified edge", "steps": steps})
+        run = post_json(
+            base_url + "/api/voyage-run",
+            {"voyage_id": saved["voyage"]["voyage_id"], "run_id": "web_edge"},
+        )
+
+    assert run["ok"] is True
+    edge = run["steps"][1]["handoff"]
+    assert edge["schema"] == "nemofold.artifact-handoff.v1"
+    assert edge["producer_run_id"] == "web_edge_01"
+    assert edge["format"] == "markdown"
+
+
 def test_library_edit_returns_a_diff_and_writes_only_on_a_separate_save(tmp_path) -> None:
     documents = tmp_path / "documents"
     documents.mkdir()

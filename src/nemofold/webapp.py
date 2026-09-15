@@ -24,7 +24,7 @@ from .provider_analysis import analyze_with_provider, preview_provider_context
 from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
 from .voyage_edit import edit_to_primitive, plan_voyage_edit
-from .voyage_runs import run_voyage
+from .voyage_runs import run_voyage, voyage_run_payload
 from .voyages import VoyageStore, validate_model_pref
 from .wizard import DEFAULT_OUTPUT_DIR, plan_to_primitive, plan_voyage
 from .workflow_graphs import workflow_graphs
@@ -1149,7 +1149,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 if validated is None:
                     raise ValueError("model_override must name a provider and a model")
                 override = validated["preferred"]
-            voyage = self._voyage_store().load(voyage_id)
+            voyage = self._voyage_store().load(voyage_id, require_receipt=True)
             run_id = _api_run_id(payload.get("run_id"), prefix="api_voyage")
             result = run_voyage(
                 voyage,
@@ -1163,38 +1163,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self._error(HTTPStatus.BAD_REQUEST, "voyage_run_rejected", str(exc))
             return
         self._json(
-            {
-                "ok": result.completed,
-                "status": result.status,
-                "run_id": result.run_id,
-                "stopped_at": result.stopped_at,
-                "dossier_path": result.dossier_path,
-                "model_authority": voyage.get("model_authority", "links_win"),
-                "authority_reason": voyage.get("authority_reason", ""),
-                "run_level_override": (
-                    None
-                    if override is None
-                    else f"{override.get('provider')}:{override.get('model')}"
-                ),
-                "steps": [
-                    {
-                        "order": step.order,
-                        "workflow": step.workflow,
-                        "run_id": step.run_id,
-                        "status": step.status,
-                        "artifact_count": step.artifact_count,
-                        "ledger_path": step.ledger_path,
-                        "model_used": step.model_used,
-                        "model_note": step.model_note,
-                        "model_level": step.model_level,
-                        "rights": step.rights,
-                        "rights_level": step.rights_level,
-                        "policy_note": step.policy_note,
-                        "errors": list(step.errors),
-                    }
-                    for step in result.steps
-                ],
-            },
+            voyage_run_payload(result, voyage, model_override=override),
             HTTPStatus.OK if result.completed else HTTPStatus.CONFLICT,
         )
 

@@ -72,6 +72,48 @@ class VoyageRunResult:
         return self.stopped_at is None
 
 
+def voyage_run_payload(
+    result: VoyageRunResult,
+    voyage: dict[str, Any],
+    *,
+    model_override: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return the same bounded chain result to CLI, MCP and the web surface."""
+    return {
+        "ok": result.completed,
+        "status": result.status,
+        "run_id": result.run_id,
+        "stopped_at": result.stopped_at,
+        "dossier_path": result.dossier_path,
+        "model_authority": voyage.get("model_authority", AUTHORITY_LINKS_WIN),
+        "authority_reason": voyage.get("authority_reason", ""),
+        "run_level_override": (
+            None
+            if model_override is None
+            else f"{model_override.get('provider')}:{model_override.get('model')}"
+        ),
+        "steps": [
+            {
+                "order": step.order,
+                "workflow": step.workflow,
+                "run_id": step.run_id,
+                "status": step.status,
+                "artifact_count": step.artifact_count,
+                "ledger_path": step.ledger_path,
+                "model_used": step.model_used,
+                "model_note": step.model_note,
+                "model_level": step.model_level,
+                "rights": step.rights,
+                "rights_level": step.rights_level,
+                "policy_note": step.policy_note,
+                "errors": list(step.errors),
+                "handoff": step.handoff,
+            }
+            for step in result.steps
+        ],
+    }
+
+
 def _dossier_markdown(result: VoyageRunResult) -> str:
     lines = [
         f"# Voyage dossier · {result.name}",
@@ -313,6 +355,8 @@ def run_voyage(
     and it does not lift the chain's local-only cap.
     """
     steps = voyage.get("steps") or []
+    if voyage.get("status", "runnable") != "runnable":
+        raise ValueError("pending_capability voyage cannot run until its capability is ready")
     if not steps:
         raise ValueError("this voyage has no step to run")
     if len(steps) > MAX_CHAIN_STEPS:

@@ -68,6 +68,48 @@ def test_a_voyage_is_saved_loaded_and_listed(tmp_path) -> None:
     assert listed[saved["voyage_id"]]["editable"] is True
 
 
+def test_loading_a_saved_voyage_rejects_a_tampered_handoff_edge(tmp_path) -> None:
+    store = _store(tmp_path)
+    plan = _voyage(tmp_path)
+    second = json.loads(json.dumps(plan["steps"][0]))
+    second["job"]["output_dir"] = str(tmp_path / "out" / "02")
+    second["handoff"] = {"format": "markdown"}
+    plan["steps"].append(second)
+    saved = store.save(plan)
+    path = store.root / f"{saved['voyage_id']}.json"
+    changed = json.loads(path.read_text(encoding="utf-8"))
+    changed["steps"][1]["reads_previous_output"] = True
+    path.write_text(json.dumps(changed), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="stored step contract invalid"):
+        store.load(saved["voyage_id"])
+
+
+def test_saved_receipt_rejects_valid_looking_top_level_rights_tamper(tmp_path) -> None:
+    store = _store(tmp_path)
+    saved = store.save(_voyage(tmp_path))
+    path = store.root / f"{saved['voyage_id']}.json"
+    changed = json.loads(path.read_text(encoding="utf-8"))
+    changed["rights"] = "send_when_ordered"
+    changed["model_authority"] = "chain_wins"
+    path.write_text(json.dumps(changed), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="voyage receipt hash mismatch"):
+        store.load(saved["voyage_id"])
+
+
+def test_unreceipted_legacy_voyage_can_be_read_but_not_executed(tmp_path) -> None:
+    store = _store(tmp_path)
+    saved = store.save(_voyage(tmp_path))
+    receipt = store.root / "_receipts" / f"{saved['voyage_id']}.json"
+    assert receipt.is_file()
+    receipt.unlink()
+
+    assert store.load(saved["voyage_id"])["name"] == "Faktenlage Unfall"
+    with pytest.raises(ValueError, match="voyage receipt missing"):
+        store.load(saved["voyage_id"], require_receipt=True)
+
+
 def test_saving_with_an_id_updates_and_keeps_the_creation_time(tmp_path) -> None:
     store = _store(tmp_path)
     first = store.save(_voyage(tmp_path))

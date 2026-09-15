@@ -18,7 +18,8 @@ from .policy import PolicyConfig, PolicyGate
 from .provider_analysis import analyze_with_provider
 from .providers import provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
-from .voyages import VoyageStore
+from .voyage_runs import run_voyage, voyage_run_payload
+from .voyages import VoyageStore, validate_model_pref
 
 MAX_ANONYMIZE_CHARS = 2 * 1024 * 1024
 
@@ -63,6 +64,7 @@ class NemoFoldMCPService:
                 "nemofold_list_drafts",
                 "nemofold_list_voyages",
                 "nemofold_copy_voyage_preset",
+                "nemofold_run_voyage",
                 "nemofold_list_policies",
                 "nemofold_verify_report",
             ],
@@ -179,6 +181,31 @@ class NemoFoldMCPService:
         )
         return {"voyage": voyage, "executed": False}
 
+    def run_voyage(
+        self,
+        voyage_id: str,
+        run_id: str | None = None,
+        model_override: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Execute a saved chain with the same policy and handoff checks as HTTP."""
+        run_id = self._run_id(run_id)
+        override = None
+        if model_override is not None:
+            checked = validate_model_pref({"preferred": model_override})
+            override = checked["preferred"] if checked is not None else None
+        voyage = VoyageStore(self.base_dir, self.config.execution.allowed_roots).load(
+            voyage_id, require_receipt=True
+        )
+        result = run_voyage(
+            voyage,
+            self.config.execution,
+            run_id=run_id,
+            base_dir=self.base_dir,
+            model_override=override,
+            policy_store=PolicyStore(self.base_dir, self.config.execution.allowed_roots),
+        )
+        return voyage_run_payload(result, voyage, model_override=override)
+
     def verify_report(self, report_path: str) -> dict[str, Any]:
         if not isinstance(report_path, str) or not self.path_gate.path_allowed(report_path):
             raise PermissionError("report_path is outside the MCP allow roots")
@@ -273,6 +300,15 @@ def build_mcp_server(config: MCPServerConfig):
     ) -> dict[str, Any]:
         """Copy a shipped specialist into the library, bound to approved roots. Runs nothing."""
         return service.copy_voyage_preset(preset_id, input_roots, output_dir, name)
+
+    @mcp.tool(name="nemofold_run_voyage")
+    def run_saved_voyage(
+        voyage_id: str,
+        run_id: str | None = None,
+        model_override: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """Run a saved use case with the configured root, policy and action gates."""
+        return service.run_voyage(voyage_id, run_id, model_override)
 
     @mcp.tool(name="nemofold_list_policies")
     def list_policies() -> dict[str, Any]:

@@ -29,6 +29,7 @@ def test_mcp_server_exposes_one_bounded_tool_surface(tmp_path) -> None:
         "nemofold_list_drafts",
         "nemofold_list_voyages",
         "nemofold_copy_voyage_preset",
+        "nemofold_run_voyage",
         "nemofold_list_policies",
         "nemofold_verify_report",
     }

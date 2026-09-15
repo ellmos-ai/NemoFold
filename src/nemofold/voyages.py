@@ -13,6 +13,7 @@ authority this product refuses.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from dataclasses import dataclass
@@ -454,22 +455,72 @@ class VoyageStore:
                 "note": "Approvals are never stored in the use-case library.",
             },
         }
+        rendered = json.dumps(payload, indent=2, sort_keys=True) + "\n"
+        write_text_artifact(self.root / f"{voyage_id}.json", rendered, "voyage")
         write_text_artifact(
-            self.root / f"{voyage_id}.json",
-            json.dumps(payload, indent=2, sort_keys=True) + "\n",
-            "voyage",
+            self.root / "_receipts" / f"{voyage_id}.json",
+            json.dumps(
+                {
+                    "schema": "nemofold.voyage-receipt.v1",
+                    "voyage_id": voyage_id,
+                    "sha256": hashlib.sha256(rendered.encode("utf-8")).hexdigest(),
+                    "status": "verified_at_save",
+                },
+                indent=2,
+                sort_keys=True,
+            ) + "\n",
+            "voyage-receipt",
         )
         return payload
 
-    def load(self, voyage_id: str) -> dict[str, Any]:
+    def load(self, voyage_id: str, *, require_receipt: bool = False) -> dict[str, Any]:
         if not _VOYAGE_ID.fullmatch(voyage_id):
             raise ValueError("voyage_id is invalid")
         path = self.root / f"{voyage_id}.json"
         if not path.is_file() or path.is_symlink() or path.stat().st_size > MAX_VOYAGE_BYTES:
             raise ValueError("voyage does not exist or exceeds the size limit")
-        value = json.loads(path.read_text(encoding="utf-8"))
+        raw_bytes = path.read_bytes()
+        value = json.loads(raw_bytes.decode("utf-8"))
         if not isinstance(value, dict) or value.get("schema") != VOYAGE_SCHEMA:
             raise ValueError("voyage contract is invalid")
+        raw_steps = value.get("steps")
+        if not isinstance(raw_steps, list) or not raw_steps or len(raw_steps) > MAX_STEPS:
+            raise ValueError("voyage stored step contract invalid")
+        try:
+            checked_steps = [
+                _step(item, index, base_dir=self.base_dir, gate=self.gate)
+                for index, item in enumerate(raw_steps, start=1)
+            ]
+        except (PermissionError, ValueError) as exc:
+            raise ValueError("voyage stored step contract invalid") from exc
+        if checked_steps != raw_steps:
+            raise ValueError("voyage stored step contract invalid")
+        for previous_step, next_step in zip(checked_steps, checked_steps[1:], strict=False):
+            if (next_step.get("handoff") or {}).get("mode") == "selected_sources" and (
+                previous_step["workflow"] != "document_registry"
+            ):
+                raise ValueError("voyage stored step contract invalid")
+        receipt_path = self.root / "_receipts" / f"{voyage_id}.json"
+        if not receipt_path.is_file():
+            if require_receipt:
+                raise ValueError("voyage receipt missing: resave this legacy voyage")
+        else:
+            if receipt_path.is_symlink() or receipt_path.stat().st_size > 4096:
+                raise ValueError("voyage receipt invalid")
+            try:
+                receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+            except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+                raise ValueError("voyage receipt invalid") from exc
+            if (
+                not isinstance(receipt, dict)
+                or receipt.get("schema") != "nemofold.voyage-receipt.v1"
+                or receipt.get("voyage_id") != voyage_id
+                or receipt.get("status") != "verified_at_save"
+                or not isinstance(receipt.get("sha256"), str)
+            ):
+                raise ValueError("voyage receipt invalid")
+            if hashlib.sha256(raw_bytes).hexdigest() != receipt["sha256"]:
+                raise ValueError("voyage receipt hash mismatch")
         return value
 
     def delete(self, voyage_id: str) -> None:

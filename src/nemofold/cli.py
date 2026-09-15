@@ -36,7 +36,8 @@ from .provider_analysis import analyze_with_provider
 from .providers import PROVIDER_DESCRIPTORS, provider_capabilities, provider_config_from_mapping
 from .report_verifier import verify_run_report
 from .runtime import LocalAgentRuntime
-from .voyages import VoyageStore
+from .voyage_runs import run_voyage, voyage_run_payload
+from .voyages import VoyageStore, validate_model_pref
 from .webapp import WebAppConfig, build_server, serve_forever
 
 
@@ -192,6 +193,16 @@ def build_parser() -> argparse.ArgumentParser:
     voyage_copy.add_argument("--output-dir", default="run-reports/web-console")
     voyage_copy.add_argument("--name")
     voyage_copy.add_argument("--base-dir", default=".")
+    voyage_run = commands.add_parser(
+        "voyage-run", help="run one saved use-case through its gated chain"
+    )
+    voyage_run.add_argument("voyage_id")
+    voyage_run.add_argument("--allow-root", action="append", required=True)
+    voyage_run.add_argument("--base-dir", default=".")
+    voyage_run.add_argument("--run-id", required=True)
+    voyage_run.add_argument("--approve-actions", action="store_true")
+    voyage_run.add_argument("--model-provider")
+    voyage_run.add_argument("--model")
     policy_list = commands.add_parser(
         "policies", help="list the named rules and policies, and where they are bound"
     )
@@ -278,7 +289,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _provider_analysis_command(args)
     if args.command in {"draft-save", "draft-list"}:
         return _draft_command(args)
-    if args.command in {"voyages", "voyage-copy"}:
+    if args.command in {"voyages", "voyage-copy", "voyage-run"}:
         return _voyage_command(args)
     if args.command == "policies":
         return _policy_command(args)
@@ -546,11 +557,34 @@ def _draft_command(args: argparse.Namespace) -> int:
 
 
 def _voyage_command(args: argparse.Namespace) -> int:
-    """List the library, or copy one shipped specialist into it. Never runs a step."""
+    """List/copy use cases, or run a saved one through the strict chain."""
     try:
         store = VoyageStore(Path(args.base_dir), tuple(args.allow_root))
         if args.command == "voyages":
             payload: dict[str, object] = {"voyages": list(store.list())}
+        elif args.command == "voyage-run":
+            validate_run_id(args.run_id)
+            if bool(args.model_provider) != bool(args.model):
+                raise ValueError("model override requires both provider and model")
+            override = None
+            if args.model_provider:
+                checked = validate_model_pref(
+                    {"preferred": {"provider": args.model_provider, "model": args.model}}
+                )
+                override = checked["preferred"] if checked is not None else None
+            voyage = store.load(args.voyage_id, require_receipt=True)
+            result = run_voyage(
+                voyage,
+                ExecutionConfig(
+                    allowed_roots=tuple(args.allow_root),
+                    apply_actions_allowed=args.approve_actions,
+                ),
+                run_id=args.run_id,
+                base_dir=args.base_dir,
+                model_override=override,
+                policy_store=PolicyStore(Path(args.base_dir), tuple(args.allow_root)),
+            )
+            payload = voyage_run_payload(result, voyage, model_override=override)
         else:
             payload = {
                 "voyage": store.copy_preset(
@@ -565,7 +599,7 @@ def _voyage_command(args: argparse.Namespace) -> int:
         print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
         return 2
     print(json.dumps(payload, indent=2, sort_keys=True))
-    return 0
+    return 0 if args.command != "voyage-run" or payload["ok"] else 2
 
 
 def _policy_command(args: argparse.Namespace) -> int:
