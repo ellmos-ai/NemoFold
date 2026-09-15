@@ -8,6 +8,7 @@ model really ran, which is never inferred from what the plan preferred.
 
 from __future__ import annotations
 
+import hashlib
 import json
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
@@ -16,7 +17,7 @@ from typing import Any
 
 from .application import ExecutionConfig, run_job
 from .artifacts import write_text_artifact
-from .contracts import RunStatus
+from .contracts import RunReport, RunStatus
 from .job_io import parse_job_payload
 from .model_authority import (
     AUTHORITY_LINKS_WIN,
@@ -33,6 +34,7 @@ from .providers import ProviderConfig
 
 VOYAGE_RUN_SCHEMA = "nemofold.voyage-run.v1"
 MAX_CHAIN_STEPS = 24
+ARTIFACT_HANDOFF_SCHEMA = "nemofold.artifact-handoff.v1"
 
 
 @dataclass(frozen=True, slots=True)
@@ -51,6 +53,7 @@ class VoyageStepResult:
     rights_level: str
     policy_note: str = ""
     errors: tuple[str, ...] = ()
+    handoff: dict[str, str] | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +112,11 @@ def _dossier_markdown(result: VoyageRunResult) -> str:
             lines.append(f"- policy: {step.policy_note}")
         if step.errors:
             lines.append(f"- errors: {', '.join(step.errors)}")
+        if step.handoff:
+            lines.append(
+                f"- handoff: {step.handoff['format']} from "
+                f"{step.handoff['producer_run_id']} (SHA-256 {step.handoff['sha256']})"
+            )
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
 
@@ -154,6 +162,54 @@ def _route_step(resolution: ModelResolution, workflow: str) -> ModelResolution:
     return resolution
 
 
+def _verified_handoff(
+    report: RunReport,
+    *,
+    output_dir: str,
+    artifact_format: str,
+    privacy_mode: str,
+) -> dict[str, str]:
+    """Bind one producer artifact to the next input; never trust a directory.
+
+    The producer's in-memory report declares the artifact, but its content can
+    change before a consumer reads it. Verify both its location and current
+    digest before making it an approved input root.
+    """
+    matches = [item for item in report.artifacts if item.format == artifact_format]
+    if not matches:
+        raise ValueError(f"handoff_format_missing:{artifact_format}")
+    if len(matches) != 1:
+        raise ValueError(f"handoff_format_ambiguous:{artifact_format}")
+    artifact = matches[0]
+    if artifact.status != "written":
+        raise ValueError(f"handoff_artifact_not_written:{artifact_format}")
+    path = Path(artifact.path)
+    if path.is_symlink() or not path.is_file():
+        raise ValueError(f"handoff_artifact_unavailable:{artifact_format}")
+    resolved = path.resolve()
+    if not resolved.is_relative_to(Path(output_dir).resolve()):
+        raise ValueError(f"handoff_artifact_outside_producer:{artifact_format}")
+    digest = hashlib.sha256()
+    try:
+        with path.open("rb") as source:
+            for chunk in iter(lambda: source.read(1024 * 1024), b""):
+                digest.update(chunk)
+    except OSError as exc:
+        raise ValueError(f"handoff_artifact_unreadable:{artifact_format}") from exc
+    if digest.hexdigest() != artifact.sha256:
+        raise ValueError(f"handoff_hash_mismatch:{artifact_format}")
+    return {
+        "schema": ARTIFACT_HANDOFF_SCHEMA,
+        "producer_run_id": report.run_id,
+        "producer_workflow": report.workflow,
+        "format": artifact.format,
+        "path": str(resolved),
+        "sha256": artifact.sha256,
+        "privacy_mode": privacy_mode,
+        "status": "verified",
+    }
+
+
 def run_voyage(
     voyage: dict[str, Any],
     config: ExecutionConfig,
@@ -180,13 +236,51 @@ def run_voyage(
     chain_rights = voyage.get("rights")
     results: list[VoyageStepResult] = []
     previous_output: str | None = None
+    previous_report: RunReport | None = None
+    previous_privacy_mode: str | None = None
     stopped_at: int | None = None
     blocked: ModelResolution | None = None
     for order, step in enumerate(steps, start=1):
         job_payload = dict(step["job"])
+        step_run_id = f"{run_id}_{order:02d}"
+        handoff_receipt: dict[str, str] | None = None
         if step.get("reads_previous_output") and previous_output is not None:
             # Declared in the saved plan, applied here - never guessed.
             job_payload["input_roots"] = [previous_output]
+        if step.get("handoff") is not None:
+            spec = step["handoff"]
+            artifact_format = spec.get("format") if isinstance(spec, dict) else None
+            try:
+                if not isinstance(artifact_format, str) or previous_report is None:
+                    raise ValueError("handoff_previous_report_missing")
+                handoff_receipt = _verified_handoff(
+                    previous_report,
+                    output_dir=previous_output or "",
+                    artifact_format=artifact_format,
+                    privacy_mode=previous_privacy_mode or "local_only",
+                )
+            except ValueError as exc:
+                rights, rights_level = resolve_rights(step.get("rights"), chain_rights)
+                results.append(
+                    VoyageStepResult(
+                        order=order,
+                        workflow=str(job_payload["workflow"]),
+                        run_id=step_run_id,
+                        status="handoff_blocked",
+                        ledger_path=None,
+                        artifact_count=0,
+                        output_dir=str(job_payload["output_dir"]),
+                        model_used=LOCAL_CORE,
+                        model_note="No model or consumer ran: the artifact handoff failed.",
+                        model_level="default",
+                        rights=rights,
+                        rights_level=rights_level,
+                        errors=(str(exc),),
+                    )
+                )
+                stopped_at = order
+                break
+            job_payload["input_roots"] = [handoff_receipt["path"]]
         policy_note = ""
         if policy_store is not None and job_payload.get("workflow") == "cleanup_rules":
             # A bound policy fills in only what the contract left empty, and the
@@ -202,7 +296,6 @@ def run_voyage(
                 job_payload["parameters"] = parameters
             policy_note = f"Cleanup rules came from {origin}."
         job = parse_job_payload(job_payload, base_dir=base_dir)
-        step_run_id = f"{run_id}_{order:02d}"
         resolution = resolve_authority(
             step_pref=step.get("model_pref"),
             chain_pref=chain_pref,
@@ -267,9 +360,12 @@ def run_voyage(
                 rights_level=rights_level,
                 policy_note=policy_note,
                 errors=tuple(report.errors),
+                handoff=handoff_receipt,
             )
         )
         previous_output = job.output_dir
+        previous_report = report
+        previous_privacy_mode = job.privacy_mode.value
         if report.status is not RunStatus.EXECUTED:
             stopped_at = order
             break
@@ -324,6 +420,7 @@ def run_voyage(
                 "rights_level": item.rights_level,
                 "policy_note": item.policy_note,
                 "errors": list(item.errors),
+                "handoff": item.handoff,
             }
             for item in result.steps
         ],

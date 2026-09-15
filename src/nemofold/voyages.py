@@ -206,18 +206,32 @@ def validate_chain_model_pref(value):
 def _step(value: Any, index: int, *, base_dir: Path, gate: PolicyGate) -> dict[str, Any]:
     allowed = {
         "workflow", "job", "model_pref", "note", "reads_previous_output",
-        "rights", "policy_refs",
+        "rights", "policy_refs", "handoff",
     }
     if not isinstance(value, dict) or set(value) - allowed:
         raise ValueError(
             f"step {index} may only carry workflow, job, model_pref, note, "
-            "reads_previous_output, rights and policy_refs"
+            "reads_previous_output, handoff, rights and policy_refs"
         )
     reads_previous = value.get("reads_previous_output", False)
     if not isinstance(reads_previous, bool):
         raise ValueError(f"step {index} reads_previous_output must be a boolean")
     if reads_previous and index == 1:
         raise ValueError("the first step has no previous output to read")
+    handoff = value.get("handoff")
+    if handoff is not None:
+        if index == 1:
+            raise ValueError("the first step has no previous artifact to receive")
+        if reads_previous:
+            raise ValueError("handoff and reads_previous_output are mutually exclusive")
+        if not isinstance(handoff, dict) or set(handoff) != {"format"}:
+            raise ValueError("handoff must name exactly one artifact format")
+        format_name = handoff["format"]
+        if not isinstance(format_name, str) or not re.fullmatch(
+            r"[a-z0-9][a-z0-9-]{0,79}", format_name
+        ):
+            raise ValueError("handoff format must be a lowercase artifact label")
+        handoff = {"format": format_name}
     raw_job = value.get("job")
     if not isinstance(raw_job, dict):
         raise ValueError(f"step {index} requires a job object")
@@ -245,6 +259,7 @@ def _step(value: Any, index: int, *, base_dir: Path, gate: PolicyGate) -> dict[s
         "model_pref": validate_model_pref(value.get("model_pref")),
         "note": _text(value.get("note", ""), "note", maximum=400, required=False),
         "reads_previous_output": reads_previous,
+        "handoff": handoff,
         "rights": validate_rights(value.get("rights"), f"step {index} rights"),
         "policy_refs": validate_policy_refs(
             value.get("policy_refs"), f"step {index} policy_refs"
