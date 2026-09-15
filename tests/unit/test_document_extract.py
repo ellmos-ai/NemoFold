@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import hashlib
 import zipfile
 
 import pytest
 
 from nemofold.contracts import Coverage
-from nemofold.document_extract import UnsupportedDocumentError, extract_document_text
+from nemofold.document_extract import (
+    SourceHashMismatch,
+    UnsupportedDocumentError,
+    extract_document_text,
+)
 from nemofold.report_studio import ReportDocument, render_report_formats
 
 
@@ -60,3 +65,14 @@ def test_pdf_report_round_trips_through_local_text_extractor(tmp_path) -> None:
 
     assert "Local PDF evidence" in extracted
     assert "Coverage" in extracted
+
+
+def test_extraction_rejects_bytes_different_from_the_inventory_hash(tmp_path) -> None:
+    source = tmp_path / "report.txt"
+    source.write_text("Befund: Schilddrüse unauffällig.\n", encoding="utf-8")
+    expected = hashlib.sha256(source.read_bytes()).hexdigest()
+    assert "unauffällig" in extract_document_text(source, expected_sha256=expected)
+
+    source.write_text("Befund: Schilddrüse verändert.\n", encoding="utf-8")
+    with pytest.raises(SourceHashMismatch, match="source_hash_mismatch"):
+        extract_document_text(source, expected_sha256=expected)

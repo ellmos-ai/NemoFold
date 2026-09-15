@@ -18,6 +18,12 @@ All notable changes to NemoFold are documented here.
   path and current SHA-256, and resolve topic-filtered document-registry rows
   to unchanged originals for synopsis merge. The full Ellmos application
   gates are still open.
+- Make multi-source registry-to-synopsis handoffs explicitly traceable across
+  producer and consumer Source ID namespaces, with matching source hashes;
+  reject the Voyage result if the consumer snapshot or live hashes differ.
+- Bind text, HTML, DOCX, ODT, and PDF extraction to the same in-memory bytes
+  checked against each inventoried source hash; fail if a source changes while
+  it is being read rather than citing unverified content.
 
 - Expand the shared job contract from eight to twelve workflows with explainable
   Cleanup Rules, local Mail-to-Case intake, confirmation-bound Controlled Email

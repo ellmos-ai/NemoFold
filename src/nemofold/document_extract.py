@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import io
 import json
 import zipfile
 from html.parser import HTMLParser
@@ -44,6 +46,10 @@ class UnsupportedDocumentError(ValueError):
     """Raised when no local extractor is available for a document."""
 
 
+class SourceHashMismatch(RuntimeError):
+    """The bytes read for extraction differ from the inventoried source."""
+
+
 class _VisibleHTML(HTMLParser):
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
@@ -66,53 +72,64 @@ def _xml_paragraphs(data: bytes, *, paragraph_names: frozenset[str]) -> str:
     return "\n".join(paragraphs)
 
 
-def _extract_docx(path: Path) -> str:
+def _extract_docx(data: bytes, name: str) -> str:
     try:
-        with zipfile.ZipFile(path) as archive:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
             data = read_xml_member(archive, "word/document.xml")
     except (KeyError, OSError, zipfile.BadZipFile) as exc:
-        raise ValueError(f"invalid DOCX document: {path.name}") from exc
+        raise ValueError(f"invalid DOCX document: {name}") from exc
     return _xml_paragraphs(data, paragraph_names=frozenset({"p"}))
 
 
-def _extract_odt(path: Path) -> str:
+def _extract_odt(data: bytes, name: str) -> str:
     try:
-        with zipfile.ZipFile(path) as archive:
+        with zipfile.ZipFile(io.BytesIO(data)) as archive:
             data = read_xml_member(archive, "content.xml")
     except (KeyError, OSError, zipfile.BadZipFile) as exc:
-        raise ValueError(f"invalid ODT document: {path.name}") from exc
+        raise ValueError(f"invalid ODT document: {name}") from exc
     return _xml_paragraphs(data, paragraph_names=frozenset({"h", "p"}))
 
 
-def _extract_pdf(path: Path) -> str:
+def _extract_pdf(data: bytes, name: str) -> str:
     try:
         from pypdf import PdfReader
     except ImportError as exc:  # pragma: no cover - packaging guarantees the dependency
         raise UnsupportedDocumentError("PDF extraction requires pypdf") from exc
     try:
-        reader = PdfReader(path)
+        reader = PdfReader(io.BytesIO(data))
         pages = [(page.extract_text() or "").strip() for page in reader.pages]
     except Exception as exc:
-        raise ValueError(f"invalid or encrypted PDF document: {path.name}") from exc
+        raise ValueError(f"invalid or encrypted PDF document: {name}") from exc
     return "\f".join(pages)
 
 
-def extract_document_text(path: str | Path, *, mime_type: str = "") -> str:
+def extract_document_text(
+    path: str | Path, *, mime_type: str = "", expected_sha256: str | None = None
+) -> str:
     source = Path(path)
     suffix = source.suffix.casefold()
+    if (
+        suffix not in PLAIN_TEXT_SUFFIXES
+        and not mime_type.startswith("text/")
+        and suffix not in {".html", ".htm", ".docx", ".odt", ".pdf"}
+    ):
+        raise UnsupportedDocumentError(f"unsupported document type: {suffix or '<none>'}")
+    data = source.read_bytes()
+    if expected_sha256 is not None and hashlib.sha256(data).hexdigest() != expected_sha256:
+        raise SourceHashMismatch("source_hash_mismatch")
     if suffix in PLAIN_TEXT_SUFFIXES or mime_type.startswith("text/"):
-        text = source.read_text(encoding="utf-8-sig")
+        text = data.decode("utf-8-sig")
         if suffix == ".json":
             json.loads(text)
         return text
     if suffix in {".html", ".htm"}:
         parser = _VisibleHTML()
-        parser.feed(source.read_text(encoding="utf-8-sig"))
+        parser.feed(data.decode("utf-8-sig"))
         return "\n".join(parser.parts)
     if suffix == ".docx":
-        return _extract_docx(source)
+        return _extract_docx(data, source.name)
     if suffix == ".odt":
-        return _extract_odt(source)
+        return _extract_odt(data, source.name)
     if suffix == ".pdf":
-        return _extract_pdf(source)
+        return _extract_pdf(data, source.name)
     raise UnsupportedDocumentError(f"unsupported document type: {suffix or '<none>'}")

@@ -18,6 +18,7 @@ from typing import Any
 from .application import ExecutionConfig, run_job
 from .artifacts import write_text_artifact
 from .contracts import RunReport, RunStatus
+from .inventory import scan_paths
 from .job_io import load_job_snapshot, parse_job_payload
 from .model_authority import (
     AUTHORITY_LINKS_WIN,
@@ -331,13 +332,84 @@ def _selected_registry_sources(
             raise ValueError(f"handoff_source_hash_mismatch:{source_id}")
         paths.append(str(resolved))
         source_hashes[source_id] = source.sha256
+    # The consumer inventories individual file roots, so its source IDs may
+    # differ from the registry's folder-root IDs. Record the exact mapping
+    # instead of making a later citation appear to refer to the producer ID.
+    try:
+        consumer_inventory = scan_paths(tuple(paths))
+    except (OSError, ValueError) as exc:
+        raise ValueError("handoff_consumer_inventory_unavailable") from exc
+    producer_by_path = {
+        path: source_id for path, source_id in zip(paths, selected_ids, strict=True)
+    }
+    lineage = []
+    for item in consumer_inventory.records:
+        producer_source_id = producer_by_path.get(item.path)
+        if (
+            producer_source_id is None
+            or item.sha256 != source_hashes[producer_source_id]
+            or item.extraction_status in {"unreadable", "excluded_symlink"}
+        ):
+            raise ValueError("handoff_consumer_source_mismatch")
+        lineage.append(
+            {
+                "producer_source_id": producer_source_id,
+                "consumer_source_id": item.source_id,
+                "path": item.path,
+                "sha256": item.sha256,
+            }
+        )
     return paths, {
         **receipt,
         "mode": "selected_sources",
         "selected_source_ids": selected_ids,
         "selected_source_sha256": source_hashes,
+        "source_lineage": lineage,
         "topic_filter": list(snapshot.parameters["topic_filter"]),
     }
+
+
+def _consumer_matches_lineage(
+    receipt: dict[str, Any], report: RunReport, *, output_dir: str
+) -> bool:
+    """Reject a handoff whose actual consumer snapshot used different bytes.
+
+    The source can change after the pre-run hash check. Even an idempotently
+    reused consumer report is not proof that today's source bytes still match.
+    """
+    try:
+        snapshot = load_job_snapshot(Path(output_dir) / "jobs" / f"{report.run_id}.json")
+    except ValueError:
+        return False
+    if (
+        snapshot.workflow != "synopsis_merge"
+        or job_idempotency_key(snapshot) != report.idempotency_key
+    ):
+        return False
+    expected = {
+        item["path"]: (item["consumer_source_id"], item["sha256"])
+        for item in receipt["source_lineage"]
+    }
+    if len(expected) != len(receipt["source_lineage"]) or len(snapshot.sources) != len(expected):
+        return False
+    for source in snapshot.sources:
+        path = Path(source.path)
+        if (
+            expected.get(str(path.resolve())) != (source.source_id, source.sha256)
+            or path.is_symlink()
+            or not path.is_file()
+        ):
+            return False
+        digest = hashlib.sha256()
+        try:
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(chunk)
+        except OSError:
+            return False
+        if digest.hexdigest() != source.sha256:
+            return False
+    return True
 
 
 def run_voyage(
@@ -485,29 +557,51 @@ def run_voyage(
             else run_job(job, config, run_id=step_run_id)
         )
         report = outcome.report
+        status = report.status.value
+        errors = tuple(report.errors)
+        model_note = resolution.note
+        if (
+            report.status is RunStatus.EXECUTED
+            and (step.get("handoff") or {}).get("mode") == "selected_sources"
+            and handoff_receipt is not None
+            and not _consumer_matches_lineage(
+                handoff_receipt, report, output_dir=job.output_dir
+            )
+        ):
+            status = "handoff_invalidated"
+            errors = ("handoff_consumer_source_mismatch",)
+            model_note = (
+                f"{resolution.note} Consumer did run, but its source snapshot "
+                "no longer matches the verified handoff; result rejected."
+            ).strip()
+            handoff_receipt = {
+                **handoff_receipt,
+                "status": "invalidated",
+                "validation_error": errors[0],
+            }
         results.append(
             VoyageStepResult(
                 order=order,
                 workflow=job.workflow,
                 run_id=step_run_id,
-                status=report.status.value,
+                status=status,
                 ledger_path=str(outcome.report_path) if outcome.report_path else None,
                 artifact_count=len(report.artifacts),
                 output_dir=job.output_dir,
                 model_used=resolution.model,
-                model_note=resolution.note,
+                model_note=model_note,
                 model_level=resolution.level,
                 rights=rights,
                 rights_level=rights_level,
                 policy_note=policy_note,
-                errors=tuple(report.errors),
+                errors=errors,
                 handoff=handoff_receipt,
             )
         )
         previous_output = job.output_dir
         previous_report = report
         previous_privacy_mode = job.privacy_mode.value
-        if report.status is not RunStatus.EXECUTED:
+        if report.status is not RunStatus.EXECUTED or status == "handoff_invalidated":
             stopped_at = order
             break
 

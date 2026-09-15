@@ -507,6 +507,7 @@ def _read_text_sources(
             texts[source.source_id] = extract_document_text(
                 source.path,
                 mime_type=source.mime_type,
+                expected_sha256=source.sha256,
             )
         except (OSError, UnicodeError, ValueError):
             continue

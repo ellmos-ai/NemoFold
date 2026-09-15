@@ -19,7 +19,17 @@ Current local implementation boundary:
   they are resaved; `pending_capability` reservations never execute.
 - A typed artifact edge verifies its producer RunReport path and SHA-256 before
   the consumer starts; topic-filtered document-registry selections can hand
-  verified originals to synopsis-merge. Full application-usecase acceptance
+  verified originals to synopsis-merge. For multiple selected originals the
+  handoff receipt records each producer-to-consumer Source ID and SHA-256,
+  because a consumer inventory of file roots uses a different ID namespace.
+  A post-run consumer-snapshot and live-hash mismatch marks that voyage
+  handoff invalidated, not executed. This is a truthful-dossier guard, not an
+  atomic source-byte binding for all structured formats. Plain text, HTML,
+  DOCX, ODT, and PDF extract from the single byte buffer checked against the
+  inventory hash; a mismatch fails the job before it produces a valid synopsis.
+  The full medical G02 application gate still requires the remaining field,
+  citation, omission, surface, and human-review checks.
+  Full application-usecase acceptance
   remains separate from these component and integration checks.
 
 Trust rules:
