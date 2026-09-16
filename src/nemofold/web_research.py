@@ -32,7 +32,8 @@ from typing import Any, Protocol
 
 from .anonymizer import detect_sensitive_categories
 from .artifacts import write_text_artifact
-from .contracts import ArtifactRecord
+from .contracts import ArtifactRecord, WorkflowBlocked
+from .evidence import compute_coverage
 
 WEB_ADAPTERS = ("tavily",)
 TAVILY_KEY_ENV = "TAVILY_API_KEY"
@@ -278,7 +279,7 @@ def research_payload(
 # The two workflows, as thin contracts over the gate
 # --------------------------------------------------------------------------- #
 
-WEB_WORKFLOWS = ("web_research", "dossier")
+WEB_WORKFLOWS = ("web_research", "dossier", "briefing")
 
 
 def default_adapter(name: str) -> WebSearchAdapter:
@@ -439,6 +440,28 @@ def execute_dossier(
             "result is not evidence that something is true."
         ),
     }
+    briefing_payload = build_briefing_payload(
+        subject=subject,
+        question=str(job.parameters.get("question", "")).strip() or (
+            f"Dossier und Recherche zu: {subject}"
+        ),
+        meeting_context=str(job.parameters.get("meeting_context", "")).strip(),
+        results=payload.get("results", []),
+        allowed=payload.get("allowed", False),
+        blocked_reasons=payload.get("blocked_reasons", []),
+        min_sources=int(job.parameters.get("min_sources", 2)),
+        sparse_sources_detected=bool(job.parameters.get("sparse_sources_detected", False)),
+    )
+    briefing_json = write_text_artifact(
+        output / f"{run_id}.briefing.json",
+        json.dumps(briefing_payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        "briefing",
+    )
+    briefing_md = write_text_artifact(
+        output / f"{run_id}.briefing.md",
+        render_briefing_markdown(briefing_payload),
+        "briefing-markdown",
+    )
     artifacts = (
         *artifacts,
         write_text_artifact(
@@ -446,7 +469,423 @@ def execute_dossier(
             json.dumps(dossier, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
             "dossier",
         ),
+        briefing_json,
+        briefing_md,
     )
     metadata["dossier_subject"] = subject
     metadata["standing_note"] = dossier["standing_note"]
+    metadata["briefing_status"] = briefing_payload["status"]
+    metadata["is_limited"] = briefing_payload["is_limited"]
     return (*actions, f"assembled a dossier on {subject} from cited results"), artifacts, metadata
+
+
+def build_briefing_payload(
+    *,
+    subject: str,
+    question: str,
+    meeting_context: str = "",
+    results: list[dict[str, Any]] | tuple[WebResult, ...],
+    allowed: bool,
+    blocked_reasons: list[str] | tuple[str, ...],
+    min_sources: int = 2,
+    sparse_sources_detected: bool = False,
+) -> dict[str, Any]:
+    """Assemble a structured briefing separating facts, inferences, and open points."""
+    source_count = len(results)
+    is_limited = not allowed or (source_count < min_sources) or sparse_sources_detected
+    limitation_reasons: list[str] = []
+    if not allowed:
+        status = "blocked_briefing"
+        limitation_reasons = list(blocked_reasons)
+    elif is_limited:
+        status = "limited_briefing"
+        if sparse_sources_detected and source_count >= min_sources:
+            limitation_reasons.append(
+                "Unzureichende Quellenlage: Datenlage als fragmentarisch eingestuft."
+            )
+        else:
+            limitation_reasons.append(
+                f"Unzureichende Quellenlage: Es wurden nur {source_count} Quelle(n) "
+                f"gefunden (erforderlich: mindestens {min_sources})."
+            )
+    else:
+        status = "complete_briefing"
+
+    normalized_sources: list[dict[str, Any]] = []
+    facts: list[dict[str, Any]] = []
+    for idx, item in enumerate(results, start=1):
+        if isinstance(item, WebResult):
+            query = item.query
+            url = item.url
+            title = item.title
+            excerpt = item.excerpt
+            rank = item.rank
+        else:
+            query = str(item.get("query", ""))
+            url = str(item.get("url", ""))
+            title = str(item.get("title", ""))
+            excerpt = str(item.get("excerpt", ""))
+            rank = int(item.get("rank", idx))
+        normalized_sources.append(
+            {
+                "query": query,
+                "url": url,
+                "title": title,
+                "excerpt": excerpt,
+                "rank": rank,
+                "anchor": f"{url} · rank {rank}",
+            }
+        )
+        fact_id = f"F{idx:02d}"
+        statement = f"Aus Quelle '{title}': {excerpt}" if excerpt else f"Quelle '{title}': {url}"
+        facts.append(
+            {
+                "fact_id": fact_id,
+                "statement": statement,
+                "evidence_url": url,
+                "evidence_excerpt": excerpt,
+                "source_rank": rank,
+            }
+        )
+
+    inferences: list[dict[str, Any]] = []
+    if facts:
+        inferences.append(
+            {
+                "inference_id": "I01",
+                "statement": (
+                    f"Auf Basis von {len(facts)} belegten Quellen liegt eine "
+                    f"Informationsgrundlage für '{subject}' vor."
+                ),
+                "grounded_in_facts": [f["fact_id"] for f in facts],
+                "confidence": "moderate" if is_limited else "high",
+                "inference_note": "Schlussfolgerung, getrennt von belegten Fakten.",
+            }
+        )
+        if meeting_context:
+            inferences.append(
+                {
+                    "inference_id": "I02",
+                    "statement": (
+                        f"Relevanz für Termin '{meeting_context}': Belegte Aspekte ermöglichen "
+                        "eine gezielte Vorbereitung, erfordern aber Nachfragen zu Lücken."
+                    ),
+                    "grounded_in_facts": [facts[0]["fact_id"]],
+                    "confidence": "provisional" if is_limited else "high",
+                    "inference_note": "Kontextuelle Schlussfolgerung für den Termin.",
+                }
+            )
+
+    uncertainties: list[dict[str, Any]] = []
+    if is_limited and allowed:
+        uncertainties.append(
+            {
+                "point_id": "O01",
+                "issue": "Unzureichende Quellendichte",
+                "reason": (
+                    f"Mit {source_count} Fundstelle(n) ist eine unabhängige "
+                    "Kreuzvalidierung nicht gewährleistet."
+                ),
+                "recommended_action": (
+                    "Vor dem Termin zusätzliche Primärquellen oder manuelle Klärung einholen."
+                ),
+            }
+        )
+    if allowed:
+        uncertainties.append(
+            {
+                "point_id": f"O{len(uncertainties) + 1:02d}",
+                "issue": "Aktualität öffentlich zugänglicher Webdaten",
+                "reason": (
+                    "Öffentliche Online-Quellen können zeitverzögert sein und kurzfristige "
+                    "Änderungen unberücksichtigt lassen."
+                ),
+                "recommended_action": "Kernaussagen im direkten Termin rückbestätigen.",
+            }
+        )
+        uncertainties.append(
+            {
+                "point_id": f"O{len(uncertainties) + 1:02d}",
+                "issue": "Vertrauliche und interne Kontextfaktoren",
+                "reason": "Nicht-öffentliche Vereinbarungen sind im Web nicht nachweisbar.",
+                "recommended_action": "Spezifische Klärungsfragen auf die Agenda setzen.",
+            }
+        )
+    else:
+        uncertainties.append(
+            {
+                "point_id": "O01",
+                "issue": "Web-Recherche blockiert",
+                "reason": (
+                    "Die Suche wurde durch Sicherheitsrichtlinien oder fehlende "
+                    "Freigabe blockiert."
+                ),
+                "recommended_action": "Rechte und Adapterkonfiguration vor erneutem Lauf prüfen.",
+            }
+        )
+
+    return {
+        "schema": "nemofold.briefing.v1",
+        "subject": subject,
+        "question": question,
+        "meeting_context": meeting_context,
+        "status": status,
+        "allowed": allowed,
+        "blocked_reasons": list(blocked_reasons),
+        "sources_evaluated": source_count,
+        "sources": normalized_sources,
+        "facts": facts,
+        "inferences": inferences,
+        "uncertainties_and_open_points": uncertainties,
+        "is_limited": is_limited,
+        "limitation_reasons": limitation_reasons,
+        "separation_principle_note": (
+            "Das Briefing trennt belegte Fakten strikt von Schlussfolgerungen "
+            "und offenen Punkten."
+        ),
+        "source_sufficiency_note": (
+            "Bei unzureichender Quellenlage wird ein begrenztes Briefing erstellt "
+            "statt falscher Vollständigkeit."
+        ),
+    }
+
+
+def render_briefing_markdown(payload: dict[str, Any]) -> str:
+    """Render the briefing as human-readable Markdown with clear sections."""
+    subject = payload["subject"]
+    question = payload.get("question", "")
+    meeting_context = payload.get("meeting_context", "")
+    is_limited = payload.get("is_limited", False)
+
+    lines = [
+        f"# Briefing: {subject}",
+        "",
+        "## 1. Fragestellung und Kontext",
+        "",
+        f"- **Thema / Person:** {subject}",
+        f"- **Fragestellung:** {question or 'Strukturierte Vorbereitung'}",
+    ]
+    if meeting_context:
+        lines.append(f"- **Terminkontext:** {meeting_context}")
+    lines.append(
+        f"- **Status:** {'Begrenztes Briefing' if is_limited else 'Vollständiges Briefing'}"
+    )
+    lines.append("")
+
+    if is_limited and payload.get("limitation_reasons"):
+        lines.extend(
+            [
+                "> [!WARNING]",
+                "> **Begrenztes Briefing:** Unzureichende Quellenlage. "
+                "Falsche Vollständigkeit wird vermieden.",
+            ]
+        )
+        for reason in payload["limitation_reasons"]:
+            lines.append(f"> - {reason}")
+        lines.append("")
+
+    lines.extend(["## 2. Recherchequellen", ""])
+    sources = payload.get("sources", [])
+    if not sources:
+        lines.append("Keine belegten Recherchequellen vorhanden.")
+        lines.append("")
+    else:
+        for item in sources:
+            lines.append(f"- **{item['title'] or item['url']}** (Rang {item['rank']})")
+            lines.append(f"  - URL: {item['url']}")
+            if item.get("excerpt"):
+                lines.append(f"  > {item['excerpt']}")
+        lines.append("")
+
+    lines.extend(["## 3. Belegte Fakten (Synthese)", ""])
+    facts = payload.get("facts", [])
+    if not facts:
+        lines.append("Keine belegten Fakten aus der Recherche extrahierbar.")
+        lines.append("")
+    else:
+        for fact in facts:
+            lines.append(
+                f"- **[{fact['fact_id']}]** {fact['statement']} "
+                f"(Beleg: {fact['evidence_url']})"
+            )
+        lines.append("")
+
+    lines.extend(["## 4. Schlussfolgerungen", ""])
+    inferences = payload.get("inferences", [])
+    if not inferences:
+        lines.append(
+            "Aufgrund unzureichender Faktenlage wurden keine weiterführenden "
+            "Schlussfolgerungen gezogen."
+        )
+        lines.append("")
+    else:
+        for inf in inferences:
+            facts_str = ", ".join(inf.get("grounded_in_facts", []))
+            lines.append(
+                f"- **[{inf['inference_id']}]** {inf['statement']} "
+                f"(Konfidenz: {inf['confidence']}, gestützt auf: {facts_str})"
+            )
+            if inf.get("inference_note"):
+                lines.append(f"  *Hinweis:* {inf['inference_note']}")
+        lines.append("")
+
+    lines.extend(["## 5. Unsicherheiten und offene Punkte", ""])
+    uncertainties = payload.get("uncertainties_and_open_points", [])
+    if not uncertainties:
+        lines.append("Keine offenen Unsicherheiten verzeichnet.")
+        lines.append("")
+    else:
+        for point in uncertainties:
+            lines.append(f"### Punkt {point['point_id']}: {point['issue']}")
+            lines.append(f"- **Hintergrund:** {point['reason']}")
+            lines.append(f"- **Empfohlene Maßnahme:** {point['recommended_action']}")
+            lines.append("")
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def execute_briefing(
+    job: Any,
+    output_dir: str,
+    run_id: str,
+    *,
+    server_allows: bool,
+    approved: bool,
+    adapter: WebSearchAdapter | None = None,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], dict[str, object]]:
+    """Assemble a structured briefing from web research or verified previous output.
+
+    Separates cited facts, clear inferences, and open uncertainties. If sources
+    are sparse, creates a limited briefing instead of false completeness.
+    """
+    subject = str(job.parameters.get("subject", "")).strip()
+    if not subject:
+        raise ValueError("a briefing needs a declared subject")
+    question = str(job.parameters.get("question", "")).strip() or (
+        f"Recherche und strukturierte Vorbereitung zu: {subject}"
+    )
+    meeting_context = str(job.parameters.get("meeting_context", "")).strip()
+    min_sources = int(job.parameters.get("min_sources", 2))
+    sparse_sources_detected = bool(job.parameters.get("sparse_sources_detected", False))
+
+    output = Path(output_dir)
+    actions: list[str] = []
+    artifacts: list[ArtifactRecord] = []
+
+    # Check if a previous step already provided web research artifacts
+    prior_payload: dict[str, Any] | None = None
+    for root_str in getattr(job, "input_roots", ()):
+        root_path = Path(root_str)
+        if root_path.is_dir():
+            for cand in sorted(root_path.glob("*.web-research.json")):
+                try:
+                    prior_payload = json.loads(cand.read_text(encoding="utf-8"))
+                    break
+                except (OSError, ValueError):
+                    pass
+        elif root_path.is_file() and root_path.name.endswith(".web-research.json"):
+            try:
+                prior_payload = json.loads(root_path.read_text(encoding="utf-8"))
+                break
+            except (OSError, ValueError):
+                pass
+        if prior_payload is not None:
+            break
+
+    if prior_payload is not None:
+        web_payload = prior_payload
+        actions.append("reused verified web research from previous voyage step")
+    else:
+        # Carry out or evaluate search
+        sub_actions, sub_artifacts, _ = execute_web_research(
+            job,
+            output_dir,
+            run_id,
+            server_allows=server_allows,
+            approved=approved,
+            adapter=adapter,
+        )
+        actions.extend(sub_actions)
+        artifacts.extend(sub_artifacts)
+        payload_path = output / f"{run_id}.web-research.json"
+        web_payload = json.loads(payload_path.read_text(encoding="utf-8"))
+
+    allowed = bool(web_payload.get("allowed", False))
+    blocked_reasons = tuple(web_payload.get("blocked_reasons", []))
+    results = web_payload.get("results", [])
+
+    briefing_payload = build_briefing_payload(
+        subject=subject,
+        question=question,
+        meeting_context=meeting_context,
+        results=results,
+        allowed=allowed,
+        blocked_reasons=blocked_reasons,
+        min_sources=min_sources,
+        sparse_sources_detected=sparse_sources_detected,
+    )
+
+    briefing_json = write_text_artifact(
+        output / f"{run_id}.briefing.json",
+        json.dumps(briefing_payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        "briefing",
+    )
+    briefing_md = write_text_artifact(
+        output / f"{run_id}.briefing.md",
+        render_briefing_markdown(briefing_payload),
+        "briefing-markdown",
+    )
+    artifacts.extend([briefing_json, briefing_md])
+
+    metadata: dict[str, object] = {
+        "briefing_subject": subject,
+        "briefing_status": briefing_payload["status"],
+        "is_limited": briefing_payload["is_limited"],
+        "sources_evaluated": briefing_payload["sources_evaluated"],
+        "facts_count": len(briefing_payload["facts"]),
+        "inferences_count": len(briefing_payload["inferences"]),
+        "open_points_count": len(briefing_payload["uncertainties_and_open_points"]),
+        "separation_principle_note": briefing_payload["separation_principle_note"],
+    }
+    if not allowed:
+        metadata["blocked"] = True
+        metadata["blocked_reasons"] = list(blocked_reasons)
+        actions.append("briefing generation blocked due to web search restrictions")
+        raise WorkflowBlocked(
+            blocked_reasons or ("web_search_restrictions",),
+            actions=tuple(actions),
+            artifacts=tuple(artifacts),
+            coverage=compute_coverage(
+                all_source_ids=(), read_source_ids={}, cited_source_ids=set()
+            ),
+            metadata=metadata,
+        )
+
+    if (
+        job.parameters.get("require_sufficient_sources", False) is True
+        and briefing_payload["is_limited"]
+    ):
+        metadata["needs_user_input"] = True
+        actions.append("briefing blocked: require_sufficient_sources unsatisfied")
+        raise WorkflowBlocked(
+            ("insufficient_sources_for_briefing",),
+            actions=tuple(actions),
+            artifacts=tuple(artifacts),
+            coverage=compute_coverage(
+                all_source_ids=(), read_source_ids={}, cited_source_ids=set()
+            ),
+            metadata=metadata,
+        )
+
+    if briefing_payload["is_limited"]:
+        actions.append(
+            f"assembled limited briefing on {subject} ({len(results)} source(s))"
+        )
+    else:
+        actions.append(
+            f"assembled complete briefing on {subject} ({len(results)} source(s))"
+        )
+
+    return tuple(actions), tuple(artifacts), metadata
+
+

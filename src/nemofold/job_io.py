@@ -44,6 +44,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "corpus_query",
         "web_research",
         "dossier",
+        "briefing",
         "bundle_completeness_check",
         "print_action",
         "reference_check",
@@ -269,10 +270,50 @@ WORKFLOW_PARAMETER_FIELDS = {
             "title",
         }
     ),
-    # The web contracts take no source_tables: they read no folder at all.
-    "web_research": frozenset({"formats", "max_results", "queries", "title", "web_adapter"}),
+    "web_research": frozenset(
+        {
+            "formats",
+            "max_results",
+            "mock_adapter",
+            "queries",
+            "title",
+            "web_adapter",
+            "web_search_approved",
+        }
+    ),
     "dossier": frozenset(
-        {"formats", "max_results", "queries", "subject", "title", "web_adapter"}
+        {
+            "formats",
+            "max_results",
+            "meeting_context",
+            "min_sources",
+            "mock_adapter",
+            "queries",
+            "question",
+            "require_sufficient_sources",
+            "sparse_sources_detected",
+            "subject",
+            "title",
+            "web_adapter",
+            "web_search_approved",
+        }
+    ),
+    "briefing": frozenset(
+        {
+            "formats",
+            "max_results",
+            "meeting_context",
+            "min_sources",
+            "mock_adapter",
+            "queries",
+            "question",
+            "require_sufficient_sources",
+            "sparse_sources_detected",
+            "subject",
+            "title",
+            "web_adapter",
+            "web_search_approved",
+        }
     ),
     "bundle_completeness_check": frozenset(
         {"formats", "required_formats", "required_parts", "title"}

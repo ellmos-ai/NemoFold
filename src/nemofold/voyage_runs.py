@@ -15,7 +15,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from .application import ExecutionConfig, run_job
+from .application import (
+    ExecutionConfig,
+    authorize_web_search,
+    release_web_search,
+    run_job,
+)
 from .artifacts import write_text_artifact
 from .contracts import RunReport, RunStatus
 from .inventory import scan_paths
@@ -41,6 +46,7 @@ from .providers import ProviderConfig
 from .recipient_bridge import RecipientBridgeError, validate_recipient_bridge
 from .runtime import job_idempotency_key
 from .structured_sources import STRUCTURED_SUFFIXES, read_structured, select_topic_rows
+from .web_research import WEB_WORKFLOWS
 
 VOYAGE_RUN_SCHEMA = "nemofold.voyage-run.v1"
 MAX_CHAIN_STEPS = 24
@@ -868,21 +874,40 @@ def run_voyage(
             )
             stopped_at = order
             break
-        # A named local worker is actually used, not merely reported.
-        outcome = (
-            analyze_with_provider(
-                job,
-                config,
-                ProviderConfig(
-                    provider_id=str(resolution.endpoint["provider"]),
-                    model=str(resolution.endpoint["model"]),
-                ),
-                run_id=step_run_id,
-                approve_external_transfer=False,
+        web_authorized = False
+        if job.workflow in WEB_WORKFLOWS:
+            step_params = job.parameters
+            mock_adapter = step_params.get("mock_adapter") or step.get("mock_adapter")
+            is_approved = bool(
+                step.get("web_search_approved")
+                or step_params.get("web_search_approved", False)
             )
-            if resolution.endpoint is not None and job.workflow in PROVIDER_WORKFLOWS
-            else run_job(job, config, run_id=step_run_id)
-        )
+            authorize_web_search(
+                step_run_id,
+                server_allows=config.web_search_allowed,
+                approved=is_approved,
+                adapter=mock_adapter,
+            )
+            web_authorized = True
+        try:
+            # A named local worker is actually used, not merely reported.
+            outcome = (
+                analyze_with_provider(
+                    job,
+                    config,
+                    ProviderConfig(
+                        provider_id=str(resolution.endpoint["provider"]),
+                        model=str(resolution.endpoint["model"]),
+                    ),
+                    run_id=step_run_id,
+                    approve_external_transfer=False,
+                )
+                if resolution.endpoint is not None and job.workflow in PROVIDER_WORKFLOWS
+                else run_job(job, config, run_id=step_run_id)
+            )
+        finally:
+            if web_authorized:
+                release_web_search(step_run_id)
         report = outcome.report
         status = report.status.value
         errors = tuple(report.errors)

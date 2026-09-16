@@ -159,6 +159,7 @@ from .version_resolver import (
 from .web_research import (
     WEB_WORKFLOWS,
     WebSearchAdapter,
+    execute_briefing,
     execute_dossier,
     execute_web_research,
 )
@@ -2719,7 +2720,7 @@ def _dispatch_workflow(
     if job.workflow in CHRONICLE_WORKFLOWS:
         return _execute_chronicle(job, inventory, run_id=run_id)
     if job.workflow in WEB_WORKFLOWS:
-        return _execute_web(job, inventory, run_id=run_id)
+        return _execute_web(job, inventory, run_id=run_id, config=config)
     if job.workflow == "bundle_completeness_check":
         return _execute_completeness(job, inventory, run_id=run_id)
     if job.workflow == "print_action":
@@ -3453,6 +3454,7 @@ def _execute_web(
     inventory: InventoryResult,
     *,
     run_id: str,
+    config: ExecutionConfig | None = None,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Run a gated web contract.
 
@@ -3461,14 +3463,26 @@ def _execute_web(
     A plain run therefore always ends blocked here, with the reasons named,
     until an approving caller passes one in.
     """
-    runner = execute_web_research if job.workflow == "web_research" else execute_dossier
+    if job.workflow == "web_research":
+        runner = execute_web_research
+    elif job.workflow == "briefing":
+        runner = execute_briefing
+    else:
+        runner = execute_dossier
+    server_allows = _WEB_SEARCH_ALLOWED.get(
+        run_id, config.web_search_allowed if config is not None else False
+    )
+    approved = _WEB_SEARCH_APPROVED.get(
+        run_id, bool(job.parameters.get("web_search_approved", False))
+    )
+    adapter = _WEB_ADAPTERS.get(run_id) or job.parameters.get("mock_adapter")
     actions, artifacts, metadata = runner(
         job,
         job.output_dir,
         run_id,
-        server_allows=_WEB_SEARCH_ALLOWED.get(run_id, False),
-        approved=_WEB_SEARCH_APPROVED.get(run_id, False),
-        adapter=_WEB_ADAPTERS.get(run_id),
+        server_allows=server_allows,
+        approved=approved,
+        adapter=adapter,
     )
     # A web contract reads no approved root, so coverage is about the sources it
     # was pointed at, which is honestly zero of them.
