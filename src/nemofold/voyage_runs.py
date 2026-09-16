@@ -20,6 +20,7 @@ from .artifacts import write_text_artifact
 from .contracts import RunReport, RunStatus
 from .inventory import scan_paths
 from .job_io import load_job_snapshot, parse_job_payload, validate_handoff_context
+from .ledger import RunLedger
 from .model_authority import (
     AUTHORITY_LINKS_WIN,
     LOCAL_CORE,
@@ -37,6 +38,7 @@ from .pdf_page_expectations import (
 from .policies import PolicyStore, cleanup_rules_for_step
 from .provider_analysis import PROVIDER_WORKFLOWS, analyze_with_provider
 from .providers import ProviderConfig
+from .recipient_bridge import RecipientBridgeError, validate_recipient_bridge
 from .runtime import job_idempotency_key
 from .structured_sources import STRUCTURED_SUFFIXES, read_structured, select_topic_rows
 
@@ -603,6 +605,61 @@ def _bind_selected_source_scope(
     }
 
 
+def _bind_recipient_bridge(
+    job_payload: dict[str, Any],
+    handoff_receipt: dict[str, Any],
+    spec: dict[str, Any],
+) -> dict[str, Any]:
+    """Validate and bind contacts from handoff to controlled_email parameters."""
+    parameters = dict(job_payload.get("parameters") or {})
+    contact_book_path = handoff_receipt["path"]
+    parameters["contact_book"] = contact_book_path
+
+    raw_recipients = (
+        spec.get("recipient")
+        or spec.get("to")
+        or parameters.get("to")
+        or []
+    )
+    if isinstance(raw_recipients, str):
+        recipients = [raw_recipients]
+    elif isinstance(raw_recipients, (list, tuple)):
+        recipients = list(raw_recipients)
+    else:
+        raise ValueError("handoff_recipient_format_invalid")
+
+    channel = str(parameters.get("channel", spec.get("channel", "email")))
+    declared_right = str(parameters.get("rights", spec.get("rights", "draft_only")))
+    send_requested = bool(parameters.get("send_requested", spec.get("send_requested", False)))
+    require_known = bool(spec.get("require_known", True))
+    strict_doctor_class = bool(spec.get("strict_doctor_class", False))
+
+    bridge_result = validate_recipient_bridge(
+        contact_book_path=contact_book_path,
+        requested_recipients=recipients,
+        declared_right=declared_right,
+        send_requested=send_requested,
+        channel=channel,
+        require_known=require_known,
+        strict_doctor_class=strict_doctor_class,
+    )
+
+    parameters["to"] = list(bridge_result.resolved_recipients)
+    parameters["rights"] = "draft_only"
+    parameters["send_requested"] = False
+    job_payload["parameters"] = parameters
+
+    handoff_receipt["recipient_bridge"] = {
+        "schema": "nemofold.recipient-bridge-handoff.v1",
+        "contact_book_sha256": handoff_receipt["sha256"],
+        "resolved_recipients": list(bridge_result.resolved_recipients),
+        "matched_contacts": [c.name for c in bridge_result.matched_contacts],
+        "governing_right": "draft_only",
+        "send_permitted": False,
+    }
+    return {}
+
+
 def _consumer_matches_lineage(
     receipt: dict[str, Any], report: RunReport, *, output_dir: str
 ) -> bool:
@@ -722,15 +779,29 @@ def run_voyage(
                     handoff_context = _bind_selected_source_scope(
                         job_payload, handoff_receipt
                     )
-            except ValueError as exc:
+                elif spec.get("mode") == "recipient_bridge":
+                    handoff_context = _bind_recipient_bridge(
+                        job_payload, handoff_receipt, spec
+                    )
+            except (ValueError, RecipientBridgeError) as exc:
                 rights, rights_level = resolve_rights(step.get("rights"), chain_rights)
+                out_dir = Path(str(job_payload["output_dir"]))
+                ledger = RunLedger(out_dir / "ledger")
+                step_report = RunReport(
+                    run_id=step_run_id,
+                    idempotency_key=step_run_id,
+                    workflow=str(job_payload["workflow"]),
+                    status=RunStatus.BLOCKED,
+                    errors=(str(exc),),
+                )
+                saved_ledger = ledger.save(step_report)
                 results.append(
                     VoyageStepResult(
                         order=order,
                         workflow=str(job_payload["workflow"]),
                         run_id=step_run_id,
                         status="handoff_blocked",
-                        ledger_path=None,
+                        ledger_path=str(saved_ledger),
                         artifact_count=0,
                         output_dir=str(job_payload["output_dir"]),
                         model_used=LOCAL_CORE,
@@ -743,7 +814,7 @@ def run_voyage(
                 )
                 stopped_at = order
                 break
-            if spec.get("mode") != "selected_sources":
+            if spec.get("mode") not in ("selected_sources", "recipient_bridge"):
                 job_payload["input_roots"] = [handoff_receipt["path"]]
         policy_note = ""
         if policy_store is not None and job_payload.get("workflow") == "cleanup_rules":
