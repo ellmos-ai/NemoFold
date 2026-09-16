@@ -1238,6 +1238,10 @@ def _finalize_action_plans(
     plans: tuple[StoragePlan, ...],
     *,
     run_id: str,
+    routes: tuple[RoutingRule, ...] = (),
+    maintain_index: bool = False,
+    index_status: dict[str, str] | None = None,
+    pruned_source_ids: tuple[str, ...] = (),
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     plan_record = write_text_artifact(
         Path(job.output_dir) / f"{run_id}.action-plan.json",
@@ -1265,6 +1269,10 @@ def _finalize_action_plans(
                 "confidence_threshold": job.parameters.get("confidence_threshold", 1.0),
             }
         )
+        if maintain_index:
+            action_metadata["maintain_index"] = True
+            action_metadata["index_status"] = index_status or {}
+            action_metadata["pruned_source_ids"] = list(pruned_source_ids)
     else:
         action_metadata.update(
             {
@@ -1279,17 +1287,83 @@ def _finalize_action_plans(
         dict.fromkeys(reason for plan in plans if not plan.allowed for reason in plan.reasons)
     )
     if blocked_reasons:
+        questions: list[Question] = []
+        for reason in blocked_reasons:
+            if reason.startswith("unreadable_input:"):
+                doc_name = reason.split(":", 1)[1]
+                questions.append(
+                    Question(
+                        field=f"unreadable_{doc_name}",
+                        prompt=f"Das Dokument '{doc_name}' konnte nicht gelesen werden.",
+                        why="Unlesbare Eingänge dürfen nicht still einsortiert werden.",
+                        kind="choice",
+                        choices=("retry_ocr", "manual_inspection", "discard"),
+                    )
+                )
+            elif reason.startswith("unclassifiable_input:") or reason.startswith(
+                "ambiguous_classification:"
+            ):
+                doc_name = reason.split(":", 1)[1]
+                category_choices = tuple(
+                    dict.fromkeys(
+                        rule.category for rule in routes if getattr(rule, "category", None)
+                    )
+                ) or ("patient", "wissen")
+                questions.append(
+                    Question(
+                        field=f"category_{doc_name}",
+                        prompt=(
+                            f"Welcher Kategorie soll das Dokument '{doc_name}' "
+                            "zugeordnet werden?"
+                        ),
+                        why="Das Dokument konnte nicht eindeutig klassifiziert werden.",
+                        kind="choice",
+                        choices=category_choices,
+                    )
+                )
+        if questions:
+            asked = needs_input_payload(tuple(questions), workflow=job.workflow)
+            question_artifact = write_text_artifact(
+                Path(job.output_dir) / f"{run_id}.needs-user-input.json",
+                json.dumps(asked, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+                "needs-user-input",
+            )
+            action_artifacts = (plan_record, question_artifact)
+            action_metadata["needs_user_input"] = True
+            action_metadata["question_count"] = len(questions)
+            action_metadata["outcome_note"] = asked["outcome_note"]
+        else:
+            action_artifacts = (plan_record,)
         raise WorkflowBlocked(
             blocked_reasons,
             actions=("action_plan_written", "action_batch_blocked"),
-            artifacts=(plan_record,),
+            artifacts=action_artifacts,
             coverage=coverage,
             metadata={**action_metadata, "applied_actions": 0},
         )
+    extra_artifacts: list[ArtifactRecord] = []
+    if maintain_index:
+        index_manifest = write_text_artifact(
+            Path(job.output_dir) / f"{run_id}.index-manifest.json",
+            json.dumps(
+                {
+                    "schema": "nemofold.index-manifest.v1",
+                    "run_id": run_id,
+                    "index_status": index_status or {},
+                    "pruned_source_ids": list(pruned_source_ids),
+                },
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n",
+            "index-manifest",
+        )
+        extra_artifacts.append(index_manifest)
+
     if job.action_mode is ActionMode.DRY_RUN:
         return (
             ("action_plan_written", "dry_run_completed"),
-            (plan_record,),
+            (plan_record, *extra_artifacts),
             coverage,
             {**action_metadata, "applied_actions": 0},
         )
@@ -1322,7 +1396,7 @@ def _finalize_action_plans(
             "moves_executed",
             "undo_receipts_written",
         ),
-        (plan_record, receipt_record),
+        (plan_record, receipt_record, *extra_artifacts),
         coverage,
         {**action_metadata, "applied_actions": len(receipts)},
     )
@@ -1352,6 +1426,7 @@ def _load_action_plans(job: JobEnvelope, *, run_id: str) -> tuple[StoragePlan, .
                 original_policy=item["original_policy"],
                 operation=item.get("operation", "move"),
                 conversion_target=item.get("conversion_target"),
+                category=item.get("category"),
             )
             for item in payload["plans"]
         )
@@ -1410,17 +1485,85 @@ def _execute_smart_inbox(
         target = Path(job.target_roots[target_index])
         if not target.is_dir():
             raise FileNotFoundError(target)
-        routes.append(RoutingRule(suffixes=tuple(suffixes), target_dir=target))
+        category = value.get("category")
+        if category is not None and (not isinstance(category, str) or not category.strip()):
+            raise ValueError("smart_inbox route category must be a non-empty string")
+        raw_match_terms = value.get("match_terms")
+        match_terms: tuple[str, ...] = ()
+        if raw_match_terms is not None:
+            if not isinstance(raw_match_terms, list) or any(
+                not isinstance(item, str) or not item.strip() for item in raw_match_terms
+            ):
+                raise ValueError(
+                    "smart_inbox route match_terms must be a list of non-empty strings"
+                )
+            match_terms = tuple(str(item) for item in raw_match_terms)
+        min_confidence = float(value.get("min_confidence", 1.0))
+        routes.append(
+            RoutingRule(
+                suffixes=tuple(suffixes),
+                target_dir=target,
+                category=category,
+                match_terms=match_terms,
+                min_confidence=min_confidence,
+            )
+        )
+    texts = _read_text_sources(inventory, job)
+    source_records = {str(Path(record.path).resolve()): record for record in inventory.records}
+    classification_policy = str(job.parameters.get("classification_policy", "suffix_routes"))
+    confidence_threshold = float(job.parameters.get("confidence_threshold", 1.0))
     plans = plan_inbox(
         (record.path for record in inventory.records),
         rules=tuple(routes),
         policies=_action_policy_set(job, default_original="move"),
+        source_records=source_records,
+        texts=texts,
+        classification_policy=classification_policy,
+        confidence_threshold=confidence_threshold,
     )
+    maintain_index = bool(job.parameters.get("maintain_index", False))
+    index_status: dict[str, str] = {}
+    pruned_source_ids: tuple[str, ...] = ()
+    if maintain_index:
+        index_dir = Path(job.output_dir) / "index"
+        index = DocumentIndex(index_dir / "nemofold.sqlite3")
+        try:
+            active_source_ids = frozenset(
+                record.source_id
+                for record in inventory.records
+                if record.extraction_status != "unreadable"
+            )
+            pruned_source_ids = index.prune_sources(active_source_ids)
+            for record in inventory.records:
+                text = texts.get(record.source_id)
+                if text is not None:
+                    index_status[record.source_id] = index.index_source(record, text)
+        finally:
+            index.close()
+
     if existing is not None and job.action_mode is ActionMode.APPLY:
         if existing != plans:
             raise RuntimeError("stored action plan does not match the current approved plan")
-        return _finalize_action_plans(job, inventory, existing, run_id=run_id)
-    return _finalize_action_plans(job, inventory, plans, run_id=run_id)
+        return _finalize_action_plans(
+            job,
+            inventory,
+            existing,
+            run_id=run_id,
+            routes=tuple(routes),
+            maintain_index=maintain_index,
+            index_status=index_status,
+            pruned_source_ids=pruned_source_ids,
+        )
+    return _finalize_action_plans(
+        job,
+        inventory,
+        plans,
+        run_id=run_id,
+        routes=tuple(routes),
+        maintain_index=maintain_index,
+        index_status=index_status,
+        pruned_source_ids=pruned_source_ids,
+    )
 
 
 def _execute_cleanup_rules(

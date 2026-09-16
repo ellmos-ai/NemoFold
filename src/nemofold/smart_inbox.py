@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import hashlib
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, replace
 from pathlib import Path
+from typing import Any
 
 from .contracts import UndoReceipt
 from .storage_policy import PolicySet, StoragePlan, preview_storage
@@ -13,6 +14,9 @@ from .storage_policy import PolicySet, StoragePlan, preview_storage
 class RoutingRule:
     suffixes: tuple[str, ...]
     target_dir: Path
+    category: str | None = None
+    match_terms: tuple[str, ...] = ()
+    min_confidence: float = 1.0
 
     def __post_init__(self) -> None:
         object.__setattr__(
@@ -24,6 +28,14 @@ class RoutingRule:
             ),
         )
         object.__setattr__(self, "target_dir", Path(self.target_dir).resolve())
+        if self.category is not None:
+            object.__setattr__(self, "category", str(self.category).strip())
+        object.__setattr__(
+            self,
+            "match_terms",
+            tuple(str(item).strip() for item in self.match_terms if str(item).strip()),
+        )
+        object.__setattr__(self, "min_confidence", float(self.min_confidence))
 
 
 def plan_inbox(
@@ -31,26 +43,119 @@ def plan_inbox(
     *,
     rules: tuple[RoutingRule, ...],
     policies: PolicySet,
+    source_records: Mapping[str, Any] | None = None,
+    texts: Mapping[str, str] | None = None,
+    classification_policy: str = "suffix_routes",
+    confidence_threshold: float = 1.0,
 ) -> tuple[StoragePlan, ...]:
     plans: list[StoragePlan] = []
+    records = source_records or {}
+    source_texts = texts or {}
     for source in sources:
         source_path = Path(source).resolve()
-        route = next(
-            (rule for rule in rules if source_path.suffix.casefold() in rule.suffixes),
+        record = records.get(str(source_path)) or next(
+            (
+                r
+                for r in records.values()
+                if Path(getattr(r, "path", "")).resolve() == source_path
+            ),
             None,
         )
-        if route is None:
+        if record is not None and getattr(record, "extraction_status", "") == "unreadable":
             plans.append(
                 StoragePlan(
                     source=str(source_path),
                     target=str(source_path),
                     allowed=False,
-                    reasons=("no_matching_route",),
+                    reasons=(f"unreadable_input:{source_path.name}",),
                     retention_action="keep",
                     original_policy="keep",
                 )
             )
             continue
+
+        if classification_policy == "content_categories":
+            record_id = getattr(record, "source_id", "") if record is not None else ""
+            text = (
+                source_texts.get(record_id)
+                if record_id
+                else source_texts.get(str(source_path), "")
+            )
+            if text is None or not text.strip() or "\x00" in text:
+                plans.append(
+                    StoragePlan(
+                        source=str(source_path),
+                        target=str(source_path),
+                        allowed=False,
+                        reasons=(f"unreadable_input:{source_path.name}",),
+                        retention_action="keep",
+                        original_policy="keep",
+                    )
+                )
+                continue
+
+            candidates: list[tuple[RoutingRule, float]] = []
+            for rule in rules:
+                if rule.suffixes and source_path.suffix.casefold() not in rule.suffixes:
+                    continue
+                if rule.match_terms:
+                    matched = sum(
+                        1 for term in rule.match_terms if term.casefold() in text.casefold()
+                    )
+                    confidence = matched / len(rule.match_terms)
+                    if (
+                        confidence >= min(rule.min_confidence, confidence_threshold)
+                        and matched > 0
+                    ):
+                        candidates.append((rule, confidence))
+                elif rule.category is not None:
+                    candidates.append((rule, 1.0))
+
+            if not candidates:
+                plans.append(
+                    StoragePlan(
+                        source=str(source_path),
+                        target=str(source_path),
+                        allowed=False,
+                        reasons=(f"unclassifiable_input:{source_path.name}",),
+                        retention_action="keep",
+                        original_policy="keep",
+                    )
+                )
+                continue
+
+            candidates.sort(key=lambda item: item[1], reverse=True)
+            if len(candidates) > 1 and candidates[0][1] == candidates[1][1]:
+                plans.append(
+                    StoragePlan(
+                        source=str(source_path),
+                        target=str(source_path),
+                        allowed=False,
+                        reasons=(f"ambiguous_classification:{source_path.name}",),
+                        retention_action="keep",
+                        original_policy="keep",
+                    )
+                )
+                continue
+            route = candidates[0][0]
+        else:
+            route = next(
+                (rule for rule in rules if source_path.suffix.casefold() in rule.suffixes),
+                None,
+            )
+            if route is None:
+                plans.append(
+                    StoragePlan(
+                        source=str(source_path),
+                        target=str(source_path),
+                        allowed=False,
+                        reasons=("no_matching_route",),
+                        retention_action="keep",
+                        original_policy="keep",
+                    )
+                )
+                continue
+
         try:
             policy = policies.resolve(source_path)
         except LookupError:
@@ -62,6 +167,7 @@ def plan_inbox(
                     reasons=("no_matching_policy",),
                     retention_action="keep",
                     original_policy="keep",
+                    category=route.category,
                 )
             )
             continue
@@ -71,9 +177,15 @@ def plan_inbox(
                 preview,
                 allowed=False,
                 reasons=preview.reasons + ("smart_inbox_conversion_unsupported",),
+                category=route.category,
             )
         else:
-            preview = replace(preview, operation="move", original_policy="move")
+            preview = replace(
+                preview,
+                operation="move",
+                original_policy="move",
+                category=route.category,
+            )
         plans.append(preview)
     return tuple(plans)
 

@@ -69,6 +69,7 @@ class StoragePlan:
     original_policy: str
     operation: str = "move"
     conversion_target: str | None = None
+    category: str | None = None
 
 
 def _normalize_extension(extension: str) -> str:

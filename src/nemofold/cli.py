@@ -29,6 +29,7 @@ from .demo_pipeline import run_full_offline_demo
 from .drafts import DraftStore
 from .g01_acceptance import G01AcceptanceError, run_g01_acceptance_bundle
 from .g02_acceptance import G02AcceptanceError, run_g02_acceptance_bundle
+from .g03_acceptance import G03AcceptanceError, run_g03_acceptance_bundle
 from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
 from .ledger import RunLedger, validate_run_id
@@ -249,6 +250,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="run the synthetic G02 positive and blocking paths and seal their evidence",
     )
     acceptance_g02.add_argument("--output", required=True)
+    acceptance_g03 = commands.add_parser(
+        "acceptance-g03",
+        help="run the synthetic G03 positive and blocking paths and seal their evidence",
+    )
+    acceptance_g03.add_argument("--output", required=True)
     return parser
 
 
@@ -336,6 +342,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _acceptance_g01_command(args)
     if args.command == "acceptance-g02":
         return _acceptance_g02_command(args)
+    if args.command == "acceptance-g03":
+        return _acceptance_g03_command(args)
     parser.print_help()
     return 0
 
@@ -446,6 +454,42 @@ def _acceptance_g02_command(args: argparse.Namespace) -> int:
                 "medical_authority_dossier_path": str(
                     bundle.medical_authority_dossier_path
                 ),
+                "verification": bundle.verification,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def _acceptance_g03_command(args: argparse.Namespace) -> int:
+    try:
+        bundle = run_g03_acceptance_bundle(
+            args.output,
+        )
+    except (G03AcceptanceError, OSError, ValueError) as exc:
+        print(
+            json.dumps(
+                {"ok": False, "gate_id": "G03", "errors": [str(exc)]},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "gate_id": "G03",
+                "root": str(bundle.root),
+                "register_path": str(bundle.register_path),
+                "positive_dossier_path": str(bundle.positive_dossier_path),
+                "unreadable_dossier_path": str(bundle.unreadable_dossier_path),
+                "unclassifiable_dossier_path": str(bundle.unclassifiable_dossier_path),
+                "ambiguous_dossier_path": str(bundle.ambiguous_dossier_path),
                 "verification": bundle.verification,
             },
             ensure_ascii=False,

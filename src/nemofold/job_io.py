@@ -75,6 +75,7 @@ WORKFLOW_PARAMETER_FIELDS = {
             "allowed_types",
             "classification_policy",
             "confidence_threshold",
+            "maintain_index",
             "naming_template",
             "original_policy",
             "retention_action",
@@ -372,7 +373,7 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             raise ValueError(f"unsupported {name}: {value}")
 
     if job.workflow == "smart_inbox":
-        choice("classification_policy", {"suffix_routes"})
+        choice("classification_policy", {"suffix_routes", "content_categories"})
         threshold = job.parameters.get("confidence_threshold", 1.0)
         if (
             isinstance(threshold, bool)
@@ -380,6 +381,9 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             or not 0 <= threshold <= 1
         ):
             raise ValueError("confidence_threshold must be between 0 and 1")
+        maintain_index = job.parameters.get("maintain_index")
+        if maintain_index is not None and not isinstance(maintain_index, bool):
+            raise ValueError("maintain_index must be a boolean")
     elif job.workflow == "rater_race":
         supplied_a = "coding_a" in job.parameters
         supplied_b = "coding_b" in job.parameters
