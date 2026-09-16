@@ -222,6 +222,11 @@ const workflowDefaults = {
     parameters: {formats: ["md", "json"], min_confidence: 0.7, detect_duplicates: true},
     hint: "OCR Pipeline processes scanned documents and image PDFs through OCR detection, quality verification, delta tracking, and FTS5 indexing."
   },
+  document_qa: {
+    questions: [],
+    parameters: {required_sections: [], formats: ["md", "json"], require_no_placeholders: true},
+    hint: "Document QA validates finished documents against required sections, placeholder bans, and SHA-256 integrity, sealing them into publication packages."
+  },
   alibi_weave: {
     questions: [],
     parameters: {formats: ["md"], places: [], tolerance_minutes: 90},
@@ -246,6 +251,11 @@ const workflowDefaults = {
     questions: [],
     parameters: {formats: ["md"], queries: [], subject: "", max_results: 5},
     hint: "Dossier collects cited search results on a subject you name into a reading list. It is not a finding about anybody, and the artifact says so about itself."
+  },
+  briefing: {
+    questions: [],
+    parameters: {subject: "", question: "", min_sources: 2, formats: ["md", "json"]},
+    hint: "Briefing structures evidence into cited facts, clear inferences, and open uncertainties, with honest limited briefings if sources are sparse."
   },
   bundle_completeness_check: {
     questions: [],
@@ -715,6 +725,10 @@ const workflowCards = {
     title: "OCR Pipeline",
     benefit: "Process scanned and image documents with OCR quality gates, delta indexation, and verified FTS5 retrieval."
   },
+  document_qa: {
+    title: "Document QA",
+    benefit: "Validate document completeness, forbid unbound placeholders, and seal outputs into a publication package."
+  },
   alibi_weave: {
     title: "Alibi Weave",
     benefit: "Tell a self-report from an outside confirmation, and see who nothing places at all."
@@ -734,6 +748,10 @@ const workflowCards = {
   dossier: {
     title: "Dossier",
     benefit: "Collect cited results on a subject into a reading list that refuses to be a verdict."
+  },
+  briefing: {
+    title: "Briefing",
+    benefit: "Assemble cited facts, clear inferences, and open uncertainties from web research into a meeting briefing."
   },
   bundle_completeness_check: {
     title: "Completeness Check",
@@ -1059,10 +1077,10 @@ const registryGroups = [
     "coverage_timeline", "cost_timeline", "subscription_reconcile", "medication_reconcile", "database_reader", "alibi_weave", "contradiction_synopsis"]},
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "routine_query", "version_resolver",
     "contact_monitor"]},
-  {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
+  {title: "Outward and status", workflows: ["web_research", "dossier", "briefing", "platform_proof"]},
   {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check",
     "rater_race", "report_studio", "guide_compose", "wiki_export",
-    "document_compose", "mail_merge_compose", "knowledge_composer", "print_action"]}
+    "document_compose", "mail_merge_compose", "knowledge_composer", "document_qa", "print_action"]}
 ];
 
 

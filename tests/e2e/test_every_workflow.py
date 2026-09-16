@@ -27,6 +27,7 @@ from nemofold.job_io import (
 # one document to print. Everything absent here is meant to be absent - the
 # workflow should manage on its defaults or say what it is missing.
 PARAMETERS: dict[str, dict[str, object]] = {
+    "briefing": {"subject": "Praxis Nord", "queries": ["Praxis Nord Bernau"]},
     "bundle_export": {"bundle_name": "akte"},
     "cleanup_rules": {"retention_action": "list"},
     "contact_monitor": {"contact_book": "CONTACTS"},

@@ -39,7 +39,9 @@ WORKFLOW_ORDER = {
     "mail_merge_compose": 100,
     "web_research": 88,
     "dossier": 90,
+    "briefing": 91,
     "bundle_completeness_check": 92,
+    "document_qa": 93,
     "person_registry": 74,
     "relation_model": 76,
     "corpus_query": 78,
@@ -81,7 +83,9 @@ WORKFLOW_TITLES = {
     "mail_merge_compose": "Mail Merge",
     "web_research": "Web Research",
     "dossier": "Dossier",
+    "briefing": "Briefing",
     "bundle_completeness_check": "Completeness Check",
+    "document_qa": "Document QA",
     "person_registry": "Person Registry",
     "relation_model": "Relation Model",
     "person_timeline": "Person Timeline",
@@ -151,9 +155,16 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "dossier": (
         "dossier", "steckbrief", "profil zu", "hintergrund zu", "was gibt es über",
     ),
+    "briefing": (
+        "briefing", "meeting-briefing", "vorbereitung meeting", "briefing erstellen",
+    ),
     "bundle_completeness_check": (
         "vollständig", "vollstaendig", "ist alles da", "fehlt etwas", "lückenlos",
         "completeness",
+    ),
+    "document_qa": (
+        "qualitätsprüfung", "qualitaetspruefung", "document_qa", "publikationspaket",
+        "human-review", "human review",
     ),
     "person_registry": (
         "personen", "wer kommt vor", "wer taucht auf", "namensliste", "beteiligte",
@@ -176,8 +187,8 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
         "kostenplan", "cost", "fälligkeiten", "sondereffekte",
     ),
     "subscription_reconcile": (
-        "abo", "abonnements", "nachrichten", "abgleich", "reconciliation", "vertrag",
-        "preiserhöhung", "rechnung", "subscriptions", "vertragsabgleich",
+        "abo", "abonnements", "nachrichten", "abo-abgleich", "abo abgleich", "reconciliation",
+        "vertrag", "preiserhöhung", "rechnung", "subscriptions", "vertragsabgleich",
     ),
     "medication_reconcile": (
         "medikamente", "medikationsplan", "wirkstoff", "dosierung", "arztbericht",

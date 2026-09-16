@@ -119,10 +119,18 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Assemble cited search results on a declared subject into a reading list that "
         "says in the artifact that it is not a finding about anybody."
     ),
+    "briefing": (
+        "Assemble cited facts, clear inferences, and open uncertainties from web research "
+        "into a structured meeting briefing with honest limited scopes."
+    ),
     "bundle_completeness_check": (
         "Report whether every approved source was read, whether the required formats can "
         "be produced and whether a required part came out empty, concluding nothing "
         "about content."
+    ),
+    "document_qa": (
+        "Validate document format, check completeness against required sections, block "
+        "unbound placeholders, and seal outputs into a publication package."
     ),
     "print_action": (
         "Prepare a print-ready file and the exact command to print it, and state that "
@@ -451,6 +459,20 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Delta index", "new, updated, or skipped duplicates"),
         ("operation", "FTS5 index", "source chunks with line anchors"),
         ("gate", "Retrieval probe", "verified searchability receipt"),
+    ),
+    "briefing": (
+        ("operation", "Context", "subject + meeting context"),
+        ("operation", "Sources", "verified web research claims"),
+        ("gate", "Evidence", "distinguish facts and inferences"),
+        ("gate", "Honest scope", "limited briefing if sources sparse"),
+        ("operation", "Dossier", "json + markdown briefing"),
+    ),
+    "document_qa": (
+        ("operation", "Document", "source artifact + sha256 hash"),
+        ("gate", "Format QA", "markdown structure + integrity"),
+        ("gate", "Completeness", "required sections present"),
+        ("gate", "Placeholders", "fail closed on unbound fields"),
+        ("operation", "Package", "publication package + report"),
     ),
 }
 
