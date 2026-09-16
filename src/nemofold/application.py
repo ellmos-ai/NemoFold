@@ -4,6 +4,7 @@ import hashlib
 import json
 import math
 import re
+from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from datetime import UTC, date, datetime
 from pathlib import Path
@@ -139,6 +140,10 @@ from .web_research import (
     execute_web_research,
 )
 
+_SOURCE_READ_NOTES: ContextVar[dict[str, tuple[str, ...]] | None] = ContextVar(
+    "nemofold_source_read_notes", default=None
+)
+
 
 @dataclass(frozen=True, slots=True)
 class ExecutionConfig:
@@ -185,7 +190,7 @@ def prepare_nemoclaw_package(
     if not decision.allowed:
         raise PermissionError(", ".join(decision.reasons))
     prepared, inventory = _prepare_inventory(job)
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, prepared)
     max_chunks = prepared.parameters.get("max_chunks", 8)
     if isinstance(max_chunks, bool) or not isinstance(max_chunks, int) or max_chunks < 1:
         raise ValueError("max_chunks must be a positive integer")
@@ -408,6 +413,8 @@ def preview_job(
     artifacts: tuple[ArtifactRecord, ...] = ()
     coverage: Coverage | None = None
     preview_metadata: dict[str, object] = {}
+    source_read_notes: dict[str, tuple[str, ...]] = {}
+    token = _SOURCE_READ_NOTES.set(source_read_notes)
     try:
         validate_workflow_parameters(prepared)
         if prepared.workflow == "storage_policy":
@@ -449,9 +456,15 @@ def preview_job(
             status=RunStatus.FAILED,
             errors=(f"preview_error:{type(exc).__name__}",),
             gate_decision=execution_decision,
-            metadata={"preview": True, "cloud_proof": False},
+            metadata={
+                "preview": True,
+                "cloud_proof": False,
+                **_source_read_notes_metadata(source_read_notes),
+            },
         )
         return JobCommandResult(report, _save_if_output_allowed(prepared, report, gate))
+    finally:
+        _SOURCE_READ_NOTES.reset(token)
     report = RunReport(
         run_id=run_id,
         idempotency_key=job_idempotency_key(prepared),
@@ -469,6 +482,7 @@ def preview_job(
             "execution_gate_allowed": execution_decision.allowed,
             "execution_gate_reasons": list(execution_decision.reasons),
             **preview_metadata,
+            **_source_read_notes_metadata(source_read_notes),
         },
     )
     return JobCommandResult(report, _save_if_output_allowed(prepared, report, gate))
@@ -500,9 +514,13 @@ def _read_text_sources(
         suffix = Path(source.path).suffix.casefold()
         try:
             if suffix in STRUCTURED_SUFFIXES or (labelled_csv and suffix == ".csv"):
-                texts[source.source_id] = read_structured(
+                rendering = read_structured(
                     source.path, tables=tables, expected_sha256=source.sha256
-                ).text
+                )
+                texts[source.source_id] = rendering.text
+                collector = _SOURCE_READ_NOTES.get()
+                if collector is not None and rendering.notes:
+                    collector[source.source_id] = rendering.notes
                 continue
             texts[source.source_id] = extract_document_text(
                 source.path,
@@ -514,13 +532,22 @@ def _read_text_sources(
     return texts
 
 
+def _source_read_notes_metadata(
+    notes: dict[str, tuple[str, ...]],
+) -> dict[str, object]:
+    """Carry reader omissions into the shared, source-keyed RunReport."""
+    if not notes:
+        return {}
+    return {"source_read_notes": {source_id: list(notes[source_id]) for source_id in sorted(notes)}}
+
+
 def _preview_context_receipts(
     job: JobEnvelope,
     inventory: InventoryResult,
     *,
     run_id: str,
 ) -> tuple[ArtifactRecord, Coverage, dict[str, object]]:
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     max_chunks = job.parameters.get("max_chunks", 8)
     if isinstance(max_chunks, bool) or not isinstance(max_chunks, int) or max_chunks < 1:
         raise ValueError("max_chunks must be a positive integer")
@@ -608,7 +635,7 @@ def _execute_bundle(
     job: JobEnvelope,
     inventory: InventoryResult,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     bundle_name = job.parameters.get("bundle_name", "document_bundle")
     if not isinstance(bundle_name, str):
         raise ValueError("bundle_name must be a string")
@@ -649,7 +676,7 @@ def _execute_digest(
     *,
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     summary_length = job.parameters.get("summary_length", 3)
     if isinstance(summary_length, bool) or not isinstance(summary_length, int):
         raise ValueError("summary_length must be an integer")
@@ -744,7 +771,7 @@ def _execute_evidence(
     run_id: str,
     platform_proof: bool = False,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     max_chunks = job.parameters.get("max_chunks", 8)
     if isinstance(max_chunks, bool) or not isinstance(max_chunks, int) or max_chunks < 1:
         raise ValueError("max_chunks must be a positive integer")
@@ -942,7 +969,7 @@ def _execute_versions(
     *,
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     as_of_value = job.parameters.get("as_of", date.today().isoformat())
     if not isinstance(as_of_value, str):
         raise ValueError("as_of must be an ISO date string")
@@ -1664,7 +1691,7 @@ def _execute_contact_monitor(
     *,
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     for record in inventory.records:
         if Path(record.path).suffix.casefold() != ".eml":
             continue
@@ -1715,7 +1742,7 @@ def _execute_document_registry(
     columns = columns_from_parameters(
         job.parameters.get("columns"), job.parameters.get("column_template")
     )
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     table = build_registry(
         tuple((record.source_id, record.display_name) for record in inventory.records),
         texts,
@@ -1867,7 +1894,7 @@ def _execute_fact_distill(
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Distil quotable facts, strike duplicates, and keep the struck ones visible."""
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     focus = tuple(job.parameters.get("focus_terms", [])) or tuple(job.questions)
     result = distil_facts(
         tuple(record.source_id for record in inventory.records),
@@ -1994,7 +2021,7 @@ def _execute_synopsis_merge(
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Merge the approved sources into one synopsis, conflicts kept visible."""
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     title = job.parameters.get("title") or "Synopsis"
     if not isinstance(title, str) or not title.strip():
         raise ValueError("title must be a non-empty string")
@@ -2091,7 +2118,7 @@ def _execute_daily_arrivals(
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Report the files that arrived since the last snapshot of this folder."""
-    texts = _read_text_sources(inventory)
+    texts = _read_text_sources(inventory, job)
     title = job.parameters.get("title") or "Daily arrivals"
     if not isinstance(title, str) or not title.strip():
         raise ValueError("title must be a non-empty string")
@@ -2989,6 +3016,8 @@ def _complete_running_job(
 ) -> JobCommandResult:
     run_id = running.run_id
     inventory_record = _write_inventory_snapshot(job, inventory, run_id=run_id)
+    source_read_notes: dict[str, tuple[str, ...]] = {}
+    token = _SOURCE_READ_NOTES.set(source_read_notes)
     try:
         actions, artifacts, coverage, metadata = _dispatch_workflow(
             job,
@@ -3004,7 +3033,11 @@ def _complete_running_job(
             errors=exc.errors,
             artifacts=(inventory_record,) + exc.artifacts,
             coverage=exc.coverage,
-            metadata={**running.metadata, **exc.metadata},
+            metadata={
+                **running.metadata,
+                **exc.metadata,
+                **_source_read_notes_metadata(source_read_notes),
+            },
         )
         ledger.update(blocked)
         return JobCommandResult(blocked, _report_path(job, run_id))
@@ -3015,9 +3048,12 @@ def _complete_running_job(
             status=RunStatus.FAILED,
             errors=(reason,),
             artifacts=(inventory_record,),
+            metadata={**running.metadata, **_source_read_notes_metadata(source_read_notes)},
         )
         ledger.update(failed)
         return JobCommandResult(failed, _report_path(job, run_id))
+    finally:
+        _SOURCE_READ_NOTES.reset(token)
     # A produced file is not finished until it is where a person will look, so
     # a job that names a delivery policy files what it just made - through the
     # same allow roots and the same action gate as any other write.
@@ -3042,7 +3078,7 @@ def _complete_running_job(
         errors=(),
         artifacts=(inventory_record,) + artifacts,
         coverage=coverage,
-        metadata={**running.metadata, **metadata},
+        metadata={**running.metadata, **metadata, **_source_read_notes_metadata(source_read_notes)},
     )
     ledger.update(final)
     return JobCommandResult(final, _report_path(job, run_id))

@@ -27,6 +27,10 @@ All notable changes to NemoFold are documented here.
 - Bind SQLite-main-file, XLSX, and opt-in structured CSV rendering to one
   inventoried byte snapshot. Fail a workflow with active SQLite sidecars rather
   than silently omit an unbound database from its claims.
+- Carry source-keyed structured-reader omission and missing-table notes into
+  persisted RunReports, including read-bearing previews and registry-to-synopsis
+  step ledgers and Voyage dossiers. Pass declared structured-source choices to
+  every job-bearing reader callsite; the full Ellmos application gates remain open.
 
 - Expand the shared job contract from eight to twelve workflows with explainable
   Cleanup Rules, local Mail-to-Case intake, confirmation-bound Controlled Email

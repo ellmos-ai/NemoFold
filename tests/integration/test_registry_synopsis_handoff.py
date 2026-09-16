@@ -12,7 +12,11 @@ import nemofold.voyage_runs as voyage_runs
 from nemofold.application import ExecutionConfig
 from nemofold.job_io import load_job_snapshot
 from nemofold.ledger import RunLedger
-from nemofold.voyage_runs import _selected_registry_sources, run_voyage
+from nemofold.voyage_runs import (
+    _selected_registry_sources,
+    run_voyage,
+    voyage_run_payload,
+)
 from nemofold.voyages import VoyageStore
 
 
@@ -169,6 +173,59 @@ def test_structured_doctor_report_crosses_registry_to_synopsis_with_receipt(
     ledger = json.loads(Path(result.steps[1].ledger_path or "").read_text(encoding="utf-8"))
     assert ledger["coverage"]["total_sources"] == 2
     assert any(item["format"] == "pdf" for item in ledger["artifacts"])
+
+
+def test_structured_omissions_survive_registry_to_synopsis_ledgers(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from nemofold.delivery import workbook_bytes
+
+    case = _case(tmp_path)
+    workbook = tmp_path / "reports" / "thyroid_table.xlsx"
+    workbook.write_bytes(
+        workbook_bytes(
+            ("Befund",),
+            (
+                ("Schilddrüse vergrößert",),
+                ("Schilddrüse stabil",),
+                ("Leberwert auffällig",),
+            ),
+        )
+    )
+    original_read = application.read_structured
+
+    def limited_reader(path, **kwargs):
+        return original_read(path, max_rows=2, **kwargs)
+
+    monkeypatch.setattr(application, "read_structured", limited_reader)
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="omission_bridge",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "executed"
+    dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
+    for step in result.steps:
+        ledger = json.loads(Path(step.ledger_path or "").read_text(encoding="utf-8"))
+        assert any(
+            "1 row(s) beyond the ceiling of 2" in note
+            for notes in ledger["metadata"]["source_read_notes"].values()
+            for note in notes
+        )
+        assert dossier["steps"][step.order - 1]["source_read_notes"] == ledger["metadata"][
+            "source_read_notes"
+        ]
+    markdown = (tmp_path / "out" / "voyage-dossier" / "omission_bridge.md")
+    assert "source notes" in markdown.read_text(encoding="utf-8")
+    response = voyage_run_payload(result, saved)
+    assert response["steps"][1]["source_read_notes"] == dossier["steps"][1][
+        "source_read_notes"
+    ]
+    synopsis = (tmp_path / "out" / "02-synopsis" / "omission_bridge_02.synopsis.md")
+    assert "Leberwert auffällig" not in synopsis.read_text(encoding="utf-8")
 
 
 def test_source_change_between_handoff_and_consumer_invalidates_the_chain(

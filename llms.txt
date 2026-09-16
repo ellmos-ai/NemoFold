@@ -28,6 +28,11 @@ Current local implementation boundary:
   against the inventory hash for extraction/rendering. Active SQLite WAL,
   SHM, or rollback-journal sidecars fail closed because that main-file hash
   does not cover their rows. A mismatch fails the job before a valid report.
+  Structured-reader omissions and missing-table notes are now source-keyed in
+  the persisted RunReport metadata for executed jobs and read-bearing previews;
+  Voyage step ledgers and dossiers expose those notes. Declared `source_tables`
+  and opt-in structured CSV settings reach the same reader in preview and run.
+  This is a visibility receipt, not proof that every omitted row was reviewed.
   The full medical G02 application gate still requires the remaining field,
   citation, omission, surface, and human-review checks.
   Full application-usecase acceptance remains separate from these component

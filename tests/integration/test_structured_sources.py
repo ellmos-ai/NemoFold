@@ -10,7 +10,7 @@ import pytest
 
 import nemofold.application as application
 import nemofold.structured_sources as structured_sources
-from nemofold.application import ExecutionConfig, run_job
+from nemofold.application import ExecutionConfig, preview_job, run_job
 from nemofold.contracts import RunStatus
 from nemofold.document_extract import (
     MAX_XML_MEMBER_BYTES,
@@ -580,6 +580,137 @@ def test_a_database_is_analysed_as_part_of_the_corpus(tmp_path) -> None:
     assert match["anchors"][0]["source_id"]
     assert match["anchors"][0]["line"] > 0
     assert "praeparat: Beispirol" in match["statement"]
+
+
+def test_xlsx_omissions_reach_the_persisted_job_report(tmp_path) -> None:
+    import json
+
+    from nemofold.delivery import workbook_bytes
+
+    source = tmp_path / "long-register.xlsx"
+    source.write_bytes(
+        workbook_bytes(("Item",), (("Beispiel",),) * 2003)
+    )
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "corpus_query",
+            "input_roots": [str(source)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {"terms": ["missing-term"], "formats": ["md"]},
+        },
+        base_dir=tmp_path,
+    )
+    result = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="xlsx_omission"
+    )
+
+    assert result.report.status is RunStatus.EXECUTED
+    notes_by_source = result.report.metadata["source_read_notes"]
+    assert len(notes_by_source) == 1
+    assert any(
+        "3 row(s) beyond the ceiling of 2000" in note
+        for notes in notes_by_source.values()
+        for note in notes
+    )
+    persisted = json.loads(result.report_path.read_text(encoding="utf-8"))
+    assert persisted["metadata"]["source_read_notes"] == notes_by_source
+
+
+def test_declared_missing_sqlite_table_is_visible_in_job_report(tmp_path) -> None:
+    database = _mediplaner(tmp_path)
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "corpus_query",
+            "input_roots": [str(database)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {
+                "terms": ["Beispirol"],
+                "source_tables": ["rezepte", "abrechnungen"],
+                "formats": ["md"],
+            },
+        },
+        base_dir=tmp_path,
+    )
+    result = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="missing_table"
+    )
+
+    assert result.report.status is RunStatus.EXECUTED
+    assert any(
+        "abrechnungen" in note and "not present" in note
+        for notes in result.report.metadata["source_read_notes"].values()
+        for note in notes
+    )
+
+
+def test_evidence_preview_shows_structured_omissions_before_run(tmp_path) -> None:
+    from nemofold.delivery import workbook_bytes
+
+    source = tmp_path / "long-preview.xlsx"
+    source.write_bytes(workbook_bytes(("Item",), (("Beispiel",),) * 2001))
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "evidence_analyst",
+            "input_roots": [str(source)],
+            "output_dir": str(tmp_path / "out"),
+            "questions": ["Welcher Eintrag?"],
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {"formats": ["md"]},
+        },
+        base_dir=tmp_path,
+    )
+    result = preview_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="preview_omission"
+    )
+
+    assert result.report.status is RunStatus.PLANNED
+    assert any(
+        "beyond the ceiling of 2000" in note
+        for notes in result.report.metadata["source_read_notes"].values()
+        for note in notes
+    )
+
+
+@pytest.mark.parametrize("preview", [True, False])
+def test_evidence_respects_declared_tables_in_preview_and_run(tmp_path, preview) -> None:
+    database = _mediplaner(tmp_path)
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "evidence_analyst",
+            "input_roots": [str(database)],
+            "output_dir": str(tmp_path / "out"),
+            "questions": ["Welches Präparat?"],
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {
+                "source_tables": ["rezepte", "abrechnungen"],
+                "formats": ["md"],
+            },
+        },
+        base_dir=tmp_path,
+    )
+    command = preview_job if preview else run_job
+    result = command(
+        job,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="evidence_table_preview" if preview else "evidence_table_run",
+    )
+
+    assert result.report.status is (RunStatus.PLANNED if preview else RunStatus.EXECUTED)
+    assert any(
+        "abrechnungen" in note and "not present" in note
+        for notes in result.report.metadata["source_read_notes"].values()
+        for note in notes
+    )
 
 
 def test_a_live_wal_stops_the_corpus_job_instead_of_omitting_the_database(tmp_path) -> None:

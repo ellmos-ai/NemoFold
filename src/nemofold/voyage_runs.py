@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -56,6 +56,7 @@ class VoyageStepResult:
     policy_note: str = ""
     errors: tuple[str, ...] = ()
     handoff: dict[str, Any] | None = None
+    source_read_notes: dict[str, list[str]] = field(default_factory=dict)
 
 
 @dataclass(frozen=True, slots=True)
@@ -109,6 +110,7 @@ def voyage_run_payload(
                 "policy_note": step.policy_note,
                 "errors": list(step.errors),
                 "handoff": step.handoff,
+                "source_read_notes": step.source_read_notes,
             }
             for step in result.steps
         ],
@@ -156,6 +158,15 @@ def _dossier_markdown(result: VoyageRunResult) -> str:
             lines.append(f"- policy: {step.policy_note}")
         if step.errors:
             lines.append(f"- errors: {', '.join(step.errors)}")
+        if step.source_read_notes:
+            count = sum(len(notes) for notes in step.source_read_notes.values())
+            lines.append(
+                f"- source notes: {count} note(s) across "
+                f"{len(step.source_read_notes)} source(s)"
+            )
+            for source_id, notes in step.source_read_notes.items():
+                for note in notes:
+                    lines.append(f"  - {source_id}: {' '.join(note.split())}")
         if step.handoff:
             lines.append(
                 f"- handoff: {step.handoff['format']} from "
@@ -163,6 +174,19 @@ def _dossier_markdown(result: VoyageRunResult) -> str:
             )
         lines.append("")
     return "\n".join(lines).rstrip() + "\n"
+
+
+def _source_notes_from_report(report: RunReport) -> dict[str, list[str]]:
+    raw = report.metadata.get("source_read_notes")
+    if not isinstance(raw, dict):
+        return {}
+    return {
+        str(source_id): list(notes)
+        for source_id, notes in sorted(raw.items(), key=lambda item: str(item[0]))
+        if isinstance(source_id, str)
+        and isinstance(notes, list)
+        and all(isinstance(note, str) for note in notes)
+    }
 
 
 def _route_step(resolution: ModelResolution, workflow: str) -> ModelResolution:
@@ -596,6 +620,7 @@ def run_voyage(
                 policy_note=policy_note,
                 errors=errors,
                 handoff=handoff_receipt,
+                source_read_notes=_source_notes_from_report(report),
             )
         )
         previous_output = job.output_dir
@@ -656,6 +681,7 @@ def run_voyage(
                 "policy_note": item.policy_note,
                 "errors": list(item.errors),
                 "handoff": item.handoff,
+                "source_read_notes": item.source_read_notes,
             }
             for item in result.steps
         ],
