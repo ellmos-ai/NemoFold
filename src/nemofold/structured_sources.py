@@ -41,6 +41,7 @@ CONTACT_FIELDS = ("name", "class", "email", "phone", "note")
 
 _IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]{0,62}")
 _CELL_REF = re.compile(r"^([A-Z]+)(\d+)$")
+_STRUCTURED_ROW = re.compile(r"^Zeile \d+ · ")
 
 
 class StructuredSourceError(ValueError):
@@ -60,11 +61,41 @@ class TableRendering:
     notes: tuple[str, ...]
 
 
-def _cell(value: object) -> str:
+def mask_structured_rows(text: str, selected_lines: tuple[int, ...]) -> str:
+    """Keep only selected records while preserving every original line anchor."""
+    lines = text.splitlines()
+    row_lines = {number for number, line in enumerate(lines, start=1)
+                 if _STRUCTURED_ROW.match(line)}
+    if not selected_lines or not set(selected_lines) <= row_lines:
+        raise ValueError("source_selected_lines_invalid")
+    selected = set(selected_lines)
+    masked = [
+        line if number not in row_lines or number in selected else ""
+        for number, line in enumerate(lines, start=1)
+    ]
+    return "\n".join(masked) + ("\n" if text.endswith("\n") else "")
+
+
+def select_topic_rows(text: str, terms: tuple[str, ...]) -> tuple[str, tuple[int, ...]]:
+    """Select matching table records, not a whole file because one row matched."""
+    if not terms:
+        return text, ()
+    selected = tuple(
+        number
+        for number, line in enumerate(text.splitlines(), start=1)
+        if _STRUCTURED_ROW.match(line)
+        and any(term.casefold() in line.casefold() for term in terms)
+    )
+    if not selected:
+        return "", ()
+    return mask_structured_rows(text, selected), selected
+
+
+def _cell(value: object) -> tuple[str, bool]:
     if value is None:
-        return ""
+        return "", False
     rendered = " ".join(str(value).split()).replace("·", "∙")
-    return rendered[:MAX_CELL_CHARS]
+    return rendered[:MAX_CELL_CHARS], len(rendered) > MAX_CELL_CHARS
 
 
 def _label(value: object) -> str:
@@ -84,7 +115,15 @@ def _render_rows(
     without knowing they came from a table at all.
     """
     notes: list[str] = []
-    columns = tuple(_label(column) or f"Spalte {index + 1}" for index, column in enumerate(columns))
+    labelled_columns: list[str] = []
+    for index, column in enumerate(columns, start=1):
+        original_label = " ".join(str(column).split())
+        if len(original_label) > MAX_CELL_CHARS:
+            notes.append(
+                f"column header {index} exceeded {MAX_CELL_CHARS} characters and was truncated."
+            )
+        labelled_columns.append(_label(column) or f"Spalte {index}")
+    columns = tuple(labelled_columns)
     if len(columns) > MAX_COLUMNS:
         notes.append(
             f"{len(columns) - MAX_COLUMNS} column(s) beyond the ceiling of {MAX_COLUMNS} "
@@ -98,14 +137,27 @@ def _render_rows(
             "were not rendered."
         )
     lines = [f"# {title}", "", "Spalten: " + " | ".join(columns), ""]
+    truncated_cells: dict[int, list[int]] = {}
     for number, row in enumerate(kept, start=1):
-        pairs = [
-            f"{column}: {_cell(value)}"
-            for column, value in zip(columns, row[: len(columns)], strict=False)
-        ]
+        pairs: list[str] = []
+        for index, (column, value) in enumerate(
+            zip(columns, row[: len(columns)], strict=False), start=1
+        ):
+            rendered, truncated = _cell(value)
+            pairs.append(f"{column}: {rendered}")
+            if truncated:
+                truncated_cells.setdefault(index, []).append(number)
         lines.append(f"Zeile {number} · " + " · ".join(pairs))
+    for index, row_numbers in sorted(truncated_cells.items()):
+        notes.append(
+            f"{len(row_numbers)} cell(s) in column {index} exceeded "
+            f"{MAX_CELL_CHARS} characters and were truncated; "
+            f"first affected row {row_numbers[0]}."
+        )
     return TableRendering(
-        text="\n".join(lines) + "\n", row_count=len(kept), notes=tuple(notes)
+        text="\n".join(lines) + "\n",
+        row_count=len(kept),
+        notes=tuple(f"{title}: {note}" for note in notes),
     )
 
 
@@ -200,7 +252,7 @@ def read_sqlite(
             notes.extend(rendering.notes)
             if count > rendering.row_count:
                 notes.append(
-                    f"{count - rendering.row_count} row(s) beyond the ceiling of "
+                    f"Tabelle {name}: {count - rendering.row_count} row(s) beyond the ceiling of "
                     f"{limit} were not rendered."
                 )
             total += rendering.row_count

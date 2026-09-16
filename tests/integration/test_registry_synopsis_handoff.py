@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 from pathlib import Path
 
 import pytest
@@ -173,6 +174,17 @@ def test_structured_doctor_report_crosses_registry_to_synopsis_with_receipt(
     ledger = json.loads(Path(result.steps[1].ledger_path or "").read_text(encoding="utf-8"))
     assert ledger["coverage"]["total_sources"] == 2
     assert any(item["format"] == "pdf" for item in ledger["artifacts"])
+    registry = json.loads(
+        (tmp_path / "out" / "01-register" / "structured_report_bridge_01.registry.json")
+        .read_text(encoding="utf-8")
+    )
+    table_row = next(
+        row for row in registry["rows"] if row["display_name"] == "thyroid_table.xlsx"
+    )
+    finding = next(cell for cell in table_row["cells"] if cell["column"] == "Befund")
+    assert finding["value"] == "Schilddrüse vergrößert"
+    assert "Befund: Schilddrüse vergrößert" in finding["quote"]
+    assert finding["line"] > 0
 
 
 def test_structured_omissions_survive_registry_to_synopsis_ledgers(
@@ -226,6 +238,236 @@ def test_structured_omissions_survive_registry_to_synopsis_ledgers(
     ]
     synopsis = (tmp_path / "out" / "02-synopsis" / "omission_bridge_02.synopsis.md")
     assert "Leberwert auffällig" not in synopsis.read_text(encoding="utf-8")
+
+
+def test_selected_sqlite_tables_remain_scoped_in_synopsis_handoff(tmp_path: Path) -> None:
+    case = _case(tmp_path)
+    database = tmp_path / "reports" / "medical.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE schilddruese ("Befund" TEXT)')
+        connection.execute('CREATE TABLE fremdthema ("Befund" TEXT)')
+        connection.execute(
+            'INSERT INTO schilddruese VALUES (?)', ("Schilddrüse stabil",)
+        )
+        connection.execute(
+            'INSERT INTO fremdthema VALUES (?)', ("Leberwert auffällig",)
+        )
+    case["steps"][0]["job"]["parameters"]["source_tables"] = ["schilddruese"]
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="scoped_sqlite_bridge",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "executed"
+    receipt = result.steps[1].handoff or {}
+    assert receipt["source_scope"]["source_tables"] == ["schilddruese"]
+    snapshot = load_job_snapshot(
+        tmp_path / "out" / "02-synopsis" / "jobs" / "scoped_sqlite_bridge_02.json"
+    )
+    assert snapshot.parameters["source_tables"] == ["schilddruese"]
+    synopsis = (
+        tmp_path / "out" / "02-synopsis" / "scoped_sqlite_bridge_02.synopsis.md"
+    ).read_text(encoding="utf-8")
+    assert "Schilddrüse stabil" in synopsis
+    assert "Leberwert auffällig" not in synopsis
+    registry = json.loads(
+        (tmp_path / "out" / "01-register" / "scoped_sqlite_bridge_01.registry.json")
+        .read_text(encoding="utf-8")
+    )
+    table_row = next(
+        row for row in registry["rows"] if row["display_name"] == "medical.sqlite"
+    )
+    finding = next(cell for cell in table_row["cells"] if cell["column"] == "Befund")
+    assert finding["value"] == "Schilddrüse stabil"
+    assert finding["line"] > 0
+
+
+def test_selected_sqlite_consumer_cannot_widen_producer_table_scope(tmp_path: Path) -> None:
+    case = _case(tmp_path)
+    database = tmp_path / "reports" / "medical.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE schilddruese ("Befund" TEXT)')
+        connection.execute('CREATE TABLE fremdthema ("Befund" TEXT)')
+        connection.execute('INSERT INTO schilddruese VALUES (?)', ("Schilddrüse stabil",))
+        connection.execute('INSERT INTO fremdthema VALUES (?)', ("Leberwert auffällig",))
+    case["steps"][0]["job"]["parameters"]["source_tables"] = ["schilddruese"]
+    case["steps"][1]["job"]["parameters"]["source_tables"] = ["fremdthema"]
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="widened_sqlite_bridge",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "stopped"
+    assert result.steps[1].status == "handoff_blocked"
+    assert result.steps[1].errors == ("handoff_source_scope_widened:source_tables",)
+    assert not (tmp_path / "out" / "02-synopsis").exists()
+
+
+def test_topic_handoff_selects_rows_not_unrelated_rows_in_the_same_table(
+    tmp_path: Path,
+) -> None:
+    case = _case(tmp_path)
+    database = tmp_path / "reports" / "mixed.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE bericht ("Befund" TEXT)')
+        connection.execute('INSERT INTO bericht VALUES (?)', ("Leberwert auffällig",))
+        connection.execute('INSERT INTO bericht VALUES (?)', ("Schilddrüse stabil",))
+    case["steps"][0]["job"]["parameters"]["source_tables"] = ["bericht"]
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="row_topic_bridge",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "executed"
+    registry = json.loads(
+        (tmp_path / "out" / "01-register" / "row_topic_bridge_01.registry.json")
+        .read_text(encoding="utf-8")
+    )
+    table_row = next(row for row in registry["rows"] if row["display_name"] == "mixed.sqlite")
+    finding = next(cell for cell in table_row["cells"] if cell["column"] == "Befund")
+    assert finding["value"] == "Schilddrüse stabil"
+    assert finding["line"] > 0
+    receipt = result.steps[1].handoff or {}
+    lineage = next(item for item in receipt["source_lineage"]
+                   if item["path"].endswith("mixed.sqlite"))
+    selected = receipt["selected_source_lines"][lineage["consumer_source_id"]]
+    assert selected == [finding["line"]]
+    snapshot = load_job_snapshot(
+        tmp_path / "out" / "02-synopsis" / "jobs" / "row_topic_bridge_02.json"
+    )
+    assert snapshot.parameters["source_selected_lines"] == receipt[
+        "selected_source_lines"
+    ]
+    synopsis = (
+        tmp_path / "out" / "02-synopsis" / "row_topic_bridge_02.synopsis.md"
+    ).read_text(encoding="utf-8")
+    assert "Schilddrüse stabil" in synopsis
+    assert "Leberwert auffällig" not in synopsis
+
+
+def test_selected_rows_block_changed_table_order_or_subset_before_consumer(
+    tmp_path: Path,
+) -> None:
+    case = _case(tmp_path)
+    database = tmp_path / "reports" / "medical.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE bericht_a ("Befund" TEXT)')
+        connection.execute('CREATE TABLE bericht_b ("Befund" TEXT)')
+        connection.execute('INSERT INTO bericht_a VALUES (?)', ("Schilddrüse stabil",))
+        connection.execute('INSERT INTO bericht_b VALUES (?)', ("Schilddrüse vergrößert",))
+    case["steps"][0]["job"]["parameters"]["source_tables"] = [
+        "bericht_a", "bericht_b"
+    ]
+    case["steps"][1]["job"]["parameters"]["source_tables"] = ["bericht_b"]
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="subset_table_bridge",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "stopped"
+    assert result.steps[1].status == "handoff_blocked"
+    assert result.steps[1].errors == ("handoff_source_scope_changed:source_tables",)
+    assert not (tmp_path / "out" / "02-synopsis").exists()
+
+
+def test_forged_topic_line_metadata_cannot_widen_a_verified_handoff(
+    tmp_path: Path,
+) -> None:
+    case = _case(tmp_path)
+    database = tmp_path / "reports" / "mixed.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE bericht ("Befund" TEXT)')
+        connection.execute('INSERT INTO bericht VALUES (?)', ("Leberwert auffällig",))
+        connection.execute('INSERT INTO bericht VALUES (?)', ("Schilddrüse stabil",))
+    case["steps"][0]["job"]["parameters"]["source_tables"] = ["bericht"]
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="forged_topic_lines",
+        base_dir=tmp_path,
+    )
+    assert result.status == "executed"
+    report = RunLedger(tmp_path / "out" / "01-register" / "ledger").load(
+        "forged_topic_lines_01"
+    )
+    receipt = result.steps[1].handoff or {}
+    producer_id = next(
+        item["producer_source_id"] for item in receipt["source_lineage"]
+        if item["path"].endswith("mixed.sqlite")
+    )
+    selected = report.metadata["topic_selected_lines"][producer_id]
+    report.metadata["topic_selected_lines"][producer_id] = [selected[0] - 1, selected[0]]
+
+    with pytest.raises(ValueError, match="handoff_topic_lines_mismatch"):
+        _selected_registry_sources(
+            receipt, report, output_dir=str(tmp_path / "out" / "01-register")
+        )
+
+
+def test_selected_csv_keeps_the_producer_labelled_reading(tmp_path: Path) -> None:
+    case = _case(tmp_path)
+    (tmp_path / "reports" / "table.csv").write_text(
+        "Befund\nSchilddrüse stabil\n", encoding="utf-8"
+    )
+    case["steps"][0]["job"]["parameters"]["structured_sources"] = True
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="labelled_csv_bridge",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "executed"
+    assert result.steps[1].handoff["source_scope"]["structured_sources"] is True
+    snapshot = load_job_snapshot(
+        tmp_path / "out" / "02-synopsis" / "jobs" / "labelled_csv_bridge_02.json"
+    )
+    assert snapshot.parameters["structured_sources"] is True
+    synopsis = (
+        tmp_path / "out" / "02-synopsis" / "labelled_csv_bridge_02.synopsis.md"
+    ).read_text(encoding="utf-8")
+    assert "Schilddrüse stabil" in synopsis
+
+
+def test_selected_csv_refuses_a_consumer_reading_mode_change(tmp_path: Path) -> None:
+    case = _case(tmp_path)
+    (tmp_path / "reports" / "table.csv").write_text(
+        "Befund\nSchilddrüse stabil\n", encoding="utf-8"
+    )
+    case["steps"][0]["job"]["parameters"]["structured_sources"] = True
+    case["steps"][1]["job"]["parameters"]["structured_sources"] = False
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="changed_csv_bridge",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "stopped"
+    assert result.steps[1].status == "handoff_blocked"
+    assert result.steps[1].errors == ("handoff_source_scope_changed:structured_sources",)
+    assert not (tmp_path / "out" / "02-synopsis").exists()
 
 
 def test_source_change_between_handoff_and_consumer_invalidates_the_chain(

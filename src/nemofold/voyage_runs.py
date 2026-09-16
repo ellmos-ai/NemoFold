@@ -33,6 +33,7 @@ from .policies import PolicyStore, cleanup_rules_for_step
 from .provider_analysis import PROVIDER_WORKFLOWS, analyze_with_provider
 from .providers import ProviderConfig
 from .runtime import job_idempotency_key
+from .structured_sources import STRUCTURED_SUFFIXES, read_structured, select_topic_rows
 
 VOYAGE_RUN_SCHEMA = "nemofold.voyage-run.v1"
 MAX_CHAIN_STEPS = 24
@@ -322,6 +323,14 @@ def _selected_registry_sources(
         or not snapshot.parameters.get("topic_filter")
     ):
         raise ValueError("handoff_producer_snapshot_mismatch")
+    source_tables = snapshot.parameters.get("source_tables", [])
+    structured_sources = snapshot.parameters.get("structured_sources", False)
+    if (
+        not isinstance(source_tables, list)
+        or any(not isinstance(name, str) or not name.strip() for name in source_tables)
+        or not isinstance(structured_sources, bool)
+    ):
+        raise ValueError("handoff_producer_source_scope_invalid")
     sources = {source.source_id: source for source in snapshot.sources}
     if (
         len(sources) != len(snapshot.sources)
@@ -383,13 +392,93 @@ def _selected_registry_sources(
                 "sha256": item.sha256,
             }
         )
+    raw_topic_lines = report.metadata.get("topic_selected_lines")
+    if not isinstance(raw_topic_lines, dict):
+        raise ValueError("handoff_topic_lines_missing")
+    selected_source_lines: dict[str, list[int]] = {}
+    for item in lineage:
+        source_id = item["producer_source_id"]
+        suffix = Path(item["path"]).suffix.casefold()
+        if suffix not in STRUCTURED_SUFFIXES and not (
+            suffix == ".csv" and structured_sources
+        ):
+            continue
+        lines = raw_topic_lines.get(source_id)
+        if (
+            not isinstance(lines, list)
+            or not lines
+            or len(lines) > 128000
+            or any(isinstance(number, bool) or not isinstance(number, int)
+                   or number < 1 for number in lines)
+            or lines != sorted(set(lines))
+        ):
+            raise ValueError("handoff_topic_lines_invalid")
+        try:
+            rendering = read_structured(
+                item["path"],
+                tables=tuple(source_tables),
+                expected_sha256=source_hashes[source_id],
+            )
+            _, expected_lines = select_topic_rows(
+                rendering.text, tuple(snapshot.parameters["topic_filter"])
+            )
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise ValueError("handoff_topic_source_unreadable") from exc
+        if lines != list(expected_lines):
+            raise ValueError("handoff_topic_lines_mismatch")
+        selected_source_lines[item["consumer_source_id"]] = list(lines)
     return paths, {
         **receipt,
         "mode": "selected_sources",
+        "source_scope": {
+            "source_tables": list(source_tables),
+            "structured_sources": structured_sources,
+        },
         "selected_source_ids": selected_ids,
         "selected_source_sha256": source_hashes,
         "source_lineage": lineage,
+        "selected_source_lines": selected_source_lines,
         "topic_filter": list(snapshot.parameters["topic_filter"]),
+    }
+
+
+def _bind_selected_source_scope(
+    job_payload: dict[str, Any], receipt: dict[str, Any]
+) -> None:
+    """Keep a consumer from reading a wider or differently rendered source."""
+    scope = receipt["source_scope"]
+    parameters = dict(job_payload.get("parameters") or {})
+    producer_tables = scope["source_tables"]
+    consumer_tables = parameters.get("source_tables")
+    if consumer_tables is None:
+        if producer_tables:
+            parameters["source_tables"] = list(producer_tables)
+    elif not isinstance(consumer_tables, list) or (
+        producer_tables and (
+            not consumer_tables or any(name not in producer_tables for name in consumer_tables)
+        )
+    ):
+        raise ValueError("handoff_source_scope_widened:source_tables")
+    elif consumer_tables != producer_tables:
+        raise ValueError("handoff_source_scope_changed:source_tables")
+    producer_structured = scope["structured_sources"]
+    consumer_structured = parameters.get("structured_sources")
+    if consumer_structured is None:
+        if producer_structured:
+            parameters["structured_sources"] = True
+    elif consumer_structured is not producer_structured:
+        raise ValueError("handoff_source_scope_changed:structured_sources")
+    selected_lines = receipt["selected_source_lines"]
+    if "source_selected_lines" in parameters and parameters["source_selected_lines"] != (
+        selected_lines
+    ):
+        raise ValueError("handoff_topic_lines_changed")
+    if selected_lines:
+        parameters["source_selected_lines"] = selected_lines
+    job_payload["parameters"] = parameters
+    receipt["consumer_source_scope"] = {
+        "source_tables": list(parameters.get("source_tables", [])),
+        "structured_sources": parameters.get("structured_sources", False),
     }
 
 
@@ -408,6 +497,7 @@ def _consumer_matches_lineage(
     if (
         snapshot.workflow != "synopsis_merge"
         or job_idempotency_key(snapshot) != report.idempotency_key
+        or snapshot.parameters.get("source_selected_lines", {}) != receipt["selected_source_lines"]
     ):
         return False
     expected = {
@@ -495,6 +585,7 @@ def run_voyage(
                             output_dir=previous_output or "",
                         )
                     )
+                    _bind_selected_source_scope(job_payload, handoff_receipt)
             except ValueError as exc:
                 rights, rights_level = resolve_rights(step.get("rights"), chain_rights)
                 results.append(

@@ -50,6 +50,7 @@ _ORDINAL_TAIL = re.compile(r"(?:^|\s)\d{1,2}\.$")
 _PUNCTUATION = re.compile(r"[^\w\s]", re.UNICODE)
 _WHITESPACE = re.compile(r"\s+")
 _LABELLED_LINE = re.compile(r"^\s*(?P<label>[^:#]{2,60}?)\s*:\s*(?P<value>\S.*?)\s*$")
+_STRUCTURED_ROW = re.compile(r"^Zeile \d+ · ")
 
 
 def ascii_variant(label: str) -> str:
@@ -265,19 +266,31 @@ def extract_fields(
             pattern = patterns[spec.name]
             found = FieldValue(field=spec.name)
             for number, line in enumerate(lines, start=1):
-                match = pattern.match(line)
-                if match is None:
-                    continue
-                value = match.group("value").strip()[:MAX_VALUE_CHARS]
-                if not value:
-                    continue
-                found = FieldValue(
-                    field=spec.name,
-                    value=value,
-                    anchor=Anchor(source_id=source_id, line=number),
-                    quote=line.strip()[:MAX_VALUE_CHARS],
+                # Structured readers label one record per line. Match each
+                # declared cell, but quote the whole row so its line anchor
+                # still names the exact record the value came from.
+                structured_row = _STRUCTURED_ROW.match(line) is not None
+                candidates = (
+                    tuple(cell.strip() for cell in line.split(" · ")[1:])
+                    if structured_row
+                    else (line,)
                 )
-                break
+                for candidate in candidates:
+                    match = pattern.match(candidate)
+                    if match is None:
+                        continue
+                    value = match.group("value").strip()[:MAX_VALUE_CHARS]
+                    if not value:
+                        continue
+                    found = FieldValue(
+                        field=spec.name,
+                        value=value,
+                        anchor=Anchor(source_id=source_id, line=number),
+                        quote=(candidate if structured_row else line.strip())[:MAX_VALUE_CHARS],
+                    )
+                    break
+                if found.value is not None:
+                    break
             values.append(found)
         rows.append(
             FieldRow(source_id=source_id, display_name=display_name, values=tuple(values))

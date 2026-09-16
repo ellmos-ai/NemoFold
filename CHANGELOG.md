@@ -31,6 +31,14 @@ All notable changes to NemoFold are documented here.
   persisted RunReports, including read-bearing previews and registry-to-synopsis
   step ledgers and Voyage dossiers. Pass declared structured-source choices to
   every job-bearing reader callsite; the full Ellmos application gates remain open.
+- Preserve declared SQLite table selection and opt-in CSV reading across a selected
+  document-registry-to-synopsis handoff; stop the consumer before execution if its
+  settings widen or change the producer's source scope. Validate these settings in
+  the strict job contract, and extract cited registry fields from labelled table rows.
+  Bind topic-matching structured row line numbers across producer and consumer, so
+  unrelated rows in the same selected file do not enter the synopsis. Warn in reader
+  notes and RunReports when long cell values or headers must be truncated. This remains
+  a partial G02 use-case path, not full application acceptance.
 
 - Expand the shared job contract from eight to twelve workflows with explainable
   Cleanup Rules, local Mail-to-Case intake, confirmation-bound Controlled Email

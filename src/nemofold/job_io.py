@@ -223,6 +223,7 @@ WORKFLOW_PARAMETER_FIELDS = {
     "synopsis_merge": frozenset({
         "source_tables",
         "structured_sources",
+        "source_selected_lines",
         "formats", "title"}),
     "daily_arrivals": frozenset(
         {
@@ -283,6 +284,38 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
     unknown = sorted(set(job.parameters) - allowed)
     if unknown:
         raise ValueError(f"unknown {job.workflow} parameter: {unknown[0]}")
+    if "source_tables" in job.parameters:
+        tables = job.parameters["source_tables"]
+        if not isinstance(tables, list) or len(tables) > 64:
+            raise ValueError("source_tables must be a list of at most 64 names")
+        if any(
+            not isinstance(name, str)
+            or re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]{0,62}", name) is None
+            for name in tables
+        ):
+            raise ValueError("source_tables contains an invalid table name")
+        if len(set(tables)) != len(tables):
+            raise ValueError("source_tables must not repeat a table name")
+    if "structured_sources" in job.parameters and not isinstance(
+        job.parameters["structured_sources"], bool
+    ):
+        raise ValueError("structured_sources must be a boolean")
+    if "source_selected_lines" in job.parameters:
+        selections = job.parameters["source_selected_lines"]
+        if not isinstance(selections, dict) or len(selections) > 500:
+            raise ValueError("source_selected_lines must be a bounded source map")
+        for source_id, lines in selections.items():
+            if (
+                not isinstance(source_id, str)
+                or not source_id
+                or not isinstance(lines, list)
+                or not lines
+                or len(lines) > 128000
+                or any(isinstance(number, bool) or not isinstance(number, int)
+                       or number < 1 or number > 500000 for number in lines)
+                or lines != sorted(set(lines))
+            ):
+                raise ValueError("source_selected_lines contains an invalid selection")
 
     def choice(name: str, supported: set[object]) -> None:
         if name in job.parameters and job.parameters[name] not in supported:

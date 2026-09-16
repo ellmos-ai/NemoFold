@@ -90,6 +90,21 @@ def test_extract_fields_anchors_what_it_finds_and_leaves_the_rest_empty() -> Non
     assert values["Kontakt"].anchor is None
 
 
+def test_structured_field_quote_still_contains_a_cell_after_a_long_prior_cell() -> None:
+    line = "Zeile 1 · Vormerkung: " + ("x" * 300) + " · Befund: Schilddrüse stabil"
+    rows, skipped = extract_fields(
+        (("src_table", "medizin.sqlite"),),
+        {"src_table": "# Tabelle medizin\n\n" + line + "\n"},
+        (FieldSpec("Befund"),),
+    )
+
+    assert skipped == ()
+    finding = rows[0].values[0]
+    assert finding.value == "Schilddrüse stabil"
+    assert finding.anchor == Anchor("src_table", 3)
+    assert "Befund: Schilddrüse stabil" in finding.quote
+
+
 def test_deduplicate_keeps_the_first_and_records_every_strike() -> None:
     statements = (
         AnchoredStatement("Die Deckung gilt.", Anchor("src_a", 1)),

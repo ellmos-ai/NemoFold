@@ -540,6 +540,85 @@ def test_a_contact_without_a_class_is_reported_as_the_strictest_case(tmp_path) -
 # --------------------------------------------------------------------------- #
 
 
+@pytest.mark.parametrize(
+    ("parameters", "message"),
+    [
+        ({"source_tables": "rezepte"}, "source_tables must be a list"),
+        ({"source_tables": ["rezepte", "rezepte"]}, "source_tables must not repeat"),
+        ({"source_tables": ["table;drop"]}, "source_tables contains"),
+        ({"structured_sources": "true"}, "structured_sources must be a boolean"),
+    ],
+)
+def test_structured_source_settings_are_typed_in_the_strict_job_contract(
+    tmp_path, parameters, message
+) -> None:
+    from nemofold.job_io import JobFileError
+
+    with pytest.raises(JobFileError, match=message):
+        parse_job_payload(
+            {
+                "schema": "nemofold.job.v1",
+                "workflow": "corpus_query",
+                "input_roots": [str(tmp_path)],
+                "output_dir": str(tmp_path / "out"),
+                "privacy_mode": "local_only",
+                "action_mode": "dry_run",
+                "parameters": {"terms": ["Beispirol"], **parameters},
+            },
+            base_dir=tmp_path,
+        )
+
+
+def test_truncated_sqlite_cell_is_explicit_in_reader_and_run_report(tmp_path) -> None:
+    database = tmp_path / "medical.sqlite"
+    long_finding = "Schilddrüse " + ("x" * 350)
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE bericht ("Befund" TEXT)')
+        connection.execute('INSERT INTO bericht VALUES (?)', (long_finding,))
+    rendering = read_structured(database, tables=("bericht",))
+    assert long_finding not in rendering.text
+    assert any("cell" in note and "300" in note and "row 1" in note
+               for note in rendering.notes)
+
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "corpus_query",
+            "input_roots": [str(database)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {
+                "terms": ["Schilddrüse"],
+                "source_tables": ["bericht"],
+                "formats": ["md"],
+            },
+        },
+        base_dir=tmp_path,
+    )
+    outcome = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="truncated_cell"
+    )
+    assert outcome.report.status is RunStatus.EXECUTED
+    assert any("cell" in note and "300" in note and "row 1" in note
+               for notes in outcome.report.metadata["source_read_notes"].values()
+               for note in notes)
+
+
+def test_truncated_cell_notes_name_the_sqlite_table(tmp_path) -> None:
+    database = tmp_path / "two-tables.sqlite"
+    with sqlite3.connect(database) as connection:
+        for name in ("bericht_a", "bericht_b"):
+            connection.execute(f'CREATE TABLE "{name}" ("Befund" TEXT)')
+            connection.execute(f'INSERT INTO "{name}" VALUES (?)', ("x" * 350,))
+    rendering = read_structured(database, tables=("bericht_a", "bericht_b"))
+    truncated = [note for note in rendering.notes if "cell(s)" in note]
+
+    assert len(truncated) == 2
+    assert any("Tabelle bericht_a" in note for note in truncated)
+    assert any("Tabelle bericht_b" in note for note in truncated)
+
+
 def test_a_database_is_analysed_as_part_of_the_corpus(tmp_path) -> None:
     documents = tmp_path / "akte"
     documents.mkdir()

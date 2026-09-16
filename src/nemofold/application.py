@@ -123,8 +123,10 @@ from .smart_inbox import RoutingRule, plan_inbox
 from .storage_policy import PolicyRule, PolicySet, StoragePlan, preview_storage
 from .structured_sources import (
     STRUCTURED_SUFFIXES,
+    mask_structured_rows,
     read_contacts,
     read_structured,
+    select_topic_rows,
 )
 from .synopsis_merge import merge_synopsis, synopsis_markdown
 from .version_resolver import (
@@ -1743,11 +1745,22 @@ def _execute_document_registry(
         job.parameters.get("columns"), job.parameters.get("column_template")
     )
     texts = _read_text_sources(inventory, job)
+    topic_filter = tuple(job.parameters.get("topic_filter", []))
+    topic_selected_lines: dict[str, list[int]] = {}
+    if topic_filter:
+        for record in inventory.records:
+            suffix = Path(record.path).suffix.casefold()
+            if suffix in STRUCTURED_SUFFIXES or (
+                suffix == ".csv" and job.parameters.get("structured_sources", False)
+            ):
+                masked, selected = select_topic_rows(texts.get(record.source_id, ""), topic_filter)
+                texts[record.source_id] = masked
+                topic_selected_lines[record.source_id] = list(selected)
     table = build_registry(
         tuple((record.source_id, record.display_name) for record in inventory.records),
         texts,
         columns,
-        topic_filter=tuple(job.parameters.get("topic_filter", [])),
+        topic_filter=topic_filter,
     )
     output = Path(job.output_dir)
     # A column a person declared as required and the sources do not answer is
@@ -1793,6 +1806,7 @@ def _execute_document_registry(
                 "needs_user_input": True,
                 "question_count": len(questions[:20]),
                 "outcome_note": payload["outcome_note"],
+                "topic_selected_lines": topic_selected_lines,
             },
         )
     artifacts: list[ArtifactRecord] = [
@@ -1881,6 +1895,7 @@ def _execute_document_registry(
             "filled_cells": table.filled_cells,
             "empty_cells": table.empty_cells,
             "skipped_source_ids": list(table.skipped_source_ids),
+            "topic_selected_lines": topic_selected_lines,
             "due_entries": list(due),
             "extraction": "labelled_lines_only",
         },
@@ -2022,6 +2037,19 @@ def _execute_synopsis_merge(
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Merge the approved sources into one synopsis, conflicts kept visible."""
     texts = _read_text_sources(inventory, job)
+    selected_lines = job.parameters.get("source_selected_lines", {})
+    if selected_lines:
+        sources = {record.source_id: record for record in inventory.records}
+        for source_id, lines in selected_lines.items():
+            record = sources.get(source_id)
+            if record is None or source_id not in texts:
+                raise ValueError("source_selected_lines_source_missing")
+            suffix = Path(record.path).suffix.casefold()
+            if suffix not in STRUCTURED_SUFFIXES and not (
+                suffix == ".csv" and job.parameters.get("structured_sources", False)
+            ):
+                raise ValueError("source_selected_lines_not_structured")
+            texts[source_id] = mask_structured_rows(texts[source_id], tuple(lines))
     title = job.parameters.get("title") or "Synopsis"
     if not isinstance(title, str) or not title.strip():
         raise ValueError("title must be a non-empty string")
