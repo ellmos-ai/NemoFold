@@ -107,7 +107,11 @@ def test_synopsis_merge_runs_end_to_end_with_conflict_claims(tmp_path) -> None:
             "output_dir": str(tmp_path / "out"),
             "privacy_mode": "local_only",
             "action_mode": "dry_run",
-            "parameters": {"formats": ["md", "pdf"], "title": "Angebotsvergleich"},
+            "parameters": {
+                "application_domain": "general_documents",
+                "formats": ["md", "pdf"],
+                "title": "Angebotsvergleich",
+            },
         },
         base_dir=tmp_path,
     )

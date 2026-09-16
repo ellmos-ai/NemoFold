@@ -738,6 +738,7 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
         return {"summary_length": 3, "export_task_snippet": True, "formats": ["md"]}
     if workflow == "synopsis_merge":
         parameters: dict[str, Any] = {
+            "application_domain": "general_documents",
             "formats": ["pdf", "md"] if wants_pdf else ["md"],
         }
         if any(mentions(text.casefold(), keyword) for keyword in MEDICAL_REPORT_KEYWORDS):

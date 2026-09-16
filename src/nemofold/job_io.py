@@ -354,8 +354,11 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
                 raise ValueError("source_selected_lines contains an invalid selection")
 
     def choice(name: str, supported: set[object]) -> None:
-        if name in job.parameters and job.parameters[name] not in supported:
-            raise ValueError(f"unsupported {name}: {job.parameters[name]}")
+        if name not in job.parameters:
+            return
+        value = job.parameters[name]
+        if not any(type(value) is type(option) and value == option for option in supported):
+            raise ValueError(f"unsupported {name}: {value}")
 
     if job.workflow == "smart_inbox":
         choice("classification_policy", {"suffix_routes"})
@@ -488,7 +491,9 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             except ValueError as exc:
                 raise ValueError("reference_date must be an ISO date string") from exc
     elif job.workflow == "synopsis_merge":
-        choice("application_domain", {"medical_reports"})
+        if "application_domain" not in job.parameters:
+            raise ValueError("application_domain is required for synopsis_merge")
+        choice("application_domain", {"general_documents", "medical_reports"})
         choice(
             "medical_purpose",
             {

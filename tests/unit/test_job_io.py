@@ -209,7 +209,11 @@ def test_medical_synopsis_job_accepts_an_explicit_bounded_purpose(
     assert loaded.job.parameters["medical_purpose"] == medical_purpose
 
 
-@pytest.mark.parametrize("medical_purpose", ["", "general_advice", True, 1])
+@pytest.mark.parametrize(
+    "medical_purpose",
+    ["", "general_advice", True, 1, [], {}],
+    ids=["empty", "unknown", "boolean", "integer", "list", "object"],
+)
 def test_medical_synopsis_job_rejects_an_unknown_or_untyped_purpose(
     tmp_path, medical_purpose,
 ) -> None:
@@ -227,12 +231,40 @@ def test_medical_synopsis_job_rejects_an_unknown_or_untyped_purpose(
         load_job_file(path)
 
 
+def test_synopsis_job_requires_an_explicit_application_domain(tmp_path) -> None:
+    path = write_job(
+        tmp_path,
+        workflow="synopsis_merge",
+        questions=[],
+        parameters={"formats": ["md"]},
+    )
+
+    with pytest.raises(JobFileError, match="application_domain is required"):
+        load_job_file(path)
+
+
+def test_general_synopsis_accepts_the_explicit_nonmedical_domain(tmp_path) -> None:
+    path = write_job(
+        tmp_path,
+        workflow="synopsis_merge",
+        questions=[],
+        parameters={"application_domain": "general_documents", "formats": ["md"]},
+    )
+
+    loaded = load_job_file(path)
+
+    assert loaded.job.parameters["application_domain"] == "general_documents"
+
+
 def test_nonmedical_synopsis_rejects_a_medical_purpose(tmp_path) -> None:
     path = write_job(
         tmp_path,
         workflow="synopsis_merge",
         questions=[],
-        parameters={"medical_purpose": "source_summary"},
+        parameters={
+            "application_domain": "general_documents",
+            "medical_purpose": "source_summary",
+        },
     )
 
     with pytest.raises(JobFileError, match="requires application_domain"):

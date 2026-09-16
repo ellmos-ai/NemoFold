@@ -302,9 +302,30 @@ def test_declared_additional_negative_paths_are_hash_and_run_bound(tmp_path) -> 
 def test_additional_negative_paths_require_unique_run_ids(tmp_path) -> None:
     register, _ = _done_register_with_files(tmp_path)
     receipt = register["gates"][0]["evidence"]["run_receipts"][0]
-    receipt["additional_negative_paths"] = [dict(receipt["negative_path"])]
+    duplicate_run = dict(receipt["negative_path"])
+    duplicate_run["case"] = "different_negative_case"
+    receipt["additional_negative_paths"] = [duplicate_run]
 
     with pytest.raises(GateRegisterError, match="duplicate_negative_run_id:G01"):
+        validate_gate_register(register)
+
+
+def test_additional_negative_paths_require_unique_case_roles(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    primary = receipt["negative_path"]
+    receipt["additional_negative_paths"] = [
+        {
+            **primary,
+            "run_id": "g01-second-negative-run",
+            "run_report": {
+                "path": "evidence/g01-second-negative-run-report.json",
+                "sha256": hashlib.sha256(b"second negative report").hexdigest(),
+            },
+        }
+    ]
+
+    with pytest.raises(GateRegisterError, match="duplicate_negative_case:G01"):
         validate_gate_register(register)
 
 

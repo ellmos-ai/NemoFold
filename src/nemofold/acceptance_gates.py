@@ -385,19 +385,25 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
         ),
     ]
     negative_run_ids: set[str] = set()
+    negative_cases: set[str] = set()
     for index, negative in enumerate(negative_paths):
         prefix = "negative_path" if index == 0 else "additional_negative_path"
+        values = {}
         for field in ("case", "run_id", "evidence"):
-            _nonplaceholder_string(
+            values[field] = _nonplaceholder_string(
                 negative.get(field),
                 f"{prefix}_{field}_missing:{gate_id}",
                 f"{prefix}_{field}_placeholder:{gate_id}",
             )
+        normalized_case = values["case"].strip().casefold()
+        if normalized_case in negative_cases:
+            raise GateRegisterError(f"duplicate_negative_case:{gate_id}")
+        negative_cases.add(normalized_case)
         if negative.get("status") not in {"blocked", "failed"}:
             raise GateRegisterError(f"{prefix}_status_invalid:{gate_id}")
         if negative.get("blocked_as_expected") is not True:
             raise GateRegisterError(f"{prefix}_not_confirmed:{gate_id}")
-        negative_run_id = str(negative["run_id"])
+        negative_run_id = values["run_id"]
         if negative_run_id == receipt.get("run_id"):
             raise GateRegisterError(f"positive_and_negative_run_id_same:{gate_id}")
         if negative_run_id in negative_run_ids:

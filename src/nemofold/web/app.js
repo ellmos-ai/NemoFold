@@ -124,7 +124,7 @@ const workflowDefaults = {
   },
   synopsis_merge: {
     questions: [],
-    parameters: {formats: ["md", "pdf"]},
+    parameters: {application_domain: "general_documents", formats: ["md", "pdf"]},
     hint: "Synopsis Merge folds several documents into one synopsis. Every paragraph keeps its source and line, and where two sources answer the same label differently both readings stay in a conflict block."
   },
   fact_distill: {

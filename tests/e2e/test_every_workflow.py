@@ -56,6 +56,7 @@ PARAMETERS: dict[str, dict[str, object]] = {
     "reference_check": {"reference_grid": "bescheid_formal"},
     "smart_inbox": {"routes": [{"suffixes": [".eml"], "target_root": 0}]},
     "storage_policy": {"retention_action": "list"},
+    "synopsis_merge": {"application_domain": "general_documents"},
     "web_research": {"queries": ["Praxis Nord Bernau Öffnungszeiten"]},
     "wiki_export": {"wiki_dir": "WIKI"},
 }
