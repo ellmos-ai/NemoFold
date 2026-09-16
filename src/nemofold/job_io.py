@@ -221,6 +221,7 @@ WORKFLOW_PARAMETER_FIELDS = {
     ),
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
     "synopsis_merge": frozenset({
+        "application_domain",
         "source_tables",
         "structured_sources",
         "source_selected_lines",
@@ -248,8 +249,9 @@ WORKFLOW_PARAMETER_FIELDS = {
     "document_registry": frozenset(
         {
             "required_columns",
-        "source_tables",
-        "structured_sources",
+            "expected_pdf_pages",
+            "source_tables",
+            "structured_sources",
             "column_template",
             "columns",
             "due_column",
@@ -300,6 +302,27 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
         job.parameters["structured_sources"], bool
     ):
         raise ValueError("structured_sources must be a boolean")
+    if "expected_pdf_pages" in job.parameters:
+        expectations = job.parameters["expected_pdf_pages"]
+        if not isinstance(expectations, dict) or len(expectations) > 500:
+            raise ValueError("expected_pdf_pages must be a bounded source map")
+        normalized_names: set[str] = set()
+        for name, count in expectations.items():
+            if (
+                not isinstance(name, str)
+                or not name
+                or len(name) > 240
+                or "\\" in name
+                or ":" in name
+                or not name.casefold().endswith(".pdf")
+                or any(part in {"", ".", ".."} for part in name.split("/"))
+                or name.casefold() in normalized_names
+                or isinstance(count, bool)
+                or not isinstance(count, int)
+                or not 1 <= count <= 10000
+            ):
+                raise ValueError("expected_pdf_pages contains an invalid source or count")
+            normalized_names.add(name.casefold())
     if "source_selected_lines" in job.parameters:
         selections = job.parameters["source_selected_lines"]
         if not isinstance(selections, dict) or len(selections) > 500:
@@ -451,6 +474,8 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
                 date.fromisoformat(reference)
             except ValueError as exc:
                 raise ValueError("reference_date must be an ISO date string") from exc
+    elif job.workflow == "synopsis_merge":
+        choice("application_domain", {"medical_reports"})
     elif job.workflow == "report_studio":
         choice("template", {"default"})
         choice("language", {"en"})

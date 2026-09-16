@@ -110,6 +110,10 @@ from .outbound import (
     resolve_recipients,
     send_payload,
 )
+from .pdf_page_expectations import (
+    PdfPageExpectationError,
+    verify_pdf_page_expectations,
+)
 from .policy import PolicyConfig, PolicyGate
 from .reference import (
     grid_named,
@@ -1741,6 +1745,22 @@ def _execute_document_registry(
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Extract fixed columns from a folder into a table, anchor included."""
+    expectations = job.parameters.get("expected_pdf_pages", {})
+    try:
+        page_checks = verify_pdf_page_expectations(
+            inventory.records, expectations
+        )
+    except PdfPageExpectationError as exc:
+        raise WorkflowBlocked(
+            (str(exc),),
+            actions=("inventory_scanned", "pdf_page_expectation_blocked"),
+            coverage=compute_coverage(
+                all_source_ids=(record.source_id for record in inventory.records),
+                read_source_ids=(),
+                cited_source_ids=(),
+            ),
+            metadata={"expected_pdf_pages": expectations},
+        ) from exc
     columns = columns_from_parameters(
         job.parameters.get("columns"), job.parameters.get("column_template")
     )
@@ -1913,6 +1933,7 @@ def _execute_document_registry(
         coverage,
         {
             "columns": [column.name for column in columns],
+            "verified_pdf_pages": [check.as_payload() for check in page_checks],
             "rows": len(table.rows),
             "filled_cells": table.filled_cells,
             "empty_cells": table.empty_cells,
@@ -2087,10 +2108,19 @@ def _execute_synopsis_merge(
         structured_source_ids=structured_source_ids,
     )
     output = Path(job.output_dir)
+    scope_notice = (
+        "Hinweis: Diese Zusammenfassung ordnet und zitiert Arztberichte; sie ist "
+        "keine medizinische Diagnose oder Handlungsempfehlung. Ärztliche "
+        "Bewertung ist erforderlich."
+        if job.parameters.get("application_domain") == "medical_reports" else ""
+    )
+    synopsis_text = synopsis_markdown(synopsis, title=title)
+    if scope_notice:
+        synopsis_text += "\n## Nutzungsgrenze\n\n" + scope_notice + "\n"
     artifacts: list[ArtifactRecord] = [
         write_text_artifact(
             output / f"{run_id}.synopsis.md",
-            synopsis_markdown(synopsis, title=title),
+            synopsis_text,
             "synopsis",
         )
     ]
@@ -2144,6 +2174,7 @@ def _execute_synopsis_merge(
                     title=title,
                     claims=tuple(claims),
                     coverage=coverage,
+                    scope_notice=scope_notice,
                     source_labels=tuple(
                         (record.source_id, record.display_name)
                         for record in inventory.records
@@ -2165,6 +2196,7 @@ def _execute_synopsis_merge(
             "conflicts": len(synopsis.conflicts),
             "conflict_labels": [item.label for item in synopsis.conflicts],
             "merged_source_ids": list(synopsis.source_ids),
+            "application_domain": job.parameters.get("application_domain"),
         },
     )
 

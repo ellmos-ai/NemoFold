@@ -103,6 +103,22 @@ def _extract_pdf(data: bytes, name: str) -> str:
     return "\f".join(pages)
 
 
+def count_pdf_pages(path: str | Path, *, expected_sha256: str) -> int:
+    """Count physical PDF pages from the same inventoried bytes, including zero."""
+    try:
+        from pypdf import PdfReader
+    except ImportError as exc:  # pragma: no cover - packaging guarantees the dependency
+        raise UnsupportedDocumentError("PDF extraction requires pypdf") from exc
+    source = Path(path)
+    data = source.read_bytes()
+    if hashlib.sha256(data).hexdigest() != expected_sha256:
+        raise SourceHashMismatch("source_hash_mismatch")
+    try:
+        return len(PdfReader(io.BytesIO(data)).pages)
+    except Exception as exc:
+        raise ValueError(f"invalid or encrypted PDF document: {source.name}") from exc
+
+
 def extract_document_text(
     path: str | Path, *, mime_type: str = "", expected_sha256: str | None = None
 ) -> str:

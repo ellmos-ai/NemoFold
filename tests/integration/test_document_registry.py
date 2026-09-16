@@ -20,6 +20,7 @@ from nemofold.document_registry import (
     registry_to_csv,
 )
 from nemofold.job_io import parse_job_payload
+from nemofold.report_studio import _render_pdf
 
 MEDICAL_REPORT = """Arztbericht
 Patient: Lukas Geiger
@@ -218,6 +219,41 @@ def test_document_registry_runs_end_to_end_and_hashes_its_pdf(tmp_path) -> None:
         if cell["value"] is not None
     ]
     assert anchored and all(cell["source_id"] and cell["line"] for cell in anchored)
+
+
+def test_direct_registry_blocks_when_declared_pdf_page_is_absent(tmp_path: Path) -> None:
+    """Catches direct CLI/API/MCP jobs bypassing the voyage page check."""
+    reports = tmp_path / "reports"
+    reports.mkdir()
+    (reports / "endokrinologie.pdf").write_bytes(
+        _render_pdf("Befund: Schilddrüse stabil.\n")
+    )
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "document_registry",
+            "input_roots": [str(reports)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {
+                "column_template": "medical_reports",
+                "expected_pdf_pages": {"endokrinologie.pdf": 2},
+                "formats": ["md"],
+            },
+        },
+        base_dir=tmp_path,
+    )
+
+    result = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="page_gap_direct"
+    )
+
+    assert result.report.status is RunStatus.BLOCKED
+    assert result.report.errors == ("expected_pdf_page_gap:endokrinologie.pdf",)
+    assert all(
+        artifact.format != "document-registry" for artifact in result.report.artifacts
+    )
 
 
 def test_required_field_questions_identify_each_row_and_disclose_question_overflow(

@@ -29,6 +29,10 @@ from .model_authority import (
     resolve_authority,
     resolve_rights,
 )
+from .pdf_page_expectations import (
+    PdfPageExpectationError,
+    verify_pdf_page_expectations,
+)
 from .policies import PolicyStore, cleanup_rules_for_step
 from .provider_analysis import PROVIDER_WORKFLOWS, analyze_with_provider
 from .providers import ProviderConfig
@@ -338,10 +342,12 @@ def _selected_registry_sources(
         raise ValueError("handoff_producer_snapshot_mismatch")
     source_tables = snapshot.parameters.get("source_tables", [])
     structured_sources = snapshot.parameters.get("structured_sources", False)
+    expected_pdf_pages = snapshot.parameters.get("expected_pdf_pages", {})
     if (
         not isinstance(source_tables, list)
         or any(not isinstance(name, str) or not name.strip() for name in source_tables)
         or not isinstance(structured_sources, bool)
+        or not isinstance(expected_pdf_pages, dict)
     ):
         raise ValueError("handoff_producer_source_scope_invalid")
     sources = {source.source_id: source for source in snapshot.sources}
@@ -351,6 +357,15 @@ def _selected_registry_sources(
         or set(selected_ids) | set(skipped) != set(sources)
     ):
         raise ValueError("handoff_registry_selection_incomplete")
+    try:
+        verified_pdf_pages = [
+            check.as_payload()
+            for check in verify_pdf_page_expectations(
+                snapshot.sources, expected_pdf_pages
+            )
+        ]
+    except PdfPageExpectationError as exc:
+        raise ValueError(f"handoff_{exc}") from exc
 
     roots = [Path(root).resolve() for root in snapshot.input_roots]
     paths: list[str] = []
@@ -460,7 +475,13 @@ def _selected_registry_sources(
         "selected_source_sha256": source_hashes,
         "source_lineage": lineage,
         "selected_source_lines": selected_source_lines,
+        "verified_pdf_pages": verified_pdf_pages,
         "topic_filter": list(snapshot.parameters["topic_filter"]),
+        "application_domain": (
+            "medical_reports"
+            if snapshot.parameters.get("column_template") == "medical_reports"
+            else None
+        ),
     }
 
 
@@ -497,6 +518,13 @@ def _bind_selected_source_scope(
         raise ValueError("handoff_topic_lines_changed")
     if selected_lines:
         parameters["source_selected_lines"] = selected_lines
+    producer_domain = receipt["application_domain"]
+    consumer_domain = parameters.get("application_domain")
+    if producer_domain is not None:
+        if consumer_domain is None:
+            parameters["application_domain"] = producer_domain
+        elif consumer_domain != producer_domain:
+            raise ValueError("handoff_application_domain_changed")
     job_payload["parameters"] = parameters
     receipt["consumer_source_scope"] = {
         "source_tables": list(parameters.get("source_tables", [])),

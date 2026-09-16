@@ -25,6 +25,7 @@ class ReportDocument:
     claims: tuple[Claim, ...]
     coverage: Coverage
     source_labels: tuple[tuple[str, str], ...] = ()
+    scope_notice: str = ""
 
 
 def _zip_info(name: str, *, stored: bool = False) -> zipfile.ZipInfo:
@@ -192,6 +193,9 @@ def render_report_formats(
             for source_id, display_name in document.source_labels
         )
         plain += "\n"
+    if document.scope_notice:
+        markdown += "\n## Nutzungsgrenze\n\n" + document.scope_notice + "\n"
+        plain += "\nNutzungsgrenze\n  " + document.scope_notice + "\n"
     records: list[ArtifactRecord] = []
     for format_name in normalized:
         if format_name == "md":

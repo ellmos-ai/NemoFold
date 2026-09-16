@@ -74,6 +74,53 @@ def test_non_analysis_workflow_may_omit_questions(tmp_path) -> None:
     assert loaded.job.questions == ()
 
 
+def test_registry_job_accepts_explicit_pdf_page_expectation(tmp_path) -> None:
+    """Catches the declared source page count being rejected or lost by the job contract."""
+    path = write_job(
+        tmp_path,
+        workflow="document_registry",
+        questions=[],
+        parameters={
+            "column_template": "medical_reports",
+            "expected_pdf_pages": {"01-endokrinologie.pdf": 2},
+        },
+    )
+
+    loaded = load_job_file(path)
+
+    assert loaded.job.parameters["expected_pdf_pages"] == {
+        "01-endokrinologie.pdf": 2
+    }
+
+
+@pytest.mark.parametrize(
+    "expectations",
+    [
+        {"../outside.pdf": 2},
+        {"report.txt": 2},
+        {"report.pdf": True},
+        {"report.pdf": 0},
+        {"Report.pdf": 2, "report.pdf": 3},
+    ],
+)
+def test_registry_job_rejects_unsafe_pdf_page_expectation(
+    tmp_path, expectations
+) -> None:
+    """Catches path escape, non-PDF, invalid count and ambiguous declarations."""
+    path = write_job(
+        tmp_path,
+        workflow="document_registry",
+        questions=[],
+        parameters={
+            "column_template": "medical_reports",
+            "expected_pdf_pages": expectations,
+        },
+    )
+
+    with pytest.raises(JobFileError, match="expected_pdf_pages"):
+        load_job_file(path)
+
+
 def test_internal_job_snapshot_preserves_discovered_sources(tmp_path) -> None:
     loaded = load_job_file(write_job(tmp_path))
     snapshot = tmp_path / "snapshot.json"

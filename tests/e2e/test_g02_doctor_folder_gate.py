@@ -11,8 +11,10 @@ from pathlib import Path
 from pypdf import PdfReader
 
 from nemofold.application import ExecutionConfig
+from nemofold.document_extract import extract_document_text
 from nemofold.job_io import load_job_snapshot
 from nemofold.ledger import RunLedger
+from nemofold.report_studio import _render_pdf
 from nemofold.structured_sources import read_structured
 from nemofold.voyage_runs import run_voyage
 from nemofold.voyages import VoyageStore
@@ -24,10 +26,12 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
     """Catches a silent source widening, lost report, or receipt/PDF disconnect."""
     reports = tmp_path / "fictional-doctor-folder"
     reports.mkdir()
-    (reports / "01-endokrinologie.txt").write_text(
-        "# Tabelle bericht\nPatient: Fallperson 204\nFachrichtung: Endokrinologie\n"
-        "Befund: Schilddrüse unauffällig.\n",
-        encoding="utf-8",
+    (reports / "01-endokrinologie.pdf").write_bytes(
+        _render_pdf(
+            "# Tabelle bericht\nPatient: Fallperson 204\n"
+            "Fachrichtung: Endokrinologie\n"
+            "Befund: Schilddrüse unauffällig.\n"
+        )
     )
     (reports / "02-orthopaedie.txt").write_text(
         "Patient: Fallperson 204\nFachrichtung: Orthopädie\n"
@@ -60,6 +64,7 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
                         "column_template": "medical_reports",
                         "topic_filter": ["Schilddrüse"],
                         "source_tables": ["bericht"],
+                        "expected_pdf_pages": {"01-endokrinologie.pdf": 1},
                         "formats": ["md"],
                     },
                 },
@@ -103,9 +108,10 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
     assert receipt["schema"] == "nemofold.artifact-handoff.v1"
     assert receipt["status"] == "verified"
     assert receipt["source_scope"]["source_tables"] == ["bericht"]
+    assert receipt["application_domain"] == "medical_reports"
     assert len(receipt["source_lineage"]) == 2
     assert {Path(item["path"]).name for item in receipt["source_lineage"]} == {
-        "01-endokrinologie.txt", "03-verlauf.sqlite"
+        "01-endokrinologie.pdf", "03-verlauf.sqlite"
     }
     assert all(
         hashlib.sha256(Path(item["path"]).read_bytes()).hexdigest()
@@ -113,12 +119,25 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
         for item in receipt["source_lineage"]
     )
     assert len(receipt["selected_source_lines"]) == 1
+    assert receipt["verified_pdf_pages"] == [{
+        "producer_source_id": next(
+            item["producer_source_id"] for item in receipt["source_lineage"]
+            if item["path"].endswith("01-endokrinologie.pdf")
+        ),
+        "display_name": "01-endokrinologie.pdf",
+        "sha256": hashlib.sha256(
+            (reports / "01-endokrinologie.pdf").read_bytes()
+        ).hexdigest(),
+        "expected_pages": 1,
+        "physical_pages": 1,
+    }]
     snapshot = load_job_snapshot(
         tmp_path / "out" / "synopsis" / "jobs" / "g02_doctor_folder_02.json"
     )
     assert {source.source_id for source in snapshot.sources} == {
         item["consumer_source_id"] for item in receipt["source_lineage"]
     }
+    assert snapshot.parameters["application_domain"] == "medical_reports"
     dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
     assert dossier["steps"][1]["handoff"] == receipt
     report = RunLedger(tmp_path / "out" / "synopsis" / "ledger").load(
@@ -126,10 +145,15 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
     )
     assert report.coverage.total_sources == 2
     assert report.metadata["conflicts"] >= 1
+    assert report.metadata["application_domain"] == "medical_reports"
+    assert "keine medizinische Diagnose" in (
+        tmp_path / "out" / "synopsis" / "g02_doctor_folder_02.synopsis.md"
+    ).read_text(encoding="utf-8")
     pdf = tmp_path / "out" / "synopsis" / "g02_doctor_folder_02_synopsis.pdf"
     pdf_text = "\n".join(page.extract_text() or "" for page in PdfReader(pdf).pages)
     assert "Schilddrüse unauffällig" in pdf_text
     assert "Schilddrüse vergrößert" in pdf_text
+    assert "keine medizinische Diagnose" in pdf_text
     assert "Knieverletzung" not in pdf_text
     assert "Leberwert auffällig" not in pdf_text
     assert any(
@@ -145,7 +169,7 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
         item["consumer_source_id"]: (
             read_structured(item["path"], tables=("bericht",)).text
             if item["path"].endswith(".sqlite")
-            else Path(item["path"]).read_text(encoding="utf-8")
+            else extract_document_text(item["path"])
         )
         for item in receipt["source_lineage"]
     }
@@ -171,3 +195,70 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
     )
     assert all(locator in pdf_text for _, _, _, locator in locators)
     assert report.coverage.read_sources == report.coverage.cited_sources == 2
+
+
+def test_g02_missing_expected_pdf_page_blocks_before_synopsis(tmp_path: Path) -> None:
+    """Catches a one-page PDF against an explicit two-page source declaration."""
+    reports = tmp_path / "fictional-doctor-folder"
+    reports.mkdir()
+    (reports / "01-endokrinologie.pdf").write_bytes(
+        _render_pdf(
+            "Patient: Fallperson 204\n"
+            "Befund: Schilddrüse unauffällig.\n"
+        )
+    )
+    case = {
+        "name": "G02 · expected page absent",
+        "steps": [
+            {
+                "workflow": "document_registry",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "document_registry",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "register"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {
+                        "column_template": "medical_reports",
+                        "topic_filter": ["Schilddrüse"],
+                        "expected_pdf_pages": {"01-endokrinologie.pdf": 2},
+                        "formats": ["md"],
+                    },
+                },
+            },
+            {
+                "workflow": "synopsis_merge",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "synopsis_merge",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "synopsis"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {"title": "Schilddrüse", "formats": ["md", "pdf"]},
+                },
+                "handoff": {
+                    "format": "document-registry",
+                    "mode": "selected_sources",
+                },
+            },
+        ],
+    }
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="g02_missing_page",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "stopped"
+    assert len(result.steps) == 1
+    assert result.steps[0].status == "blocked"
+    assert result.steps[0].errors == (
+        "expected_pdf_page_gap:01-endokrinologie.pdf",
+    )
+    assert not (tmp_path / "out" / "register" / "g02_missing_page_01.registry.json").exists()
+    assert not (tmp_path / "out" / "synopsis").exists()
