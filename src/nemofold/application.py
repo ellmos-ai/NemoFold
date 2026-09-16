@@ -135,6 +135,7 @@ from .reference import (
     validate_items,
 )
 from .report_studio import SUPPORTED_FORMATS, ReportDocument, render_report_formats
+from .routine_query import execute_routine_query
 from .runtime import job_idempotency_key
 from .smart_inbox import RoutingRule, plan_inbox
 from .storage_policy import PolicyRule, PolicySet, StoragePlan, preview_storage
@@ -2707,6 +2708,8 @@ def _dispatch_workflow(
         return execute_database_reader(job, inventory, run_id=run_id)
     if job.workflow == "knowledge_composer":
         return execute_knowledge_composer(job, inventory, run_id=run_id)
+    if job.workflow == "routine_query":
+        return execute_routine_query(job, inventory, run_id=run_id)
     if job.workflow in CHRONICLE_WORKFLOWS:
         return _execute_chronicle(job, inventory, run_id=run_id)
     if job.workflow in WEB_WORKFLOWS:

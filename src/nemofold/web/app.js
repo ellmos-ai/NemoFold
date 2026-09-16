@@ -212,6 +212,11 @@ const workflowDefaults = {
     parameters: {formats: ["md", "json"], profile: "cv_ascii", min_knowledge_items: 1},
     hint: "Knowledge Composer generates grounded documents (ASCII CVs, autism worksheets, counseling worksheets) strictly from verified local knowledge bases."
   },
+  routine_query: {
+    questions: [],
+    parameters: {formats: ["md", "json"], min_routines: 1, require_read_only: true},
+    hint: "Routine Query queries MasterRoutine SQLite databases for tasks, cadences, and due dates under strict read-only guarantees."
+  },
   alibi_weave: {
     questions: [],
     parameters: {formats: ["md"], places: [], tolerance_minutes: 90},
@@ -697,6 +702,10 @@ const workflowCards = {
     title: "Knowledge Composer",
     benefit: "Generate verified documents and worksheets strictly from knowledge bases without hallucinating ungrounded claims."
   },
+  routine_query: {
+    title: "Routine Query",
+    benefit: "Query MasterRoutine tasks, cadences, and due dates under strict read-only and ungrounded-cadence protection."
+  },
   alibi_weave: {
     title: "Alibi Weave",
     benefit: "Tell a self-report from an outside confirmation, and see who nothing places at all."
@@ -1039,7 +1048,7 @@ const registryGroups = [
     "synopsis_merge", "document_registry", "corpus_query", "pattern_mining"]},
   {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
     "coverage_timeline", "cost_timeline", "subscription_reconcile", "medication_reconcile", "database_reader", "alibi_weave", "contradiction_synopsis"]},
-  {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "version_resolver",
+  {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "routine_query", "version_resolver",
     "contact_monitor"]},
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
   {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check",

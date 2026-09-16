@@ -50,6 +50,7 @@ WORKFLOW_ORDER = {
     "medication_reconcile": 87,
     "database_reader": 88,
     "knowledge_composer": 89,
+    "routine_query": 89,
     "alibi_weave": 84,
     "contradiction_synopsis": 86,
     "bundle_export": 80,
@@ -89,6 +90,7 @@ WORKFLOW_TITLES = {
     "medication_reconcile": "Medication Reconciliation",
     "database_reader": "Database Reader",
     "knowledge_composer": "Knowledge Composer",
+    "routine_query": "Routine Query",
     "alibi_weave": "Alibi Weave",
     "contradiction_synopsis": "Contradiction Synopsis",
     "corpus_query": "Corpus Query",
@@ -188,6 +190,10 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
         "lebenslauf", "cv", "arbeitszeugnis", "arbeitsblatt", "autismus",
         "förderung", "beratung", "reflexion", "wissensbasis", "grounded",
         "knowledge_composer", "ascii",
+    ),
+    "routine_query": (
+        "routine", "routinen", "erinnerung", "erinnerungen", "turnus", "faelligkeit",
+        "fälligkeit", "aufgaben", "masterroutine", "routine_master", "cadence",
     ),
     "alibi_weave": (
         "alibi", "wer war wo", "bestätigt", "belegt wo", "aufenthalt", "wochenende",
@@ -650,6 +656,11 @@ def _why(workflow: str) -> str:
             "Generates source-grounded documents (ASCII CVs, autism worksheets, counseling "
             "worksheets) strictly from local verified knowledge bases without unanchored claims."
         ),
+        "routine_query": (
+            "Queries MasterRoutine SQLite databases for tasks, recurring cadences, and due "
+            "dates under strict read-only guarantees, grounding each cadence against a "
+            "reference date."
+        ),
         "alibi_weave": (
             "Keeps a self-report and an outside confirmation apart, and names everyone the "
             "sources place nowhere. Needs the places to compare."
@@ -767,6 +778,7 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
         "medication_reconcile",
         "database_reader",
         "knowledge_composer",
+        "routine_query",
     }:
         return {"formats": ["md"]}
     if workflow == "alibi_weave":

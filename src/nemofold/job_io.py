@@ -54,6 +54,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "document_compose",
         "mail_merge_compose",
         "knowledge_composer",
+        "routine_query",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -213,6 +214,17 @@ WORKFLOW_PARAMETER_FIELDS = {
             "client_context",
             "min_knowledge_items",
             "forbidden_unanchored_claim",
+            "formats",
+        }
+    ),
+    "routine_query": frozenset(
+        {
+            "reference_date",
+            "min_routines",
+            "require_valid_cadence",
+            "require_read_only",
+            "query",
+            "target_tables",
             "formats",
         }
     ),
@@ -674,6 +686,30 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             and not isinstance(job.parameters["forbidden_unanchored_claim"], str)
         ):
             raise ValueError("forbidden_unanchored_claim must be a string")
+    elif job.workflow == "routine_query":
+        ref_date = job.parameters.get("reference_date")
+        if ref_date is not None and not isinstance(ref_date, str):
+            raise ValueError("reference_date must be an ISO date string (YYYY-MM-DD)")
+        min_routines = job.parameters.get("min_routines")
+        if min_routines is not None and (
+            isinstance(min_routines, bool)
+            or not isinstance(min_routines, int)
+            or min_routines < 0
+        ):
+            raise ValueError("min_routines must be a non-negative integer")
+        for bool_param in ("require_valid_cadence", "require_read_only"):
+            val = job.parameters.get(bool_param)
+            if val is not None and not isinstance(val, bool):
+                raise ValueError(f"{bool_param} must be a boolean")
+        query_val = job.parameters.get("query")
+        if query_val is not None and not isinstance(query_val, str):
+            raise ValueError("query must be a string")
+        target_tables = job.parameters.get("target_tables")
+        if target_tables is not None and (
+            not isinstance(target_tables, list)
+            or any(not isinstance(t, str) for t in target_tables)
+        ):
+            raise ValueError("target_tables must be a list of strings")
     elif job.workflow in {"evidence_analyst", "platform_proof"}:
         choice("analysis_mode", {"local_extractive", "nemotron"})
         choice("citation_granularity", {"line_or_page"})

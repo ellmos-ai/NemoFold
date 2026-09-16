@@ -91,6 +91,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "worksheets) strictly from local verified knowledge bases while preventing "
         "unanchored claims."
     ),
+    "routine_query": (
+        "Query MasterRoutine SQLite databases for tasks, recurring cadences, and due dates "
+        "under strict read-only guarantees, grounding each cadence against a reference date."
+    ),
     "alibi_weave": (
         "Separate a self-reported position from one another source confirms at the same "
         "place and time, and report every person nothing places as a gap."
@@ -308,6 +312,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("gate", "Scope & disclaimer gate", "enforce target context and HeilprG disclaimers"),
         ("operation", "Structure synthesis", "render structured ASCII or Markdown document"),
         ("operation", "Artifact creation", "write verified JSON, Markdown, and text outputs"),
+    ),
+    "routine_query": (
+        ("gate", "Read-only enforcement", "fail-closed on mutation or query injection"),
+        ("operation", "Database scan", "query approved routine, task, and reminder tables"),
+        ("gate", "Cadence grounding check", "calculate due dates and mark contradictions"),
+        ("gate", "Completeness check", "halt if routine database is empty or deficient"),
+        ("operation", "Report generation", "render structured JSON and Markdown routine overview"),
     ),
     "alibi_weave": (
         ("operation", "Collect", "stated positions"),
