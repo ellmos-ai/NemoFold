@@ -7,6 +7,7 @@ import io
 import json
 import re
 import sqlite3
+from dataclasses import replace
 from pathlib import Path
 
 from pypdf import PdfReader, PdfWriter
@@ -368,6 +369,132 @@ def test_g02_declared_pdf_with_scanned_second_page_blocks_before_synopsis(
     )
     assert not (tmp_path / "out" / "register" / "g02_scanned_page_01.registry.json").exists()
     assert not (tmp_path / "out" / "synopsis").exists()
+
+
+def test_g02_reviewed_scanned_page_flows_into_registry_and_synopsis(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    """A complete hash-bound transcript must become cited PDF evidence end to end."""
+    reports = tmp_path / "fictional-doctor-folder"
+    reports.mkdir()
+    pdf = reports / "01-endokrinologie.pdf"
+    _write_scanned_body_pdf_with_selectable_footer(pdf)
+    source_sha256 = hashlib.sha256(pdf.read_bytes()).hexdigest()
+    reviewed_text = (
+        "Patient: Fallperson 204\n"
+        "Fachrichtung: Endokrinologie\n"
+        "Befund: Schilddrüse vergrößert."
+    )
+    review = {
+        "page": 2,
+        "source_sha256": source_sha256,
+        "method": "manual",
+        "reviewer": "human:test-reviewer",
+        "reviewed_at": "2026-09-16T07:50:00+02:00",
+        "content_complete": True,
+        "text": reviewed_text,
+    }
+    case = {
+        "name": "G02 · reviewed scanned page",
+        "steps": [
+            {
+                "workflow": "document_registry",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "document_registry",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "register"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {
+                        "column_template": "medical_reports",
+                        "topic_filter": ["Schilddrüse"],
+                        "expected_pdf_pages": {"01-endokrinologie.pdf": 2},
+                        "require_complete_pdf_inventory": True,
+                        "pdf_page_reviews": {
+                            "01-endokrinologie.pdf": [review],
+                        },
+                        "formats": ["md"],
+                    },
+                },
+            },
+            {
+                "workflow": "synopsis_merge",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "synopsis_merge",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "synopsis"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {"title": "Schilddrüse", "formats": ["md", "pdf"]},
+                },
+                "handoff": {"format": "document-registry", "mode": "selected_sources"},
+            },
+        ],
+    }
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="g02_reviewed_scan",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "executed"
+    receipt = result.steps[1].handoff or {}
+    assert reviewed_text not in json.dumps(receipt, ensure_ascii=False)
+    reviewed_pages = receipt["verified_pdf_pages"][0]["reviewed_pages"]
+    assert reviewed_pages == [{
+        "page": 2,
+        "method": "manual",
+        "reviewer": "human:test-reviewer",
+        "reviewed_at": "2026-09-16T07:50:00+02:00",
+        "content_complete": True,
+        "text_sha256": hashlib.sha256(reviewed_text.encode("utf-8")).hexdigest(),
+    }]
+    consumer = load_job_snapshot(
+        tmp_path / "out" / "synopsis" / "jobs" / "g02_reviewed_scan_02.json"
+    )
+    assert len(consumer.parameters["source_page_reviews"]) == 1
+    assert next(iter(consumer.parameters["source_page_reviews"].values())) == [review]
+    registry = json.loads((
+        tmp_path / "out" / "register" / "g02_reviewed_scan_01.registry.json"
+    ).read_text(encoding="utf-8"))
+    synopsis = (
+        tmp_path / "out" / "synopsis" / "g02_reviewed_scan_02.synopsis.md"
+    ).read_text(encoding="utf-8")
+    finding = next(
+        cell for cell in registry["rows"][0]["cells"]
+        if cell["column"] == "Befund"
+    )
+    assert finding["value"] == "Schilddrüse unauffällig."
+    assert "Schilddrüse vergrößert" in synopsis
+
+    original_run_job = voyage_runs.run_job
+
+    def run_with_tampered_review(job, *args, **kwargs):
+        if job.workflow == "synopsis_merge" and job.parameters.get(
+            "source_page_reviews"
+        ):
+            parameters = json.loads(json.dumps(job.parameters))
+            reviews = next(iter(parameters["source_page_reviews"].values()))
+            reviews[0]["text"] = "Befund: manipulierte Übergabe."
+            job = replace(job, parameters=parameters)
+        return original_run_job(job, *args, **kwargs)
+
+    monkeypatch.setattr(voyage_runs, "run_job", run_with_tampered_review)
+    tampered = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="g02_reviewed_scan_tampered",
+        base_dir=tmp_path,
+    )
+
+    assert tampered.status == "stopped"
+    assert tampered.steps[1].status == "handoff_invalidated"
+    assert tampered.steps[1].errors == ("handoff_consumer_source_mismatch",)
 
 
 def test_g02_complete_pdf_inventory_blocks_an_undeclared_report(tmp_path: Path) -> None:

@@ -31,6 +31,7 @@ from .model_authority import (
 )
 from .pdf_page_expectations import (
     PdfPageExpectationError,
+    parse_source_page_reviews,
     verify_pdf_page_expectations,
 )
 from .policies import PolicyStore, cleanup_rules_for_step
@@ -343,6 +344,7 @@ def _selected_registry_sources(
     source_tables = snapshot.parameters.get("source_tables", [])
     structured_sources = snapshot.parameters.get("structured_sources", False)
     expected_pdf_pages = snapshot.parameters.get("expected_pdf_pages", {})
+    pdf_page_reviews = snapshot.parameters.get("pdf_page_reviews")
     require_complete_pdf_inventory = snapshot.parameters.get(
         "require_complete_pdf_inventory", False
     )
@@ -387,14 +389,13 @@ def _selected_registry_sources(
                 for source in current_inventory.records
                 if Path(source.path).suffix.casefold() == ".pdf"
             ))
-        verified_pdf_pages = [
-            check.as_payload()
-            for check in verify_pdf_page_expectations(
-                verification_sources,
-                expected_pdf_pages,
-                require_complete_inventory=require_complete_pdf_inventory,
-            )
-        ]
+        page_checks = verify_pdf_page_expectations(
+            verification_sources,
+            expected_pdf_pages,
+            require_complete_inventory=require_complete_pdf_inventory,
+            page_reviews=pdf_page_reviews,
+        )
+        verified_pdf_pages = [check.as_payload() for check in page_checks]
     except PdfPageExpectationError as exc:
         raise ValueError(f"handoff_{exc}") from exc
     except (OSError, ValueError) as exc:
@@ -502,6 +503,20 @@ def _selected_registry_sources(
         ):
             raise ValueError("handoff_registry_lines_mismatch")
         selected_source_lines[item["consumer_source_id"]] = list(lines)
+    checks_by_source_id = {check.source_id: check for check in page_checks}
+    consumer_page_reviews: dict[str, list[dict[str, object]]] = {}
+    reviewed_page_receipts: dict[str, list[dict[str, object]]] = {}
+    for item in lineage:
+        check = checks_by_source_id.get(item["producer_source_id"])
+        if check is None or not check.reviewed_pages:
+            continue
+        consumer_source_id = item["consumer_source_id"]
+        consumer_page_reviews[consumer_source_id] = [
+            review.as_parameter_payload() for review in check.reviewed_pages
+        ]
+        reviewed_page_receipts[consumer_source_id] = [
+            review.as_summary() for review in check.reviewed_pages
+        ]
     return paths, {
         **receipt,
         "mode": "selected_sources",
@@ -509,12 +524,17 @@ def _selected_registry_sources(
             "source_tables": list(source_tables),
             "structured_sources": structured_sources,
             "require_complete_pdf_inventory": require_complete_pdf_inventory,
+            "reviewed_pdf_page_count": sum(
+                len(check.reviewed_pages) for check in page_checks
+            ),
         },
         "selected_source_ids": selected_ids,
         "selected_source_sha256": source_hashes,
         "source_lineage": lineage,
         "selected_source_lines": selected_source_lines,
         "verified_pdf_pages": verified_pdf_pages,
+        "reviewed_page_receipts": reviewed_page_receipts,
+        "_consumer_page_reviews": consumer_page_reviews,
         "topic_filter": list(snapshot.parameters["topic_filter"]),
         "application_domain": (
             "medical_reports"
@@ -550,6 +570,16 @@ def _bind_selected_source_scope(
             parameters["structured_sources"] = True
     elif consumer_structured is not producer_structured:
         raise ValueError("handoff_source_scope_changed:structured_sources")
+    producer_page_reviews = receipt.pop("_consumer_page_reviews", {})
+    consumer_page_reviews = parameters.get("source_page_reviews")
+    if producer_page_reviews:
+        if consumer_page_reviews is not None and consumer_page_reviews != (
+            producer_page_reviews
+        ):
+            raise ValueError("handoff_page_reviews_changed")
+        parameters["source_page_reviews"] = producer_page_reviews
+    elif consumer_page_reviews:
+        raise ValueError("handoff_source_scope_widened:source_page_reviews")
     selected_lines = receipt["selected_source_lines"]
     if "source_selected_lines" in parameters and parameters["source_selected_lines"] != (
         selected_lines
@@ -568,6 +598,10 @@ def _bind_selected_source_scope(
     receipt["consumer_source_scope"] = {
         "source_tables": list(parameters.get("source_tables", [])),
         "structured_sources": parameters.get("structured_sources", False),
+        "reviewed_pdf_page_count": sum(
+            len(reviews)
+            for reviews in parameters.get("source_page_reviews", {}).values()
+        ),
     }
 
 
@@ -588,6 +622,18 @@ def _consumer_matches_lineage(
         or job_idempotency_key(snapshot) != report.idempotency_key
         or snapshot.parameters.get("source_selected_lines", {}) != receipt["selected_source_lines"]
     ):
+        return False
+    try:
+        snapshot_page_reviews = parse_source_page_reviews(
+            snapshot.parameters.get("source_page_reviews")
+        )
+    except ValueError:
+        return False
+    page_review_receipts = {
+        source_id: [review.as_summary() for review in reviews]
+        for source_id, reviews in snapshot_page_reviews.items()
+    }
+    if page_review_receipts != receipt.get("reviewed_page_receipts", {}):
         return False
     expected = {
         item["path"]: (item["consumer_source_id"], item["sha256"])

@@ -9,6 +9,7 @@ from typing import Any
 
 from .contracts import ActionMode, JobEnvelope, PrivacyMode, SourceRecord, to_primitive
 from .document_registry import columns_from_parameters
+from .pdf_page_expectations import parse_pdf_page_reviews, parse_source_page_reviews
 
 JOB_SCHEMA = "nemofold.job.v1"
 JOB_SNAPSHOT_SCHEMA = "nemofold.job-snapshot.v1"
@@ -222,6 +223,7 @@ WORKFLOW_PARAMETER_FIELDS = {
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
     "synopsis_merge": frozenset({
         "application_domain",
+        "source_page_reviews",
         "source_tables",
         "structured_sources",
         "source_selected_lines",
@@ -250,6 +252,7 @@ WORKFLOW_PARAMETER_FIELDS = {
         {
             "required_columns",
             "expected_pdf_pages",
+            "pdf_page_reviews",
             "require_complete_pdf_inventory",
             "source_tables",
             "structured_sources",
@@ -328,6 +331,13 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
         job.parameters["require_complete_pdf_inventory"], bool
     ):
         raise ValueError("require_complete_pdf_inventory must be a boolean")
+    if "pdf_page_reviews" in job.parameters:
+        reviews = parse_pdf_page_reviews(job.parameters["pdf_page_reviews"])
+        expectations = job.parameters.get("expected_pdf_pages", {})
+        if not isinstance(expectations, dict) or set(reviews) - set(expectations):
+            raise ValueError("pdf_page_reviews must name declared expected_pdf_pages")
+    if "source_page_reviews" in job.parameters:
+        parse_source_page_reviews(job.parameters["source_page_reviews"])
     if "source_selected_lines" in job.parameters:
         selections = job.parameters["source_selected_lines"]
         if not isinstance(selections, dict) or len(selections) > 500:

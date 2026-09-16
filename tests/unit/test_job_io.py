@@ -95,6 +95,73 @@ def test_registry_job_accepts_explicit_pdf_page_expectation(tmp_path) -> None:
     assert loaded.job.parameters["require_complete_pdf_inventory"] is True
 
 
+def test_registry_job_accepts_a_complete_hash_bound_pdf_page_review(tmp_path) -> None:
+    review = {
+        "page": 2,
+        "source_sha256": "a" * 64,
+        "method": "ocr",
+        "reviewer": "ellmos-filecommander:ocr",
+        "reviewed_at": "2026-09-16T07:50:00+02:00",
+        "content_complete": True,
+        "text": "Befund: Schilddrüse vergrößert.",
+    }
+    path = write_job(
+        tmp_path,
+        workflow="document_registry",
+        questions=[],
+        parameters={
+            "column_template": "medical_reports",
+            "expected_pdf_pages": {"01-endokrinologie.pdf": 2},
+            "pdf_page_reviews": {"01-endokrinologie.pdf": [review]},
+        },
+    )
+
+    loaded = load_job_file(path)
+
+    assert loaded.job.parameters["pdf_page_reviews"] == {
+        "01-endokrinologie.pdf": [review]
+    }
+
+
+@pytest.mark.parametrize(
+    "review_patch",
+    [
+        {"content_complete": False},
+        {"text": ""},
+        {"source_sha256": "not-a-sha"},
+        {"method": "guessed"},
+        {"reviewer": ""},
+        {"reviewed_at": "2026-09-16"},
+    ],
+)
+def test_registry_job_rejects_incomplete_pdf_page_review(
+    tmp_path, review_patch,
+) -> None:
+    review = {
+        "page": 2,
+        "source_sha256": "a" * 64,
+        "method": "manual",
+        "reviewer": "human:test-reviewer",
+        "reviewed_at": "2026-09-16T07:50:00+02:00",
+        "content_complete": True,
+        "text": "Befund: Schilddrüse vergrößert.",
+        **review_patch,
+    }
+    path = write_job(
+        tmp_path,
+        workflow="document_registry",
+        questions=[],
+        parameters={
+            "column_template": "medical_reports",
+            "expected_pdf_pages": {"01-endokrinologie.pdf": 2},
+            "pdf_page_reviews": {"01-endokrinologie.pdf": [review]},
+        },
+    )
+
+    with pytest.raises(JobFileError, match="pdf_page_reviews"):
+        load_job_file(path)
+
+
 def test_registry_job_rejects_non_boolean_complete_pdf_inventory(tmp_path) -> None:
     path = write_job(
         tmp_path,

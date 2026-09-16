@@ -75,7 +75,7 @@ from .document_compose import (
     plan_merge,
     validate_template,
 )
-from .document_extract import extract_document_text
+from .document_extract import count_pdf_pages, extract_document_text
 from .document_index import DocumentIndex, SearchHit
 from .document_registry import (
     build_registry,
@@ -112,6 +112,8 @@ from .outbound import (
 )
 from .pdf_page_expectations import (
     PdfPageExpectationError,
+    extract_reviewed_pdf_text,
+    parse_source_page_reviews,
     verify_pdf_page_expectations,
 )
 from .policy import PolicyConfig, PolicyGate
@@ -508,17 +510,44 @@ def _read_text_sources(
     """
     tables: tuple[str, ...] = ()
     labelled_csv = False
+    source_page_reviews = {}
     if job is not None:
         raw_tables = job.parameters.get("source_tables") or ()
         if isinstance(raw_tables, list):
             tables = tuple(str(item) for item in raw_tables)
         labelled_csv = bool(job.parameters.get("structured_sources", False))
+        source_page_reviews = parse_source_page_reviews(
+            job.parameters.get("source_page_reviews")
+        )
+    inventory_source_ids = {source.source_id for source in inventory.records}
+    if set(source_page_reviews) - inventory_source_ids:
+        raise ValueError("source_page_reviews references a missing source")
     texts: dict[str, str] = {}
     for source in inventory.records:
         if source.extraction_status in {"unreadable", "excluded_symlink"}:
             continue
         suffix = Path(source.path).suffix.casefold()
         try:
+            if source.source_id in source_page_reviews:
+                if suffix != ".pdf":
+                    raise ValueError("source_page_reviews requires a PDF source")
+                review_payloads = [
+                    review.as_parameter_payload()
+                    for review in source_page_reviews[source.source_id]
+                ]
+                checks = verify_pdf_page_expectations(
+                    (source,),
+                    {
+                        source.display_name: count_pdf_pages(
+                            source.path, expected_sha256=source.sha256
+                        )
+                    },
+                    page_reviews={source.display_name: review_payloads},
+                )
+                texts[source.source_id] = extract_reviewed_pdf_text(
+                    source, checks[0]
+                )
+                continue
             if suffix in STRUCTURED_SUFFIXES or (labelled_csv and suffix == ".csv"):
                 rendering = read_structured(
                     source.path, tables=tables, expected_sha256=source.sha256
@@ -534,6 +563,8 @@ def _read_text_sources(
                 expected_sha256=source.sha256,
             )
         except (OSError, UnicodeError, ValueError):
+            if source.source_id in source_page_reviews:
+                raise
             continue
     return texts
 
@@ -1749,11 +1780,13 @@ def _execute_document_registry(
     require_complete_pdf_inventory = job.parameters.get(
         "require_complete_pdf_inventory", False
     )
+    page_reviews = job.parameters.get("pdf_page_reviews")
     try:
         page_checks = verify_pdf_page_expectations(
             inventory.records,
             expectations,
             require_complete_inventory=require_complete_pdf_inventory,
+            page_reviews=page_reviews,
         )
     except PdfPageExpectationError as exc:
         raise WorkflowBlocked(
@@ -1766,6 +1799,7 @@ def _execute_document_registry(
             ),
             metadata={
                 "expected_pdf_pages": expectations,
+                "pdf_page_reviews_declared": bool(page_reviews),
                 "require_complete_pdf_inventory": require_complete_pdf_inventory,
             },
         ) from exc
@@ -1773,6 +1807,25 @@ def _execute_document_registry(
         job.parameters.get("columns"), job.parameters.get("column_template")
     )
     texts = _read_text_sources(inventory, job)
+    source_by_id = {source.source_id: source for source in inventory.records}
+    for check in page_checks:
+        if not check.reviewed_pages:
+            continue
+        try:
+            texts[check.source_id] = extract_reviewed_pdf_text(
+                source_by_id[check.source_id], check
+            )
+        except (KeyError, OSError, RuntimeError, ValueError) as exc:
+            raise WorkflowBlocked(
+                (f"pdf_page_review_source_changed:{check.display_name}",),
+                actions=("inventory_scanned", "pdf_page_review_invalidated"),
+                coverage=compute_coverage(
+                    all_source_ids=(record.source_id for record in inventory.records),
+                    read_source_ids=(),
+                    cited_source_ids=(),
+                ),
+                metadata={"expected_pdf_pages": expectations},
+            ) from exc
     topic_filter = tuple(job.parameters.get("topic_filter", []))
     structured_source_ids = frozenset(
         record.source_id for record in inventory.records
@@ -1942,6 +1995,9 @@ def _execute_document_registry(
         {
             "columns": [column.name for column in columns],
             "require_complete_pdf_inventory": require_complete_pdf_inventory,
+            "reviewed_pdf_page_count": sum(
+                len(check.reviewed_pages) for check in page_checks
+            ),
             "verified_pdf_pages": [check.as_payload() for check in page_checks],
             "rows": len(table.rows),
             "filled_cells": table.filled_cells,
