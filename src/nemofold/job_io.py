@@ -162,7 +162,10 @@ WORKFLOW_PARAMETER_FIELDS = {
         {"formats", "reference_grid", "reference_items", "require_complete", "title"}
     ),
     "rater_race": frozenset(
-        {"coding_scheme", "formats", "rater_a", "rater_b", "scan_labels", "title"}
+        {
+            "coding_scheme", "coding_a", "coding_b", "formats", "rater_a",
+            "rater_b", "scan_labels", "title",
+        }
     ),
     "guide_compose": frozenset({"dedupe_scope", "formats", "title"}),
     "wiki_export": frozenset({"formats", "title", "wiki_dir"}),
@@ -369,6 +372,21 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             or not 0 <= threshold <= 1
         ):
             raise ValueError("confidence_threshold must be between 0 and 1")
+    elif job.workflow == "rater_race":
+        supplied_a = "coding_a" in job.parameters
+        supplied_b = "coding_b" in job.parameters
+        if supplied_a != supplied_b:
+            raise ValueError("coding_a and coding_b must be supplied together")
+        if supplied_a:
+            for name in ("coding_a", "coding_b"):
+                if not isinstance(job.parameters[name], dict):
+                    raise ValueError(f"{name} must be an object")
+            for name in ("rater_a", "rater_b"):
+                value = job.parameters.get(name)
+                if not isinstance(value, str) or not value.strip():
+                    raise ValueError("supplied codings need both named raters")
+            if job.parameters["rater_a"].strip() == job.parameters["rater_b"].strip():
+                raise ValueError("supplied codings need distinct rater names")
     elif job.workflow == "cleanup_rules":
         minimum = job.parameters.get("min_support", 2)
         if isinstance(minimum, bool) or not isinstance(minimum, int) or minimum < 1:

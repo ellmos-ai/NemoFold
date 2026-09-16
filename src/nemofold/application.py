@@ -93,6 +93,7 @@ from .interrater import (
     interrater_diff,
     interrater_payload,
     interrater_rows,
+    supplied_coding,
     validate_codes,
 )
 from .inventory import InventoryResult, scan_paths
@@ -2778,25 +2779,54 @@ def _execute_rater_race(
     labels = tuple(str(item) for item in job.parameters.get("scan_labels", []) or [])
     texts = _read_text_sources(inventory, job)
     source_ids = tuple(record.source_id for record in inventory.records)
-    first = code_corpus(
-        source_ids,
-        texts,
-        scheme,
-        strategy="first_match",
-        rater=str(job.parameters.get("rater_a", "") or "first_match"),
-        scan_labels=labels,
-    )
-    second = code_corpus(
-        source_ids,
-        texts,
-        scheme,
-        strategy="last_match",
-        rater=str(job.parameters.get("rater_b", "") or "last_match"),
-        scan_labels=labels,
-    )
-    report = interrater_diff(first, second)
     names = {record.source_id: record.display_name for record in inventory.records}
+    if "coding_a" in job.parameters:
+        readable_ids = tuple(source_id for source_id in source_ids if source_id in texts)
+        first = supplied_coding(
+            job.parameters["coding_a"],
+            rater=job.parameters["rater_a"],
+            source_ids=readable_ids,
+            labels=names,
+            allowed_codes=set(scheme),
+        )
+        second = supplied_coding(
+            job.parameters["coding_b"],
+            rater=job.parameters["rater_b"],
+            source_ids=readable_ids,
+            labels=names,
+            allowed_codes=set(scheme),
+        )
+        coding_mode = "supplied_codings"
+        coding_note = (
+            "Two separately supplied coding sheets were compared; NemoFold does "
+            "not verify that their raters worked independently."
+        )
+    else:
+        first = code_corpus(
+            source_ids,
+            texts,
+            scheme,
+            strategy="first_match",
+            rater=str(job.parameters.get("rater_a", "") or "first_match"),
+            scan_labels=labels,
+        )
+        second = code_corpus(
+            source_ids,
+            texts,
+            scheme,
+            strategy="last_match",
+            rater=str(job.parameters.get("rater_b", "") or "last_match"),
+            scan_labels=labels,
+        )
+        coding_mode = "deterministic_demo"
+        coding_note = (
+            "First-match and last-match are two deterministic readings of the "
+            "same corpus, not two independent agents."
+        )
+    report = interrater_diff(first, second)
     payload = interrater_payload(report, names)
+    payload["coding_mode"] = coding_mode
+    payload["coding_note"] = coding_note
     output = Path(job.output_dir)
     artifacts: list[ArtifactRecord] = [
         write_text_artifact(
@@ -2840,15 +2870,27 @@ def _execute_rater_race(
         render_report_formats(
             ReportDocument(
                 title=str(job.parameters.get("title") or "Doppelcodierung"),
-                claims=claims
-                or (
+                claims=(
                     Claim(
                         statement=(
-                            "Beide Lesarten stimmen bei jedem Dokument überein. Das ist "
-                            "das Ergebnis, kein fehlender Bericht."
+                            "Demonstrationsmodus: erste und letzte Fundstelle im selben "
+                            "Korpus; keine zwei unabhängigen Agenten."
+                            if coding_mode == "deterministic_demo"
+                            else "Zwei bereitgestellte Codierungsblätter wurden verglichen; "
+                            "die Unabhängigkeit der Codierenden ist nicht geprüft."
                         ),
                         evidence=(),
                     ),
+                    *(claims
+                      or (
+                          Claim(
+                              statement=(
+                                  "Beide Lesarten stimmen bei jedem Dokument überein. "
+                                  "Das ist das Ergebnis, kein fehlender Bericht."
+                              ),
+                              evidence=(),
+                          ),
+                      )),
                 ),
                 coverage=coverage,
             ),
@@ -2860,6 +2902,8 @@ def _execute_rater_race(
     metadata: dict[str, object] = {
         "rater_a": report.rater_a,
         "rater_b": report.rater_b,
+        "coding_mode": coding_mode,
+        "coding_note": coding_note,
         "item_count": report.agreement.items,
         "percent_agreement": report.agreement.percent,
         "cohens_kappa": report.agreement.kappa,

@@ -13,6 +13,7 @@ from nemofold.interrater import (
     cohens_kappa,
     interrater_diff,
     interrater_payload,
+    supplied_coding,
     validate_codes,
 )
 from nemofold.job_io import parse_job_payload
@@ -108,6 +109,25 @@ def test_an_item_only_one_rater_saw_is_reported_not_counted() -> None:
     assert report.only_in_b == ()
 
 
+def test_supplied_coding_requires_every_readable_item_and_declared_codes() -> None:
+    arguments = {
+        "rater": "Agent A",
+        "source_ids": ("src_1", "src_2"),
+        "labels": {"src_1": "eins.md", "src_2": "zwei.md"},
+        "allowed_codes": {"ja", "nein"},
+    }
+    coding = supplied_coding({"eins.md": "ja", "src_2": "nein"}, **arguments)
+    assert coding.codes == {"src_1": "ja", "src_2": "nein"}
+    with pytest.raises(ValueError, match="omits 1"):
+        supplied_coding({"eins.md": "ja"}, **arguments)
+    with pytest.raises(ValueError, match="undeclared code"):
+        supplied_coding({"eins.md": "vielleicht", "zwei.md": "nein"}, **arguments)
+    with pytest.raises(ValueError, match="unknown item"):
+        supplied_coding({"eins.md": "ja", "fremd.md": "nein"}, **arguments)
+    with pytest.raises(ValueError, match="repeats an item"):
+        supplied_coding({"eins.md": "ja", "src_1": "ja", "zwei.md": "nein"}, **arguments)
+
+
 def test_the_disagreements_are_the_output_worth_reading() -> None:
     payload = interrater_payload(
         interrater_diff(
@@ -170,6 +190,54 @@ def test_two_readings_of_the_same_forms_part_where_they_are_ambiguous(tmp_path) 
     disputed = {item["display_name"] for item in payload["disagreements"]}
     assert disputed == {"fb-03.md", "fb-05.md", "fb-07.md"}
     assert all(item["item_id"].startswith("src_") for item in payload["disagreements"])
+    assert payload["coding_mode"] == "deterministic_demo"
+    assert "not two independent agents" in payload["coding_note"]
+    markdown = (tmp_path / "out" / "race_interrater.md").read_text(encoding="utf-8")
+    assert "keine zwei unabhängigen Agenten" in markdown
+
+
+def test_two_supplied_sheets_produce_a_real_diff_without_claiming_independence(tmp_path) -> None:
+    names = sorted(path.name for path in SURVEY.glob("*.md"))
+    assert len(names) == 8
+    first = {name: "zufrieden" for name in names}
+    second = dict(first)
+    second[names[2]] = "unzufrieden"
+    result = _race(
+        tmp_path,
+        "supplied",
+        coding_a=first,
+        coding_b=second,
+        rater_a="Agent A / Lauf 1",
+        rater_b="Agent B / Lauf 2",
+    )
+    assert result.report.status is RunStatus.EXECUTED
+    payload = json.loads(
+        (tmp_path / "out" / "supplied.interrater.json").read_text(encoding="utf-8")
+    )
+    assert payload["item_count"] == 8
+    assert payload["disagreed"] == 1
+    assert payload["disagreements"][0]["display_name"] == names[2]
+    assert payload["coding_mode"] == "supplied_codings"
+    assert "does not verify" in payload["coding_note"]
+    assert result.report.metadata["coding_mode"] == "supplied_codings"
+    markdown = (tmp_path / "out" / "supplied_interrater.md").read_text(encoding="utf-8")
+    assert "Unabhängigkeit der Codierenden ist nicht geprüft" in markdown
+
+
+@pytest.mark.parametrize(
+    ("overrides", "message"),
+    [
+        ({"coding_a": {"fb-01.md": "zufrieden"}}, "supplied together"),
+        ({"coding_a": {}, "coding_b": {}}, "named raters"),
+        (
+            {"coding_a": {}, "coding_b": {}, "rater_a": "A", "rater_b": "A"},
+            "distinct rater names",
+        ),
+    ],
+)
+def test_supplied_sheets_need_two_named_raters(overrides, message, tmp_path) -> None:
+    with pytest.raises(ValueError, match=message):
+        _race(tmp_path, "invalid", **overrides)
 
 
 def test_the_race_exports_the_cell_diff_as_a_workbook(tmp_path) -> None:

@@ -431,6 +431,17 @@ number that would be read as a result. The disagreements are the output worth
 reading: they mark where the coding scheme is ambiguous, not where a rater was
 wrong. The cell diff exports as a workbook.
 
+The default run is a deterministic demonstration: first-match versus
+last-match on the same local corpus. It is **not** two independent agents.
+For an actual two-rater comparison, supply both `coding_a` and `coding_b` as
+objects mapping every readable source file name (or source ID) to one declared
+code. Also supply distinct `rater_a` and `rater_b` names. Each sheet must cover
+the same complete corpus; missing or foreign items and undeclared codes stop
+the run. The JSON result and run metadata distinguish `deterministic_demo`
+from `supplied_codings`. NemoFold compares the sheets but cannot verify that
+the two raters produced them independently; retain their separate run receipts
+for that claim.
+
 **Guide Compose** folds a folder into one guide that stands in for its
 documents, with every paragraph still a quoted line naming its source and a
 count of the repeats it folded. **Wiki Export** writes the same corpus as one

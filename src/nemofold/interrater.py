@@ -222,6 +222,52 @@ def code_corpus(
     return Coding(rater=rater or strategy, codes=codes, anchors=anchors)
 
 
+def supplied_coding(
+    value: Any,
+    *,
+    rater: str,
+    source_ids: tuple[str, ...],
+    labels: dict[str, str],
+    allowed_codes: set[str],
+) -> Coding:
+    """Match a separately supplied rating sheet to the exact readable corpus.
+
+    A sheet may use opaque source IDs or unique file names. Missing, foreign, or
+    duplicated items are refused so a high agreement cannot hide skipped forms.
+    The caller, not this function, is responsible for establishing that two
+    sheets really came from independent raters.
+    """
+    if not isinstance(value, dict) or not value:
+        raise ValueError("supplied coding must be a non-empty object")
+    if not rater.strip():
+        raise ValueError("supplied coding needs a rater name")
+    if not source_ids or len(source_ids) > MAX_ITEMS:
+        raise ValueError(f"supplied coding needs 1 to {MAX_ITEMS} readable items")
+    by_name: dict[str, str] = {}
+    for source_id in source_ids:
+        name = labels.get(source_id, source_id)
+        if name in by_name:
+            raise ValueError(f"ambiguous display name in corpus: {name}")
+        by_name[name] = source_id
+    expected = set(source_ids)
+    codes: dict[str, str] = {}
+    for item, code in value.items():
+        if not isinstance(item, str) or not isinstance(code, str):
+            raise ValueError("supplied coding keys and codes must be strings")
+        source_id = item if item in expected else by_name.get(item)
+        if source_id is None:
+            raise ValueError(f"supplied coding contains an unknown item: {item}")
+        if source_id in codes:
+            raise ValueError(f"supplied coding repeats an item: {item}")
+        if code not in allowed_codes and code != UNCODED:
+            raise ValueError(f"supplied coding contains an undeclared code: {code}")
+        codes[source_id] = code
+    missing = expected - set(codes)
+    if missing:
+        raise ValueError(f"supplied coding omits {len(missing)} readable item(s)")
+    return Coding(rater=rater.strip(), codes=codes, anchors={})
+
+
 def interrater_payload(
     report: InterraterReport, labels: dict[str, str] | None = None
 ) -> dict[str, object]:
