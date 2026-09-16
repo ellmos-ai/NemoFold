@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 import re
@@ -11,6 +12,9 @@ from typing import Any
 EXPECTED_GATE_IDS = tuple(f"G{number:02d}" for number in range(1, 19))
 ALLOWED_STATUSES = frozenset({"planned", "partial", "not_supported", "done"})
 SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
+PLACEHOLDER_VALUES = frozenset(
+    {"n/a", "na", "none", "placeholder", "present", "tbd", "test", "todo", "unknown"}
+)
 
 
 class GateRegisterError(ValueError):
@@ -113,10 +117,20 @@ def validate_gate_register(
         evidence = _mapping(gate.get("evidence"), f"gate_evidence_missing:{gate_id}")
         test_nodes = evidence.get("test_nodes")
         receipts = evidence.get("run_receipts")
-        if not isinstance(test_nodes, list) or not all(
-            isinstance(item, str) and item for item in test_nodes
-        ):
+        if not isinstance(test_nodes, list):
             raise GateRegisterError(f"gate_test_nodes_invalid:{gate_id}")
+        seen_nodes: set[str] = set()
+        for raw_node in test_nodes:
+            node = _mapping(raw_node, f"gate_test_node_must_be_object:{gate_id}")
+            node_id = _nonplaceholder_string(
+                node.get("node"),
+                f"gate_test_node_missing:{gate_id}",
+                f"gate_test_node_placeholder:{gate_id}",
+            )
+            _validate_evidence_sha(node.get("file_sha256"), gate_id, "test_node")
+            if node_id in seen_nodes:
+                raise GateRegisterError(f"duplicate_test_node:{gate_id}:{node_id}")
+            seen_nodes.add(node_id)
         if not isinstance(receipts, list):
             raise GateRegisterError(f"gate_run_receipts_invalid:{gate_id}")
         if status == "partial" and not test_nodes:
@@ -235,10 +249,20 @@ def _nonempty_string(value: object, error: str) -> str:
     return value
 
 
+def _nonplaceholder_string(value: object, error: str, placeholder_error: str) -> str:
+    text = _nonempty_string(value, error)
+    if text.strip().casefold() in PLACEHOLDER_VALUES:
+        raise GateRegisterError(placeholder_error)
+    return text
+
+
 def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
-    run_id = _nonempty_string(receipt.get("run_id"), f"run_receipt_run_id_invalid:{gate_id}")
-    if run_id.lower() in {"present", "placeholder", "tbd", "todo", "unknown"}:
-        raise GateRegisterError(f"run_receipt_run_id_placeholder:{gate_id}")
+    _nonplaceholder_string(
+        receipt.get("run_id"),
+        f"run_receipt_run_id_invalid:{gate_id}",
+        f"run_receipt_run_id_placeholder:{gate_id}",
+    )
+    artifact_paths: dict[str, set[str]] = {"input": set(), "output": set()}
     for field in ("input_sha256", "output_sha256"):
         _validate_evidence_sha(receipt.get(field), gate_id, "run_receipt")
     for direction in ("input", "output"):
@@ -247,15 +271,17 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
             raise GateRegisterError(
                 f"{direction}_artifacts_must_be_nonempty_list:{gate_id}"
             )
-        seen_paths: set[str] = set()
         for artifact in artifacts:
             item = _mapping(artifact, f"{direction}_artifact_must_be_object:{gate_id}")
             path = _nonempty_string(
                 item.get("path"), f"{direction}_artifact_path_missing:{gate_id}"
             )
-            if path in seen_paths:
-                raise GateRegisterError(f"duplicate_{direction}_artifact:{gate_id}:{path}")
-            seen_paths.add(path)
+            canonical_path = _canonical_relative_path(path, gate_id, f"{direction}_artifact")
+            if canonical_path in artifact_paths[direction]:
+                raise GateRegisterError(
+                    f"duplicate_{direction}_artifact:{gate_id}:{canonical_path}"
+                )
+            artifact_paths[direction].add(canonical_path)
             _validate_evidence_sha(
                 item.get("sha256"), gate_id, f"{direction}_artifact"
             )
@@ -265,20 +291,38 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
                 f"{direction}_manifest_sha256_mismatch:{gate_id}:"
                 f"expected={receipt[f'{direction}_sha256']}:actual={expected_manifest_sha}"
             )
+    overlap = artifact_paths["input"] & artifact_paths["output"]
+    if overlap:
+        raise GateRegisterError(
+            f"artifact_used_as_input_and_output:{gate_id}:{sorted(overlap)[0]}"
+        )
 
     handoffs = receipt.get("handoff_receipts")
     if not isinstance(handoffs, list) or not handoffs:
         raise GateRegisterError(f"handoff_receipts_must_be_nonempty_list:{gate_id}")
+    handoff_paths: set[str] = set()
     for handoff in handoffs:
         item = _mapping(handoff, f"handoff_receipt_must_be_object:{gate_id}")
-        for field in ("producer", "consumer", "artifact_path", "evidence"):
-            _nonempty_string(item.get(field), f"handoff_receipt_{field}_missing:{gate_id}")
+        for field in ("producer", "consumer", "evidence"):
+            _nonplaceholder_string(
+                item.get(field),
+                f"handoff_receipt_{field}_missing:{gate_id}",
+                f"handoff_receipt_{field}_placeholder:{gate_id}",
+            )
+        handoff_path = _canonical_relative_path(
+            item.get("artifact_path"), gate_id, "handoff_receipt"
+        )
+        if handoff_path in handoff_paths:
+            raise GateRegisterError(f"duplicate_handoff_receipt:{gate_id}:{handoff_path}")
+        handoff_paths.add(handoff_path)
         _validate_evidence_sha(item.get("artifact_sha256"), gate_id, "handoff_receipt")
         if item.get("status") != "verified":
             raise GateRegisterError(f"handoff_receipt_not_verified:{gate_id}")
 
     run_report = _mapping(receipt.get("run_report"), f"run_report_must_be_object:{gate_id}")
-    _nonempty_string(run_report.get("path"), f"run_report_path_missing:{gate_id}")
+    positive_report_path = _canonical_relative_path(
+        run_report.get("path"), gate_id, "run_report"
+    )
     _validate_evidence_sha(run_report.get("sha256"), gate_id, "run_report")
     if run_report.get("status") != "executed" or run_report.get("verified") is not True:
         raise GateRegisterError(f"run_report_not_verified_executed:{gate_id}")
@@ -288,14 +332,26 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
         raise GateRegisterError(f"result_checks_must_be_nonempty_list:{gate_id}")
     for check in checks:
         item = _mapping(check, f"result_check_must_be_object:{gate_id}")
-        _nonempty_string(item.get("name"), f"result_check_name_missing:{gate_id}")
-        _nonempty_string(item.get("evidence"), f"result_check_evidence_missing:{gate_id}")
+        _nonplaceholder_string(
+            item.get("name"),
+            f"result_check_name_missing:{gate_id}",
+            f"result_check_name_placeholder:{gate_id}",
+        )
+        _nonplaceholder_string(
+            item.get("evidence"),
+            f"result_check_evidence_missing:{gate_id}",
+            f"result_check_evidence_placeholder:{gate_id}",
+        )
         if item.get("passed") is not True:
             raise GateRegisterError(f"result_check_not_passed:{gate_id}")
 
     negative = _mapping(receipt.get("negative_path"), f"negative_path_must_be_object:{gate_id}")
     for field in ("case", "run_id", "evidence"):
-        _nonempty_string(negative.get(field), f"negative_path_{field}_missing:{gate_id}")
+        _nonplaceholder_string(
+            negative.get(field),
+            f"negative_path_{field}_missing:{gate_id}",
+            f"negative_path_{field}_placeholder:{gate_id}",
+        )
     if negative.get("status") not in {"blocked", "failed"}:
         raise GateRegisterError(f"negative_path_status_invalid:{gate_id}")
     if negative.get("blocked_as_expected") is not True:
@@ -303,9 +359,11 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
     negative_report = _mapping(
         negative.get("run_report"), f"negative_path_run_report_must_be_object:{gate_id}"
     )
-    _nonempty_string(
-        negative_report.get("path"), f"negative_path_run_report_path_missing:{gate_id}"
+    negative_report_path = _canonical_relative_path(
+        negative_report.get("path"), gate_id, "negative_path"
     )
+    if negative_report_path == positive_report_path:
+        raise GateRegisterError(f"positive_and_negative_run_report_same_path:{gate_id}")
     _validate_evidence_sha(negative_report.get("sha256"), gate_id, "negative_path")
 
 
@@ -315,6 +373,16 @@ def _validate_evidence_sha(value: object, gate_id: str, prefix: str) -> str:
     if len(set(value)) == 1:
         raise GateRegisterError(f"{prefix}_sha256_placeholder:{gate_id}")
     return value
+
+
+def _canonical_relative_path(value: object, gate_id: str, kind: str) -> str:
+    path_text = _nonempty_string(value, f"evidence_path_missing:{gate_id}:{kind}")
+    declared = Path(path_text)
+    if declared.is_absolute():
+        raise GateRegisterError(f"evidence_path_must_be_relative:{gate_id}:{kind}:{path_text}")
+    if ".." in declared.parts:
+        raise GateRegisterError(f"evidence_path_traversal:{gate_id}:{kind}:{path_text}")
+    return declared.as_posix()
 
 
 def _artifact_manifest_sha256(artifacts: list[object]) -> str:
@@ -338,10 +406,7 @@ def _verify_done_gate_files(
     for gate in done_gates:
         gate_id = gate["gate_id"]
         for node in gate["evidence"]["test_nodes"]:
-            test_path = node.split("::", 1)[0]
-            checked.append(
-                _verify_evidence_file(root, test_path, None, gate_id, "test_node")
-            )
+            checked.append(_verify_test_node(root, node, gate_id))
         for receipt in gate["evidence"]["run_receipts"]:
             for direction in ("input", "output"):
                 for artifact in receipt[f"{direction}_artifacts"]:
@@ -365,22 +430,24 @@ def _verify_done_gate_files(
                     )
                 )
             checked.append(
-                _verify_evidence_file(
+                _verify_run_report_file(
                     root,
-                    receipt["run_report"]["path"],
-                    receipt["run_report"]["sha256"],
+                    receipt["run_report"],
                     gate_id,
-                    "run_report",
+                    expected_run_id=receipt["run_id"],
+                    expected_status=receipt["run_report"]["status"],
+                    kind="run_report",
                 )
             )
             negative_report = receipt["negative_path"]["run_report"]
             checked.append(
-                _verify_evidence_file(
+                _verify_run_report_file(
                     root,
-                    negative_report["path"],
-                    negative_report["sha256"],
+                    negative_report,
                     gate_id,
-                    "negative_path",
+                    expected_run_id=receipt["negative_path"]["run_id"],
+                    expected_status=receipt["negative_path"]["status"],
+                    kind="negative_path",
                 )
             )
     return sorted(set(checked))
@@ -393,10 +460,8 @@ def _verify_evidence_file(
     gate_id: str,
     kind: str,
 ) -> str:
-    path_text = _nonempty_string(relative_path, f"evidence_path_missing:{gate_id}:{kind}")
+    path_text = _canonical_relative_path(relative_path, gate_id, kind)
     declared = Path(path_text)
-    if declared.is_absolute():
-        raise GateRegisterError(f"evidence_path_must_be_relative:{gate_id}:{kind}:{path_text}")
     candidate = (root / declared).resolve()
     try:
         candidate.relative_to(root)
@@ -406,11 +471,95 @@ def _verify_evidence_file(
         ) from exc
     if not candidate.is_file():
         raise GateRegisterError(f"evidence_file_missing:{gate_id}:{kind}:{path_text}")
+    raw = candidate.read_bytes()
     if expected_sha256 is not None:
-        actual_sha256 = hashlib.sha256(candidate.read_bytes()).hexdigest()
+        actual_sha256 = hashlib.sha256(raw).hexdigest()
         if actual_sha256 != expected_sha256:
             raise GateRegisterError(
                 f"evidence_sha256_mismatch:{gate_id}:{kind}:{path_text}:"
                 f"expected={expected_sha256}:actual={actual_sha256}"
             )
+    stripped = raw.strip().lower()
+    if not stripped:
+        raise GateRegisterError(f"evidence_file_empty:{gate_id}:{kind}:{path_text}")
+    placeholder_bytes = {value.encode("utf-8") for value in PLACEHOLDER_VALUES}
+    if stripped in placeholder_bytes:
+        raise GateRegisterError(f"evidence_file_placeholder:{gate_id}:{kind}:{path_text}")
     return candidate.relative_to(root).as_posix()
+
+
+def _verify_test_node(root: Path, node: dict[str, Any], gate_id: str) -> str:
+    node_id = node["node"]
+    path_text, separator, selector_text = node_id.partition("::")
+    if not separator or not selector_text:
+        raise GateRegisterError(f"test_node_selector_missing:{gate_id}:{node_id}")
+    relative = _verify_evidence_file(
+        root,
+        path_text,
+        node["file_sha256"],
+        gate_id,
+        "test_node",
+    )
+    candidate = root / relative
+    if candidate.suffix.casefold() != ".py":
+        raise GateRegisterError(f"test_node_not_python:{gate_id}:{node_id}")
+    try:
+        tree = ast.parse(candidate.read_text(encoding="utf-8"), filename=str(candidate))
+    except (SyntaxError, UnicodeDecodeError) as exc:
+        raise GateRegisterError(f"test_node_invalid_python:{gate_id}:{node_id}") from exc
+    selectors = [part.split("[", 1)[0] for part in selector_text.split("::")]
+    if not _ast_contains_test_node(tree, selectors):
+        raise GateRegisterError(f"test_node_not_found:{gate_id}:{node_id}")
+    return relative
+
+
+def _ast_contains_test_node(tree: ast.Module, selectors: list[str]) -> bool:
+    if len(selectors) == 1:
+        return any(
+            isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+            and node.name == selectors[0]
+            and node.name.startswith("test_")
+            for node in tree.body
+        )
+    if len(selectors) == 2:
+        return any(
+            isinstance(node, ast.ClassDef)
+            and node.name == selectors[0]
+            and node.name.startswith("Test")
+            and any(
+                isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef))
+                and child.name == selectors[1]
+                and child.name.startswith("test_")
+                for child in node.body
+            )
+            for node in tree.body
+        )
+    return False
+
+
+def _verify_run_report_file(
+    root: Path,
+    report: dict[str, Any],
+    gate_id: str,
+    *,
+    expected_run_id: str,
+    expected_status: str,
+    kind: str,
+) -> str:
+    relative = _verify_evidence_file(
+        root,
+        report["path"],
+        report["sha256"],
+        gate_id,
+        kind,
+    )
+    try:
+        payload = json.loads((root / relative).read_text(encoding="utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise GateRegisterError(f"{kind}_invalid_json:{gate_id}:{relative}") from exc
+    data = _mapping(payload, f"{kind}_must_contain_object:{gate_id}:{relative}")
+    if data.get("run_id") != expected_run_id:
+        raise GateRegisterError(f"{kind}_run_id_mismatch:{gate_id}:{relative}")
+    if data.get("status") != expected_status:
+        raise GateRegisterError(f"{kind}_status_mismatch:{gate_id}:{relative}")
+    return relative

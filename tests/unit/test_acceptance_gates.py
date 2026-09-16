@@ -28,14 +28,25 @@ def _manifest_sha256(artifacts: list[dict[str, str]]) -> str:
     return hashlib.sha256(canonical).hexdigest()
 
 
+def _dummy_test_node() -> dict[str, str]:
+    return {
+        "node": "tests/e2e/test_g01.py::test_g01",
+        "file_sha256": hashlib.sha256(b"test node").hexdigest(),
+    }
+
+
 def _done_register_with_files(root) -> tuple[dict, dict[str, object]]:
     files = {
         "inputs/source.txt": b"Steuernummer: 12/345/67890\n",
         "outputs/result.json": b'{"document":"steuerbescheid.pdf","line":1}',
         "tests/e2e/test_g01.py": b"def test_g01():\n    assert True\n",
         "evidence/g01-handoff.json": b'{"schema":"nemofold.handoff.v1"}',
-        "evidence/g01-run-report.json": b'{"status":"executed"}',
-        "evidence/g01-negative-run-report.json": b'{"status":"blocked"}',
+        "evidence/g01-run-report.json": (
+            b'{"run_id":"g01-20260916-verified","status":"executed"}'
+        ),
+        "evidence/g01-negative-run-report.json": (
+            b'{"run_id":"g01-20260916-blocked","status":"blocked"}'
+        ),
     }
     paths = {}
     for relative, content in files.items():
@@ -59,7 +70,12 @@ def _done_register_with_files(root) -> tuple[dict, dict[str, object]]:
     ]
     gate = register["gates"][0]
     gate["status"] = "done"
-    gate["evidence"]["test_nodes"] = ["tests/e2e/test_g01.py::test_g01"]
+    gate["evidence"]["test_nodes"] = [
+        {
+            "node": "tests/e2e/test_g01.py::test_g01",
+            "file_sha256": hashlib.sha256(files["tests/e2e/test_g01.py"]).hexdigest(),
+        }
+    ]
     gate["evidence"]["run_receipts"] = [
         {
             "run_id": "g01-20260916-verified",
@@ -159,7 +175,7 @@ def test_shipped_gate_register_is_complete_without_false_done_claims() -> None:
 def test_done_gate_without_full_run_receipt_is_rejected() -> None:
     register = copy.deepcopy(load_gate_register())
     register["gates"][0]["status"] = "done"
-    register["gates"][0]["evidence"]["test_nodes"] = ["tests/e2e/test_g01.py"]
+    register["gates"][0]["evidence"]["test_nodes"] = [_dummy_test_node()]
     register["gates"][0]["evidence"]["run_receipts"] = []
 
     with pytest.raises(GateRegisterError, match="done_gate_requires_run_receipt:G01"):
@@ -169,7 +185,7 @@ def test_done_gate_without_full_run_receipt_is_rejected() -> None:
 def test_done_gate_rejects_placeholder_run_receipt_values() -> None:
     register = copy.deepcopy(load_gate_register())
     register["gates"][0]["status"] = "done"
-    register["gates"][0]["evidence"]["test_nodes"] = ["tests/e2e/test_g01.py"]
+    register["gates"][0]["evidence"]["test_nodes"] = [_dummy_test_node()]
     register["gates"][0]["evidence"]["run_receipts"] = [
         {
             field: "present"
@@ -186,7 +202,7 @@ def test_done_gate_rejects_semantically_empty_structured_placeholders() -> None:
     register = copy.deepcopy(load_gate_register())
     gate = register["gates"][0]
     gate["status"] = "done"
-    gate["evidence"]["test_nodes"] = ["present"]
+    gate["evidence"]["test_nodes"] = [_dummy_test_node()]
     gate["evidence"]["run_receipts"] = [
         {
             "run_id": "g01-run-001",
@@ -264,13 +280,98 @@ def test_done_gate_blocks_input_bytes_and_manifest_hash_drift(tmp_path) -> None:
         validate_gate_register(register, evidence_root=tmp_path)
 
 
+def test_done_gate_blocks_test_node_mutation(tmp_path) -> None:
+    register, paths = _done_register_with_files(tmp_path)
+    paths["tests/e2e/test_g01.py"].write_bytes(b"arbitrary bytes")
+
+    with pytest.raises(GateRegisterError, match="evidence_sha256_mismatch:G01:test_node"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_rejects_rehashed_file_without_declared_test_node(tmp_path) -> None:
+    register, paths = _done_register_with_files(tmp_path)
+    replacement = b"def test_other():\n    assert True\n"
+    paths["tests/e2e/test_g01.py"].write_bytes(replacement)
+    register["gates"][0]["evidence"]["test_nodes"][0]["file_sha256"] = hashlib.sha256(
+        replacement
+    ).hexdigest()
+
+    with pytest.raises(GateRegisterError, match="test_node_not_found:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_blocks_normalized_duplicate_artifact_paths(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    receipt["input_artifacts"].append(
+        {
+            "path": "inputs/./source.txt",
+            "sha256": receipt["input_artifacts"][0]["sha256"],
+        }
+    )
+    receipt["input_sha256"] = _manifest_sha256(receipt["input_artifacts"])
+
+    with pytest.raises(GateRegisterError, match="duplicate_input_artifact:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_blocks_cross_role_and_handoff_path_duplicates(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    receipt["output_artifacts"] = [copy.deepcopy(receipt["input_artifacts"][0])]
+    receipt["output_sha256"] = _manifest_sha256(receipt["output_artifacts"])
+
+    with pytest.raises(GateRegisterError, match="artifact_used_as_input_and_output:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+    register, _ = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    duplicate = copy.deepcopy(receipt["handoff_receipts"][0])
+    duplicate["artifact_path"] = "evidence/./g01-handoff.json"
+    receipt["handoff_receipts"].append(duplicate)
+    with pytest.raises(GateRegisterError, match="duplicate_handoff_receipt:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_blocks_placeholder_file_bytes(tmp_path) -> None:
+    register, paths = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    paths["inputs/source.txt"].write_bytes(b"present")
+    receipt["input_artifacts"][0]["sha256"] = hashlib.sha256(b"present").hexdigest()
+    receipt["input_sha256"] = _manifest_sha256(receipt["input_artifacts"])
+
+    with pytest.raises(GateRegisterError, match="evidence_file_placeholder:G01:input_artifact"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_blocks_placeholder_evidence_text(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    register["gates"][0]["evidence"]["run_receipts"][0]["handoff_receipts"][0][
+        "evidence"
+    ] = "present"
+
+    with pytest.raises(GateRegisterError, match="handoff_receipt_evidence_placeholder:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_reads_run_report_identity_and_status(tmp_path) -> None:
+    register, paths = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    wrong_report = b'{"run_id":"different-run","status":"executed"}'
+    paths["evidence/g01-run-report.json"].write_bytes(wrong_report)
+    receipt["run_report"]["sha256"] = hashlib.sha256(wrong_report).hexdigest()
+
+    with pytest.raises(GateRegisterError, match="run_report_run_id_mismatch:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
 def test_done_gate_blocks_evidence_path_escape(tmp_path) -> None:
     register, _ = _done_register_with_files(tmp_path)
     register["gates"][0]["evidence"]["run_receipts"][0]["handoff_receipts"][0][
         "artifact_path"
     ] = "../outside.json"
 
-    with pytest.raises(GateRegisterError, match="evidence_path_outside_root:G01"):
+    with pytest.raises(GateRegisterError, match="evidence_path_traversal:G01"):
         validate_gate_register(register, evidence_root=tmp_path)
 
 

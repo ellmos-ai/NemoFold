@@ -174,9 +174,18 @@
       "negative_cases": ["Fehlende, leere oder bildbasierte Seiten blockieren die Synthese bis zur manuellen oder OCR-gestützten Prüfung."],
       "evidence": {
         "test_nodes": [
-          "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff",
-          "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_missing_expected_pdf_page_blocks_before_synopsis",
-          "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_declared_pdf_with_scanned_second_page_blocks_before_synopsis"
+          {
+            "node": "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff",
+            "file_sha256": "e1410b20c63f16d8615021071c00cff9bdd2093a687f961bdf2cdcb786db0a2a"
+          },
+          {
+            "node": "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_missing_expected_pdf_page_blocks_before_synopsis",
+            "file_sha256": "e1410b20c63f16d8615021071c00cff9bdd2093a687f961bdf2cdcb786db0a2a"
+          },
+          {
+            "node": "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_declared_pdf_with_scanned_second_page_blocks_before_synopsis",
+            "file_sha256": "e1410b20c63f16d8615021071c00cff9bdd2093a687f961bdf2cdcb786db0a2a"
+          }
         ],
         "run_receipts": []
       }
