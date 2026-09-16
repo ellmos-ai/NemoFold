@@ -1746,9 +1746,14 @@ def _execute_document_registry(
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Extract fixed columns from a folder into a table, anchor included."""
     expectations = job.parameters.get("expected_pdf_pages", {})
+    require_complete_pdf_inventory = job.parameters.get(
+        "require_complete_pdf_inventory", False
+    )
     try:
         page_checks = verify_pdf_page_expectations(
-            inventory.records, expectations
+            inventory.records,
+            expectations,
+            require_complete_inventory=require_complete_pdf_inventory,
         )
     except PdfPageExpectationError as exc:
         raise WorkflowBlocked(
@@ -1759,7 +1764,10 @@ def _execute_document_registry(
                 read_source_ids=(),
                 cited_source_ids=(),
             ),
-            metadata={"expected_pdf_pages": expectations},
+            metadata={
+                "expected_pdf_pages": expectations,
+                "require_complete_pdf_inventory": require_complete_pdf_inventory,
+            },
         ) from exc
     columns = columns_from_parameters(
         job.parameters.get("columns"), job.parameters.get("column_template")
@@ -1933,6 +1941,7 @@ def _execute_document_registry(
         coverage,
         {
             "columns": [column.name for column in columns],
+            "require_complete_pdf_inventory": require_complete_pdf_inventory,
             "verified_pdf_pages": [check.as_payload() for check in page_checks],
             "rows": len(table.rows),
             "filled_cells": table.filled_cells,

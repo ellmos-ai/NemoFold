@@ -291,6 +291,7 @@ def _g02_case(
                         "expected_pdf_pages": {
                             "01-endokrinologie.pdf": expected_pages
                         },
+                        "require_complete_pdf_inventory": True,
                         "formats": ["md"],
                     },
                 },

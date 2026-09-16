@@ -43,9 +43,23 @@ class PdfPageExpectationError(ValueError):
 
 
 def verify_pdf_page_expectations(
-    sources: tuple[SourceRecord, ...], expectations: dict[str, int]
+    sources: tuple[SourceRecord, ...],
+    expectations: dict[str, int],
+    *,
+    require_complete_inventory: bool = False,
 ) -> tuple[PdfPageCheck, ...]:
     """Check every declared source; absence cannot be guessed without a declaration."""
+    if require_complete_inventory:
+        undeclared = sorted(
+            source.display_name
+            for source in sources
+            if Path(source.path).suffix.casefold() == ".pdf"
+            and source.display_name not in expectations
+        )
+        if undeclared:
+            raise PdfPageExpectationError(
+                "expected_pdf_source_undeclared", undeclared[0]
+            )
     checks: list[PdfPageCheck] = []
     for display_name, expected_pages in sorted(expectations.items()):
         matched = [source for source in sources if source.display_name == display_name]

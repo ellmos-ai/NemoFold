@@ -104,6 +104,7 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
                         "topic_filter": ["Schilddrüse"],
                         "source_tables": ["bericht"],
                         "expected_pdf_pages": {"01-endokrinologie.pdf": 1},
+                        "require_complete_pdf_inventory": True,
                         "formats": ["md"],
                     },
                 },
@@ -147,6 +148,7 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
     assert receipt["schema"] == "nemofold.artifact-handoff.v1"
     assert receipt["status"] == "verified"
     assert receipt["source_scope"]["source_tables"] == ["bericht"]
+    assert receipt["source_scope"]["require_complete_pdf_inventory"] is True
     assert receipt["application_domain"] == "medical_reports"
     assert len(receipt["source_lineage"]) == 2
     assert {Path(item["path"]).name for item in receipt["source_lineage"]} == {
@@ -364,4 +366,66 @@ def test_g02_declared_pdf_with_scanned_second_page_blocks_before_synopsis(
         "expected_pdf_page_image_review_required:01-endokrinologie.pdf:page=2",
     )
     assert not (tmp_path / "out" / "register" / "g02_scanned_page_01.registry.json").exists()
+    assert not (tmp_path / "out" / "synopsis").exists()
+
+
+def test_g02_complete_pdf_inventory_blocks_an_undeclared_report(tmp_path: Path) -> None:
+    reports = tmp_path / "fictional-doctor-folder"
+    reports.mkdir()
+    (reports / "01-endokrinologie.pdf").write_bytes(
+        _render_pdf("Patient: Fallperson 204\nBefund: Schilddrüse unauffällig.\n")
+    )
+    (reports / "02-undeclared.pdf").write_bytes(
+        _render_pdf("Patient: Fallperson 204\nBefund: Schilddrüse vergrößert.\n")
+    )
+    case = {
+        "name": "G02 · complete PDF inventory",
+        "steps": [
+            {
+                "workflow": "document_registry",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "document_registry",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "register"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {
+                        "column_template": "medical_reports",
+                        "topic_filter": ["Schilddrüse"],
+                        "expected_pdf_pages": {"01-endokrinologie.pdf": 1},
+                        "require_complete_pdf_inventory": True,
+                        "formats": ["md"],
+                    },
+                },
+            },
+            {
+                "workflow": "synopsis_merge",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "synopsis_merge",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "synopsis"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {"title": "Schilddrüse", "formats": ["md", "pdf"]},
+                },
+                "handoff": {"format": "document-registry", "mode": "selected_sources"},
+            },
+        ],
+    }
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="g02_undeclared_pdf",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "stopped"
+    assert result.steps[0].errors == (
+        "expected_pdf_source_undeclared:02-undeclared.pdf",
+    )
+    assert not (tmp_path / "out" / "register" / "g02_undeclared_pdf_01.registry.json").exists()
     assert not (tmp_path / "out" / "synopsis").exists()

@@ -250,6 +250,7 @@ WORKFLOW_PARAMETER_FIELDS = {
         {
             "required_columns",
             "expected_pdf_pages",
+            "require_complete_pdf_inventory",
             "source_tables",
             "structured_sources",
             "column_template",
@@ -323,6 +324,10 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             ):
                 raise ValueError("expected_pdf_pages contains an invalid source or count")
             normalized_names.add(name.casefold())
+    if "require_complete_pdf_inventory" in job.parameters and not isinstance(
+        job.parameters["require_complete_pdf_inventory"], bool
+    ):
+        raise ValueError("require_complete_pdf_inventory must be a boolean")
     if "source_selected_lines" in job.parameters:
         selections = job.parameters["source_selected_lines"]
         if not isinstance(selections, dict) or len(selections) > 500:

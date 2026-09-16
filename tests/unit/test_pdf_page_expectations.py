@@ -105,3 +105,22 @@ def test_raster_body_with_selectable_footer_requires_image_review(tmp_path) -> N
         verify_pdf_page_expectations(
             inventory.records, {"scanned-body.pdf": 1}
         )
+
+
+def test_complete_pdf_inventory_rejects_an_undeclared_pdf(tmp_path) -> None:
+    """A complete-folder claim cannot silently omit another PDF in the same input."""
+    for name in ("declared.pdf", "undeclared.pdf"):
+        writer = PdfWriter()
+        writer.add_blank_page(width=595, height=842)
+        writer.write(tmp_path / name)
+    inventory = scan_paths((str(tmp_path),))
+
+    with pytest.raises(
+        PdfPageExpectationError,
+        match="expected_pdf_source_undeclared:undeclared.pdf",
+    ):
+        verify_pdf_page_expectations(
+            inventory.records,
+            {"declared.pdf": 1},
+            require_complete_inventory=True,
+        )

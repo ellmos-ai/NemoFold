@@ -343,11 +343,15 @@ def _selected_registry_sources(
     source_tables = snapshot.parameters.get("source_tables", [])
     structured_sources = snapshot.parameters.get("structured_sources", False)
     expected_pdf_pages = snapshot.parameters.get("expected_pdf_pages", {})
+    require_complete_pdf_inventory = snapshot.parameters.get(
+        "require_complete_pdf_inventory", False
+    )
     if (
         not isinstance(source_tables, list)
         or any(not isinstance(name, str) or not name.strip() for name in source_tables)
         or not isinstance(structured_sources, bool)
         or not isinstance(expected_pdf_pages, dict)
+        or not isinstance(require_complete_pdf_inventory, bool)
     ):
         raise ValueError("handoff_producer_source_scope_invalid")
     sources = {source.source_id: source for source in snapshot.sources}
@@ -361,7 +365,9 @@ def _selected_registry_sources(
         verified_pdf_pages = [
             check.as_payload()
             for check in verify_pdf_page_expectations(
-                snapshot.sources, expected_pdf_pages
+                snapshot.sources,
+                expected_pdf_pages,
+                require_complete_inventory=require_complete_pdf_inventory,
             )
         ]
     except PdfPageExpectationError as exc:
@@ -470,6 +476,7 @@ def _selected_registry_sources(
         "source_scope": {
             "source_tables": list(source_tables),
             "structured_sources": structured_sources,
+            "require_complete_pdf_inventory": require_complete_pdf_inventory,
         },
         "selected_source_ids": selected_ids,
         "selected_source_sha256": source_hashes,

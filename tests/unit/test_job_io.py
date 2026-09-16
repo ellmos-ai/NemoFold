@@ -83,6 +83,7 @@ def test_registry_job_accepts_explicit_pdf_page_expectation(tmp_path) -> None:
         parameters={
             "column_template": "medical_reports",
             "expected_pdf_pages": {"01-endokrinologie.pdf": 2},
+            "require_complete_pdf_inventory": True,
         },
     )
 
@@ -91,6 +92,22 @@ def test_registry_job_accepts_explicit_pdf_page_expectation(tmp_path) -> None:
     assert loaded.job.parameters["expected_pdf_pages"] == {
         "01-endokrinologie.pdf": 2
     }
+    assert loaded.job.parameters["require_complete_pdf_inventory"] is True
+
+
+def test_registry_job_rejects_non_boolean_complete_pdf_inventory(tmp_path) -> None:
+    path = write_job(
+        tmp_path,
+        workflow="document_registry",
+        questions=[],
+        parameters={
+            "column_template": "medical_reports",
+            "require_complete_pdf_inventory": "yes",
+        },
+    )
+
+    with pytest.raises(JobFileError, match="require_complete_pdf_inventory"):
+        load_job_file(path)
 
 
 @pytest.mark.parametrize(
