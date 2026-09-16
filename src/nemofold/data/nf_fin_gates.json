@@ -143,6 +143,8 @@
       "run_id",
       "input_sha256",
       "output_sha256",
+      "input_artifacts",
+      "output_artifacts",
       "handoff_receipts",
       "run_report",
       "result_checks",

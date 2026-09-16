@@ -12,9 +12,104 @@ from nemofold.acceptance_gates import (
     summarize_gate_register,
     validate_gate_register,
     verify_ellmos_catalog,
+    verify_gate_evidence,
 )
 
 EXPECTED_GATE_IDS = [f"G{number:02d}" for number in range(1, 19)]
+
+
+def _manifest_sha256(artifacts: list[dict[str, str]]) -> str:
+    canonical = json.dumps(
+        artifacts,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _done_register_with_files(root) -> tuple[dict, dict[str, object]]:
+    files = {
+        "inputs/source.txt": b"Steuernummer: 12/345/67890\n",
+        "outputs/result.json": b'{"document":"steuerbescheid.pdf","line":1}',
+        "tests/e2e/test_g01.py": b"def test_g01():\n    assert True\n",
+        "evidence/g01-handoff.json": b'{"schema":"nemofold.handoff.v1"}',
+        "evidence/g01-run-report.json": b'{"status":"executed"}',
+        "evidence/g01-negative-run-report.json": b'{"status":"blocked"}',
+    }
+    paths = {}
+    for relative, content in files.items():
+        path = root / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(content)
+        paths[relative] = path
+
+    register = copy.deepcopy(load_gate_register())
+    input_artifacts = [
+        {
+            "path": "inputs/source.txt",
+            "sha256": hashlib.sha256(files["inputs/source.txt"]).hexdigest(),
+        }
+    ]
+    output_artifacts = [
+        {
+            "path": "outputs/result.json",
+            "sha256": hashlib.sha256(files["outputs/result.json"]).hexdigest(),
+        }
+    ]
+    gate = register["gates"][0]
+    gate["status"] = "done"
+    gate["evidence"]["test_nodes"] = ["tests/e2e/test_g01.py::test_g01"]
+    gate["evidence"]["run_receipts"] = [
+        {
+            "run_id": "g01-20260916-verified",
+            "input_sha256": _manifest_sha256(input_artifacts),
+            "output_sha256": _manifest_sha256(output_artifacts),
+            "input_artifacts": input_artifacts,
+            "output_artifacts": output_artifacts,
+            "handoff_receipts": [
+                {
+                    "producer": "inventory",
+                    "consumer": "document_search",
+                    "artifact_path": "evidence/g01-handoff.json",
+                    "artifact_sha256": hashlib.sha256(
+                        files["evidence/g01-handoff.json"]
+                    ).hexdigest(),
+                    "status": "verified",
+                    "evidence": "Übergabedatei vorhanden und hashgebunden.",
+                }
+            ],
+            "run_report": {
+                "path": "evidence/g01-run-report.json",
+                "sha256": hashlib.sha256(
+                    files["evidence/g01-run-report.json"]
+                ).hexdigest(),
+                "status": "executed",
+                "verified": True,
+            },
+            "result_checks": [
+                {
+                    "name": "source_locator_matches",
+                    "passed": True,
+                    "evidence": "Treffer und Fundstelle stimmen überein.",
+                }
+            ],
+            "negative_path": {
+                "case": "ambiguous_document",
+                "run_id": "g01-20260916-blocked",
+                "status": "blocked",
+                "blocked_as_expected": True,
+                "evidence": "Mehrdeutiger Treffer wurde blockiert.",
+                "run_report": {
+                    "path": "evidence/g01-negative-run-report.json",
+                    "sha256": hashlib.sha256(
+                        files["evidence/g01-negative-run-report.json"]
+                    ).hexdigest(),
+                },
+            },
+        }
+    ]
+    return register, paths
 
 
 def test_shipped_gate_register_is_complete_without_false_done_claims() -> None:
@@ -97,6 +192,8 @@ def test_done_gate_rejects_semantically_empty_structured_placeholders() -> None:
             "run_id": "g01-run-001",
             "input_sha256": "0" * 64,
             "output_sha256": "0" * 64,
+            "input_artifacts": ["present"],
+            "output_artifacts": ["present"],
             "handoff_receipts": ["present"],
             "run_report": "present",
             "result_checks": ["present"],
@@ -108,58 +205,73 @@ def test_done_gate_rejects_semantically_empty_structured_placeholders() -> None:
         validate_gate_register(register)
 
 
-def test_done_gate_accepts_typed_positive_and_negative_evidence() -> None:
-    register = copy.deepcopy(load_gate_register())
-    gate = register["gates"][0]
-    gate["status"] = "done"
-    gate["evidence"]["test_nodes"] = [
-        "tests/e2e/test_g01.py::test_document_search_positive_and_blocked_paths"
-    ]
-    gate["evidence"]["run_receipts"] = [
-        {
-            "run_id": "g01-20260916-001",
-            "input_sha256": hashlib.sha256(b"input").hexdigest(),
-            "output_sha256": hashlib.sha256(b"output").hexdigest(),
-            "handoff_receipts": [
-                {
-                    "producer": "inventory",
-                    "consumer": "document_search",
-                    "artifact_path": "evidence/g01-handoff.json",
-                    "artifact_sha256": hashlib.sha256(b"handoff").hexdigest(),
-                    "status": "verified",
-                    "evidence": "Schema und Hash im E2E-Test geprüft.",
-                }
-            ],
-            "run_report": {
-                "path": "evidence/g01-run-report.json",
-                "sha256": hashlib.sha256(b"report").hexdigest(),
-                "status": "executed",
-                "verified": True,
-            },
-            "result_checks": [
-                {
-                    "name": "source_locator_matches",
-                    "passed": True,
-                    "evidence": "Treffer und Fundstelle stimmen mit der Fixture überein.",
-                }
-            ],
-            "negative_path": {
-                "case": "ambiguous_document",
-                "run_id": "g01-20260916-002",
-                "status": "blocked",
-                "blocked_as_expected": True,
-                "evidence": "Mehrdeutige Treffer erzeugen keine unbelegte Auswahl.",
-                "run_report": {
-                    "path": "evidence/g01-negative-run-report.json",
-                    "sha256": hashlib.sha256(b"negative-report").hexdigest(),
-                },
-            },
-        }
-    ]
+def test_done_gate_requires_an_evidence_root_for_file_verification(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
 
-    validated = validate_gate_register(register)
-    assert validated["gates"][0]["status"] == "done"
-    assert summarize_gate_register(validated)["counts"]["done"] == 1
+    with pytest.raises(GateRegisterError, match="done_gate_requires_evidence_root:G01"):
+        validate_gate_register(register)
+
+
+def test_done_gate_verifies_referenced_files_and_blocks_mutation(tmp_path) -> None:
+    register, paths = _done_register_with_files(tmp_path)
+
+    validated = validate_gate_register(register, evidence_root=tmp_path)
+    verification = verify_gate_evidence(validated, tmp_path)
+
+    assert summarize_gate_register(validated, evidence_root=tmp_path)["counts"]["done"] == 1
+    assert verification == {
+        "evidence_root": str(tmp_path.resolve()),
+        "verified_done_gates": ["G01"],
+        "checked_file_count": 6,
+        "checked_files": [
+            "evidence/g01-handoff.json",
+            "evidence/g01-negative-run-report.json",
+            "evidence/g01-run-report.json",
+            "inputs/source.txt",
+            "outputs/result.json",
+            "tests/e2e/test_g01.py",
+        ],
+    }
+
+    paths["evidence/g01-handoff.json"].write_bytes(b'{"mutated":true}')
+    with pytest.raises(GateRegisterError, match="evidence_sha256_mismatch:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_requires_input_and_output_artifact_manifests(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    del register["gates"][0]["evidence"]["run_receipts"][0]["input_artifacts"]
+
+    with pytest.raises(GateRegisterError, match="run_receipt_fields_missing:G01:input_artifacts"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_blocks_input_bytes_and_manifest_hash_drift(tmp_path) -> None:
+    register, paths = _done_register_with_files(tmp_path)
+    paths["inputs/source.txt"].write_bytes(b"manipulated input")
+
+    with pytest.raises(
+        GateRegisterError,
+        match="evidence_sha256_mismatch:G01:input_artifact:inputs/source.txt",
+    ):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+    register, _ = _done_register_with_files(tmp_path)
+    register["gates"][0]["evidence"]["run_receipts"][0]["input_sha256"] = hashlib.sha256(
+        b"wrong manifest"
+    ).hexdigest()
+    with pytest.raises(GateRegisterError, match="input_manifest_sha256_mismatch:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_blocks_evidence_path_escape(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    register["gates"][0]["evidence"]["run_receipts"][0]["handoff_receipts"][0][
+        "artifact_path"
+    ] = "../outside.json"
+
+    with pytest.raises(GateRegisterError, match="evidence_path_outside_root:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
 
 
 def test_catalog_verification_blocks_hash_and_semantic_drift(tmp_path) -> None:

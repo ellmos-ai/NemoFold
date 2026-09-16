@@ -17,7 +17,11 @@ class GateRegisterError(ValueError):
     """Raised when the acceptance register or its provenance is invalid."""
 
 
-def load_gate_register(path: str | Path | None = None) -> dict[str, Any]:
+def load_gate_register(
+    path: str | Path | None = None,
+    *,
+    evidence_root: str | Path | None = None,
+) -> dict[str, Any]:
     if path is None:
         resource = files("nemofold").joinpath("data", "nf_fin_gates.json")
         raw = resource.read_text(encoding="utf-8")
@@ -27,10 +31,14 @@ def load_gate_register(path: str | Path | None = None) -> dict[str, Any]:
         payload = json.loads(raw)
     except json.JSONDecodeError as exc:
         raise GateRegisterError(f"invalid_gate_register_json:{exc.msg}") from exc
-    return validate_gate_register(payload)
+    return validate_gate_register(payload, evidence_root=evidence_root)
 
 
-def validate_gate_register(payload: object) -> dict[str, Any]:
+def validate_gate_register(
+    payload: object,
+    *,
+    evidence_root: str | Path | None = None,
+) -> dict[str, Any]:
     register = _mapping(payload, "gate_register_must_be_object")
     if register.get("schema") != "nemofold.acceptance-gates.v1":
         raise GateRegisterError("unsupported_gate_register_schema")
@@ -73,6 +81,7 @@ def validate_gate_register(payload: object) -> dict[str, Any]:
         raise GateRegisterError("gate_ids_must_be_exactly_G01_through_G18")
 
     referenced_usecase_ids: set[int] = set()
+    done_gates: list[dict[str, Any]] = []
     for raw_gate in gates:
         gate = _mapping(raw_gate, "gate_must_be_object")
         gate_id = str(gate["gate_id"])
@@ -126,14 +135,26 @@ def validate_gate_register(payload: object) -> dict[str, Any]:
                     f"run_receipt_fields_missing:{gate_id}:{','.join(sorted(missing))}"
                 )
             _validate_run_receipt(receipt_data, gate_id)
+        if status == "done":
+            done_gates.append(gate)
 
     if referenced_usecase_ids != set(selected_by_id):
         raise GateRegisterError("selected_usecases_must_equal_gate_references")
+    if done_gates:
+        if evidence_root is None:
+            raise GateRegisterError(
+                f"done_gate_requires_evidence_root:{done_gates[0]['gate_id']}"
+            )
+        _verify_done_gate_files(done_gates, evidence_root)
     return register
 
 
-def summarize_gate_register(register: object) -> dict[str, Any]:
-    validated = validate_gate_register(register)
+def summarize_gate_register(
+    register: object,
+    *,
+    evidence_root: str | Path | None = None,
+) -> dict[str, Any]:
+    validated = validate_gate_register(register, evidence_root=evidence_root)
     counts = Counter(gate["status"] for gate in validated["gates"])
     ordered_counts = {status: counts[status] for status in sorted(ALLOWED_STATUSES)}
     open_gates = [
@@ -146,8 +167,13 @@ def summarize_gate_register(register: object) -> dict[str, Any]:
     }
 
 
-def verify_ellmos_catalog(register: object, catalog_path: str | Path) -> dict[str, Any]:
-    validated = validate_gate_register(register)
+def verify_ellmos_catalog(
+    register: object,
+    catalog_path: str | Path,
+    *,
+    evidence_root: str | Path | None = None,
+) -> dict[str, Any]:
+    validated = validate_gate_register(register, evidence_root=evidence_root)
     path = Path(catalog_path).resolve()
     raw = path.read_bytes()
     actual_sha = hashlib.sha256(raw).hexdigest()
@@ -182,6 +208,21 @@ def verify_ellmos_catalog(register: object, catalog_path: str | Path) -> dict[st
     }
 
 
+def verify_gate_evidence(
+    register: object,
+    evidence_root: str | Path,
+) -> dict[str, Any]:
+    validated = validate_gate_register(register, evidence_root=evidence_root)
+    done_gates = [gate for gate in validated["gates"] if gate["status"] == "done"]
+    checked_files = _verify_done_gate_files(done_gates, evidence_root)
+    return {
+        "evidence_root": str(Path(evidence_root).resolve()),
+        "verified_done_gates": [gate["gate_id"] for gate in done_gates],
+        "checked_file_count": len(checked_files),
+        "checked_files": checked_files,
+    }
+
+
 def _mapping(value: object, error: str) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise GateRegisterError(error)
@@ -200,6 +241,30 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
         raise GateRegisterError(f"run_receipt_run_id_placeholder:{gate_id}")
     for field in ("input_sha256", "output_sha256"):
         _validate_evidence_sha(receipt.get(field), gate_id, "run_receipt")
+    for direction in ("input", "output"):
+        artifacts = receipt.get(f"{direction}_artifacts")
+        if not isinstance(artifacts, list) or not artifacts:
+            raise GateRegisterError(
+                f"{direction}_artifacts_must_be_nonempty_list:{gate_id}"
+            )
+        seen_paths: set[str] = set()
+        for artifact in artifacts:
+            item = _mapping(artifact, f"{direction}_artifact_must_be_object:{gate_id}")
+            path = _nonempty_string(
+                item.get("path"), f"{direction}_artifact_path_missing:{gate_id}"
+            )
+            if path in seen_paths:
+                raise GateRegisterError(f"duplicate_{direction}_artifact:{gate_id}:{path}")
+            seen_paths.add(path)
+            _validate_evidence_sha(
+                item.get("sha256"), gate_id, f"{direction}_artifact"
+            )
+        expected_manifest_sha = _artifact_manifest_sha256(artifacts)
+        if receipt[f"{direction}_sha256"] != expected_manifest_sha:
+            raise GateRegisterError(
+                f"{direction}_manifest_sha256_mismatch:{gate_id}:"
+                f"expected={receipt[f'{direction}_sha256']}:actual={expected_manifest_sha}"
+            )
 
     handoffs = receipt.get("handoff_receipts")
     if not isinstance(handoffs, list) or not handoffs:
@@ -250,3 +315,102 @@ def _validate_evidence_sha(value: object, gate_id: str, prefix: str) -> str:
     if len(set(value)) == 1:
         raise GateRegisterError(f"{prefix}_sha256_placeholder:{gate_id}")
     return value
+
+
+def _artifact_manifest_sha256(artifacts: list[object]) -> str:
+    canonical = json.dumps(
+        artifacts,
+        ensure_ascii=False,
+        separators=(",", ":"),
+        sort_keys=True,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def _verify_done_gate_files(
+    done_gates: list[dict[str, Any]],
+    evidence_root: str | Path,
+) -> list[str]:
+    root = Path(evidence_root).resolve()
+    if not root.is_dir():
+        raise GateRegisterError(f"evidence_root_not_directory:{root}")
+    checked: list[str] = []
+    for gate in done_gates:
+        gate_id = gate["gate_id"]
+        for node in gate["evidence"]["test_nodes"]:
+            test_path = node.split("::", 1)[0]
+            checked.append(
+                _verify_evidence_file(root, test_path, None, gate_id, "test_node")
+            )
+        for receipt in gate["evidence"]["run_receipts"]:
+            for direction in ("input", "output"):
+                for artifact in receipt[f"{direction}_artifacts"]:
+                    checked.append(
+                        _verify_evidence_file(
+                            root,
+                            artifact["path"],
+                            artifact["sha256"],
+                            gate_id,
+                            f"{direction}_artifact",
+                        )
+                    )
+            for handoff in receipt["handoff_receipts"]:
+                checked.append(
+                    _verify_evidence_file(
+                        root,
+                        handoff["artifact_path"],
+                        handoff["artifact_sha256"],
+                        gate_id,
+                        "handoff_receipt",
+                    )
+                )
+            checked.append(
+                _verify_evidence_file(
+                    root,
+                    receipt["run_report"]["path"],
+                    receipt["run_report"]["sha256"],
+                    gate_id,
+                    "run_report",
+                )
+            )
+            negative_report = receipt["negative_path"]["run_report"]
+            checked.append(
+                _verify_evidence_file(
+                    root,
+                    negative_report["path"],
+                    negative_report["sha256"],
+                    gate_id,
+                    "negative_path",
+                )
+            )
+    return sorted(set(checked))
+
+
+def _verify_evidence_file(
+    root: Path,
+    relative_path: object,
+    expected_sha256: str | None,
+    gate_id: str,
+    kind: str,
+) -> str:
+    path_text = _nonempty_string(relative_path, f"evidence_path_missing:{gate_id}:{kind}")
+    declared = Path(path_text)
+    if declared.is_absolute():
+        raise GateRegisterError(f"evidence_path_must_be_relative:{gate_id}:{kind}:{path_text}")
+    candidate = (root / declared).resolve()
+    try:
+        candidate.relative_to(root)
+    except ValueError as exc:
+        raise GateRegisterError(
+            f"evidence_path_outside_root:{gate_id}:{kind}:{path_text}"
+        ) from exc
+    if not candidate.is_file():
+        raise GateRegisterError(f"evidence_file_missing:{gate_id}:{kind}:{path_text}")
+    if expected_sha256 is not None:
+        actual_sha256 = hashlib.sha256(candidate.read_bytes()).hexdigest()
+        if actual_sha256 != expected_sha256:
+            raise GateRegisterError(
+                f"evidence_sha256_mismatch:{gate_id}:{kind}:{path_text}:"
+                f"expected={expected_sha256}:actual={actual_sha256}"
+            )
+    return candidate.relative_to(root).as_posix()

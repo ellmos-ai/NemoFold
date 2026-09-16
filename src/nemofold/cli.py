@@ -13,6 +13,7 @@ from .acceptance_gates import (
     load_gate_register,
     summarize_gate_register,
     verify_ellmos_catalog,
+    verify_gate_evidence,
 )
 from .application import (
     ExecutionConfig,
@@ -228,6 +229,10 @@ def build_parser() -> argparse.ArgumentParser:
         "--ellmos-catalog",
         help="verify the pinned Ellmos use-case catalog bytes and selected records",
     )
+    acceptance_gates.add_argument(
+        "--evidence-root",
+        help="required when a gate is done; verifies referenced files and SHA-256 values",
+    )
     return parser
 
 
@@ -317,17 +322,30 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 def _acceptance_gates_command(args: argparse.Namespace) -> int:
     try:
-        register = load_gate_register()
+        register = load_gate_register(evidence_root=args.evidence_root)
         catalog_verification = (
-            verify_ellmos_catalog(register, args.ellmos_catalog)
+            verify_ellmos_catalog(
+                register,
+                args.ellmos_catalog,
+                evidence_root=args.evidence_root,
+            )
             if args.ellmos_catalog
+            else None
+        )
+        gate_evidence_verification = (
+            verify_gate_evidence(register, args.evidence_root)
+            if args.evidence_root
             else None
         )
         payload = {
             "ok": True,
             "register": register,
-            "summary": summarize_gate_register(register),
+            "summary": summarize_gate_register(
+                register,
+                evidence_root=args.evidence_root,
+            ),
             "catalog_verification": catalog_verification,
+            "gate_evidence_verification": gate_evidence_verification,
         }
     except (GateRegisterError, OSError) as exc:
         print(
