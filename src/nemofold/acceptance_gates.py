@@ -114,6 +114,8 @@ def validate_gate_register(payload: object) -> dict[str, Any]:
             raise GateRegisterError(f"partial_gate_requires_test_node:{gate_id}")
         if status == "not_supported":
             _nonempty_string(gate.get("boundary"), f"unsupported_gate_requires_boundary:{gate_id}")
+        if status == "done" and not test_nodes:
+            raise GateRegisterError(f"done_gate_requires_test_node:{gate_id}")
         if status == "done" and not receipts:
             raise GateRegisterError(f"done_gate_requires_run_receipt:{gate_id}")
         for receipt in receipts:
@@ -123,18 +125,7 @@ def validate_gate_register(payload: object) -> dict[str, Any]:
                 raise GateRegisterError(
                     f"run_receipt_fields_missing:{gate_id}:{','.join(sorted(missing))}"
                 )
-            if any(
-                not isinstance(receipt_data[field], str)
-                or SHA256_PATTERN.fullmatch(receipt_data[field]) is None
-                for field in ("input_sha256", "output_sha256")
-            ):
-                raise GateRegisterError(f"run_receipt_sha256_invalid:{gate_id}")
-            if not isinstance(receipt_data["handoff_receipts"], list):
-                raise GateRegisterError(f"handoff_receipts_must_be_list:{gate_id}")
-            if not isinstance(receipt_data["result_checks"], list):
-                raise GateRegisterError(f"result_checks_must_be_list:{gate_id}")
-            if not isinstance(receipt_data["negative_path"], dict):
-                raise GateRegisterError(f"negative_path_must_be_object:{gate_id}")
+            _validate_run_receipt(receipt_data, gate_id)
 
     if referenced_usecase_ids != set(selected_by_id):
         raise GateRegisterError("selected_usecases_must_equal_gate_references")
@@ -200,4 +191,62 @@ def _mapping(value: object, error: str) -> dict[str, Any]:
 def _nonempty_string(value: object, error: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise GateRegisterError(error)
+    return value
+
+
+def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
+    run_id = _nonempty_string(receipt.get("run_id"), f"run_receipt_run_id_invalid:{gate_id}")
+    if run_id.lower() in {"present", "placeholder", "tbd", "todo", "unknown"}:
+        raise GateRegisterError(f"run_receipt_run_id_placeholder:{gate_id}")
+    for field in ("input_sha256", "output_sha256"):
+        _validate_evidence_sha(receipt.get(field), gate_id, "run_receipt")
+
+    handoffs = receipt.get("handoff_receipts")
+    if not isinstance(handoffs, list) or not handoffs:
+        raise GateRegisterError(f"handoff_receipts_must_be_nonempty_list:{gate_id}")
+    for handoff in handoffs:
+        item = _mapping(handoff, f"handoff_receipt_must_be_object:{gate_id}")
+        for field in ("producer", "consumer", "artifact_path", "evidence"):
+            _nonempty_string(item.get(field), f"handoff_receipt_{field}_missing:{gate_id}")
+        _validate_evidence_sha(item.get("artifact_sha256"), gate_id, "handoff_receipt")
+        if item.get("status") != "verified":
+            raise GateRegisterError(f"handoff_receipt_not_verified:{gate_id}")
+
+    run_report = _mapping(receipt.get("run_report"), f"run_report_must_be_object:{gate_id}")
+    _nonempty_string(run_report.get("path"), f"run_report_path_missing:{gate_id}")
+    _validate_evidence_sha(run_report.get("sha256"), gate_id, "run_report")
+    if run_report.get("status") != "executed" or run_report.get("verified") is not True:
+        raise GateRegisterError(f"run_report_not_verified_executed:{gate_id}")
+
+    checks = receipt.get("result_checks")
+    if not isinstance(checks, list) or not checks:
+        raise GateRegisterError(f"result_checks_must_be_nonempty_list:{gate_id}")
+    for check in checks:
+        item = _mapping(check, f"result_check_must_be_object:{gate_id}")
+        _nonempty_string(item.get("name"), f"result_check_name_missing:{gate_id}")
+        _nonempty_string(item.get("evidence"), f"result_check_evidence_missing:{gate_id}")
+        if item.get("passed") is not True:
+            raise GateRegisterError(f"result_check_not_passed:{gate_id}")
+
+    negative = _mapping(receipt.get("negative_path"), f"negative_path_must_be_object:{gate_id}")
+    for field in ("case", "run_id", "evidence"):
+        _nonempty_string(negative.get(field), f"negative_path_{field}_missing:{gate_id}")
+    if negative.get("status") not in {"blocked", "failed"}:
+        raise GateRegisterError(f"negative_path_status_invalid:{gate_id}")
+    if negative.get("blocked_as_expected") is not True:
+        raise GateRegisterError(f"negative_path_not_confirmed:{gate_id}")
+    negative_report = _mapping(
+        negative.get("run_report"), f"negative_path_run_report_must_be_object:{gate_id}"
+    )
+    _nonempty_string(
+        negative_report.get("path"), f"negative_path_run_report_path_missing:{gate_id}"
+    )
+    _validate_evidence_sha(negative_report.get("sha256"), gate_id, "negative_path")
+
+
+def _validate_evidence_sha(value: object, gate_id: str, prefix: str) -> str:
+    if not isinstance(value, str) or SHA256_PATTERN.fullmatch(value) is None:
+        raise GateRegisterError(f"{prefix}_sha256_invalid:{gate_id}")
+    if len(set(value)) == 1:
+        raise GateRegisterError(f"{prefix}_sha256_placeholder:{gate_id}")
     return value
