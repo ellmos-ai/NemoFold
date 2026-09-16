@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import os
 
 import pytest
 
@@ -330,6 +331,45 @@ def test_done_gate_blocks_cross_role_and_handoff_path_duplicates(tmp_path) -> No
     duplicate["artifact_path"] = "evidence/./g01-handoff.json"
     receipt["handoff_receipts"].append(duplicate)
     with pytest.raises(GateRegisterError, match="duplicate_handoff_receipt:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Windows path identity is case-insensitive")
+def test_done_gate_blocks_case_alias_artifact_duplicates_on_windows(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    duplicate = copy.deepcopy(receipt["input_artifacts"][0])
+    duplicate["path"] = "INPUTS/SOURCE.TXT"
+    receipt["input_artifacts"].append(duplicate)
+    receipt["input_sha256"] = _manifest_sha256(receipt["input_artifacts"])
+
+    with pytest.raises(GateRegisterError, match="duplicate_input_artifact:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_blocks_artifact_reuse_as_handoff(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    receipt["handoff_receipts"][0]["artifact_path"] = receipt["input_artifacts"][0][
+        "path"
+    ]
+    receipt["handoff_receipts"][0]["artifact_sha256"] = receipt["input_artifacts"][0][
+        "sha256"
+    ]
+
+    with pytest.raises(GateRegisterError, match="evidence_path_role_conflict:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_done_gate_requires_distinct_positive_and_negative_run_ids(tmp_path) -> None:
+    register, paths = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    receipt["negative_path"]["run_id"] = receipt["run_id"]
+    report = b'{"run_id":"g01-20260916-verified","status":"blocked"}'
+    paths["evidence/g01-negative-run-report.json"].write_bytes(report)
+    receipt["negative_path"]["run_report"]["sha256"] = hashlib.sha256(report).hexdigest()
+
+    with pytest.raises(GateRegisterError, match="positive_and_negative_run_id_same:G01"):
         validate_gate_register(register, evidence_root=tmp_path)
 
 

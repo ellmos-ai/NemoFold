@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import os
 import re
 from collections import Counter
 from importlib.resources import files
@@ -277,11 +278,12 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
                 item.get("path"), f"{direction}_artifact_path_missing:{gate_id}"
             )
             canonical_path = _canonical_relative_path(path, gate_id, f"{direction}_artifact")
-            if canonical_path in artifact_paths[direction]:
+            path_identity = _path_identity(canonical_path)
+            if path_identity in artifact_paths[direction]:
                 raise GateRegisterError(
                     f"duplicate_{direction}_artifact:{gate_id}:{canonical_path}"
                 )
-            artifact_paths[direction].add(canonical_path)
+            artifact_paths[direction].add(path_identity)
             _validate_evidence_sha(
                 item.get("sha256"), gate_id, f"{direction}_artifact"
             )
@@ -296,6 +298,7 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
         raise GateRegisterError(
             f"artifact_used_as_input_and_output:{gate_id}:{sorted(overlap)[0]}"
         )
+    claimed_paths = artifact_paths["input"] | artifact_paths["output"]
 
     handoffs = receipt.get("handoff_receipts")
     if not isinstance(handoffs, list) or not handoffs:
@@ -312,9 +315,15 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
         handoff_path = _canonical_relative_path(
             item.get("artifact_path"), gate_id, "handoff_receipt"
         )
-        if handoff_path in handoff_paths:
+        handoff_identity = _path_identity(handoff_path)
+        if handoff_identity in handoff_paths:
             raise GateRegisterError(f"duplicate_handoff_receipt:{gate_id}:{handoff_path}")
-        handoff_paths.add(handoff_path)
+        if handoff_identity in claimed_paths:
+            raise GateRegisterError(
+                f"evidence_path_role_conflict:{gate_id}:handoff_receipt:{handoff_path}"
+            )
+        handoff_paths.add(handoff_identity)
+        claimed_paths.add(handoff_identity)
         _validate_evidence_sha(item.get("artifact_sha256"), gate_id, "handoff_receipt")
         if item.get("status") != "verified":
             raise GateRegisterError(f"handoff_receipt_not_verified:{gate_id}")
@@ -323,6 +332,12 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
     positive_report_path = _canonical_relative_path(
         run_report.get("path"), gate_id, "run_report"
     )
+    positive_report_identity = _path_identity(positive_report_path)
+    if positive_report_identity in claimed_paths:
+        raise GateRegisterError(
+            f"evidence_path_role_conflict:{gate_id}:run_report:{positive_report_path}"
+        )
+    claimed_paths.add(positive_report_identity)
     _validate_evidence_sha(run_report.get("sha256"), gate_id, "run_report")
     if run_report.get("status") != "executed" or run_report.get("verified") is not True:
         raise GateRegisterError(f"run_report_not_verified_executed:{gate_id}")
@@ -356,14 +371,21 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
         raise GateRegisterError(f"negative_path_status_invalid:{gate_id}")
     if negative.get("blocked_as_expected") is not True:
         raise GateRegisterError(f"negative_path_not_confirmed:{gate_id}")
+    if negative.get("run_id") == receipt.get("run_id"):
+        raise GateRegisterError(f"positive_and_negative_run_id_same:{gate_id}")
     negative_report = _mapping(
         negative.get("run_report"), f"negative_path_run_report_must_be_object:{gate_id}"
     )
     negative_report_path = _canonical_relative_path(
         negative_report.get("path"), gate_id, "negative_path"
     )
-    if negative_report_path == positive_report_path:
-        raise GateRegisterError(f"positive_and_negative_run_report_same_path:{gate_id}")
+    negative_report_identity = _path_identity(negative_report_path)
+    if negative_report_identity in claimed_paths:
+        if negative_report_identity == positive_report_identity:
+            raise GateRegisterError(f"positive_and_negative_run_report_same_path:{gate_id}")
+        raise GateRegisterError(
+            f"evidence_path_role_conflict:{gate_id}:negative_path:{negative_report_path}"
+        )
     _validate_evidence_sha(negative_report.get("sha256"), gate_id, "negative_path")
 
 
@@ -383,6 +405,10 @@ def _canonical_relative_path(value: object, gate_id: str, kind: str) -> str:
     if ".." in declared.parts:
         raise GateRegisterError(f"evidence_path_traversal:{gate_id}:{kind}:{path_text}")
     return declared.as_posix()
+
+
+def _path_identity(path: str) -> str:
+    return os.path.normcase(str(Path(path))).replace("\\", "/")
 
 
 def _artifact_manifest_sha256(artifacts: list[object]) -> str:
