@@ -306,10 +306,23 @@ def _selected_registry_sources(
         or any(not isinstance(source_id, str) for source_id in skipped)
     ):
         raise ValueError("handoff_registry_selection_invalid")
-    selected_ids = [row["source_id"] for row in rows]
+    selected_ids = list(dict.fromkeys(row["source_id"] for row in rows))
     if not selected_ids:
         raise ValueError("handoff_selection_empty")
-    if len(set(selected_ids)) != len(selected_ids) or len(set(skipped)) != len(skipped):
+    if len(set(skipped)) != len(skipped):
+        raise ValueError("handoff_registry_selection_invalid")
+    row_lines: dict[str, list[int | None]] = {}
+    for row in rows:
+        line = row.get("record_line")
+        if line is not None and (
+            isinstance(line, bool) or not isinstance(line, int) or line < 1
+        ):
+            raise ValueError("handoff_registry_selection_invalid")
+        row_lines.setdefault(row["source_id"], []).append(line)
+    if any(
+        len(lines) != len(set(lines)) or (len(lines) > 1 and None in lines)
+        for lines in row_lines.values()
+    ):
         raise ValueError("handoff_registry_selection_invalid")
 
     snapshot_path = Path(output_dir) / "jobs" / f"{report.run_id}.json"
@@ -402,6 +415,8 @@ def _selected_registry_sources(
         if suffix not in STRUCTURED_SUFFIXES and not (
             suffix == ".csv" and structured_sources
         ):
+            if row_lines[source_id] != [None]:
+                raise ValueError("handoff_registry_lines_mismatch")
             continue
         lines = raw_topic_lines.get(source_id)
         if (
@@ -424,8 +439,15 @@ def _selected_registry_sources(
             )
         except (OSError, RuntimeError, ValueError) as exc:
             raise ValueError("handoff_topic_source_unreadable") from exc
+        if rendering.omitted_rows:
+            raise ValueError("handoff_topic_source_omitted_rows")
         if lines != list(expected_lines):
             raise ValueError("handoff_topic_lines_mismatch")
+        registry_lines = row_lines[source_id]
+        if registry_lines != lines and not (
+            registry_lines == [None] and len(lines) == 1
+        ):
+            raise ValueError("handoff_registry_lines_mismatch")
         selected_source_lines[item["consumer_source_id"]] = list(lines)
     return paths, {
         **receipt,

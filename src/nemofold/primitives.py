@@ -215,6 +215,7 @@ class FieldRow:
     source_id: str
     display_name: str
     values: tuple[FieldValue, ...]
+    record_line: int | None = None
 
     @property
     def filled_count(self) -> int:
@@ -246,6 +247,7 @@ def extract_fields(
     *,
     topic_filter: tuple[str, ...] = (),
     max_rows: int = 500,
+    structured_source_ids: frozenset[str] | None = None,
 ) -> tuple[tuple[FieldRow, ...], tuple[str, ...]]:
     """Read declared fields out of labelled lines; return rows and skipped ids.
 
@@ -253,6 +255,11 @@ def extract_fields(
     that could fill it, which is the property the whole registry rests on.
     """
     patterns = {spec.name: label_pattern(spec) for spec in fields}
+    if structured_source_ids is None:
+        structured_source_ids = frozenset(
+            source_id for source_id, display_name in sources
+            if Path(display_name).suffix.casefold() in {".db", ".sqlite", ".sqlite3", ".xlsx"}
+        )
     rows: list[FieldRow] = []
     skipped: list[str] = []
     for source_id, display_name in sources:
@@ -261,42 +268,57 @@ def extract_fields(
             skipped.append(source_id)
             continue
         lines = text.splitlines()
-        values: list[FieldValue] = []
-        for spec in fields:
-            pattern = patterns[spec.name]
-            found = FieldValue(field=spec.name)
-            for number, line in enumerate(lines, start=1):
-                # Structured readers label one record per line. Match each
-                # declared cell, but quote the whole row so its line anchor
-                # still names the exact record the value came from.
-                structured_row = _STRUCTURED_ROW.match(line) is not None
-                candidates = (
-                    tuple(cell.strip() for cell in line.split(" · ")[1:])
-                    if structured_row
-                    else (line,)
-                )
-                for candidate in candidates:
-                    match = pattern.match(candidate)
-                    if match is None:
-                        continue
-                    value = match.group("value").strip()[:MAX_VALUE_CHARS]
-                    if not value:
-                        continue
-                    found = FieldValue(
-                        field=spec.name,
-                        value=value,
-                        anchor=Anchor(source_id=source_id, line=number),
-                        quote=(candidate if structured_row else line.strip())[:MAX_VALUE_CHARS],
-                    )
-                    break
-                if found.value is not None:
-                    break
-            values.append(found)
-        rows.append(
-            FieldRow(source_id=source_id, display_name=display_name, values=tuple(values))
+        structured_lines = (
+            tuple(number for number, line in enumerate(lines, start=1)
+                  if _STRUCTURED_ROW.match(line))
+            if source_id in structured_source_ids else ()
         )
-        if len(rows) >= max_rows:
-            break
+        record_groups = (
+            tuple((number,) for number in structured_lines)
+            if structured_lines else (tuple(range(1, len(lines) + 1)),)
+        )
+        for group in record_groups:
+            values: list[FieldValue] = []
+            for spec in fields:
+                pattern = patterns[spec.name]
+                found = FieldValue(field=spec.name)
+                for number in group:
+                    line = lines[number - 1]
+                    # Structured readers label one record per line. Match each
+                    # declared cell without borrowing values from another row.
+                    structured_row = _STRUCTURED_ROW.match(line) is not None
+                    candidates = (
+                        tuple(cell.strip() for cell in line.split(" · ")[1:])
+                        if structured_row
+                        else (line,)
+                    )
+                    for candidate in candidates:
+                        match = pattern.match(candidate)
+                        if match is None:
+                            continue
+                        value = match.group("value").strip()[:MAX_VALUE_CHARS]
+                        if not value:
+                            continue
+                        found = FieldValue(
+                            field=spec.name,
+                            value=value,
+                            anchor=Anchor(source_id=source_id, line=number),
+                            quote=(candidate if structured_row else line.strip())[:MAX_VALUE_CHARS],
+                        )
+                        break
+                    if found.value is not None:
+                        break
+                values.append(found)
+            if len(rows) >= max_rows:
+                raise ValueError("field_rows_limit_exceeded")
+            rows.append(
+                FieldRow(
+                    source_id=source_id,
+                    display_name=display_name,
+                    values=tuple(values),
+                    record_line=group[0] if structured_lines else None,
+                )
+            )
     return tuple(rows), tuple(skipped)
 
 
@@ -424,7 +446,9 @@ class MergedDocument:
         return sum(len(section.paragraphs) for section in self.sections)
 
 
-def _sections_of(text: str) -> list[tuple[str, list[tuple[int, str]]]]:
+def _sections_of(
+    text: str, *, structured: bool = False
+) -> list[tuple[str, list[tuple[int, str]]]]:
     sections: list[tuple[str, list[tuple[int, str]]]] = []
     current_title = DEFAULT_SECTION
     current: list[tuple[int, str]] = []
@@ -438,7 +462,14 @@ def _sections_of(text: str) -> list[tuple[str, list[tuple[int, str]]]]:
             continue
         line = raw.strip()
         if line:
-            current.append((number, line[:MAX_PARAGRAPH_CHARS]))
+            if structured and _STRUCTURED_ROW.match(line):
+                _, *cells = line.split(" · ")
+                current.extend(
+                    (number, cell.strip()[:MAX_PARAGRAPH_CHARS])
+                    for cell in cells if cell.strip()
+                )
+            else:
+                current.append((number, line[:MAX_PARAGRAPH_CHARS]))
     if current:
         sections.append((current_title, current))
     return sections
@@ -449,6 +480,7 @@ def merge_sections(
     texts: dict[str, str],
     *,
     max_sections: int = 200,
+    structured_source_ids: frozenset[str] = frozenset(),
 ) -> MergedDocument:
     """Merge documents section by section, surfacing disagreements as conflicts.
 
@@ -466,7 +498,9 @@ def merge_sections(
         if text is None:
             continue
         used.append(source_id)
-        for title, entries in _sections_of(text):
+        for title, entries in _sections_of(
+            text, structured=source_id in structured_source_ids
+        ):
             key = title.casefold()
             if key not in grouped:
                 if len(ordered_titles) >= max_sections:

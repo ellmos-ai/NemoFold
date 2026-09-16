@@ -105,6 +105,80 @@ def test_structured_field_quote_still_contains_a_cell_after_a_long_prior_cell() 
     assert "Befund: Schilddrüse stabil" in finding.quote
 
 
+def test_structured_registry_limit_blocks_instead_of_silently_omitting_records() -> None:
+    text = "# Tabelle medizin\n\n" + "\n".join(
+        f"Zeile {number} · Befund: Schilddrüse {number}" for number in range(1, 502)
+    )
+    with pytest.raises(ValueError, match="field_rows_limit_exceeded"):
+        extract_fields(
+            (("src_table", "medizin.sqlite"),),
+            {"src_table": text},
+            (FieldSpec("Befund"),),
+            max_rows=500,
+        )
+
+
+def test_plain_text_with_a_row_like_note_keeps_ordinary_field_lines() -> None:
+    rows, skipped = extract_fields(
+        (("src_text", "bericht.txt"),),
+        {"src_text": "Befund: Schilddrüse stabil\nZeile 1 · Notiz: Tabellenfuß\n"},
+        (FieldSpec("Befund"),),
+    )
+
+    assert skipped == ()
+    assert len(rows) == 1
+    assert rows[0].record_line is None
+    assert rows[0].values[0].value == "Schilddrüse stabil"
+    assert rows[0].values[0].anchor == Anchor("src_text", 1)
+
+
+def test_merge_flags_a_structured_cell_against_a_text_finding_in_one_section() -> None:
+    merged = merge_sections(
+        ("src_sqlite", "src_text"),
+        {
+            "src_sqlite": "# Befunde\nZeile 1 · Befund: Schilddrüse stabil\n",
+            "src_text": "# Befunde\nBefund: Schilddrüse auffällig\n",
+        },
+        structured_source_ids=frozenset({"src_sqlite"}),
+    )
+
+    assert len(merged.conflicts) == 1
+    conflict = merged.conflicts[0]
+    assert conflict.section == "Befunde"
+    assert conflict.label == "befund"
+    assert conflict.values == (
+        ("Schilddrüse stabil", Anchor("src_sqlite", 2)),
+        ("Schilddrüse auffällig", Anchor("src_text", 2)),
+    )
+
+
+def test_merge_preserves_late_cell_of_a_long_structured_topic_row() -> None:
+    prior_cells = " · ".join(
+        f"Spalte {number}: " + "x" * 240 for number in range(1, 5)
+    )
+    text = f"# Befunde\nZeile 1 · {prior_cells} · Befund: Schilddrüse stabil\n"
+
+    merged = merge_sections(
+        ("src_sqlite",), {"src_sqlite": text},
+        structured_source_ids=frozenset({"src_sqlite"}),
+    )
+
+    paragraphs = merged.sections[0].paragraphs
+    assert any("Befund: Schilddrüse stabil" in item.text for item in paragraphs)
+    assert all(item.anchor == Anchor("src_sqlite", 2) for item in paragraphs)
+    assert all(item.text in text.splitlines()[1] for item in paragraphs)
+
+
+def test_merge_keeps_an_ordinary_text_row_like_note_as_one_verbatim_paragraph() -> None:
+    text = "# Notizen\nZeile 1 · Alpha: a · Beta: b\n"
+
+    merged = merge_sections(("src_text",), {"src_text": text})
+
+    assert [item.text for item in merged.sections[0].paragraphs] == [
+        "Zeile 1 · Alpha: a · Beta: b"
+    ]
+
+
 def test_deduplicate_keeps_the_first_and_records_every_strike() -> None:
     statements = (
         AnchoredStatement("Die Deckung gilt.", Anchor("src_a", 1)),

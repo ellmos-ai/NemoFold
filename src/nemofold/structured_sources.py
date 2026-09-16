@@ -59,6 +59,7 @@ class TableRendering:
     text: str
     row_count: int
     notes: tuple[str, ...]
+    omitted_rows: int = 0
 
 
 def mask_structured_rows(text: str, selected_lines: tuple[int, ...]) -> str:
@@ -158,6 +159,7 @@ def _render_rows(
         text="\n".join(lines) + "\n",
         row_count=len(kept),
         notes=tuple(f"{title}: {note}" for note in notes),
+        omitted_rows=len(rows) - len(kept),
     )
 
 
@@ -227,6 +229,7 @@ def read_sqlite(
             )
         parts: list[str] = []
         total = 0
+        omitted_rows = 0
         for name in wanted:
             if name not in available:
                 continue
@@ -251,6 +254,7 @@ def read_sqlite(
             parts.append(rendering.text)
             notes.extend(rendering.notes)
             if count > rendering.row_count:
+                omitted_rows += count - rendering.row_count
                 notes.append(
                     f"Tabelle {name}: {count - rendering.row_count} row(s) beyond the ceiling of "
                     f"{limit} were not rendered."
@@ -258,7 +262,10 @@ def read_sqlite(
             total += rendering.row_count
         if not parts:
             notes.append("no declared table was readable in this SQLite source.")
-        return TableRendering(text="\n".join(parts), row_count=total, notes=tuple(notes))
+        return TableRendering(
+            text="\n".join(parts), row_count=total, notes=tuple(notes),
+            omitted_rows=omitted_rows,
+        )
     except sqlite3.Error as exc:
         raise StructuredSourceError(f"cannot read SQLite source: {exc}") from exc
     finally:
@@ -308,6 +315,7 @@ def read_csv(
             f"{total - rendering.row_count} row(s) beyond the ceiling of {limit} "
             "were not rendered.",
         ),
+        omitted_rows=total - rendering.row_count,
     )
 
 
@@ -400,6 +408,7 @@ def read_xlsx(
         notes=rendering.notes + (
             f"{omitted} row(s) beyond the ceiling of {limit} were not rendered.",
         ),
+        omitted_rows=omitted,
     )
 
 

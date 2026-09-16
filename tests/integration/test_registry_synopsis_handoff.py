@@ -3,16 +3,19 @@
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from pathlib import Path
 
 import pytest
+from pypdf import PdfReader
 
 import nemofold.application as application
 import nemofold.voyage_runs as voyage_runs
 from nemofold.application import ExecutionConfig
 from nemofold.job_io import load_job_snapshot
 from nemofold.ledger import RunLedger
+from nemofold.structured_sources import read_structured
 from nemofold.voyage_runs import (
     _selected_registry_sources,
     run_voyage,
@@ -357,6 +360,156 @@ def test_topic_handoff_selects_rows_not_unrelated_rows_in_the_same_table(
     assert "Leberwert auffällig" not in synopsis
 
 
+def test_two_topic_rows_in_one_sqlite_source_both_reach_registry_and_synopsis(
+    tmp_path: Path,
+) -> None:
+    case = _case(tmp_path)
+    database = tmp_path / "reports" / "followups.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE bericht ("Befund" TEXT)')
+        connection.execute('INSERT INTO bericht VALUES (?)', ("Schilddrüse stabil",))
+        connection.execute('INSERT INTO bericht VALUES (?)', ("Leberwert auffällig",))
+        connection.execute('INSERT INTO bericht VALUES (?)', ("Schilddrüse vergrößert",))
+    case["steps"][0]["job"]["parameters"]["source_tables"] = ["bericht"]
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="two_rows_one_source",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "executed"
+    registry = json.loads(
+        (tmp_path / "out" / "01-register" / "two_rows_one_source_01.registry.json")
+        .read_text(encoding="utf-8")
+    )
+    rows = [row for row in registry["rows"] if row["display_name"] == "followups.sqlite"]
+    findings = [next(cell for cell in row["cells"] if cell["column"] == "Befund")
+                for row in rows]
+    assert [cell["value"] for cell in findings] == [
+        "Schilddrüse stabil", "Schilddrüse vergrößert"
+    ]
+    assert len({row["record_line"] for row in rows}) == 2
+    assert [cell["line"] for cell in findings] == [row["record_line"] for row in rows]
+    assert all(cell["quote"] == f"Befund: {cell['value']}" for cell in findings)
+    receipt = result.steps[1].handoff or {}
+    assert len(receipt["selected_source_ids"]) == 2  # text report + one SQLite file
+    lineage = next(item for item in receipt["source_lineage"]
+                   if item["path"].endswith("followups.sqlite"))
+    assert receipt["selected_source_lines"][lineage["consumer_source_id"]] == [
+        row["record_line"] for row in rows
+    ]
+    synopsis = (
+        tmp_path / "out" / "02-synopsis" / "two_rows_one_source_02.synopsis.md"
+    ).read_text(encoding="utf-8")
+    assert "Schilddrüse stabil" in synopsis
+    assert "Schilddrüse vergrößert" in synopsis
+    assert "Leberwert auffällig" not in synopsis
+    assert (
+        tmp_path / "out" / "02-synopsis" / "two_rows_one_source_02_synopsis.pdf"
+    ).is_file()
+
+
+def test_topic_handoff_blocks_when_sqlite_reader_omitted_later_rows(
+    tmp_path: Path,
+) -> None:
+    case = _case(tmp_path)
+    database = tmp_path / "reports" / "over_limit.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE bericht ("Befund" TEXT)')
+        connection.execute('INSERT INTO bericht VALUES (?)', ("AAA Schilddrüse stabil",))
+        connection.executemany(
+            'INSERT INTO bericht VALUES (?)',
+            ((f"MMM Leber {number:04d}",) for number in range(1, 2000)),
+        )
+        connection.execute('INSERT INTO bericht VALUES (?)', ("ZZZ Schilddrüse vergrößert",))
+    case["steps"][0]["job"]["parameters"]["source_tables"] = ["bericht"]
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="omitted_sqlite_rows",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "stopped"
+    assert result.steps[1].status == "handoff_blocked"
+    assert result.steps[1].errors == ("handoff_topic_source_omitted_rows",)
+    assert not (tmp_path / "out" / "02-synopsis").exists()
+
+
+def test_long_sqlite_finding_and_text_conflict_survive_into_synopsis_pdf(
+    tmp_path: Path,
+) -> None:
+    case = _case(tmp_path)
+    (tmp_path / "reports" / "thyroid.txt").write_text(
+        "# Tabelle bericht\nBefund: Schilddrüse auffällig\n", encoding="utf-8"
+    )
+    database = tmp_path / "reports" / "long.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            'CREATE TABLE bericht ("Spalte 1" TEXT, "Spalte 2" TEXT, '
+            '"Spalte 3" TEXT, "Spalte 4" TEXT, "Befund" TEXT)'
+        )
+        connection.execute(
+            'INSERT INTO bericht VALUES (?, ?, ?, ?, ?)',
+            (*("x" * 240 for _ in range(4)), "Schilddrüse stabil"),
+        )
+    case["steps"][0]["job"]["parameters"]["source_tables"] = ["bericht"]
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="long_row_conflict",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "executed"
+    registry = json.loads(
+        (tmp_path / "out" / "01-register" / "long_row_conflict_01.registry.json")
+        .read_text(encoding="utf-8")
+    )
+    row = next(item for item in registry["rows"] if item["display_name"] == "long.sqlite")
+    finding = next(cell for cell in row["cells"] if cell["column"] == "Befund")
+    assert finding["value"] == "Schilddrüse stabil"
+    synopsis_path = tmp_path / "out" / "02-synopsis" / "long_row_conflict_02.synopsis.md"
+    synopsis = synopsis_path.read_text(encoding="utf-8")
+    assert "Schilddrüse stabil" in synopsis
+    assert "Schilddrüse auffällig" in synopsis
+    report = RunLedger(tmp_path / "out" / "02-synopsis" / "ledger").load(
+        "long_row_conflict_02"
+    )
+    assert report.metadata["conflicts"] >= 1
+    assert "befund" in report.metadata["conflict_labels"]
+    pdf = tmp_path / "out" / "02-synopsis" / "long_row_conflict_02_synopsis.pdf"
+    pdf_text = "\n".join(page.extract_text() or "" for page in PdfReader(pdf).pages)
+    assert "Schilddrüse stabil" in pdf_text
+    assert "Schilddrüse auffällig" in pdf_text
+    evidence_markdown = next(
+        Path(item.path).read_text(encoding="utf-8")
+        for item in report.artifacts if item.format == "markdown"
+    )
+    source_texts = {
+        item["consumer_source_id"]: (
+            read_structured(item["path"], tables=("bericht",)).text
+            if item["path"].endswith(".sqlite")
+            else Path(item["path"]).read_text(encoding="utf-8")
+        )
+        for item in result.steps[1].handoff["source_lineage"]
+    }
+    locators = [
+        match.groups()
+        for line in evidence_markdown.splitlines()
+        if (match := re.match(r'^- \[([^,\]]+),.*\] "(.*)"$', line))
+    ]
+    assert len(locators) >= 4
+    assert all(quote in source_texts[source_id] for source_id, quote in locators)
+
+
 def test_selected_rows_block_changed_table_order_or_subset_before_consumer(
     tmp_path: Path,
 ) -> None:
@@ -416,6 +569,38 @@ def test_forged_topic_line_metadata_cannot_widen_a_verified_handoff(
     report.metadata["topic_selected_lines"][producer_id] = [selected[0] - 1, selected[0]]
 
     with pytest.raises(ValueError, match="handoff_topic_lines_mismatch"):
+        _selected_registry_sources(
+            receipt, report, output_dir=str(tmp_path / "out" / "01-register")
+        )
+
+
+def test_selected_text_source_cannot_claim_two_structured_record_lines(
+    tmp_path: Path,
+) -> None:
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(
+        _case(tmp_path)
+    )
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="forged_text_records",
+        base_dir=tmp_path,
+    )
+    assert result.status == "executed"
+    report = RunLedger(tmp_path / "out" / "01-register" / "ledger").load(
+        "forged_text_records_01"
+    )
+    receipt = result.steps[1].handoff or {}
+    registry_path = Path(receipt["path"])
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    row = dict(registry["rows"][0])
+    row["record_line"] = 1
+    duplicate = dict(row)
+    duplicate["record_line"] = 2
+    registry["rows"] = [row, duplicate]
+    registry_path.write_text(json.dumps(registry), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="handoff_registry_lines_mismatch"):
         _selected_registry_sources(
             receipt, report, output_dir=str(tmp_path / "out" / "01-register")
         )

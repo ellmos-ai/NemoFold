@@ -17,9 +17,16 @@ Section = MergedSection
 Conflict = MergeConflict
 
 
-def merge_synopsis(source_ids: tuple[str, ...], texts: dict[str, str]) -> MergedDocument:
+def merge_synopsis(
+    source_ids: tuple[str, ...],
+    texts: dict[str, str],
+    *,
+    structured_source_ids: frozenset[str] = frozenset(),
+) -> MergedDocument:
     """Adapter kept so the workflow reads in its own words."""
-    return merge_sections(source_ids, texts)
+    return merge_sections(
+        source_ids, texts, structured_source_ids=structured_source_ids
+    )
 
 
 def synopsis_markdown(synopsis: Synopsis, *, title: str) -> str:

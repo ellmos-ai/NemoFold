@@ -3,6 +3,7 @@ from __future__ import annotations
 import csv
 import io
 import json
+import sqlite3
 from datetime import date
 from pathlib import Path
 
@@ -217,3 +218,50 @@ def test_document_registry_runs_end_to_end_and_hashes_its_pdf(tmp_path) -> None:
         if cell["value"] is not None
     ]
     assert anchored and all(cell["source_id"] and cell["line"] for cell in anchored)
+
+
+def test_required_field_questions_identify_each_row_and_disclose_question_overflow(
+    tmp_path: Path,
+) -> None:
+    database = tmp_path / "reports.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute('CREATE TABLE bericht ("Name" TEXT, "Befund" TEXT)')
+        connection.executemany(
+            'INSERT INTO bericht VALUES (?, ?)',
+            ((f"Schilddrüse Fall {number:02d}", "") for number in range(1, 22)),
+        )
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "document_registry",
+            "input_roots": [str(database)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {
+                "source_tables": ["bericht"],
+                "topic_filter": ["Schilddrüse"],
+                "columns": [{"name": "Name"}, {"name": "Befund"}],
+                "required_columns": ["Befund"],
+            },
+        },
+        base_dir=tmp_path,
+    )
+
+    report = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="missing_rows"
+    ).report
+
+    assert report.status is RunStatus.BLOCKED
+    artifact = next(item for item in report.artifacts if item.format == "needs-user-input")
+    payload = json.loads(Path(artifact.path).read_text(encoding="utf-8"))
+    assert payload["question_count"] == 20
+    assert payload["total_question_count"] == 21
+    assert payload["unshown_question_count"] == 1
+    fields = [question["field"] for question in payload["questions"]]
+    assert len(set(fields)) == 20
+    assert fields[0].endswith(".line.5")
+    assert fields[-1].endswith(".line.24")
+    assert all("Zeile " in question["prompt"] for question in payload["questions"])
+    assert report.metadata["question_count"] == 21
+    assert report.metadata["unshown_question_count"] == 1

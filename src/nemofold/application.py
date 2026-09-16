@@ -1746,6 +1746,13 @@ def _execute_document_registry(
     )
     texts = _read_text_sources(inventory, job)
     topic_filter = tuple(job.parameters.get("topic_filter", []))
+    structured_source_ids = frozenset(
+        record.source_id for record in inventory.records
+        if Path(record.path).suffix.casefold() in STRUCTURED_SUFFIXES or (
+            Path(record.path).suffix.casefold() == ".csv"
+            and job.parameters.get("structured_sources", False)
+        )
+    )
     topic_selected_lines: dict[str, list[int]] = {}
     if topic_filter:
         for record in inventory.records:
@@ -1761,6 +1768,7 @@ def _execute_document_registry(
         texts,
         columns,
         topic_filter=topic_filter,
+        structured_source_ids=structured_source_ids,
     )
     output = Path(job.output_dir)
     # A column a person declared as required and the sources do not answer is
@@ -1770,14 +1778,19 @@ def _execute_document_registry(
     required = tuple(str(item) for item in job.parameters.get("required_columns", []) or [])
     questions = [
         Question(
-            field=f"columns.{value.column}",
+            field=(
+                f"columns.{value.column}.{row.source_id}.line.{row.record_line}"
+                if row.record_line is not None else f"columns.{value.column}"
+            ),
             prompt=(
-                f"Welchen Wert hat '{value.column}' für {row.display_name}? "
-                "Die Quellen sagen dazu nichts."
+                f"Welchen Wert hat '{value.column}' für {row.display_name}"
+                + (f", Zeile {row.record_line}" if row.record_line is not None else "")
+                + "? Die Quellen sagen dazu nichts."
             ),
             why=(
                 f"'{value.column}' ist als Pflichtspalte erklärt, und {row.source_id} "
-                "enthält keine Zeile dazu."
+                + (f"in Zeile {row.record_line} " if row.record_line is not None else "")
+                + "enthält keine Zeile dazu."
             ),
             kind="text",
         )
@@ -1787,6 +1800,14 @@ def _execute_document_registry(
     ]
     if questions:
         payload = needs_input_payload(tuple(questions[:20]), workflow=job.workflow)
+        payload["total_question_count"] = len(questions)
+        payload["unshown_question_count"] = max(0, len(questions) - 20)
+        if len(questions) > 20:
+            payload["outcome_note"] = (
+                "Dieser Lauf ist gestoppt: 20 Rückfragen sind sichtbar, weitere "
+                f"{len(questions) - 20} Pflichtfeld-Lücken bleiben offen. "
+                "Die sichtbaren Antworten allein genügen nicht für die Fortsetzung."
+            )
         raise WorkflowBlocked(
             tuple(f"needs_user_input:{item.field}" for item in questions[:20]),
             actions=("registry_built", "registry_needs_user_input"),
@@ -1804,7 +1825,8 @@ def _execute_document_registry(
             ),
             metadata={
                 "needs_user_input": True,
-                "question_count": len(questions[:20]),
+                "question_count": len(questions),
+                "unshown_question_count": max(0, len(questions) - 20),
                 "outcome_note": payload["outcome_note"],
                 "topic_selected_lines": topic_selected_lines,
             },
@@ -2037,6 +2059,13 @@ def _execute_synopsis_merge(
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Merge the approved sources into one synopsis, conflicts kept visible."""
     texts = _read_text_sources(inventory, job)
+    structured_source_ids = frozenset(
+        record.source_id for record in inventory.records
+        if Path(record.path).suffix.casefold() in STRUCTURED_SUFFIXES or (
+            Path(record.path).suffix.casefold() == ".csv"
+            and job.parameters.get("structured_sources", False)
+        )
+    )
     selected_lines = job.parameters.get("source_selected_lines", {})
     if selected_lines:
         sources = {record.source_id: record for record in inventory.records}
@@ -2054,7 +2083,8 @@ def _execute_synopsis_merge(
     if not isinstance(title, str) or not title.strip():
         raise ValueError("title must be a non-empty string")
     synopsis = merge_synopsis(
-        tuple(record.source_id for record in inventory.records), texts
+        tuple(record.source_id for record in inventory.records), texts,
+        structured_source_ids=structured_source_ids,
     )
     output = Path(job.output_dir)
     artifacts: list[ArtifactRecord] = [
@@ -2078,7 +2108,7 @@ def _execute_synopsis_merge(
                 evidence=tuple(
                     EvidenceLocator(
                         source_id=anchor.source_id,
-                        quote=f"{conflict.label}: {value}",
+                        quote=value,
                         section=f"line {anchor.line}",
                     )
                     for value, anchor in conflict.values

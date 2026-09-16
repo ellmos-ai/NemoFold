@@ -54,6 +54,7 @@ class RegistryRow:
     source_id: str
     display_name: str
     cells: tuple[RegistryCell, ...]
+    record_line: int | None = None
 
     @property
     def filled_count(self) -> int:
@@ -170,6 +171,7 @@ def build_registry(
     columns: tuple[RegistryColumn, ...],
     *,
     topic_filter: tuple[str, ...] = (),
+    structured_source_ids: frozenset[str] | None = None,
 ) -> RegistryTable:
     """Adapt the shared field primitive to the registry's own row contract."""
     rows, skipped = extract_fields(
@@ -178,6 +180,7 @@ def build_registry(
         tuple(column.spec() for column in columns),
         topic_filter=topic_filter,
         max_rows=MAX_ROWS,
+        structured_source_ids=structured_source_ids,
     )
     return RegistryTable(
         columns=columns,
@@ -185,6 +188,7 @@ def build_registry(
             RegistryRow(
                 source_id=row.source_id,
                 display_name=row.display_name,
+                record_line=row.record_line,
                 cells=tuple(
                     RegistryCell(
                         column=value.field,
@@ -214,6 +218,7 @@ def registry_to_primitive(table: RegistryTable) -> dict[str, Any]:
             {
                 "source_id": row.source_id,
                 "display_name": row.display_name,
+                "record_line": row.record_line,
                 "cells": [
                     {
                         "column": cell.column,
@@ -237,12 +242,17 @@ def registry_to_csv(table: RegistryTable) -> str:
     """Flatten the table, keeping each cell's anchor in its own column."""
     buffer = io.StringIO()
     writer = csv.writer(buffer, lineterminator="\n")
+    has_record_lines = any(row.record_line is not None for row in table.rows)
     header = ["source_id", "display_name"]
+    if has_record_lines:
+        header.append("record_line")
     for column in table.columns:
         header.extend([column.name, f"{column.name} [source]"])
     writer.writerow(header)
     for row in table.rows:
         line = [row.source_id, row.display_name]
+        if has_record_lines:
+            line.append(row.record_line or "")
         for cell in row.cells:
             line.append(cell.value or "")
             line.append(
