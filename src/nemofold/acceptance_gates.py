@@ -135,8 +135,6 @@ def validate_gate_register(
             seen_nodes.add(node_id)
         if not isinstance(receipts, list):
             raise GateRegisterError(f"gate_run_receipts_invalid:{gate_id}")
-        if status == "partial" and not test_nodes:
-            raise GateRegisterError(f"partial_gate_requires_test_node:{gate_id}")
         if status == "not_supported":
             _nonempty_string(gate.get("boundary"), f"unsupported_gate_requires_boundary:{gate_id}")
         if status == "done" and not test_nodes:

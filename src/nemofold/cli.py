@@ -243,8 +243,6 @@ def build_parser() -> argparse.ArgumentParser:
         help="run the synthetic G02 positive and blocking paths and seal their evidence",
     )
     acceptance_g02.add_argument("--output", required=True)
-    acceptance_g02.add_argument("--test-node-file", required=True)
-    acceptance_g02.add_argument("--test-node-id", required=True)
     return parser
 
 
@@ -382,8 +380,6 @@ def _acceptance_g02_command(args: argparse.Namespace) -> int:
     try:
         bundle = run_g02_acceptance_bundle(
             args.output,
-            test_node_file=args.test_node_file,
-            test_node_id=args.test_node_id,
         )
     except (G02AcceptanceError, OSError, ValueError) as exc:
         print(

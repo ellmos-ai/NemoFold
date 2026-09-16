@@ -15,18 +15,15 @@ from nemofold.g02_acceptance import run_g02_acceptance_bundle
 def test_g02_acceptance_bundle_verifies_positive_and_negative_runs(tmp_path: Path) -> None:
     bundle = run_g02_acceptance_bundle(
         tmp_path / "g02-evidence",
-        test_node_file=Path(__file__),
-        test_node_id=(
-            "test_g02_acceptance_bundle_verifies_positive_and_negative_runs"
-        ),
     )
 
     assert bundle.verification["verified_evidence_gates"] == ["G02"]
     assert bundle.verification["verified_done_gates"] == []
-    assert bundle.verification["checked_file_count"] == 11
+    assert bundle.verification["checked_file_count"] == 14
     register = json.loads(bundle.register_path.read_text(encoding="utf-8"))
     g02 = next(gate for gate in register["gates"] if gate["gate_id"] == "G02")
     assert g02["status"] == "partial"
+    assert g02["evidence"]["test_nodes"] == []
     assert len(g02["evidence"]["run_receipts"]) == 1
     receipt = g02["evidence"]["run_receipts"][0]
     assert receipt["run_id"] == "g02_acceptance_positive_02"
@@ -86,7 +83,9 @@ def test_g02_acceptance_bundle_verifies_positive_and_negative_runs(tmp_path: Pat
     assert "Knieverletzung" not in pdf_text
     assert "Leberwert auffällig" not in pdf_text
 
-    pdf_path.write_bytes(pdf_path.read_bytes() + b"mutated")
+    bundle.positive_dossier_path.write_bytes(
+        bundle.positive_dossier_path.read_bytes() + b"mutated"
+    )
     with pytest.raises(GateRegisterError, match="evidence_sha256_mismatch:G02"):
         load_gate_register(bundle.register_path, evidence_root=bundle.root)
 
@@ -99,10 +98,6 @@ def test_g02_acceptance_cli_writes_verified_bundle(tmp_path: Path, capsys) -> No
             "acceptance-g02",
             "--output",
             str(output),
-            "--test-node-file",
-            str(Path(__file__)),
-            "--test-node-id",
-            "test_g02_acceptance_cli_writes_verified_bundle",
         ]
     ) == 0
 
@@ -148,10 +143,6 @@ def test_g02_acceptance_cli_refuses_a_nonempty_output_root(tmp_path: Path, capsy
             "acceptance-g02",
             "--output",
             str(output),
-            "--test-node-file",
-            str(Path(__file__)),
-            "--test-node-id",
-            "test_g02_acceptance_cli_refuses_a_nonempty_output_root",
         ]
     ) == 2
 
@@ -159,3 +150,28 @@ def test_g02_acceptance_cli_refuses_a_nonempty_output_root(tmp_path: Path, capsy
     assert payload["ok"] is False
     assert payload["errors"] == [f"g02_evidence_root_not_empty:{output.resolve()}"]
     assert sentinel.read_text(encoding="utf-8") == "gehört dem Nutzer"
+
+
+def test_g02_acceptance_bundle_uses_stable_voyage_identity(tmp_path: Path) -> None:
+    first = run_g02_acceptance_bundle(tmp_path / "first")
+    second = run_g02_acceptance_bundle(tmp_path / "second")
+
+    first_register = json.loads(first.register_path.read_text(encoding="utf-8"))
+    second_register = json.loads(second.register_path.read_text(encoding="utf-8"))
+    first_receipt = next(
+        gate for gate in first_register["gates"] if gate["gate_id"] == "G02"
+    )["evidence"]["run_receipts"][0]
+    second_receipt = next(
+        gate for gate in second_register["gates"] if gate["gate_id"] == "G02"
+    )["evidence"]["run_receipts"][0]
+
+    assert [item["path"] for item in first_receipt["output_artifacts"]] == [
+        item["path"] for item in second_receipt["output_artifacts"]
+    ]
+    assert json.loads(first.positive_dossier_path.read_text(encoding="utf-8"))[
+        "voyage_id"
+    ] == "voyage_g02_acceptance_positive"
+    assert json.loads(first.negative_dossier_path.read_text(encoding="utf-8"))[
+        "voyage_id"
+    ] == "voyage_g02_acceptance_missing_page"
+    assert not (first.root / "run-reports" / "web-console" / "voyages").exists()

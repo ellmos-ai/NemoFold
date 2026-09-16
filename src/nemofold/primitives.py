@@ -299,8 +299,10 @@ def extract_fields(
                         if match is None:
                             continue
                         value = match.group("value").strip()
+                        quote = candidate
                         if structured_row:
                             value = decode_structured_cell(value)
+                            quote = candidate[: match.start("value")] + value
                         value = value[:MAX_VALUE_CHARS]
                         if not value:
                             continue
@@ -308,7 +310,7 @@ def extract_fields(
                             field=spec.name,
                             value=value,
                             anchor=Anchor(source_id=source_id, line=number),
-                            quote=(candidate if structured_row else line.strip())[:MAX_VALUE_CHARS],
+                            quote=(quote if structured_row else line.strip())[:MAX_VALUE_CHARS],
                         )
                         break
                     if found.value is not None:

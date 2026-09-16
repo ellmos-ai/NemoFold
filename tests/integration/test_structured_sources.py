@@ -109,6 +109,19 @@ def test_structured_field_limit_applies_after_lossless_decoding() -> None:
     assert rows[0].values[0].value == source
 
 
+def test_structured_field_quote_restores_the_source_value() -> None:
+    source = "literal · and ∙ and %E2%88%99"
+    rows, _ = extract_fields(
+        (("db", "example.sqlite"),),
+        {"db": f"Zeile 1 · Kontakt: {encode_structured_cell(source)}\n"},
+        (FieldSpec("Kontakt"),),
+        structured_source_ids=frozenset({"db"}),
+    )
+
+    assert rows[0].values[0].value == source
+    assert rows[0].values[0].quote == f"Kontakt: {source}"
+
+
 def test_virtual_and_shadow_tables_are_not_plain_corpus_sources(tmp_path) -> None:
     database = tmp_path / "fts.sqlite"
     with sqlite3.connect(database) as connection:

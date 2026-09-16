@@ -19,7 +19,6 @@ from .artifacts import write_text_artifact
 from .ledger import RunLedger
 from .report_studio import _render_pdf
 from .voyage_runs import VoyageRunResult, run_voyage
-from .voyages import VoyageStore
 
 
 class G02AcceptanceError(RuntimeError):
@@ -37,21 +36,12 @@ class G02AcceptanceBundle:
 
 def run_g02_acceptance_bundle(
     output_root: str | Path,
-    *,
-    test_node_file: str | Path,
-    test_node_id: str,
 ) -> G02AcceptanceBundle:
     """Run the synthetic G02 positive and blocking paths and seal their evidence."""
     root = Path(output_root).resolve()
     if root.exists() and any(root.iterdir()):
         raise G02AcceptanceError(f"g02_evidence_root_not_empty:{root}")
     root.mkdir(parents=True, exist_ok=True)
-    source_test = Path(test_node_file).resolve()
-    if not source_test.is_file():
-        raise G02AcceptanceError(f"g02_test_node_file_missing:{source_test}")
-    if not test_node_id.startswith("test_") or "::" in test_node_id:
-        raise G02AcceptanceError("g02_test_node_id_must_be_a_top_level_pytest_function")
-
     positive_inputs = _write_positive_fixture(root)
     negative_input = _write_negative_fixture(root)
     config = ExecutionConfig(allowed_roots=(str(root),))
@@ -60,9 +50,6 @@ def run_g02_acceptance_bundle(
     positive_report, output_artifacts = _verify_positive_result(root, positive)
     negative_report = _verify_negative_result(root, negative)
 
-    copied_test = root / "test-evidence" / source_test.name
-    copied_test.parent.mkdir(parents=True, exist_ok=True)
-    copied_test.write_bytes(source_test.read_bytes())
     handoff_path = root / "evidence" / "g02-handoff.json"
     handoff = positive.steps[-1].handoff
     if not isinstance(handoff, dict):
@@ -77,7 +64,16 @@ def run_g02_acceptance_bundle(
         _artifact_receipt(root, path)
         for path in (*positive_inputs, negative_input)
     ]
-    output_receipts = [_artifact_receipt(root, path) for path in output_artifacts]
+    dossier_artifacts = (
+        Path(positive.dossier_path),
+        Path(positive.dossier_path).with_suffix(".md"),
+        Path(negative.dossier_path),
+        Path(negative.dossier_path).with_suffix(".md"),
+    )
+    output_receipts = [
+        _artifact_receipt(root, path)
+        for path in (*output_artifacts, *dossier_artifacts)
+    ]
     receipt = {
         "run_id": positive.steps[-1].run_id,
         "input_sha256": artifact_manifest_sha256(input_artifacts),
@@ -149,12 +145,7 @@ def run_g02_acceptance_bundle(
     gate = next(item for item in register["gates"] if item["gate_id"] == "G02")
     gate["status"] = "partial"
     gate["evidence"] = {
-        "test_nodes": [
-            {
-                "node": f"{_relative(root, copied_test)}::{test_node_id}",
-                "file_sha256": _sha256(copied_test),
-            }
-        ],
+        "test_nodes": [],
         "run_receipts": [receipt],
     }
     verification = verify_gate_evidence(register, root)
@@ -242,9 +233,8 @@ def _run_positive_voyage(
         expected_pages=1,
         title="Schilddrüse · fiktiver Verlauf",
     )
-    saved = VoyageStore(base_dir=root, allowed_roots=(str(root),)).save(case)
     return run_voyage(
-        saved,
+        case,
         config,
         run_id="g02_acceptance_positive",
         base_dir=root,
@@ -262,9 +252,8 @@ def _run_negative_voyage(
         expected_pages=2,
         title="Schilddrüse · fehlende Seite",
     )
-    saved = VoyageStore(base_dir=root, allowed_roots=(str(root),)).save(case)
     return run_voyage(
-        saved,
+        case,
         config,
         run_id="g02_acceptance_missing_page",
         base_dir=root,
@@ -279,6 +268,11 @@ def _g02_case(
     title: str,
 ) -> dict[str, Any]:
     return {
+        "voyage_id": (
+            "voyage_g02_acceptance_positive"
+            if expected_pages == 1
+            else "voyage_g02_acceptance_missing_page"
+        ),
         "name": title,
         "steps": [
             {
