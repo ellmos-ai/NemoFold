@@ -1,0 +1,361 @@
+{
+  "schema": "nemofold.acceptance-gates.v1",
+  "register_id": "NF-FIN-20260915",
+  "source_catalog": {
+    "name": "ellmos-tests/usecases.json",
+    "sha256": "caf0a9331ce25fbaa537775d07a8350caf644decf60c1f097da3484d8b60293f",
+    "selected_usecases": [
+      {
+        "id": 1,
+        "title": "ASCII Lebenslauf erstellen",
+        "description": "Claude erstelle mir einen aktuellen textbasierten ASCII Lebenslauf aus meinen Arbeitgeber-Dokumenten"
+      },
+      {
+        "id": 2,
+        "title": "Office Lens Auto-Kategorisierung",
+        "description": "Automatisch neu fotografierte und hochgeladene Dokumente scannen, kategorisieren und auf Dateisystem oder User in BACH verteilen"
+      },
+      {
+        "id": 3,
+        "title": "Wichtiges Dokument suchen",
+        "description": "Claude suche mir das Dokument heraus indem meine Steuernummer steht"
+      },
+      {
+        "id": 4,
+        "title": "Arztberichte zusammenfassen",
+        "description": "Claude lese alle Berichte zum Thema Schilddruese. Gib mir ein Verzeichnis (Name, Fachrichtung, Arzt, Kontakt, Befund) und fasse zusammen"
+      },
+      {
+        "id": 6,
+        "title": "Versicherungsberatung",
+        "description": "Claude sollte ich eine bestimmte Versicherung abschliessen? Analyse basierend auf vorhandenen Policen"
+      },
+      {
+        "id": 7,
+        "title": "Versicherungs-Verzeichnis abfragen",
+        "description": "Was fuer Versicherungen gibt es? Regeln wann sinnvoll? Tabelle mit Uebersicht"
+      },
+      {
+        "id": 8,
+        "title": "Meine Versicherungen auflisten",
+        "description": "Liste meiner abgeschlossenen Versicherungen mit Police, Tarif, Kosten, Kontakt, Abdeckungsanalyse"
+      },
+      {
+        "id": 9,
+        "title": "Abo-Uebersicht anzeigen",
+        "description": "Claude gib mir eine Uebersicht meiner Abos und wiederkehrenden Kosten mit aktuellem Status"
+      },
+      {
+        "id": 10,
+        "title": "Abo-Status aendern",
+        "description": "Claude stelle Abo 1,3,5 auf inaktiv und 2 auf aktiv. Zeige erwartete Monatskosten"
+      },
+      {
+        "id": 11,
+        "title": "Abo-Abgleich mit Mails",
+        "description": "Vergleiche erkannte Financial-Mails mit hinterlegten Abos. Zeige Differenzen"
+      },
+      {
+        "id": 12,
+        "title": "Irregulaere Kosten Vorschau",
+        "description": "Finanzagent bitte gib mir eine Uebersicht welche irregulaeren Kosten koennten mich naechsten Monat erwarten?"
+      },
+      {
+        "id": 13,
+        "title": "Aerzte-Kontakte exportieren",
+        "description": "Claude gib mir einen uebersichtlichen Textauszug aller Telefon und Mailadressen meiner hinterlegten Aerzte"
+      },
+      {
+        "id": 16,
+        "title": "Medizin-Dokumentenverzeichnis aktualisieren",
+        "description": "Neue PDFs erkennen, kategorisieren (Wissen/Patient), ins Verzeichnis aufnehmen. Pruefen ob Dokumente hinzugekommen oder geloescht wurden."
+      },
+      {
+        "id": 23,
+        "title": "Medikamentenplan aktuell halten",
+        "description": "Aktueller Medikationsplan aus Berichten + User-Korrektur. Name, Wirkstoff, Menge, Tageszeit, Wirkung."
+      },
+      {
+        "id": 25,
+        "title": "Dossier oder Briefing erstellen",
+        "description": "Vor Meetings: Person/Thema recherchieren und strukturiert aufbereiten."
+      },
+      {
+        "id": 32,
+        "title": "Wiederkehrende jaehrliche Kosten planen",
+        "description": "Monatliche Uebersicht irregularer jaehrlicher Kosten (KFZ, TUeV, Uni, Versicherungen, Rundfunk). Quelle: Wiederkehrende Kosten Uebersicht.docx"
+      },
+      {
+        "id": 37,
+        "title": "Medikamente Uebersicht fuehren",
+        "description": "Aktuelle Medikation mit Dosierung, Einnahmezeit, Wirkung. Aus Arztberichten extrahieren. Quelle: Medikamente Uebersicht.pdf"
+      },
+      {
+        "id": 38,
+        "title": "Wissensdatenbank navigieren und nutzen",
+        "description": "Wissen aus Wissensdatenbank-Ordner abrufen, strukturieren, verknuepfen."
+      },
+      {
+        "id": 39,
+        "title": "Arbeitsblaetter fuer Autismus-Foerderung erstellen",
+        "description": "Aus Wissensdatenbank recherchieren, nach Klientenbeschreibung spezifische Arbeitsblaetter und Uebungen generieren."
+      },
+      {
+        "id": 40,
+        "title": "Arbeitsblaetter fuer psychologische Beratung erstellen",
+        "description": "Wissen aus Datenbank fuer Beratung nutzen, Uebungen und Arbeitsblaetter erstellen."
+      },
+      {
+        "id": 41,
+        "title": "FormBuilder Formulare erstellen",
+        "description": "Mit A3 FormBuilder Formulare erstellen und exportieren."
+      },
+      {
+        "id": 42,
+        "title": "HausLagerist Datenbank auslesen",
+        "description": "Datenbank hauslagerist.db auslesen: Haushaltsgegenstaende, Lagerort, Inventar."
+      },
+      {
+        "id": 44,
+        "title": "MasterRoutine Datenbank nutzen",
+        "description": "routine_master.db auslesen: Routinen, Aufgaben, Turnus-basierte Erinnerungen."
+      },
+      {
+        "id": 45,
+        "title": "MediPlaner Datenbank nutzen",
+        "description": "mediplaner.db auslesen: Medikamentenplaene, Einnahmezeiten, Dosierungen."
+      },
+      {
+        "id": 47,
+        "title": "ProFiler Wissen indizieren",
+        "description": "ProFiler komplett integrieren: PDFs scannen, OCR, Wissensindizierung, Datenbanken erstellen und nutzen."
+      },
+      {
+        "id": 49,
+        "title": "MetaWiki erstellen und exportieren",
+        "description": "MetaWiki-Struktur (hierarchische Markdown-Wikis) erstellen und als Funktion in BACH exportieren."
+      }
+    ]
+  },
+  "completion_contract": {
+    "rule": "Ein Gate ist erst done, wenn ein vollständiger Usecase-Lauf einschließlich Negativpfad durchlaufen und als Receipt belegt wurde.",
+    "required_run_receipt_fields": [
+      "run_id",
+      "input_sha256",
+      "output_sha256",
+      "handoff_receipts",
+      "run_report",
+      "result_checks",
+      "negative_path"
+    ]
+  },
+  "gates": [
+    {
+      "gate_id": "G01",
+      "name": "Belegtes Dokument finden",
+      "status": "planned",
+      "ellmos_usecase_ids": [3],
+      "external_requirement_ids": [],
+      "application_chain": ["Inventar", "Suche", "Quellenbeleg", "Übergabe"],
+      "expected_outcomes": ["Das richtige Dokument und die Fundstelle werden mit nachvollziehbarer Quelle ausgegeben."],
+      "negative_cases": ["Mehrdeutige oder fehlende Treffer führen zu einer blockierten oder klärenden Übergabe."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G02",
+      "name": "Arztberichte vollständig zusammenfassen",
+      "status": "partial",
+      "ellmos_usecase_ids": [4],
+      "external_requirement_ids": [],
+      "application_chain": ["Inventar", "PDF-Prüfung", "Extraktion", "Synthese", "Übergabe"],
+      "expected_outcomes": ["Alle deklarierten PDF-Seiten werden berücksichtigt und die Zusammenfassung bleibt quellengebunden."],
+      "negative_cases": ["Fehlende, leere oder bildbasierte Seiten blockieren die Synthese bis zur manuellen oder OCR-gestützten Prüfung."],
+      "evidence": {
+        "test_nodes": [
+          "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff",
+          "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_missing_expected_pdf_page_blocks_before_synopsis",
+          "tests/e2e/test_g02_doctor_folder_gate.py::test_g02_declared_pdf_with_scanned_second_page_blocks_before_synopsis"
+        ],
+        "run_receipts": []
+      }
+    },
+    {
+      "gate_id": "G03",
+      "name": "Dokumenteingang erkennen und aktualisieren",
+      "status": "planned",
+      "ellmos_usecase_ids": [2, 16, 47],
+      "external_requirement_ids": [],
+      "application_chain": ["Änderungserkennung", "Klassifikation", "Index", "Bestätigung"],
+      "expected_outcomes": ["Neue, geänderte und entfernte Dokumente werden deterministisch im Index nachgeführt."],
+      "negative_cases": ["Unlesbare oder nicht klassifizierbare Eingänge bleiben sichtbar offen und werden nicht still einsortiert."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G04",
+      "name": "Versicherungen erfassen und analysieren",
+      "status": "planned",
+      "ellmos_usecase_ids": [6, 7, 8],
+      "external_requirement_ids": [],
+      "application_chain": ["Policen-Inventar", "Normalisierung", "Abdeckungsanalyse", "Beratung"],
+      "expected_outcomes": ["Policen, Kosten und Abdeckung werden getrennt von interpretierender Beratung belegt."],
+      "negative_cases": ["Fehlende Vertragsdaten erzeugen Unsicherheitshinweise statt erfundener Abdeckung."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G05",
+      "name": "Wiederkehrende und unregelmäßige Kosten planen",
+      "status": "planned",
+      "ellmos_usecase_ids": [9, 12, 32],
+      "external_requirement_ids": [],
+      "application_chain": ["Kostenquellen", "Zeitnormalisierung", "Prognose", "Übersicht"],
+      "expected_outcomes": ["Wiederkehrende Kosten und erwartbare Sondereffekte werden mit Zeitraum und Quelle ausgewiesen."],
+      "negative_cases": ["Unbekannte Fälligkeiten werden nicht als exakte Prognosen dargestellt."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G06",
+      "name": "Abo-Abgleich mit Nachrichten",
+      "status": "planned",
+      "ellmos_usecase_ids": [11],
+      "external_requirement_ids": [],
+      "application_chain": ["Abo-Daten", "Nachrichtenbelege", "Abgleich", "Differenzbericht"],
+      "expected_outcomes": ["Abweichungen zwischen hinterlegten Abos und belegten Nachrichten werden erklärt."],
+      "negative_cases": ["Uneindeutige Zuordnungen bleiben unbestätigt und lösen keine Statusänderung aus."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G07",
+      "name": "Medikationsplan konsolidieren",
+      "status": "planned",
+      "ellmos_usecase_ids": [23, 37],
+      "external_requirement_ids": [],
+      "application_chain": ["Berichte", "Medikationsfakten", "Konfliktprüfung", "User-Korrektur", "Plan"],
+      "expected_outcomes": ["Medikament, Wirkstoff, Dosis, Zeitpunkt und Quelle bleiben gemeinsam nachvollziehbar."],
+      "negative_cases": ["Widersprüchliche Dosierungen werden eskaliert und niemals automatisch medizinisch entschieden."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G08",
+      "name": "Fachdatenbanken sicher auslesen",
+      "status": "planned",
+      "ellmos_usecase_ids": [42, 45],
+      "external_requirement_ids": [],
+      "application_chain": ["Datenbankvertrag", "Read-only-Abfrage", "Normalisierung", "Antwort"],
+      "expected_outcomes": ["Inventar- und Medikationsdaten werden aus erlaubten Tabellen reproduzierbar gelesen."],
+      "negative_cases": ["Unbekannte Schemas oder Schreibversuche werden blockiert."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G09",
+      "name": "Dokumente aus Wissen erzeugen",
+      "status": "planned",
+      "ellmos_usecase_ids": [1, 39, 40],
+      "external_requirement_ids": [],
+      "application_chain": ["Wissensabruf", "Zielkontext", "Entwurf", "Quellenprüfung", "Export"],
+      "expected_outcomes": ["Der erzeugte Text entspricht dem Zielkontext und trennt Quelleninhalt von Generierung."],
+      "negative_cases": ["Fehlende Wissensgrundlage verhindert unbelegte fachliche Aussagen."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G10",
+      "name": "Routinen und Erinnerungen abfragen",
+      "status": "planned",
+      "ellmos_usecase_ids": [44],
+      "external_requirement_ids": [],
+      "application_chain": ["Routinen-Datenbank", "Turnusberechnung", "Fälligkeit", "Ausgabe"],
+      "expected_outcomes": ["Fällige Aufgaben werden aus gespeichertem Turnus und Bezugstag reproduzierbar berechnet."],
+      "negative_cases": ["Ungültige oder widersprüchliche Turnusdaten werden markiert statt geschätzt."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G11",
+      "name": "OCR- und Wissensindex-Pipeline",
+      "status": "planned",
+      "ellmos_usecase_ids": [2, 16, 47],
+      "external_requirement_ids": [],
+      "application_chain": ["Dateierkennung", "OCR", "Qualitätsprüfung", "Indexierung", "Abrufprobe"],
+      "expected_outcomes": ["Bildbasierte Dokumente erhalten prüfbaren Text, Indexeintrag und Abrufnachweis."],
+      "negative_cases": ["Niedrige OCR-Qualität bleibt reviewpflichtig und wird nicht als vollständig indexiert behauptet."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G12",
+      "name": "Kontakte exportieren",
+      "status": "planned",
+      "ellmos_usecase_ids": [13],
+      "external_requirement_ids": [],
+      "application_chain": ["Kontaktdaten", "Deduplizierung", "Formatierung", "Exportprüfung"],
+      "expected_outcomes": ["Telefon- und E-Mail-Daten werden vollständig, dedupliziert und quellengebunden exportiert."],
+      "negative_cases": ["Unvollständige oder ungültige Kontaktdaten werden gekennzeichnet."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G13",
+      "name": "Arbeitsmaterialien mit Human-Review erstellen",
+      "status": "planned",
+      "ellmos_usecase_ids": [1, 39, 40],
+      "external_requirement_ids": [],
+      "application_chain": ["Anforderung", "Wissensbasis", "Generierung", "Human-Review", "Freigabe"],
+      "expected_outcomes": ["Arbeitsmaterialien werden erst nach nachvollziehbarer gemeinsamer Prüfung durch User und LLM freigegeben."],
+      "negative_cases": ["Sensible oder fachlich unsichere Inhalte bleiben Entwurf und erhalten keine Freigabe."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G14",
+      "name": "Dossier und Briefing erstellen",
+      "status": "planned",
+      "ellmos_usecase_ids": [25],
+      "external_requirement_ids": [],
+      "application_chain": ["Fragestellung", "Recherchequellen", "Synthese", "Unsicherheiten", "Briefing"],
+      "expected_outcomes": ["Das Briefing trennt Fakten, Schlussfolgerungen und offene Punkte."],
+      "negative_cases": ["Unzureichende Quellenlage erzeugt ein begrenztes Briefing statt falscher Vollständigkeit."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G15",
+      "name": "Wissensnavigation und MetaWiki-Export",
+      "status": "planned",
+      "ellmos_usecase_ids": [38, 49],
+      "external_requirement_ids": [],
+      "application_chain": ["Wissensgraph", "Navigation", "Hierarchie", "Linkprüfung", "Export"],
+      "expected_outcomes": ["Hierarchie und Querverweise bleiben nach dem Export navigierbar und überprüfbar."],
+      "negative_cases": ["Gebrochene Links oder Zyklen blockieren den als vollständig bezeichneten Export."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G16",
+      "name": "Interrater-Übereinstimmung",
+      "status": "planned",
+      "ellmos_usecase_ids": [],
+      "external_requirement_ids": ["D-030"],
+      "application_chain": ["Unabhängige Bewertungen", "Normalisierung", "Übereinstimmungsmetrik", "Konfliktbericht"],
+      "expected_outcomes": ["Bewertungen mehrerer Rater werden ohne Datenverlust verglichen und Abweichungen sichtbar gemacht."],
+      "negative_cases": ["Fehlende Rater oder inkompatible Skalen verhindern eine scheinpräzise Kennzahl."],
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G17",
+      "name": "Abo-Statusänderung mit Bestätigung",
+      "status": "not_supported",
+      "ellmos_usecase_ids": [10],
+      "external_requirement_ids": [],
+      "application_chain": ["Änderungsentwurf", "Kosten-Vorschau", "User-Bestätigung", "Anwendung", "Undo-Receipt"],
+      "expected_outcomes": ["Eine Statusänderung wäre nur nach expliziter Bestätigung und mit rücksetzbarem Receipt zulässig."],
+      "negative_cases": ["Ohne Bestätigung oder Schreibadapter findet keine Statusänderung statt."],
+      "boundary": "NemoFold besitzt derzeit keinen freigegebenen schreibenden Abo-Adapter; der Usecase bleibt absichtlich blockiert.",
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    },
+    {
+      "gate_id": "G18",
+      "name": "FormBuilder-Export",
+      "status": "not_supported",
+      "ellmos_usecase_ids": [41],
+      "external_requirement_ids": [],
+      "application_chain": ["Formularschema", "Feldvalidierung", "Darstellung", "Export", "Öffnungsprobe"],
+      "expected_outcomes": ["Ein erzeugtes Formular müsste Schema, Darstellung und geöffnetes Exportartefakt gemeinsam belegen."],
+      "negative_cases": ["Nicht unterstützte Zielformate oder ungültige Felder dürfen kein positives Export-Receipt erzeugen."],
+      "boundary": "Ein A3-FormBuilder-Adapter und dessen Exportverifikation sind noch nicht implementiert.",
+      "evidence": {"test_nodes": [], "run_receipts": []}
+    }
+  ]
+}

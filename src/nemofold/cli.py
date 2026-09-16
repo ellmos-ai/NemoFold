@@ -8,6 +8,12 @@ from dataclasses import replace
 from pathlib import Path
 
 from . import __version__
+from .acceptance_gates import (
+    GateRegisterError,
+    load_gate_register,
+    summarize_gate_register,
+    verify_ellmos_catalog,
+)
 from .application import (
     ExecutionConfig,
     prepare_nemoclaw_package,
@@ -214,6 +220,14 @@ def build_parser() -> argparse.ArgumentParser:
     mcp.add_argument("--allow-external-models", action="store_true")
     mcp.add_argument("--max-external-cost-usd", type=float, default=0.0)
     mcp.add_argument("--approve-actions", action="store_true")
+    acceptance_gates = commands.add_parser(
+        "acceptance-gates",
+        help="validate and report the executable NF-FIN G01-G18 gate register",
+    )
+    acceptance_gates.add_argument(
+        "--ellmos-catalog",
+        help="verify the pinned Ellmos use-case catalog bytes and selected records",
+    )
     return parser
 
 
@@ -295,7 +309,36 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _policy_command(args)
     if args.command == "mcp":
         return _mcp_command(args)
+    if args.command == "acceptance-gates":
+        return _acceptance_gates_command(args)
     parser.print_help()
+    return 0
+
+
+def _acceptance_gates_command(args: argparse.Namespace) -> int:
+    try:
+        register = load_gate_register()
+        catalog_verification = (
+            verify_ellmos_catalog(register, args.ellmos_catalog)
+            if args.ellmos_catalog
+            else None
+        )
+        payload = {
+            "ok": True,
+            "register": register,
+            "summary": summarize_gate_register(register),
+            "catalog_verification": catalog_verification,
+        }
+    except (GateRegisterError, OSError) as exc:
+        print(
+            json.dumps(
+                {"ok": False, "errors": [str(exc)]},
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
 
 
