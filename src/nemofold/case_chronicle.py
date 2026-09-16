@@ -386,6 +386,48 @@ def execute_coverage_timeline(
         for event in timeline.events
     )
     output = Path(job.output_dir)
+    valid_events = tuple(e for e in timeline.events if e.determined)
+    min_intervals = job.parameters.get("min_intervals")
+    require_complete = bool(job.parameters.get("require_complete_coverage", False))
+    coverage_missing = (
+        min_intervals is not None and len(valid_events) < int(min_intervals)
+    ) or (require_complete and len(valid_events) < len(data.source_ids))
+    if coverage_missing:
+        target_count = int(min_intervals) if min_intervals is not None else len(data.source_ids)
+        question = Question(
+            field="coverage_dates",
+            prompt=(
+                f"Keine ausreichenden Deckungszeiträume gefunden "
+                f"({len(valid_events)} < {target_count}). "
+                "Bitte prüfen Sie die Vertragsdokumente auf deklarierte Datumsangaben."
+            ),
+            why=(
+                "Fehlende Vertragsdaten erzeugen Unsicherheitshinweise statt erfundener "
+                "Abdeckung; ohne deklarierte Deckungsdaten kann keine Zeitachse gezeichnet werden."
+            ),
+            kind="text",
+        )
+        asked = needs_input_payload((question,), workflow=job.workflow)
+        needs_artifact = write_text_artifact(
+            output / f"{run_id}.needs-user-input.json",
+            json.dumps(asked, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "needs-user-input",
+        )
+        coverage = _coverage(data, set())
+        raise WorkflowBlocked(
+            (f"insufficient_coverage_intervals:{len(valid_events)}<{target_count}",),
+            actions=(f"analyzed {len(data.source_ids)} source(s)", "coverage_intervals_missing"),
+            artifacts=(needs_artifact,),
+            coverage=coverage,
+            metadata={
+                "interval_count": len(valid_events),
+                "undetermined_count": len(timeline.undetermined),
+                "target_interval_count": target_count,
+                "needs_user_input": True,
+                "outcome_note": asked["outcome_note"],
+                "notes": list(timeline.notes),
+            },
+        )
     artifacts, figure = _timeline_artifacts(
         output, run_id, timeline, str(job.parameters.get("title") or "Versicherungsverlauf"),
         lanes,

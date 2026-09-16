@@ -703,6 +703,7 @@ def _execute_digest(
     *,
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    insurance_metadata = _check_insurance_authority(job, inventory, run_id=run_id)
     texts = _read_text_sources(inventory, job)
     summary_length = job.parameters.get("summary_length", 3)
     if isinstance(summary_length, bool) or not isinstance(summary_length, int):
@@ -713,9 +714,18 @@ def _execute_digest(
         max_sentences=summary_length,
         deleted_source_ids=inventory.deleted_source_ids,
     )
+    digest_text = digest.markdown
+    if job.parameters.get("application_domain") == "insurance":
+        digest_text += (
+            "\n## Nutzungsgrenze\n\n"
+            "Hinweis: Diese Bestandsübersicht ordnet und zitiert vorhandene Versicherungspolicen; "
+            "sie ist keine Versicherungsvermittlung und keine Rechts- oder Versicherungsberatung "
+            "(§ 34d/e GewO). Alle Angaben stammen quellengebunden aus den Vertragsdokumenten; "
+            "für fehlende Daten werden keine Deckungszusagen erfunden.\n"
+        )
     artifact = write_text_artifact(
         Path(job.output_dir) / f"{run_id}.digest.md",
-        digest.markdown,
+        digest_text,
         "folder-digest",
     )
     coverage = compute_coverage(
@@ -723,18 +733,20 @@ def _execute_digest(
         read_source_ids=texts,
         cited_source_ids=(),
     )
+    metadata: dict[str, object] = {
+        "new_source_ids": list(inventory.new_source_ids),
+        "changed_source_ids": list(inventory.changed_source_ids),
+        "unchanged_source_ids": list(inventory.unchanged_source_ids),
+        "deleted_source_ids": list(inventory.deleted_source_ids),
+        "gap_source_ids": list(digest.gap_source_ids),
+        "digest_depth": job.parameters.get("digest_depth", "full"),
+        **insurance_metadata,
+    }
     return (
         ("inventory_scanned", "folder_digest_built", "coverage_recorded"),
         (artifact,),
         coverage,
-        {
-            "new_source_ids": list(inventory.new_source_ids),
-            "changed_source_ids": list(inventory.changed_source_ids),
-            "unchanged_source_ids": list(inventory.unchanged_source_ids),
-            "deleted_source_ids": list(inventory.deleted_source_ids),
-            "gap_source_ids": list(digest.gap_source_ids),
-            "digest_depth": job.parameters.get("digest_depth", "full"),
-        },
+        metadata,
     )
 
 
@@ -2339,6 +2351,78 @@ def _check_medical_synopsis_authority(
     )
 
 
+def _check_insurance_authority(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> dict[str, object]:
+    """Allow source inventory and coverage analysis.
+
+    Never allow unlicensed brokerage or binding coverage promises.
+    """
+    if job.parameters.get("application_domain") != "insurance":
+        return {}
+    purpose = job.parameters.get("insurance_purpose")
+    if purpose in {"coverage_analysis", "policy_inventory"}:
+        return {
+            "insurance_application_domain": "insurance",
+            "insurance_authority": "not_granted",
+            "insurance_purpose": purpose,
+        }
+
+    denied = purpose in {
+        "broker_recommendation",
+        "binding_coverage_promise",
+        "legal_advice",
+    }
+    question = Question(
+        field="insurance_purpose",
+        prompt=(
+            "Soll NemoFold die vorliegenden Versicherungspolicen ausschließlich "
+            "ordnen, zitieren und auf Abdeckungslücken prüfen?"
+        ),
+        why=(
+            "NemoFold besitzt keine gewerberechtliche Vermittler- oder "
+            "Versicherungsberatungsautorität (§ 34d/e GewO)."
+        ),
+        kind="choice",
+        choices=("coverage_analysis",),
+    )
+    payload = needs_input_payload((question,), workflow=job.workflow)
+    error = (
+        f"insurance_authority_denied:{purpose}"
+        if denied
+        else "needs_user_input:insurance_purpose"
+    )
+    raise WorkflowBlocked(
+        (error,),
+        actions=(
+            "insurance_authority_checked",
+            "insurance_authority_denied" if denied else "insurance_scope_needs_input",
+        ),
+        artifacts=(
+            write_text_artifact(
+                Path(job.output_dir) / f"{run_id}.needs-user-input.json",
+                json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+                "needs-user-input",
+            ),
+        ),
+        coverage=compute_coverage(
+            all_source_ids=(record.source_id for record in inventory.records),
+            read_source_ids=(),
+            cited_source_ids=(),
+        ),
+        metadata={
+            "insurance_application_domain": "insurance",
+            "insurance_authority": "denied" if denied else "not_granted",
+            "insurance_purpose": purpose,
+            "needs_user_input": True,
+            "outcome_note": payload["outcome_note"],
+        },
+    )
+
+
 def _execute_synopsis_merge(
     job: JobEnvelope,
     inventory: InventoryResult,
@@ -2347,6 +2431,9 @@ def _execute_synopsis_merge(
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Merge the approved sources into one synopsis, conflicts kept visible."""
     medical_metadata = _check_medical_synopsis_authority(
+        job, inventory, run_id=run_id
+    )
+    insurance_metadata = _check_insurance_authority(
         job, inventory, run_id=run_id
     )
     texts = _read_text_sources(inventory, job)
@@ -2378,12 +2465,21 @@ def _execute_synopsis_merge(
         structured_source_ids=structured_source_ids,
     )
     output = Path(job.output_dir)
-    scope_notice = (
-        "Hinweis: Diese Zusammenfassung ordnet und zitiert Arztberichte; sie ist "
-        "keine medizinische Diagnose oder Handlungsempfehlung. Ärztliche "
-        "Bewertung ist erforderlich."
-        if job.parameters.get("application_domain") == "medical_reports" else ""
-    )
+    if job.parameters.get("application_domain") == "medical_reports":
+        scope_notice = (
+            "Hinweis: Diese Zusammenfassung ordnet und zitiert Arztberichte; sie ist "
+            "keine medizinische Diagnose oder Handlungsempfehlung. Ärztliche "
+            "Bewertung ist erforderlich."
+        )
+    elif job.parameters.get("application_domain") == "insurance":
+        scope_notice = (
+            "Hinweis: Diese Übersicht ordnet und zitiert vorhandene Versicherungspolicen; "
+            "sie ist keine Versicherungsvermittlung und keine Rechts- oder Versicherungsberatung "
+            "(§ 34d/e GewO). Alle Angaben stammen quellengebunden aus den Vertragsdokumenten; "
+            "für fehlende Daten werden keine Deckungszusagen erfunden."
+        )
+    else:
+        scope_notice = ""
     synopsis_text = synopsis_markdown(synopsis, title=title)
     if scope_notice:
         synopsis_text += "\n## Nutzungsgrenze\n\n" + scope_notice + "\n"
@@ -2468,6 +2564,7 @@ def _execute_synopsis_merge(
             "merged_source_ids": list(synopsis.source_ids),
             "application_domain": job.parameters.get("application_domain"),
             **medical_metadata,
+            **insurance_metadata,
         },
     )
 

@@ -130,7 +130,8 @@ WORKFLOW_PARAMETER_FIELDS = {
         {
         "source_tables",
         "structured_sources",
-        "end_field", "formats", "holder_field", "label_field", "start_field", "title"}
+        "end_field", "formats", "holder_field", "label_field", "min_intervals",
+        "require_complete_coverage", "start_field", "title"}
     ),
     "alibi_weave": frozenset(
         {
@@ -213,6 +214,8 @@ WORKFLOW_PARAMETER_FIELDS = {
         "bundle_format", "bundle_name", "include_manifest", "order", "recursive"}
     ),
     "folder_digest": frozenset({
+        "application_domain",
+        "insurance_purpose",
         "source_tables",
         "structured_sources",
         "digest_depth", "since_run_id", "summary_length"}),
@@ -235,6 +238,7 @@ WORKFLOW_PARAMETER_FIELDS = {
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
     "synopsis_merge": frozenset({
         "application_domain",
+        "insurance_purpose",
         "medical_purpose",
         "source_tables",
         "structured_sources",
@@ -467,6 +471,33 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
         choice("include_manifest", {True})
     elif job.workflow == "folder_digest":
         choice("digest_depth", {"full"})
+        if "application_domain" in job.parameters:
+            choice("application_domain", {"general_documents", "insurance"})
+        if "insurance_purpose" in job.parameters:
+            choice(
+                "insurance_purpose",
+                {
+                    "coverage_analysis",
+                    "policy_inventory",
+                    "broker_recommendation",
+                    "binding_coverage_promise",
+                    "legal_advice",
+                },
+            )
+            if job.parameters.get("application_domain") != "insurance":
+                raise ValueError("insurance_purpose requires application_domain=insurance")
+    elif job.workflow == "coverage_timeline":
+        min_intervals = job.parameters.get("min_intervals")
+        if min_intervals is not None and (
+            isinstance(min_intervals, bool)
+            or not isinstance(min_intervals, int)
+            or min_intervals < 0
+        ):
+            raise ValueError("min_intervals must be a non-negative integer")
+        if "require_complete_coverage" in job.parameters and not isinstance(
+            job.parameters["require_complete_coverage"], bool
+        ):
+            raise ValueError("require_complete_coverage must be a boolean")
     elif job.workflow in {"evidence_analyst", "platform_proof"}:
         choice("analysis_mode", {"local_extractive", "nemotron"})
         choice("citation_granularity", {"line_or_page"})
@@ -523,7 +554,7 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
     elif job.workflow == "synopsis_merge":
         if "application_domain" not in job.parameters:
             raise ValueError("application_domain is required for synopsis_merge")
-        choice("application_domain", {"general_documents", "medical_reports"})
+        choice("application_domain", {"general_documents", "medical_reports", "insurance"})
         choice(
             "medical_purpose",
             {
@@ -533,12 +564,29 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
                 "urgency_assessment",
             },
         )
+        choice(
+            "insurance_purpose",
+            {
+                "coverage_analysis",
+                "policy_inventory",
+                "broker_recommendation",
+                "binding_coverage_promise",
+                "legal_advice",
+            },
+        )
         if (
             "medical_purpose" in job.parameters
             and job.parameters.get("application_domain") != "medical_reports"
         ):
             raise ValueError(
                 "medical_purpose requires application_domain=medical_reports"
+            )
+        if (
+            "insurance_purpose" in job.parameters
+            and job.parameters.get("application_domain") != "insurance"
+        ):
+            raise ValueError(
+                "insurance_purpose requires application_domain=insurance"
             )
     elif job.workflow == "report_studio":
         choice("template", {"default"})
