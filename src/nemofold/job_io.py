@@ -55,6 +55,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "mail_merge_compose",
         "knowledge_composer",
         "routine_query",
+        "ocr_pipeline",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -226,6 +227,18 @@ WORKFLOW_PARAMETER_FIELDS = {
             "query",
             "target_tables",
             "formats",
+        }
+    ),
+    "ocr_pipeline": frozenset(
+        {
+            "min_confidence",
+            "detect_duplicates",
+            "require_retrieval",
+            "test_query",
+            "page_reviews",
+            "synthetic_ocr_map",
+            "formats",
+            "title",
         }
     ),
     "alibi_weave": frozenset(

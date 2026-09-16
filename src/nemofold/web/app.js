@@ -217,6 +217,11 @@ const workflowDefaults = {
     parameters: {formats: ["md", "json"], min_routines: 1, require_read_only: true},
     hint: "Routine Query queries MasterRoutine SQLite databases for tasks, cadences, and due dates under strict read-only guarantees."
   },
+  ocr_pipeline: {
+    questions: [],
+    parameters: {formats: ["md", "json"], min_confidence: 0.7, detect_duplicates: true},
+    hint: "OCR Pipeline processes scanned documents and image PDFs through OCR detection, quality verification, delta tracking, and FTS5 indexing."
+  },
   alibi_weave: {
     questions: [],
     parameters: {formats: ["md"], places: [], tolerance_minutes: 90},
@@ -706,6 +711,10 @@ const workflowCards = {
     title: "Routine Query",
     benefit: "Query MasterRoutine tasks, cadences, and due dates under strict read-only and ungrounded-cadence protection."
   },
+  ocr_pipeline: {
+    title: "OCR Pipeline",
+    benefit: "Process scanned and image documents with OCR quality gates, delta indexation, and verified FTS5 retrieval."
+  },
   alibi_weave: {
     title: "Alibi Weave",
     benefit: "Tell a self-report from an outside confirmation, and see who nothing places at all."
@@ -1045,7 +1054,7 @@ const registryGroups = [
   {title: "Intake and filing", workflows: ["smart_inbox", "cleanup_rules", "storage_policy"]},
   {title: "Mail", workflows: ["mail_to_case", "controlled_email"]},
   {title: "Reading a corpus", workflows: ["evidence_analyst", "bundle_export", "fact_distill",
-    "synopsis_merge", "document_registry", "corpus_query", "pattern_mining"]},
+    "synopsis_merge", "document_registry", "corpus_query", "pattern_mining", "ocr_pipeline"]},
   {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
     "coverage_timeline", "cost_timeline", "subscription_reconcile", "medication_reconcile", "database_reader", "alibi_weave", "contradiction_synopsis"]},
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "routine_query", "version_resolver",

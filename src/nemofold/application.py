@@ -111,6 +111,7 @@ from .ledger import RunLedger, validate_run_id
 from .mail_workflows import build_controlled_draft, build_mail_case, parse_eml
 from .medication_reconcile import execute_medication_reconcile
 from .nemoclaw_package import NemoClawPackage, export_job_package
+from .ocr_pipeline import execute_ocr_pipeline
 from .outbound import (
     OutboundAdapter,
     OutboundError,
@@ -2710,6 +2711,8 @@ def _dispatch_workflow(
         return execute_knowledge_composer(job, inventory, run_id=run_id)
     if job.workflow == "routine_query":
         return execute_routine_query(job, inventory, run_id=run_id)
+    if job.workflow == "ocr_pipeline":
+        return execute_ocr_pipeline(job, inventory, run_id=run_id)
     if job.workflow in CHRONICLE_WORKFLOWS:
         return _execute_chronicle(job, inventory, run_id=run_id)
     if job.workflow in WEB_WORKFLOWS:

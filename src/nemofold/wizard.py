@@ -51,6 +51,7 @@ WORKFLOW_ORDER = {
     "database_reader": 88,
     "knowledge_composer": 89,
     "routine_query": 89,
+    "ocr_pipeline": 90,
     "alibi_weave": 84,
     "contradiction_synopsis": 86,
     "bundle_export": 80,
@@ -194,6 +195,10 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "routine_query": (
         "routine", "routinen", "erinnerung", "erinnerungen", "turnus", "faelligkeit",
         "fälligkeit", "aufgaben", "masterroutine", "routine_master", "cadence",
+    ),
+    "ocr_pipeline": (
+        "ocr", "scan", "gescannt", "bilddokument", "handschrift", "profiler",
+        "wissensindex", "fts5", "abrufprobe", "texterkennung", "ocr_pipeline",
     ),
     "alibi_weave": (
         "alibi", "wer war wo", "bestätigt", "belegt wo", "aufenthalt", "wochenende",

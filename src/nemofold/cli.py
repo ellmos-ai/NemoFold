@@ -37,6 +37,7 @@ from .g07_acceptance import G07AcceptanceError, run_g07_acceptance_bundle
 from .g08_acceptance import G08AcceptanceError, run_g08_acceptance_bundle
 from .g09_acceptance import G09AcceptanceError, run_g09_acceptance_bundle
 from .g10_acceptance import G10AcceptanceError, run_g10_acceptance_bundle
+from .g11_acceptance import G11AcceptanceError, run_g11_acceptance_bundle
 from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
 from .ledger import RunLedger, validate_run_id
@@ -297,6 +298,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="run the synthetic G10 positive and blocking paths and seal their evidence",
     )
     acceptance_g10.add_argument("--output", required=True)
+    acceptance_g11 = commands.add_parser(
+        "acceptance-g11",
+        help="run the synthetic G11 positive and blocking paths and seal their evidence",
+    )
+    acceptance_g11.add_argument("--output", required=True)
     return parser
 
 
@@ -400,6 +406,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _acceptance_g09_command(args)
     if args.command == "acceptance-g10":
         return _acceptance_g10_command(args)
+    if args.command == "acceptance-g11":
+        return _acceptance_g11_command(args)
     parser.print_help()
     return 0
 
@@ -812,6 +820,42 @@ def _acceptance_g10_command(args: argparse.Namespace) -> int:
                 "mutation_blocked_dossier_path": str(
                     bundle.mutation_blocked_dossier_path
                 ),
+                "verification": bundle.verification,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def _acceptance_g11_command(args: argparse.Namespace) -> int:
+    try:
+        bundle = run_g11_acceptance_bundle(
+            args.output,
+        )
+    except (G11AcceptanceError, OSError, ValueError) as exc:
+        print(
+            json.dumps(
+                {"ok": False, "gate_id": "G11", "errors": [str(exc)]},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "gate_id": "G11",
+                "root": str(bundle.root),
+                "register_path": str(bundle.register_path),
+                "positive_dossier_path": str(bundle.positive_dossier_path),
+                "low_quality_dossier_path": str(bundle.low_quality_dossier_path),
+                "corrupted_dossier_path": str(bundle.corrupted_dossier_path),
+                "retrieval_fail_dossier_path": str(bundle.retrieval_fail_dossier_path),
                 "verification": bundle.verification,
             },
             ensure_ascii=False,

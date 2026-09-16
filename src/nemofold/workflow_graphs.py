@@ -95,6 +95,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Query MasterRoutine SQLite databases for tasks, recurring cadences, and due dates "
         "under strict read-only guarantees, grounding each cadence against a reference date."
     ),
+    "ocr_pipeline": (
+        "Process scanned documents and image PDFs through OCR detection, page-level quality "
+        "verification, duplicate and version delta tracking, and verified FTS5 search indexing."
+    ),
     "alibi_weave": (
         "Separate a self-reported position from one another source confirms at the same "
         "place and time, and report every person nothing places as a gap."
@@ -440,6 +444,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("compare", "Compare", "content + dates"),
         ("validity", "Validity", "requested date"),
         ("matrix", "Change matrix", "evidence + uncertainty"),
+    ),
+    "ocr_pipeline": (
+        ("operation", "Scan detection", "text layers + raster pages"),
+        ("gate", "OCR quality", "confidence threshold + review gate"),
+        ("operation", "Delta index", "new, updated, or skipped duplicates"),
+        ("operation", "FTS5 index", "source chunks with line anchors"),
+        ("gate", "Retrieval probe", "verified searchability receipt"),
     ),
 }
 
