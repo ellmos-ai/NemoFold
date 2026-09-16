@@ -68,6 +68,11 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Read declared coverage intervals out of contract documents, leave an unnamed end "
         "open, and report a start date that cannot be read instead of inventing one."
     ),
+    "cost_timeline": (
+        "Extract recurring and irregular cost schedules, normalize billing cadences, "
+        "project upcoming period totals, and keep unknown due dates separate rather "
+        "than guessing exact moments."
+    ),
     "alibi_weave": (
         "Separate a self-reported position from one another source confirms at the same "
         "place and time, and report every person nothing places as a gap."
@@ -250,6 +255,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Read", "declared contract fields"),
         ("gate", "Open end", "unnamed end stays open"),
         ("operation", "Render", "intervals over time"),
+    ),
+    "cost_timeline": (
+        ("operation", "Read", "declared cost and billing fields"),
+        ("operation", "Normalize", "cadences and due dates"),
+        ("gate", "Honest due dates", "unknown dates never placed on exact moments"),
+        ("operation", "Forecast", "recurring vs special effects"),
+        ("operation", "Render", "timeline and cost schedule"),
     ),
     "alibi_weave": (
         ("operation", "Collect", "stated positions"),

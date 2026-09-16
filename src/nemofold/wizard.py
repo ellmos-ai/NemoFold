@@ -45,6 +45,7 @@ WORKFLOW_ORDER = {
     "corpus_query": 78,
     "person_timeline": 80,
     "coverage_timeline": 82,
+    "cost_timeline": 83,
     "alibi_weave": 84,
     "contradiction_synopsis": 86,
     "bundle_export": 80,
@@ -79,6 +80,7 @@ WORKFLOW_TITLES = {
     "relation_model": "Relation Model",
     "person_timeline": "Person Timeline",
     "coverage_timeline": "Coverage Timeline",
+    "cost_timeline": "Cost Timeline",
     "alibi_weave": "Alibi Weave",
     "contradiction_synopsis": "Contradiction Synopsis",
     "corpus_query": "Corpus Query",
@@ -157,6 +159,10 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "coverage_timeline": (
         "abgedeckt", "versicherungsverlauf", "deckung", "wann war ich wie",
         "policenverlauf", "coverage",
+    ),
+    "cost_timeline": (
+        "kosten", "fälligkeit", "ausgaben", "budget", "turnus", "wiederkehrend",
+        "kostenplan", "cost", "fälligkeiten", "sondereffekte",
     ),
     "alibi_weave": (
         "alibi", "wer war wo", "bestätigt", "belegt wo", "aufenthalt", "wochenende",
@@ -599,6 +605,10 @@ def _why(workflow: str) -> str:
             "Reads declared coverage fields out of the contracts, leaving an unnamed end "
             "date open rather than assuming one."
         ),
+        "cost_timeline": (
+            "Projects recurring and irregular costs into future periods, keeping unknown "
+            "due dates separate instead of guessing exact moments."
+        ),
         "alibi_weave": (
             "Keeps a self-report and an outside confirmation apart, and names everyone the "
             "sources place nowhere. Needs the places to compare."
@@ -708,7 +718,7 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
         return {"formats": ["md"], "match_surnames": False}
     if workflow == "relation_model":
         return {"formats": ["md"], "pseudonymous": False}
-    if workflow in {"person_timeline", "coverage_timeline"}:
+    if workflow in {"person_timeline", "coverage_timeline", "cost_timeline"}:
         return {"formats": ["md"]}
     if workflow == "alibi_weave":
         # Places stay empty until a person names them: guessing a place

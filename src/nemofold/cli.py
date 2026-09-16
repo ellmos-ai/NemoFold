@@ -31,6 +31,7 @@ from .g01_acceptance import G01AcceptanceError, run_g01_acceptance_bundle
 from .g02_acceptance import G02AcceptanceError, run_g02_acceptance_bundle
 from .g03_acceptance import G03AcceptanceError, run_g03_acceptance_bundle
 from .g04_acceptance import G04AcceptanceError, run_g04_acceptance_bundle
+from .g05_acceptance import G05AcceptanceError, run_g05_acceptance_bundle
 from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
 from .ledger import RunLedger, validate_run_id
@@ -261,6 +262,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="run the synthetic G04 positive and blocking paths and seal their evidence",
     )
     acceptance_g04.add_argument("--output", required=True)
+    acceptance_g05 = commands.add_parser(
+        "acceptance-g05",
+        help="run the synthetic G05 positive and blocking paths and seal their evidence",
+    )
+    acceptance_g05.add_argument("--output", required=True)
     return parser
 
 
@@ -352,6 +358,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _acceptance_g03_command(args)
     if args.command == "acceptance-g04":
         return _acceptance_g04_command(args)
+    if args.command == "acceptance-g05":
+        return _acceptance_g05_command(args)
     parser.print_help()
     return 0
 
@@ -534,6 +542,42 @@ def _acceptance_g04_command(args: argparse.Namespace) -> int:
                 "missing_dates_dossier_path": str(bundle.missing_dates_dossier_path),
                 "missing_data_dossier_path": str(bundle.missing_data_dossier_path),
                 "unauthorized_advice_dossier_path": str(bundle.unauthorized_advice_dossier_path),
+                "verification": bundle.verification,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def _acceptance_g05_command(args: argparse.Namespace) -> int:
+    try:
+        bundle = run_g05_acceptance_bundle(
+            args.output,
+        )
+    except (G05AcceptanceError, OSError, ValueError) as exc:
+        print(
+            json.dumps(
+                {"ok": False, "gate_id": "G05", "errors": [str(exc)]},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "gate_id": "G05",
+                "root": str(bundle.root),
+                "register_path": str(bundle.register_path),
+                "positive_dossier_path": str(bundle.positive_dossier_path),
+                "missing_dates_dossier_path": str(bundle.missing_dates_dossier_path),
+                "missing_data_dossier_path": str(bundle.missing_data_dossier_path),
+                "insufficient_items_dossier_path": str(bundle.insufficient_items_dossier_path),
                 "verification": bundle.verification,
             },
             ensure_ascii=False,

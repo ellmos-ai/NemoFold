@@ -27,13 +27,20 @@ from .evidence import compute_coverage
 from .primitives import AggregationBudget, AnchoredStatement, aggregate_mapreduce, merge_sections
 from .primitives import statements_from_texts as _statements
 from .report_studio import ReportDocument, render_report_formats
-from .timeline import extract_coverage, extract_events, timeline_payload
+from .timeline import (
+    cost_timeline_payload,
+    extract_costs,
+    extract_coverage,
+    extract_events,
+    timeline_payload,
+)
 
 CHRONICLE_WORKFLOWS = (
     "person_registry",
     "relation_model",
     "person_timeline",
     "coverage_timeline",
+    "cost_timeline",
     "alibi_weave",
     "contradiction_synopsis",
     "corpus_query",
@@ -451,6 +458,223 @@ def execute_coverage_timeline(
         )
     )
     actions = (f"read {len(timeline.events)} declared coverage interval(s)",)
+    return actions, tuple(artifacts), coverage, metadata
+
+
+def execute_cost_timeline(
+    job: Any, data: ChronicleInput, run_id: str
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Plan recurring and irregular costs from declared contract fields.
+
+    Normalizes billing cadences and due dates, projects upcoming period totals,
+    and keeps unknown due dates separate rather than guessing exact moments.
+    """
+    cost_timeline = extract_costs(
+        data.source_ids,
+        data.texts,
+        contract_field=str(job.parameters.get("contract_field", "Vertrag")),
+        amount_field=str(job.parameters.get("amount_field", "Betrag")),
+        cadence_field=str(job.parameters.get("cadence_field", "Turnus")),
+        due_date_field=str(job.parameters.get("due_date_field", "Nächste Fälligkeit")),
+        category_field=str(job.parameters.get("category_field", "Kategorie")),
+    )
+    output = Path(job.output_dir)
+
+    min_items = job.parameters.get("min_cost_items")
+    if min_items is not None and len(cost_timeline.items) < int(min_items):
+        question = Question(
+            field="cost_items",
+            prompt=(
+                f"Keine ausreichenden Kostenpositionen gefunden "
+                f"({len(cost_timeline.items)} < {min_items}). "
+                "Bitte prüfen Sie die Vertragsdokumente auf deklarierte Kosten."
+            ),
+            why=(
+                "Fehlende Vertragsdaten erzeugen Unsicherheitshinweise statt erfundener "
+                "Kostenpositionen; ohne deklarierte Kosten kann keine Kostenplanung erfolgen."
+            ),
+            kind="text",
+        )
+        asked = needs_input_payload((question,), workflow=job.workflow)
+        needs_artifact = write_text_artifact(
+            output / f"{run_id}.needs-user-input.json",
+            json.dumps(asked, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "needs-user-input",
+        )
+        coverage = _coverage(data, set())
+        raise WorkflowBlocked(
+            (f"insufficient_cost_items:{len(cost_timeline.items)}<{min_items}",),
+            actions=(f"analyzed {len(data.source_ids)} source(s)", "cost_items_missing"),
+            artifacts=(needs_artifact,),
+            coverage=coverage,
+            metadata={
+                "item_count": len(cost_timeline.items),
+                "target_item_count": min_items,
+                "needs_user_input": True,
+                "outcome_note": asked["outcome_note"],
+            },
+        )
+
+    require_deterministic = bool(job.parameters.get("require_deterministic_due_dates", False))
+    undetermined_items = tuple(item for item in cost_timeline.items if not item.determined)
+    if require_deterministic and undetermined_items:
+        contracts_list = ", ".join(item.contract for item in undetermined_items)
+        question = Question(
+            field="cost_due_dates",
+            prompt=(
+                f"Unbekannte oder unvollständige Fälligkeiten für {len(undetermined_items)} "
+                f"Vertrag/Verträge gefunden ({contracts_list}). "
+                "Unbekannte Fälligkeiten dürfen nicht als exakte Prognosen dargestellt werden. "
+                "Bitte tragen Sie die Fälligkeiten nach."
+            ),
+            why=(
+                "Unbekannte Fälligkeiten werden nicht als exakte Prognosen dargestellt; "
+                "ohne belegte Fälligkeit kann kein exaktes Fälligkeitsdatum prognostiziert werden."
+            ),
+            kind="text",
+        )
+        asked = needs_input_payload((question,), workflow=job.workflow)
+        needs_artifact = write_text_artifact(
+            output / f"{run_id}.needs-user-input.json",
+            json.dumps(asked, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "needs-user-input",
+        )
+        coverage = _coverage(data, set())
+        raise WorkflowBlocked(
+            (f"undetermined_cost_due_dates:{len(undetermined_items)}",),
+            actions=(f"analyzed {len(data.source_ids)} source(s)", "cost_due_dates_undetermined"),
+            artifacts=(needs_artifact,),
+            coverage=coverage,
+            metadata={
+                "undetermined_count": len(undetermined_items),
+                "undetermined_contracts": [item.contract for item in undetermined_items],
+                "needs_user_input": True,
+                "outcome_note": asked["outcome_note"],
+            },
+        )
+
+    forecast_month = job.parameters.get("forecast_month")
+    projected_recurring_total = 0.0
+    projected_special_effects_total = 0.0
+    for item in cost_timeline.items:
+        if not item.determined or item.amount is None:
+            continue
+        if forecast_month:
+            if item.cadence == "monthly":
+                projected_recurring_total += item.amount
+            elif item.due_date.value and item.due_date.value.startswith(forecast_month):
+                if (
+                    item.category == "special_effect"
+                    or item.cadence in ("annual", "biennial", "irregular")
+                ):
+                    projected_special_effects_total += item.amount
+                else:
+                    projected_recurring_total += item.amount
+        else:
+            if (
+                item.category == "special_effect"
+                or item.cadence in ("annual", "biennial", "irregular")
+            ):
+                projected_special_effects_total += item.amount
+            else:
+                projected_recurring_total += item.amount
+
+    recurring_entries = []
+    special_entries = []
+    undetermined_entries = []
+    for item in cost_timeline.items:
+        entry = (
+            f"{item.contract}: {item.amount_raw}" if item.amount_raw else item.contract,
+            _minutes(item.due_date.value) or 0,
+            None,
+            item.determined,
+        )
+        if not item.determined:
+            undetermined_entries.append(entry)
+        elif (
+            item.category == "special_effect"
+            or item.cadence in ("annual", "biennial", "irregular")
+        ):
+            special_entries.append(entry)
+        else:
+            recurring_entries.append(entry)
+
+    lanes = []
+    if recurring_entries:
+        lanes.append(("Wiederkehrende Kosten", tuple(recurring_entries)))
+    if special_entries:
+        lanes.append(("Erwartbare Sondereffekte", tuple(special_entries)))
+    if undetermined_entries:
+        lanes.append(("(Unbestimmte Fälligkeiten)", tuple(undetermined_entries)))
+
+    title = str(job.parameters.get("title") or "Kosten- und Fälligkeitsplanung")
+    payload = cost_timeline_payload(
+        cost_timeline,
+        title=title,
+        forecast_month=str(forecast_month) if forecast_month else None,
+        projected_recurring_total=projected_recurring_total,
+        projected_special_effects_total=projected_special_effects_total,
+        undetermined_items=undetermined_items,
+    )
+    figure = timeline_svg(tuple(lanes), title=title)
+    artifacts: list[ArtifactRecord] = [
+        _json_artifact(output, f"{run_id}.timeline.json", payload, "cost-timeline"),
+        _svg_artifact(output, f"{run_id}.timeline.svg", figure, "timeline-figure"),
+    ]
+
+    claims: list[Claim] = []
+    for item in cost_timeline.items:
+        statement = (
+            f"{item.contract}: {item.amount_raw} ({item.cadence_raw}), "
+            f"Fälligkeit {item.due_date.value or item.due_date.raw}"
+        )
+        claims.append(
+            Claim(
+                statement=statement,
+                evidence=(
+                    EvidenceLocator(
+                        source_id=item.anchor.source_id,
+                        quote=item.quote,
+                        section=f"line {item.anchor.line}",
+                    ),
+                ),
+            )
+        )
+
+    cited = {item.anchor.source_id for item in cost_timeline.items}
+    coverage = _coverage(data, cited)
+    artifacts.extend(
+        _report(
+            job,
+            output,
+            f"{run_id}_cost_plan",
+            title,
+            tuple(claims),
+            coverage,
+        )
+    )
+    metadata: dict[str, object] = {
+        "item_count": len(cost_timeline.items),
+        "undetermined_count": len(undetermined_items),
+        "forecast_month": forecast_month,
+        "projected_total": round(
+            projected_recurring_total + projected_special_effects_total, 2
+        ),
+        "projected_recurring_total": round(projected_recurring_total, 2),
+        "projected_special_effects_total": round(projected_special_effects_total, 2),
+        "figure_description": figure.description,
+        "notes": list(cost_timeline.notes),
+        "honesty_note": (
+            "Wiederkehrende Kosten und erwartbare Sondereffekte werden mit Zeitraum und "
+            "Quelle ausgewiesen. Unbekannte Fälligkeiten werden nicht als exakte Prognosen "
+            "dargestellt."
+        ),
+        "no_legal_conclusion": NO_LEGAL_CONCLUSION,
+    }
+    actions = (
+        f"analyzed {len(cost_timeline.items)} cost item(s); "
+        f"projected {len(cost_timeline.items) - len(undetermined_items)} confirmed item(s)",
+    )
     return actions, tuple(artifacts), coverage, metadata
 
 

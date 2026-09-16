@@ -35,6 +35,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "relation_model",
         "person_timeline",
         "coverage_timeline",
+        "cost_timeline",
         "alibi_weave",
         "contradiction_synopsis",
         "corpus_query",
@@ -132,6 +133,24 @@ WORKFLOW_PARAMETER_FIELDS = {
         "structured_sources",
         "end_field", "formats", "holder_field", "label_field", "min_intervals",
         "require_complete_coverage", "start_field", "title"}
+    ),
+    "cost_timeline": frozenset(
+        {
+            "source_tables",
+            "structured_sources",
+            "amount_field",
+            "cadence_field",
+            "category_field",
+            "contract_field",
+            "due_date_field",
+            "due_within_days",
+            "forecast_month",
+            "formats",
+            "min_cost_items",
+            "reference_date",
+            "require_deterministic_due_dates",
+            "title",
+        }
     ),
     "alibi_weave": frozenset(
         {
@@ -498,6 +517,24 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             job.parameters["require_complete_coverage"], bool
         ):
             raise ValueError("require_complete_coverage must be a boolean")
+    elif job.workflow == "cost_timeline":
+        min_items = job.parameters.get("min_cost_items")
+        if min_items is not None and (
+            isinstance(min_items, bool)
+            or not isinstance(min_items, int)
+            or min_items < 0
+        ):
+            raise ValueError("min_cost_items must be a non-negative integer")
+        if "require_deterministic_due_dates" in job.parameters and not isinstance(
+            job.parameters["require_deterministic_due_dates"], bool
+        ):
+            raise ValueError("require_deterministic_due_dates must be a boolean")
+        forecast_month = job.parameters.get("forecast_month")
+        if forecast_month is not None and (
+            not isinstance(forecast_month, str)
+            or not re.match(r"^\d{4}-\d{2}$", forecast_month.strip())
+        ):
+            raise ValueError("forecast_month must be formatted YYYY-MM")
     elif job.workflow in {"evidence_analyst", "platform_proof"}:
         choice("analysis_mode", {"local_extractive", "nemotron"})
         choice("citation_granularity", {"line_or_page"})

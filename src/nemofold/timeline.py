@@ -339,3 +339,226 @@ def timeline_payload(timeline: Timeline, *, title: str) -> dict[str, object]:
             "placed at a guessed moment to make the chart look complete."
         ),
     }
+
+
+@dataclass(frozen=True, slots=True)
+class CostItem:
+    """A recurring or irregular cost declaration extracted from contract sources."""
+
+    contract: str
+    amount_raw: str
+    amount: float | None
+    cadence_raw: str
+    cadence: str
+    category: str
+    due_date: TimePoint
+    anchor: Anchor
+    quote: str
+
+    @property
+    def determined(self) -> bool:
+        return self.due_date.known
+
+
+@dataclass(frozen=True, slots=True)
+class CostTimeline:
+    """Extracted cost items, timeline events and honesty notes."""
+
+    items: tuple[CostItem, ...]
+    timeline: Timeline
+    notes: tuple[str, ...]
+
+
+def _parse_amount(raw: str) -> float | None:
+    cleaned = raw.replace("€", "").replace("EUR", "").replace("Euro", "").strip()
+    match = re.search(r"(\d+(?:[.,]\d{1,2})?)", cleaned)
+    if not match:
+        return None
+    val_str = match.group(1).replace(",", ".")
+    try:
+        return float(val_str)
+    except ValueError:
+        return None
+
+
+def _normalize_cadence(raw: str) -> tuple[str, str]:
+    lower = raw.lower().strip()
+    if any(term in lower for term in ("monat", "mtl", "monthly")):
+        return "monthly", "recurring"
+    if any(term in lower for term in ("quartal", "vierteljähr", "quarterly")):
+        return "quarterly", "recurring"
+    if any(term in lower for term in ("halbjahr", "semiannual")):
+        return "semiannual", "recurring"
+    if any(term in lower for term in ("jähr", "annual", "yearly", "jhrl")):
+        return "annual", "special_effect"
+    if any(term in lower for term in ("zweijähr", "biennial")):
+        return "biennial", "special_effect"
+    return "irregular", "special_effect"
+
+
+def extract_costs(
+    source_ids: tuple[str, ...],
+    texts: dict[str, str],
+    *,
+    contract_field: str = "Vertrag",
+    amount_field: str = "Betrag",
+    cadence_field: str = "Turnus",
+    due_date_field: str = "Nächste Fälligkeit",
+    category_field: str = "Kategorie",
+) -> CostTimeline:
+    """Extract recurring and irregular cost items from declared document fields."""
+    items: list[CostItem] = []
+    events: list[Event] = []
+    notes: list[str] = []
+    fields = (contract_field, amount_field, cadence_field, due_date_field, category_field)
+    pattern = {
+        name: re.compile(rf"^\s*{re.escape(name)}\s*:\s*(?P<value>\S.*?)\s*$", re.IGNORECASE)
+        for name in fields
+    }
+
+    for source_id in source_ids:
+        text = texts.get(source_id)
+        if text is None:
+            continue
+        current_block: dict[str, tuple[str, int]] = {}
+
+        def _flush_block(block: dict[str, tuple[str, int]], src_id: str) -> None:
+            if not block or contract_field not in block:
+                return
+            contract, c_line = block[contract_field]
+            amount_raw = block.get(amount_field, ("", c_line))[0]
+            amount = _parse_amount(amount_raw)
+            cadence_raw = block.get(cadence_field, ("monatlich", c_line))[0]
+            cadence_norm, default_cat = _normalize_cadence(cadence_raw)
+
+            category_raw = block.get(category_field, ("", c_line))[0]
+            if "wiederkehrend" in category_raw.lower():
+                category = "recurring"
+            elif any(
+                t in category_raw.lower() for t in ("sondereffekt", "irregulär", "einmalig")
+            ):
+                category = "special_effect"
+            else:
+                category = default_cat
+
+            due_raw = block.get(due_date_field, ("", c_line))[0]
+            if due_raw and any(term in due_raw.lower() for term in UNCERTAIN_TERMS):
+                due_point = TimePoint(value=None, precision=PRECISION_UNKNOWN, raw=due_raw)
+            elif due_raw:
+                parsed_times = parse_times(due_raw)
+                if parsed_times and parsed_times[0].known:
+                    due_point = parsed_times[0]
+                else:
+                    due_point = TimePoint(value=None, precision=PRECISION_UNKNOWN, raw=due_raw)
+            else:
+                due_point = TimePoint(value=None, precision=PRECISION_UNKNOWN, raw="unbekannt")
+
+            quote_parts = [f"{contract_field}: {contract}"]
+            if amount_raw:
+                quote_parts.append(f"{amount_field}: {amount_raw}")
+            if cadence_raw:
+                quote_parts.append(f"{cadence_field}: {cadence_raw}")
+            if due_raw:
+                quote_parts.append(f"{due_date_field}: {due_raw}")
+            quote = " · ".join(quote_parts)
+
+            anchor = Anchor(source_id=src_id, line=c_line)
+            cost_item = CostItem(
+                contract=contract,
+                amount_raw=amount_raw,
+                amount=amount,
+                cadence_raw=cadence_raw,
+                cadence=cadence_norm,
+                category=category,
+                due_date=due_point,
+                anchor=anchor,
+                quote=quote,
+            )
+            items.append(cost_item)
+
+            events.append(
+                Event(
+                    subject=f"{contract} ({cadence_raw})",
+                    label=f"{contract}: {amount_raw}" if amount_raw else contract,
+                    start=due_point,
+                    end=None,
+                    kind=KIND_POINT,
+                    anchor=anchor,
+                    quote=quote,
+                )
+            )
+
+        for line_num, raw in enumerate(text.splitlines(), start=1):
+            is_new_contract = pattern[contract_field].match(raw) is not None
+            if is_new_contract and current_block:
+                _flush_block(current_block, source_id)
+                current_block = {}
+            for name in fields:
+                match = pattern[name].match(raw)
+                if match is not None and name not in current_block:
+                    current_block[name] = (match.group("value").strip(), line_num)
+
+        if current_block:
+            _flush_block(current_block, source_id)
+
+    events.sort(key=lambda item: (item.start.value or "", item.anchor.source_id))
+    if not items:
+        notes.append("Keine Kostenpositionen in den geprüften Dokumenten gefunden.")
+    timeline = Timeline(events=tuple(events), notes=tuple(notes))
+    return CostTimeline(items=tuple(items), timeline=timeline, notes=tuple(notes))
+
+
+def cost_timeline_payload(
+    cost_timeline: CostTimeline,
+    *,
+    title: str,
+    forecast_month: str | None = None,
+    projected_recurring_total: float = 0.0,
+    projected_special_effects_total: float = 0.0,
+    undetermined_items: tuple[CostItem, ...] = (),
+) -> dict[str, object]:
+    return {
+        "schema": "nemofold.cost-timeline.v1",
+        "title": title,
+        "item_count": len(cost_timeline.items),
+        "undetermined_count": len(undetermined_items),
+        "forecast_month": forecast_month,
+        "projected_total": round(projected_recurring_total + projected_special_effects_total, 2),
+        "projected_recurring_total": round(projected_recurring_total, 2),
+        "projected_special_effects_total": round(projected_special_effects_total, 2),
+        "items": [
+            {
+                "contract": item.contract,
+                "amount": item.amount,
+                "amount_raw": item.amount_raw,
+                "cadence": item.cadence,
+                "cadence_raw": item.cadence_raw,
+                "category": item.category,
+                "due_date": item.due_date.value,
+                "determined": item.determined,
+                "source_id": item.anchor.source_id,
+                "line": item.anchor.line,
+                "quote": item.quote,
+            }
+            for item in cost_timeline.items
+        ],
+        "undetermined_items": [
+            {
+                "contract": item.contract,
+                "amount": item.amount,
+                "amount_raw": item.amount_raw,
+                "source_id": item.anchor.source_id,
+                "line": item.anchor.line,
+                "quote": item.quote,
+                "note": "Unbekannte Fälligkeit; nicht in exakte Prognosen eingerechnet",
+            }
+            for item in undetermined_items
+        ],
+        "notes": list(cost_timeline.notes),
+        "honesty_note": (
+            "Unbekannte Fälligkeiten werden nicht als exakte Prognosen dargestellt. "
+            "Wiederkehrende Kosten und erwartbare Sondereffekte werden getrennt mit Zeitraum "
+            "und Quelle ausgewiesen."
+        ),
+    }
+
