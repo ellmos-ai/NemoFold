@@ -80,6 +80,7 @@ from .document_compose import (
 )
 from .document_extract import count_pdf_pages, extract_document_text
 from .document_index import DocumentIndex, SearchHit
+from .document_qa import execute_document_qa
 from .document_registry import (
     build_registry,
     columns_from_parameters,
@@ -2713,6 +2714,8 @@ def _dispatch_workflow(
         return execute_routine_query(job, inventory, run_id=run_id)
     if job.workflow == "ocr_pipeline":
         return execute_ocr_pipeline(job, inventory, run_id=run_id)
+    if job.workflow == "document_qa":
+        return execute_document_qa(job, inventory, run_id=run_id)
     if job.workflow in CHRONICLE_WORKFLOWS:
         return _execute_chronicle(job, inventory, run_id=run_id)
     if job.workflow in WEB_WORKFLOWS:
@@ -3325,7 +3328,14 @@ def _execute_print_action(
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Prepare a file for printing and say plainly that it was not printed."""
     wanted = str(job.parameters.get("source_id", "")).strip()
-    records = [record for record in inventory.records if not wanted or record.source_id == wanted]
+    records = [
+        record
+        for record in inventory.records
+        if not wanted
+        or record.source_id == wanted
+        or record.display_name == wanted
+        or Path(record.path).name == wanted
+    ]
     if not records:
         raise ValueError(
             "print_action needs one approved source; name it with source_id"

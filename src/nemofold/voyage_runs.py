@@ -785,23 +785,25 @@ def run_voyage(
                     )
             except (ValueError, RecipientBridgeError) as exc:
                 rights, rights_level = resolve_rights(step.get("rights"), chain_rights)
-                out_dir = Path(str(job_payload["output_dir"]))
-                ledger = RunLedger(out_dir / "ledger")
-                step_report = RunReport(
-                    run_id=step_run_id,
-                    idempotency_key=step_run_id,
-                    workflow=str(job_payload["workflow"]),
-                    status=RunStatus.BLOCKED,
-                    errors=(str(exc),),
-                )
-                saved_ledger = ledger.save(step_report)
+                saved_ledger: str | None = None
+                if spec.get("mode") == "recipient_bridge":
+                    out_dir = Path(str(job_payload["output_dir"]))
+                    ledger = RunLedger(out_dir / "ledger")
+                    step_report = RunReport(
+                        run_id=step_run_id,
+                        idempotency_key=step_run_id,
+                        workflow=str(job_payload["workflow"]),
+                        status=RunStatus.BLOCKED,
+                        errors=(str(exc),),
+                    )
+                    saved_ledger = str(ledger.save(step_report))
                 results.append(
                     VoyageStepResult(
                         order=order,
                         workflow=str(job_payload["workflow"]),
                         run_id=step_run_id,
                         status="handoff_blocked",
-                        ledger_path=str(saved_ledger),
+                        ledger_path=saved_ledger,
                         artifact_count=0,
                         output_dir=str(job_payload["output_dir"]),
                         model_used=LOCAL_CORE,

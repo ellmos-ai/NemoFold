@@ -56,6 +56,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "knowledge_composer",
         "routine_query",
         "ocr_pipeline",
+        "document_qa",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -293,6 +294,20 @@ WORKFLOW_PARAMETER_FIELDS = {
     ),
     "document_compose": frozenset(
         {"basename", "fields", "formats", "template_path", "title"}
+    ),
+    "document_qa": frozenset(
+        {
+            "disallow_unbound_fields",
+            "document_path",
+            "expected_sha256",
+            "formats",
+            "min_words",
+            "package_title",
+            "required_sections",
+            "target_format",
+            "title",
+            "version",
+        }
     ),
     "mail_merge_compose": frozenset(
         {"basename", "contact_book", "fields", "formats", "template_path", "title"}
