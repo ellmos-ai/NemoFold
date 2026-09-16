@@ -33,6 +33,7 @@ from .g03_acceptance import G03AcceptanceError, run_g03_acceptance_bundle
 from .g04_acceptance import G04AcceptanceError, run_g04_acceptance_bundle
 from .g05_acceptance import G05AcceptanceError, run_g05_acceptance_bundle
 from .g06_acceptance import G06AcceptanceError, run_g06_acceptance_bundle
+from .g07_acceptance import G07AcceptanceError, run_g07_acceptance_bundle
 from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
 from .ledger import RunLedger, validate_run_id
@@ -273,6 +274,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="run the synthetic G06 positive and blocking paths and seal their evidence",
     )
     acceptance_g06.add_argument("--output", required=True)
+    acceptance_g07 = commands.add_parser(
+        "acceptance-g07",
+        help="run the synthetic G07 positive and blocking paths and seal their evidence",
+    )
+    acceptance_g07.add_argument("--output", required=True)
     return parser
 
 
@@ -368,6 +374,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _acceptance_g05_command(args)
     if args.command == "acceptance-g06":
         return _acceptance_g06_command(args)
+    if args.command == "acceptance-g07":
+        return _acceptance_g07_command(args)
     parser.print_help()
     return 0
 
@@ -622,6 +630,42 @@ def _acceptance_g06_command(args: argparse.Namespace) -> int:
                 "ambiguous_dossier_path": str(bundle.ambiguous_dossier_path),
                 "missing_data_dossier_path": str(bundle.missing_data_dossier_path),
                 "insufficient_subs_dossier_path": str(bundle.insufficient_subs_dossier_path),
+                "verification": bundle.verification,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def _acceptance_g07_command(args: argparse.Namespace) -> int:
+    try:
+        bundle = run_g07_acceptance_bundle(
+            args.output,
+        )
+    except (G07AcceptanceError, OSError, ValueError) as exc:
+        print(
+            json.dumps(
+                {"ok": False, "gate_id": "G07", "errors": [str(exc)]},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "gate_id": "G07",
+                "root": str(bundle.root),
+                "register_path": str(bundle.register_path),
+                "positive_dossier_path": str(bundle.positive_dossier_path),
+                "unresolved_conflict_dossier_path": str(bundle.unresolved_conflict_dossier_path),
+                "missing_data_dossier_path": str(bundle.missing_data_dossier_path),
+                "insufficient_meds_dossier_path": str(bundle.insufficient_meds_dossier_path),
                 "verification": bundle.verification,
             },
             ensure_ascii=False,

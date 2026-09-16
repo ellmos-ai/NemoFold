@@ -538,7 +538,7 @@ def _selected_registry_sources(
         "topic_filter": list(snapshot.parameters["topic_filter"]),
         "application_domain": (
             "medical_reports"
-            if snapshot.parameters.get("column_template") == "medical_reports"
+            if snapshot.parameters.get("column_template") in ("medical_reports", "medication_plan")
             else None
         ),
     }

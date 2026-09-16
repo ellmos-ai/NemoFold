@@ -77,6 +77,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Reconcile declared subscriptions against observed message and invoice evidence, "
         "flag price discrepancies and cancellation mismatches, and halt on ambiguous matches."
     ),
+    "medication_reconcile": (
+        "Consolidate medication plans across multiple reports, identify conflicting dosages "
+        "and schedules, and halt without medical authority unless explicitly confirmed."
+    ),
     "alibi_weave": (
         "Separate a self-reported position from one another source confirms at the same "
         "place and time, and report every person nothing places as a gap."
@@ -273,6 +277,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("gate", "Ambiguity gate", "fail-closed if evidence belongs to multiple candidates"),
         ("operation", "Discrepancy audit", "detect price changes and cancellation status"),
         ("operation", "Render", "reconciliation report and verification json"),
+    ),
+    "medication_reconcile": (
+        ("operation", "Extract", "medication facts and schedules"),
+        ("gate", "Consistency audit", "detect conflicting dosages and duplicate ingredients"),
+        ("gate", "Medical authority gate", "fail-closed if dosages conflict without confirmation"),
+        ("operation", "Consolidation", "merge sources with verified anchor quotes"),
+        ("operation", "Render", "medication plan and verification json"),
     ),
     "alibi_weave": (
         ("operation", "Collect", "stated positions"),

@@ -47,6 +47,7 @@ WORKFLOW_ORDER = {
     "coverage_timeline": 82,
     "cost_timeline": 83,
     "subscription_reconcile": 85,
+    "medication_reconcile": 87,
     "alibi_weave": 84,
     "contradiction_synopsis": 86,
     "bundle_export": 80,
@@ -83,6 +84,7 @@ WORKFLOW_TITLES = {
     "coverage_timeline": "Coverage Timeline",
     "cost_timeline": "Cost Timeline",
     "subscription_reconcile": "Subscription Reconciliation",
+    "medication_reconcile": "Medication Reconciliation",
     "alibi_weave": "Alibi Weave",
     "contradiction_synopsis": "Contradiction Synopsis",
     "corpus_query": "Corpus Query",
@@ -169,6 +171,10 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "subscription_reconcile": (
         "abo", "abonnements", "nachrichten", "abgleich", "reconciliation", "vertrag",
         "preiserhöhung", "rechnung", "subscriptions", "vertragsabgleich",
+    ),
+    "medication_reconcile": (
+        "medikamente", "medikationsplan", "wirkstoff", "dosierung", "arztbericht",
+        "entlassungsbrief", "rezept", "arzneimittel", "medication", "einnahmeplan",
     ),
     "alibi_weave": (
         "alibi", "wer war wo", "bestätigt", "belegt wo", "aufenthalt", "wochenende",
@@ -619,6 +625,10 @@ def _why(workflow: str) -> str:
             "Reconciles declared subscriptions with incoming message and invoice evidence, "
             "highlighting price changes and cancellation status mismatches without guessing."
         ),
+        "medication_reconcile": (
+            "Consolidates medication plans across medical reports, highlighting conflicting "
+            "dosages and duplicate ingredients without guessing or claiming medical authority."
+        ),
         "alibi_weave": (
             "Keeps a self-report and an outside confirmation apart, and names everyone the "
             "sources place nowhere. Needs the places to compare."
@@ -733,6 +743,7 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
         "coverage_timeline",
         "cost_timeline",
         "subscription_reconcile",
+        "medication_reconcile",
     }:
         return {"formats": ["md"]}
     if workflow == "alibi_weave":

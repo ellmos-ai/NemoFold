@@ -42,6 +42,7 @@ CHRONICLE_WORKFLOWS = (
     "coverage_timeline",
     "cost_timeline",
     "subscription_reconcile",
+    "medication_reconcile",
     "alibi_weave",
     "contradiction_synopsis",
     "corpus_query",

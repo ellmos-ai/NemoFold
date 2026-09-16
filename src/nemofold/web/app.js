@@ -197,6 +197,11 @@ const workflowDefaults = {
     parameters: {formats: ["md"], min_subscriptions: 1, require_unambiguous_matches: true},
     hint: "Subscription Reconciliation reconciles declared subscriptions with incoming message/invoice evidence, identifying price discrepancies and status mismatches."
   },
+  medication_reconcile: {
+    questions: [],
+    parameters: {formats: ["md"], min_medications: 1, require_unambiguous_dosages: true, application_domain: "medical_reports"},
+    hint: "Medication Reconciliation consolidates medication plans across medical reports, identifying conflicting dosages and duplicate active ingredients without medical overreach."
+  },
   alibi_weave: {
     questions: [],
     parameters: {formats: ["md"], places: [], tolerance_minutes: 90},
@@ -670,6 +675,10 @@ const workflowCards = {
     title: "Subscription Reconciliation",
     benefit: "Reconcile declared subscriptions with incoming invoice and message evidence without guessing on ambiguity."
   },
+  medication_reconcile: {
+    title: "Medication Reconciliation",
+    benefit: "Consolidate medications across reports and flag conflicting dosages without medical overreach."
+  },
   alibi_weave: {
     title: "Alibi Weave",
     benefit: "Tell a self-report from an outside confirmation, and see who nothing places at all."
@@ -1011,7 +1020,7 @@ const registryGroups = [
   {title: "Reading a corpus", workflows: ["evidence_analyst", "bundle_export", "fact_distill",
     "synopsis_merge", "document_registry", "corpus_query", "pattern_mining"]},
   {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
-    "coverage_timeline", "cost_timeline", "subscription_reconcile", "alibi_weave", "contradiction_synopsis"]},
+    "coverage_timeline", "cost_timeline", "subscription_reconcile", "medication_reconcile", "alibi_weave", "contradiction_synopsis"]},
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "version_resolver",
     "contact_monitor"]},
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},

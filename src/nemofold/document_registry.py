@@ -117,6 +117,18 @@ COLUMN_TEMPLATES: dict[str, tuple[RegistryColumn, ...]] = {
         RegistryColumn("Kontakt", "Provider contact",
                        ("Contact", "Anbieter", "Provider", "Telefon", "E-Mail", "Email")),
     ),
+    "medication_plan": (
+        RegistryColumn("Medikament", "Trade name or medication",
+                       ("Medikament", "Präparat", "Name", "Handelsname", "Arzneimittel")),
+        RegistryColumn("Wirkstoff", "Active ingredient",
+                       ("Wirkstoff", "Substanz", "Ingredient", "Active ingredient")),
+        RegistryColumn("Dosierung", "Dose or strength",
+                       ("Dosierung", "Dosis", "Stärke", "Menge", "Strength")),
+        RegistryColumn("Einnahme", "Intake schedule or time",
+                       ("Einnahme", "Einnahmezeit", "Tageszeit", "Schema", "Turnus", "Schedule")),
+        RegistryColumn("Hinweis", "Application notes or indications",
+                       ("Hinweis", "Grund", "Indikation", "Wirkung", "Anmerkung", "Notes")),
+    ),
 }
 
 DATE_PATTERNS = (

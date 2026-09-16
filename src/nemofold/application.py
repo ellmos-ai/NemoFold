@@ -107,6 +107,7 @@ from .job_io import (
 )
 from .ledger import RunLedger, validate_run_id
 from .mail_workflows import build_controlled_draft, build_mail_case, parse_eml
+from .medication_reconcile import execute_medication_reconcile
 from .nemoclaw_package import NemoClawPackage, export_job_package
 from .outbound import (
     OutboundAdapter,
@@ -3493,6 +3494,7 @@ CHRONICLE_EXECUTORS = {
     "coverage_timeline": execute_coverage_timeline,
     "cost_timeline": execute_cost_timeline,
     "subscription_reconcile": execute_subscription_reconcile,
+    "medication_reconcile": execute_medication_reconcile,
     "alibi_weave": execute_alibi_weave,
     "contradiction_synopsis": execute_contradiction_synopsis,
     "corpus_query": execute_corpus_query,
