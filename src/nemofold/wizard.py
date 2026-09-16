@@ -49,6 +49,7 @@ WORKFLOW_ORDER = {
     "subscription_reconcile": 85,
     "medication_reconcile": 87,
     "database_reader": 88,
+    "knowledge_composer": 89,
     "alibi_weave": 84,
     "contradiction_synopsis": 86,
     "bundle_export": 80,
@@ -87,6 +88,7 @@ WORKFLOW_TITLES = {
     "subscription_reconcile": "Subscription Reconciliation",
     "medication_reconcile": "Medication Reconciliation",
     "database_reader": "Database Reader",
+    "knowledge_composer": "Knowledge Composer",
     "alibi_weave": "Alibi Weave",
     "contradiction_synopsis": "Contradiction Synopsis",
     "corpus_query": "Corpus Query",
@@ -181,6 +183,11 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "database_reader": (
         "datenbank", "sqlite", "hauslagerist", "mediplaner", "inventar", "lagerort",
         "rezepte", "fachdatenbank", "database", "tabellen", "read_only",
+    ),
+    "knowledge_composer": (
+        "lebenslauf", "cv", "arbeitszeugnis", "arbeitsblatt", "autismus",
+        "förderung", "beratung", "reflexion", "wissensbasis", "grounded",
+        "knowledge_composer", "ascii",
     ),
     "alibi_weave": (
         "alibi", "wer war wo", "bestätigt", "belegt wo", "aufenthalt", "wochenende",
@@ -639,6 +646,10 @@ def _why(workflow: str) -> str:
             "Safely extracts records from local specialist SQLite databases (HausLagerist, "
             "MediPlaner) under strict read-only and schema validation rules."
         ),
+        "knowledge_composer": (
+            "Generates source-grounded documents (ASCII CVs, autism worksheets, counseling "
+            "worksheets) strictly from local verified knowledge bases without unanchored claims."
+        ),
         "alibi_weave": (
             "Keeps a self-report and an outside confirmation apart, and names everyone the "
             "sources place nowhere. Needs the places to compare."
@@ -755,6 +766,7 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
         "subscription_reconcile",
         "medication_reconcile",
         "database_reader",
+        "knowledge_composer",
     }:
         return {"formats": ["md"]}
     if workflow == "alibi_weave":

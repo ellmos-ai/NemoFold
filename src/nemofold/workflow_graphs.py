@@ -86,6 +86,11 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "under strict read-only and schema contracts without executing arbitrary or mutating "
         "queries."
     ),
+    "knowledge_composer": (
+        "Generate source-grounded documents (ASCII CVs, autism worksheets, counseling "
+        "worksheets) strictly from local verified knowledge bases while preventing "
+        "unanchored claims."
+    ),
     "alibi_weave": (
         "Separate a self-reported position from one another source confirms at the same "
         "place and time, and report every person nothing places as a gap."
@@ -296,6 +301,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("gate", "Schema & table allowlist", "refuse unauthorized tables or missing columns"),
         ("operation", "Normalization", "transform table records into typed domain items"),
         ("operation", "Render", "structured JSON and safety-audited Markdown report"),
+    ),
+    "knowledge_composer": (
+        ("operation", "Knowledge retrieval", "extract and verify factual stations or items"),
+        ("gate", "Grounding check", "halt if knowledge base is empty or claims are unanchored"),
+        ("gate", "Scope & disclaimer gate", "enforce target context and HeilprG disclaimers"),
+        ("operation", "Structure synthesis", "render structured ASCII or Markdown document"),
+        ("operation", "Artifact creation", "write verified JSON, Markdown, and text outputs"),
     ),
     "alibi_weave": (
         ("operation", "Collect", "stated positions"),

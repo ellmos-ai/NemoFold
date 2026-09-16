@@ -53,6 +53,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "pattern_mining",
         "document_compose",
         "mail_merge_compose",
+        "knowledge_composer",
     }
 )
 ANALYSIS_WORKFLOWS = frozenset({"evidence_analyst", "platform_proof"})
@@ -203,6 +204,16 @@ WORKFLOW_PARAMETER_FIELDS = {
             "title",
             "source_tables",
             "structured_sources",
+        }
+    ),
+    "knowledge_composer": frozenset(
+        {
+            "profile",
+            "title",
+            "client_context",
+            "min_knowledge_items",
+            "forbidden_unanchored_claim",
+            "formats",
         }
     ),
     "alibi_weave": frozenset(
@@ -642,6 +653,27 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
                 not isinstance(val, list) or any(not isinstance(x, str) for x in val)
             ):
                 raise ValueError(f"{list_param} must be a list of strings")
+    elif job.workflow == "knowledge_composer":
+        if "profile" in job.parameters:
+            choice("profile", {"cv_ascii", "autism_support", "counseling_worksheet"})
+        if "title" in job.parameters and not isinstance(job.parameters["title"], str):
+            raise ValueError("title must be a string")
+        if "client_context" in job.parameters and not isinstance(
+            job.parameters["client_context"], dict
+        ):
+            raise ValueError("client_context must be a dictionary")
+        min_items = job.parameters.get("min_knowledge_items")
+        if min_items is not None and (
+            isinstance(min_items, bool)
+            or not isinstance(min_items, int)
+            or min_items < 0
+        ):
+            raise ValueError("min_knowledge_items must be a non-negative integer")
+        if (
+            "forbidden_unanchored_claim" in job.parameters
+            and not isinstance(job.parameters["forbidden_unanchored_claim"], str)
+        ):
+            raise ValueError("forbidden_unanchored_claim must be a string")
     elif job.workflow in {"evidence_analyst", "platform_proof"}:
         choice("analysis_mode", {"local_extractive", "nemotron"})
         choice("citation_granularity", {"line_or_page"})

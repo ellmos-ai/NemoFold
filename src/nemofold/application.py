@@ -106,6 +106,7 @@ from .job_io import (
     validate_handoff_context,
     validate_workflow_parameters,
 )
+from .knowledge_composer import execute_knowledge_composer
 from .ledger import RunLedger, validate_run_id
 from .mail_workflows import build_controlled_draft, build_mail_case, parse_eml
 from .medication_reconcile import execute_medication_reconcile
@@ -2704,6 +2705,8 @@ def _dispatch_workflow(
         return _execute_contact_monitor(job, inventory, run_id=run_id)
     if job.workflow == "database_reader":
         return execute_database_reader(job, inventory, run_id=run_id)
+    if job.workflow == "knowledge_composer":
+        return execute_knowledge_composer(job, inventory, run_id=run_id)
     if job.workflow in CHRONICLE_WORKFLOWS:
         return _execute_chronicle(job, inventory, run_id=run_id)
     if job.workflow in WEB_WORKFLOWS:

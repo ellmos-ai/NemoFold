@@ -207,6 +207,11 @@ const workflowDefaults = {
     parameters: {formats: ["md"], min_records: 1, require_read_only: true},
     hint: "Database Reader safely reads approved specialist SQLite databases (HausLagerist, MediPlaner) under strict read-only and schema protection."
   },
+  knowledge_composer: {
+    questions: [],
+    parameters: {formats: ["md", "json"], profile: "cv_ascii", min_knowledge_items: 1},
+    hint: "Knowledge Composer generates grounded documents (ASCII CVs, autism worksheets, counseling worksheets) strictly from verified local knowledge bases."
+  },
   alibi_weave: {
     questions: [],
     parameters: {formats: ["md"], places: [], tolerance_minutes: 90},
@@ -688,6 +693,10 @@ const workflowCards = {
     title: "Database Reader",
     benefit: "Safely read inventory or medical specialist databases under guaranteed read-only and schema protection."
   },
+  knowledge_composer: {
+    title: "Knowledge Composer",
+    benefit: "Generate verified documents and worksheets strictly from knowledge bases without hallucinating ungrounded claims."
+  },
   alibi_weave: {
     title: "Alibi Weave",
     benefit: "Tell a self-report from an outside confirmation, and see who nothing places at all."
@@ -1035,7 +1044,7 @@ const registryGroups = [
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},
   {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check",
     "rater_race", "report_studio", "guide_compose", "wiki_export",
-    "document_compose", "mail_merge_compose", "print_action"]}
+    "document_compose", "mail_merge_compose", "knowledge_composer", "print_action"]}
 ];
 
 
