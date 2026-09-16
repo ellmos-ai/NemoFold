@@ -109,6 +109,24 @@ class ArtifactRecord:
     status: str = "written"
 
 
+class WorkflowBlocked(RuntimeError):
+    def __init__(
+        self,
+        errors: tuple[str, ...],
+        *,
+        actions: tuple[str, ...] = (),
+        artifacts: tuple[ArtifactRecord, ...] = (),
+        coverage: Coverage | None = None,
+        metadata: dict[str, object] | None = None,
+    ) -> None:
+        super().__init__(", ".join(errors))
+        self.errors = errors
+        self.actions = actions
+        self.artifacts = artifacts
+        self.coverage = coverage
+        self.metadata = metadata or {}
+
+
 @dataclass(frozen=True, slots=True)
 class UndoReceipt:
     action_id: str

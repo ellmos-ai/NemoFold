@@ -145,10 +145,18 @@ WORKFLOW_PARAMETER_FIELDS = {
         "contested_terms", "formats", "title"}),
     "corpus_query": frozenset(
         {
-        "source_tables",
-        "structured_sources",
-        "dedupe_scope", "formats", "max_per_source", "max_results", "partition_size",
-         "terms", "title"}
+            "dedupe_scope",
+            "formats",
+            "max_matches",
+            "max_per_source",
+            "max_results",
+            "min_matches",
+            "partition_size",
+            "source_tables",
+            "structured_sources",
+            "terms",
+            "title",
+        }
     ),
     # The web contracts take no source_tables: they read no folder at all.
     "web_research": frozenset({"formats", "max_results", "queries", "title", "web_adapter"}),
@@ -532,6 +540,27 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
         choice("template", {"default"})
         choice("language", {"en"})
         choice("include_coverage", {True})
+    elif job.workflow == "corpus_query":
+        min_matches = job.parameters.get("min_matches")
+        if min_matches is not None and (
+            isinstance(min_matches, bool)
+            or not isinstance(min_matches, int)
+            or min_matches < 0
+        ):
+            raise ValueError("min_matches must be a non-negative integer")
+        max_matches = job.parameters.get("max_matches")
+        if max_matches is not None and (
+            isinstance(max_matches, bool)
+            or not isinstance(max_matches, int)
+            or max_matches < 1
+        ):
+            raise ValueError("max_matches must be a positive integer")
+        if (
+            min_matches is not None
+            and max_matches is not None
+            and max_matches < min_matches
+        ):
+            raise ValueError("max_matches must be greater than or equal to min_matches")
     if job.workflow == "platform_proof":
         choice("runtime", {"nemoclaw", "offline"})
         choice("network_gate", {"approved", "closed"})

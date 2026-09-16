@@ -27,6 +27,7 @@ from .contracts import ActionMode, JobEnvelope, PrivacyMode, RunReport, RunStatu
 from .demo import DeterministicDemoReasoner
 from .demo_pipeline import run_full_offline_demo
 from .drafts import DraftStore
+from .g01_acceptance import G01AcceptanceError, run_g01_acceptance_bundle
 from .g02_acceptance import G02AcceptanceError, run_g02_acceptance_bundle
 from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
@@ -238,6 +239,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--evidence-root",
         help="required when a gate is done; verifies referenced files and SHA-256 values",
     )
+    acceptance_g01 = commands.add_parser(
+        "acceptance-g01",
+        help="run the synthetic G01 positive and blocking paths and seal their evidence",
+    )
+    acceptance_g01.add_argument("--output", required=True)
     acceptance_g02 = commands.add_parser(
         "acceptance-g02",
         help="run the synthetic G02 positive and blocking paths and seal their evidence",
@@ -326,6 +332,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _mcp_command(args)
     if args.command == "acceptance-gates":
         return _acceptance_gates_command(args)
+    if args.command == "acceptance-g01":
+        return _acceptance_g01_command(args)
     if args.command == "acceptance-g02":
         return _acceptance_g02_command(args)
     parser.print_help()
@@ -373,6 +381,41 @@ def _acceptance_gates_command(args: argparse.Namespace) -> int:
         )
         return 2
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
+    return 0
+
+
+def _acceptance_g01_command(args: argparse.Namespace) -> int:
+    try:
+        bundle = run_g01_acceptance_bundle(
+            args.output,
+        )
+    except (G01AcceptanceError, OSError, ValueError) as exc:
+        print(
+            json.dumps(
+                {"ok": False, "gate_id": "G01", "errors": [str(exc)]},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "gate_id": "G01",
+                "root": str(bundle.root),
+                "register_path": str(bundle.register_path),
+                "positive_dossier_path": str(bundle.positive_dossier_path),
+                "missing_dossier_path": str(bundle.missing_dossier_path),
+                "ambiguous_dossier_path": str(bundle.ambiguous_dossier_path),
+                "verification": bundle.verification,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
     return 0
 
 

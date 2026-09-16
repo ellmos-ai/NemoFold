@@ -19,7 +19,8 @@ from typing import Any
 
 from .artifacts import write_text_artifact
 from .chronicle_svg import alibi_weave_svg, relation_graph_svg, timeline_svg
-from .contracts import ArtifactRecord, Claim, Coverage, EvidenceLocator
+from .completeness import Question, needs_input_payload
+from .contracts import ArtifactRecord, Claim, Coverage, EvidenceLocator, WorkflowBlocked
 from .corroboration import _minutes, suggest_places, weave_alibis, weave_payload
 from .entity_relation import build_entity_graph, registry_payload
 from .evidence import compute_coverage
@@ -532,6 +533,70 @@ def execute_corpus_query(
         ),
     )
     output = Path(job.output_dir)
+    min_matches = int(job.parameters.get("min_matches", 0))
+    max_matches_val = job.parameters.get("max_matches")
+    max_matches = None if max_matches_val is None else int(max_matches_val)
+
+    if min_matches > 0 and len(outcome.results) < min_matches:
+        question = Question(
+            field="terms",
+            prompt=(
+                f"Kein Beleg für {', '.join(terms)} gefunden. "
+                "Möchten Sie nach einem anderen Begriff suchen?"
+            ),
+            why="Die Korpus-Suche ergab keine Fundstellen im bereitgestellten Dokumentenbestand.",
+            kind="search_term",
+        )
+        asked = needs_input_payload((question,), workflow=job.workflow)
+        needs_artifact = write_text_artifact(
+            output / f"{run_id}.needs-user-input.json",
+            json.dumps(asked, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "needs-user-input",
+        )
+        coverage = _coverage(data, set())
+        raise WorkflowBlocked(
+            (f"no_matches_found:{','.join(terms)}",),
+            actions=(f"searched {len(data.source_ids)} source(s)", "no_matches_found"),
+            artifacts=(needs_artifact,),
+            coverage=coverage,
+            metadata={
+                "terms": list(terms),
+                "match_count": len(outcome.results),
+                "needs_user_input": True,
+                "outcome_note": asked["outcome_note"],
+            },
+        )
+
+    if max_matches is not None and len(outcome.results) > max_matches:
+        question = Question(
+            field="document_choice",
+            prompt=(
+                f"Mehrdeutige Fundstellen ({len(outcome.results)} Treffer für {', '.join(terms)}). "
+                "Bitte wählen Sie das maßgebliche Dokument."
+            ),
+            why="Es wurden mehrere unterschiedliche Belege gefunden, die geklärt werden müssen.",
+            kind="document_selection",
+        )
+        asked = needs_input_payload((question,), workflow=job.workflow)
+        needs_artifact = write_text_artifact(
+            output / f"{run_id}.needs-user-input.json",
+            json.dumps(asked, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "needs-user-input",
+        )
+        cited = {anchor.source_id for item in outcome.results for anchor in item.anchors}
+        coverage = _coverage(data, cited)
+        raise WorkflowBlocked(
+            (f"ambiguous_matches:{len(outcome.results)}>{max_matches}",),
+            actions=(f"searched {len(data.source_ids)} source(s)", "ambiguous_matches_found"),
+            artifacts=(needs_artifact,),
+            coverage=coverage,
+            metadata={
+                "terms": list(terms),
+                "match_count": len(outcome.results),
+                "needs_user_input": True,
+                "outcome_note": asked["outcome_note"],
+            },
+        )
     payload = {
         "schema": "nemofold.corpus-query.v1",
         "terms": list(terms),

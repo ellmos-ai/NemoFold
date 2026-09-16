@@ -51,6 +51,7 @@ from .contracts import (
     PrivacyMode,
     RunReport,
     RunStatus,
+    WorkflowBlocked,
     to_primitive,
 )
 from .daily_arrivals import (
@@ -276,24 +277,6 @@ def _failure_reason(exc: BaseException) -> str:
     if message and (origin == "nemofold" or origin.startswith("nemofold.")):
         return f"{label}: {message[:400]}"
     return label
-
-
-class WorkflowBlocked(RuntimeError):
-    def __init__(
-        self,
-        errors: tuple[str, ...],
-        *,
-        actions: tuple[str, ...] = (),
-        artifacts: tuple[ArtifactRecord, ...] = (),
-        coverage: Coverage | None = None,
-        metadata: dict[str, object] | None = None,
-    ) -> None:
-        super().__init__(", ".join(errors))
-        self.errors = errors
-        self.actions = actions
-        self.artifacts = artifacts
-        self.coverage = coverage
-        self.metadata = metadata or {}
 
 
 def _gate(config: ExecutionConfig) -> PolicyGate:
