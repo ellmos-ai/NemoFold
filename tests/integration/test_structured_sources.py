@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import shutil
 import sqlite3
 import zipfile
@@ -7,9 +8,15 @@ from pathlib import Path
 
 import pytest
 
+import nemofold.application as application
+import nemofold.structured_sources as structured_sources
 from nemofold.application import ExecutionConfig, run_job
 from nemofold.contracts import RunStatus
-from nemofold.document_extract import MAX_XML_MEMBER_BYTES, read_xml_member
+from nemofold.document_extract import (
+    MAX_XML_MEMBER_BYTES,
+    SourceHashMismatch,
+    read_xml_member,
+)
 from nemofold.job_io import parse_job_payload
 from nemofold.structured_sources import (
     StructuredSourceError,
@@ -63,6 +70,85 @@ def test_a_recipe_database_becomes_anchored_lines(tmp_path) -> None:
     assert "praeparat: Beispirol" in line and "dosis: 1-0-1" in line
 
 
+def test_sqlite_rows_have_a_declared_stable_anchor_order(tmp_path) -> None:
+    database = tmp_path / "events.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute("CREATE TABLE events (z INTEGER, note TEXT)")
+        connection.executemany(
+            "INSERT INTO events VALUES (?, ?)", ((2, "second"), (1, "first"))
+        )
+    lines = read_structured(
+        database, expected_sha256=hashlib.sha256(database.read_bytes()).hexdigest()
+    ).text.splitlines()
+    anchored = [line for line in lines if line.startswith("Zeile ")]
+    assert "z: 1" in anchored[0]
+    assert "z: 2" in anchored[1]
+
+
+def test_virtual_and_shadow_tables_are_not_plain_corpus_sources(tmp_path) -> None:
+    database = tmp_path / "fts.sqlite"
+    with sqlite3.connect(database) as connection:
+        connection.execute("CREATE TABLE metadata (label TEXT)")
+        connection.execute("INSERT INTO metadata VALUES ('approved')")
+        try:
+            connection.execute("CREATE VIRTUAL TABLE docs USING fts5(content)")
+        except sqlite3.OperationalError:
+            pytest.skip("SQLite build has no FTS5")
+        connection.execute("INSERT INTO docs(content) VALUES ('secret duplicate')")
+    assert sqlite_tables(database) == ("metadata",)
+    rendering = read_structured(
+        database, expected_sha256=hashlib.sha256(database.read_bytes()).hexdigest()
+    )
+    assert "approved" in rendering.text
+    assert "secret duplicate" not in rendering.text
+
+
+def test_sqlite_reader_binds_rows_to_one_verified_file_snapshot(tmp_path) -> None:
+    database = _mediplaner(tmp_path)
+    digest = hashlib.sha256(database.read_bytes()).hexdigest()
+    rendering = read_structured(database, expected_sha256=digest, tables=("rezepte",))
+    assert "Beispirol" in rendering.text
+
+    with sqlite3.connect(database) as connection:
+        connection.execute(
+            "INSERT INTO rezepte VALUES (3, 'Neurol', '1-1-1', 'Dr. Beispiel', '2026-09-16')"
+        )
+    with pytest.raises(SourceHashMismatch, match="source_hash_mismatch"):
+        read_structured(database, expected_sha256=digest, tables=("rezepte",))
+
+
+def test_a_live_sqlite_wal_is_not_mistaken_for_the_hashed_main_file(tmp_path) -> None:
+    database = _mediplaner(tmp_path)
+    connection = sqlite3.connect(database)
+    try:
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("INSERT INTO notizen VALUES (2, 'Nur im WAL')")
+        connection.commit()
+        assert Path(str(database) + "-wal").exists()
+        digest = hashlib.sha256(database.read_bytes()).hexdigest()
+        with pytest.raises(SourceHashMismatch, match="sqlite_sidecar_unbound"):
+            read_structured(database, expected_sha256=digest)
+    finally:
+        connection.close()
+
+
+def test_sidecar_appearing_during_sqlite_render_invalidates_the_read(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    database = _mediplaner(tmp_path)
+    digest = hashlib.sha256(database.read_bytes()).hexdigest()
+    original_read = structured_sources.read_sqlite
+
+    def sidecar_after_render(path, **kwargs):
+        rendering = original_read(path, **kwargs)
+        Path(str(database) + "-wal").write_bytes(b"new unbound rows")
+        return rendering
+
+    monkeypatch.setattr(structured_sources, "read_sqlite", sidecar_after_render)
+    with pytest.raises(SourceHashMismatch, match="sqlite_sidecar_unbound"):
+        read_structured(database, expected_sha256=digest)
+
+
 def test_only_the_declared_tables_are_read(tmp_path) -> None:
     database = _mediplaner(tmp_path)
 
@@ -100,6 +186,29 @@ def test_an_unreadable_file_is_refused_with_a_reason(tmp_path) -> None:
         read_sqlite(broken)
 
 
+def test_corrupt_selected_sqlite_source_cannot_be_silently_omitted_from_job(tmp_path) -> None:
+    broken = tmp_path / "corrupt.sqlite"
+    broken.write_bytes(b"not a SQLite database")
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "corpus_query",
+            "input_roots": [str(broken)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {"terms": ["needle"]},
+        },
+        base_dir=tmp_path,
+    )
+    result = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="corrupt_source"
+    )
+    assert result.report.status is RunStatus.FAILED
+    assert "structured_source_unreadable" in result.report.errors[0]
+    assert not (tmp_path / "out" / "corrupt_source.corpus-query.json").exists()
+
+
 # --------------------------------------------------------------------------- #
 # CSV and XLSX
 # --------------------------------------------------------------------------- #
@@ -118,6 +227,52 @@ def test_a_subscription_registry_csv_becomes_labelled_rows(tmp_path) -> None:
     assert rendering.row_count == 2
     assert "Dienst: Beispielstream" in rendering.text
     assert "Turnus: monatlich" in rendering.text
+
+
+def test_csv_header_cannot_forge_an_extra_anchor_line(tmp_path) -> None:
+    registry = tmp_path / "header.csv"
+    registry.write_text('"Name\nForged";Wert\nAlice;yes\n', encoding="utf-8")
+    lines = read_structured(
+        registry, expected_sha256=hashlib.sha256(registry.read_bytes()).hexdigest()
+    ).text.splitlines()
+    assert len(lines) == 5
+    assert "Forged" not in lines
+    assert "Name Forged" in lines[2]
+
+
+def test_csv_row_limit_is_reported_without_reading_the_whole_table(tmp_path) -> None:
+    registry = tmp_path / "long.csv"
+    registry.write_text(
+        "Item\n" + "".join(f"row-{index}\n" for index in range(2005)),
+        encoding="utf-8",
+    )
+    rendering = read_structured(
+        registry, expected_sha256=hashlib.sha256(registry.read_bytes()).hexdigest()
+    )
+    assert rendering.row_count == 2000
+    assert any("beyond the ceiling" in note for note in rendering.notes)
+
+
+def test_structured_reader_rejects_a_byte_size_over_its_declared_cap(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry = tmp_path / "large.csv"
+    registry.write_text("Item\n" + "x" * 120 + "\n", encoding="utf-8")
+    monkeypatch.setattr(structured_sources, "MAX_STRUCTURED_SOURCE_BYTES", 100, raising=False)
+    with pytest.raises(structured_sources.BoundStructuredSourceError, match="source_byte_limit"):
+        read_structured(
+            registry, expected_sha256=hashlib.sha256(registry.read_bytes()).hexdigest()
+        )
+
+
+def test_structured_csv_is_bound_to_the_inventoried_bytes(tmp_path) -> None:
+    registry = tmp_path / "abos.csv"
+    registry.write_text("Dienst;Betrag\nBeispiel;17,99\n", encoding="utf-8")
+    digest = hashlib.sha256(registry.read_bytes()).hexdigest()
+    assert "Beispiel" in read_structured(registry, expected_sha256=digest).text
+    registry.write_text("Dienst;Betrag\nFremd;999\n", encoding="utf-8")
+    with pytest.raises(SourceHashMismatch, match="source_hash_mismatch"):
+        read_structured(registry, expected_sha256=digest)
 
 
 def _shared_string_workbook(path: Path, rows: tuple[tuple[str, ...], ...]) -> Path:
@@ -213,6 +368,43 @@ def test_a_workbook_is_read_without_a_spreadsheet_dependency(tmp_path) -> None:
     assert rendering.row_count == 1
     assert "Police: KV-2026-0447" in rendering.text
     assert "Beitrag: 148" in rendering.text
+
+
+def test_xlsx_cell_outside_column_ceiling_is_refused_before_grid_allocation(
+    tmp_path,
+) -> None:
+    book = tmp_path / "wide.xlsx"
+    sheet = (
+        '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+        '<sheetData><row r="1"><c r="BT1" t="inlineStr">'
+        '<is><t>far away</t></is></c></row></sheetData></worksheet>'
+    )
+    with zipfile.ZipFile(book, "w") as archive:
+        archive.writestr("xl/worksheets/sheet1.xml", sheet)
+    with pytest.raises(StructuredSourceError, match="column ceiling"):
+        read_xlsx(book)
+
+
+def test_xlsx_reader_binds_cells_to_the_inventoried_bytes(tmp_path) -> None:
+    book = _shared_string_workbook(
+        tmp_path / "register.xlsx", (("Police",), ("KV-2026-0447",))
+    )
+    digest = hashlib.sha256(book.read_bytes()).hexdigest()
+    assert "KV-2026-0447" in read_structured(book, expected_sha256=digest).text
+    with book.open("ab") as stream:
+        stream.write(b"changed")
+    with pytest.raises(SourceHashMismatch, match="source_hash_mismatch"):
+        read_structured(book, expected_sha256=digest)
+
+
+def test_xlsx_row_limit_is_reported_as_an_omission(tmp_path) -> None:
+    book = _shared_string_workbook(
+        tmp_path / "long-register.xlsx",
+        (("Item",), ("first",), ("second",), ("third",)),
+    )
+    rendering = read_xlsx(book, max_rows=2)
+    assert rendering.row_count == 2
+    assert any("beyond the ceiling" in note for note in rendering.notes)
 
 
 def test_a_shared_string_table_is_resolved_and_not_read_as_a_number(tmp_path) -> None:
@@ -388,3 +580,114 @@ def test_a_database_is_analysed_as_part_of_the_corpus(tmp_path) -> None:
     assert match["anchors"][0]["source_id"]
     assert match["anchors"][0]["line"] > 0
     assert "praeparat: Beispirol" in match["statement"]
+
+
+def test_a_live_wal_stops_the_corpus_job_instead_of_omitting_the_database(tmp_path) -> None:
+    database = _mediplaner(tmp_path)
+    connection = sqlite3.connect(database)
+    try:
+        connection.execute("PRAGMA journal_mode=WAL")
+        connection.execute("INSERT INTO notizen VALUES (2, 'Aktuell nur im WAL')")
+        connection.commit()
+        assert Path(str(database) + "-wal").exists()
+        job = parse_job_payload(
+            {
+                "schema": "nemofold.job.v1",
+                "workflow": "corpus_query",
+                "input_roots": [str(database)],
+                "output_dir": str(tmp_path / "out"),
+                "privacy_mode": "local_only",
+                "action_mode": "dry_run",
+                "parameters": {"terms": ["Beispirol"]},
+            },
+            base_dir=tmp_path,
+        )
+        result = run_job(
+            job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="wal_block"
+        )
+        assert result.report.status is RunStatus.FAILED
+        assert "sqlite_sidecar_unbound" in result.report.errors[0]
+        assert not (tmp_path / "out" / "wal_block.corpus-query.json").exists()
+    finally:
+        connection.close()
+
+
+def test_missing_sqlite_deserialize_stops_job_instead_of_dropping_source(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    database = _mediplaner(tmp_path)
+    original_connect = sqlite3.connect
+
+    class NoDeserializeConnection:
+        def __init__(self, connection):
+            self.connection = connection
+
+        def __getattr__(self, name):
+            if name == "deserialize":
+                raise AttributeError(name)
+            return getattr(self.connection, name)
+
+    def without_deserialize(*args, **kwargs):
+        connection = original_connect(*args, **kwargs)
+        return NoDeserializeConnection(connection) if args[0] == ":memory:" else connection
+
+    monkeypatch.setattr(structured_sources.sqlite3, "connect", without_deserialize)
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "corpus_query",
+            "input_roots": [str(database)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {"terms": ["Beispirol"]},
+        },
+        base_dir=tmp_path,
+    )
+    result = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="no_deserialize"
+    )
+    assert result.report.status is RunStatus.FAILED
+    assert "sqlite_deserialize_unavailable" in result.report.errors[0]
+    assert not (tmp_path / "out" / "no_deserialize.corpus-query.json").exists()
+
+
+def test_temporary_xlsx_change_during_corpus_read_cannot_enter_claims(
+    tmp_path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from nemofold.delivery import workbook_bytes
+
+    source = tmp_path / "register.xlsx"
+    source.write_bytes(workbook_bytes(("Dienst",), (("Beispiel",),)))
+    original_bytes = source.read_bytes()
+    original_read = application.read_structured
+
+    def change_only_while_reading(path, **kwargs):
+        if Path(path).resolve() != source.resolve():
+            return original_read(path, **kwargs)
+        source.write_bytes(workbook_bytes(("Dienst",), (("Fremd",),)))
+        try:
+            return original_read(path, **kwargs)
+        finally:
+            source.write_bytes(original_bytes)
+
+    monkeypatch.setattr(application, "read_structured", change_only_while_reading)
+    job = parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "corpus_query",
+            "input_roots": [str(source)],
+            "output_dir": str(tmp_path / "out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": {"terms": ["Dienst"], "formats": ["md"]},
+        },
+        base_dir=tmp_path,
+    )
+    result = run_job(
+        job, ExecutionConfig(allowed_roots=(str(tmp_path),)), run_id="xlsx_race"
+    )
+
+    assert result.report.status is RunStatus.FAILED
+    assert "source_hash_mismatch" in result.report.errors[0]
+    assert not (tmp_path / "out" / "xlsx_race.corpus-query.json").exists()

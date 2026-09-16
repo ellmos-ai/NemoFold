@@ -501,7 +501,7 @@ def _read_text_sources(
         try:
             if suffix in STRUCTURED_SUFFIXES or (labelled_csv and suffix == ".csv"):
                 texts[source.source_id] = read_structured(
-                    source.path, tables=tables
+                    source.path, tables=tables, expected_sha256=source.sha256
                 ).text
                 continue
             texts[source.source_id] = extract_document_text(

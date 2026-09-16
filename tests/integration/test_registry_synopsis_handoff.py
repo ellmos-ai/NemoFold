@@ -131,6 +131,46 @@ def test_two_selected_reports_keep_a_verifiable_source_lineage(tmp_path: Path) -
     assert "Conflicts" in synopsis
 
 
+def test_structured_doctor_report_crosses_registry_to_synopsis_with_receipt(
+    tmp_path: Path,
+) -> None:
+    from nemofold.delivery import workbook_bytes
+
+    case = _case(tmp_path)
+    workbook = tmp_path / "reports" / "thyroid_table.xlsx"
+    workbook.write_bytes(
+        workbook_bytes(
+            ("Patient", "Fachrichtung", "Befund"),
+            (("Beispielperson", "Endokrinologie", "Schilddrüse vergrößert"),),
+        )
+    )
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="structured_report_bridge",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "executed"
+    dossier = json.loads(Path(result.dossier_path).read_text(encoding="utf-8"))
+    edge = dossier["steps"][1]["handoff"]
+    assert edge["status"] == "verified"
+    assert len(edge["source_lineage"]) == 2
+    assert edge["selected_source_sha256"]
+    assert all(item["sha256"] == edge["selected_source_sha256"][item["producer_source_id"]]
+               for item in edge["source_lineage"])
+    synopsis = (
+        tmp_path / "out" / "02-synopsis" / "structured_report_bridge_02.synopsis.md"
+    ).read_text(encoding="utf-8")
+    assert "Schilddrüse unauffällig" in synopsis
+    assert "Schilddrüse vergrößert" in synopsis
+    assert "Knieverletzung" not in synopsis
+    ledger = json.loads(Path(result.steps[1].ledger_path or "").read_text(encoding="utf-8"))
+    assert ledger["coverage"]["total_sources"] == 2
+    assert any(item["format"] == "pdf" for item in ledger["artifacts"])
+
+
 def test_source_change_between_handoff_and_consumer_invalidates_the_chain(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

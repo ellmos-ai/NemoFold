@@ -24,6 +24,9 @@ All notable changes to NemoFold are documented here.
 - Bind text, HTML, DOCX, ODT, and PDF extraction to the same in-memory bytes
   checked against each inventoried source hash; fail if a source changes while
   it is being read rather than citing unverified content.
+- Bind SQLite-main-file, XLSX, and opt-in structured CSV rendering to one
+  inventoried byte snapshot. Fail a workflow with active SQLite sidecars rather
+  than silently omit an unbound database from its claims.
 
 - Expand the shared job contract from eight to twelve workflows with explainable
   Cleanup Rules, local Mail-to-Case intake, confirmation-bound Controlled Email
