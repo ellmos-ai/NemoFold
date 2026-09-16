@@ -31,6 +31,7 @@ from pathlib import Path
 from xml.etree import ElementTree
 
 from .document_extract import SourceHashMismatch, read_xml_member
+from .structured_codec import encode_structured_cell
 
 STRUCTURED_SUFFIXES = frozenset({".db", ".sqlite", ".sqlite3", ".xlsx"})
 MAX_ROWS_PER_TABLE = 2000
@@ -95,8 +96,9 @@ def select_topic_rows(text: str, terms: tuple[str, ...]) -> tuple[str, tuple[int
 def _cell(value: object) -> tuple[str, bool]:
     if value is None:
         return "", False
-    rendered = " ".join(str(value).split()).replace("·", "∙")
-    return rendered[:MAX_CELL_CHARS], len(rendered) > MAX_CELL_CHARS
+    rendered = " ".join(str(value).split())
+    truncated = len(rendered) > MAX_CELL_CHARS
+    return encode_structured_cell(rendered[:MAX_CELL_CHARS]), truncated
 
 
 def _label(value: object) -> str:

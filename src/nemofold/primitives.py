@@ -26,6 +26,8 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 
+from .structured_codec import decode_structured_cell
+
 # --------------------------------------------------------------------------- #
 # Shared text handling
 # --------------------------------------------------------------------------- #
@@ -296,7 +298,10 @@ def extract_fields(
                         match = pattern.match(candidate)
                         if match is None:
                             continue
-                        value = match.group("value").strip()[:MAX_VALUE_CHARS]
+                        value = match.group("value").strip()
+                        if structured_row:
+                            value = decode_structured_cell(value)
+                        value = value[:MAX_VALUE_CHARS]
                         if not value:
                             continue
                         found = FieldValue(

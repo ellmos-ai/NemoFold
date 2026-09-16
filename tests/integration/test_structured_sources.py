@@ -18,6 +18,8 @@ from nemofold.document_extract import (
     read_xml_member,
 )
 from nemofold.job_io import parse_job_payload
+from nemofold.primitives import FieldSpec, extract_fields
+from nemofold.structured_codec import decode_structured_cell, encode_structured_cell
 from nemofold.structured_sources import (
     StructuredSourceError,
     read_contacts,
@@ -83,6 +85,28 @@ def test_sqlite_rows_have_a_declared_stable_anchor_order(tmp_path) -> None:
     anchored = [line for line in lines if line.startswith("Zeile ")]
     assert "z: 1" in anchored[0]
     assert "z: 2" in anchored[1]
+
+
+def test_structured_cell_separator_escape_is_lossless_and_non_recursive() -> None:
+    source = "praxis@example.invalid · +49 30 1 and literal %E2%88%99 and ∙"
+
+    encoded = encode_structured_cell(source)
+
+    assert " · " not in encoded
+    assert decode_structured_cell(encoded) == source
+
+
+def test_structured_field_limit_applies_after_lossless_decoding() -> None:
+    source = "·" * 100
+    rows, skipped = extract_fields(
+        (("db", "example.sqlite"),),
+        {"db": f"Zeile 1 · Kontakt: {encode_structured_cell(source)}\n"},
+        (FieldSpec("Kontakt"),),
+        structured_source_ids=frozenset({"db"}),
+    )
+
+    assert skipped == ()
+    assert rows[0].values[0].value == source
 
 
 def test_virtual_and_shadow_tables_are_not_plain_corpus_sources(tmp_path) -> None:

@@ -87,6 +87,7 @@ def validate_gate_register(
 
     referenced_usecase_ids: set[int] = set()
     done_gates: list[dict[str, Any]] = []
+    evidenced_gates: list[dict[str, Any]] = []
     for raw_gate in gates:
         gate = _mapping(raw_gate, "gate_must_be_object")
         gate_id = str(gate["gate_id"])
@@ -152,15 +153,21 @@ def validate_gate_register(
             _validate_run_receipt(receipt_data, gate_id)
         if status == "done":
             done_gates.append(gate)
+        if receipts:
+            evidenced_gates.append(gate)
 
     if referenced_usecase_ids != set(selected_by_id):
         raise GateRegisterError("selected_usecases_must_equal_gate_references")
-    if done_gates:
-        if evidence_root is None:
-            raise GateRegisterError(
-                f"done_gate_requires_evidence_root:{done_gates[0]['gate_id']}"
-            )
-        _verify_done_gate_files(done_gates, evidence_root)
+    if done_gates and evidence_root is None:
+        raise GateRegisterError(
+            f"done_gate_requires_evidence_root:{done_gates[0]['gate_id']}"
+        )
+    if evidenced_gates and evidence_root is None:
+        raise GateRegisterError(
+            f"gate_receipts_require_evidence_root:{evidenced_gates[0]['gate_id']}"
+        )
+    if evidenced_gates:
+        _verify_done_gate_files(evidenced_gates, evidence_root)
     return register
 
 
@@ -228,10 +235,14 @@ def verify_gate_evidence(
     evidence_root: str | Path,
 ) -> dict[str, Any]:
     validated = validate_gate_register(register, evidence_root=evidence_root)
+    evidenced_gates = [
+        gate for gate in validated["gates"] if gate["evidence"]["run_receipts"]
+    ]
     done_gates = [gate for gate in validated["gates"] if gate["status"] == "done"]
-    checked_files = _verify_done_gate_files(done_gates, evidence_root)
+    checked_files = _verify_done_gate_files(evidenced_gates, evidence_root)
     return {
         "evidence_root": str(Path(evidence_root).resolve()),
+        "verified_evidence_gates": [gate["gate_id"] for gate in evidenced_gates],
         "verified_done_gates": [gate["gate_id"] for gate in done_gates],
         "checked_file_count": len(checked_files),
         "checked_files": checked_files,
@@ -287,7 +298,7 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
             _validate_evidence_sha(
                 item.get("sha256"), gate_id, f"{direction}_artifact"
             )
-        expected_manifest_sha = _artifact_manifest_sha256(artifacts)
+        expected_manifest_sha = artifact_manifest_sha256(artifacts)
         if receipt[f"{direction}_sha256"] != expected_manifest_sha:
             raise GateRegisterError(
                 f"{direction}_manifest_sha256_mismatch:{gate_id}:"
@@ -411,7 +422,8 @@ def _path_identity(path: str) -> str:
     return os.path.normcase(str(Path(path))).replace("\\", "/")
 
 
-def _artifact_manifest_sha256(artifacts: list[object]) -> str:
+def artifact_manifest_sha256(artifacts: list[object]) -> str:
+    """Hash the canonical path/hash list used by a gate run receipt."""
     canonical = json.dumps(
         artifacts,
         ensure_ascii=False,

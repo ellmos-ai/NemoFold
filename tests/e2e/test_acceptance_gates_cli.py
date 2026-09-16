@@ -26,5 +26,6 @@ def test_acceptance_gates_cli_verifies_empty_done_set_against_evidence_root(
         "checked_file_count": 0,
         "checked_files": [],
         "evidence_root": str(tmp_path.resolve()),
+        "verified_evidence_gates": [],
         "verified_done_gates": [],
     }

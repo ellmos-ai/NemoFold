@@ -238,6 +238,7 @@ def test_done_gate_verifies_referenced_files_and_blocks_mutation(tmp_path) -> No
     assert summarize_gate_register(validated, evidence_root=tmp_path)["counts"]["done"] == 1
     assert verification == {
         "evidence_root": str(tmp_path.resolve()),
+        "verified_evidence_gates": ["G01"],
         "verified_done_gates": ["G01"],
         "checked_file_count": 6,
         "checked_files": [
