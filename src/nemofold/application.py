@@ -3104,27 +3104,54 @@ def _execute_rater_race(
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Code the same material twice and report where the two readings part."""
-    scheme = validate_codes(job.parameters.get("coding_scheme"))
+    source_ids = tuple(record.source_id for record in inventory.records)
+    try:
+        scheme = validate_codes(job.parameters.get("coding_scheme"))
+    except ValueError as exc:
+        raise WorkflowBlocked(
+            (f"invalid_coding_scheme:{exc}",),
+            actions=("rater_race_planned", "invalid_coding_scheme"),
+            artifacts=(),
+            coverage=compute_coverage(
+                all_source_ids=source_ids,
+                read_source_ids={},
+                cited_source_ids=set(),
+            ),
+            metadata={"error": str(exc)},
+        ) from exc
+
     labels = tuple(str(item) for item in job.parameters.get("scan_labels", []) or [])
     texts = _read_text_sources(inventory, job)
-    source_ids = tuple(record.source_id for record in inventory.records)
     names = {record.source_id: record.display_name for record in inventory.records}
     if "coding_a" in job.parameters:
         readable_ids = tuple(source_id for source_id in source_ids if source_id in texts)
-        first = supplied_coding(
-            job.parameters["coding_a"],
-            rater=job.parameters["rater_a"],
-            source_ids=readable_ids,
-            labels=names,
-            allowed_codes=set(scheme),
-        )
-        second = supplied_coding(
-            job.parameters["coding_b"],
-            rater=job.parameters["rater_b"],
-            source_ids=readable_ids,
-            labels=names,
-            allowed_codes=set(scheme),
-        )
+        try:
+            first = supplied_coding(
+                job.parameters["coding_a"],
+                rater=job.parameters["rater_a"],
+                source_ids=readable_ids,
+                labels=names,
+                allowed_codes=set(scheme),
+            )
+            second = supplied_coding(
+                job.parameters["coding_b"],
+                rater=job.parameters["rater_b"],
+                source_ids=readable_ids,
+                labels=names,
+                allowed_codes=set(scheme),
+            )
+        except ValueError as exc:
+            raise WorkflowBlocked(
+                (f"invalid_supplied_coding:{exc}",),
+                actions=("rater_race_planned", "invalid_supplied_coding"),
+                artifacts=(),
+                coverage=compute_coverage(
+                    all_source_ids=source_ids,
+                    read_source_ids=texts,
+                    cited_source_ids=set(),
+                ),
+                metadata={"error": str(exc)},
+            ) from exc
         coding_mode = "supplied_codings"
         coding_note = (
             "Two separately supplied coding sheets were compared; NemoFold does "
