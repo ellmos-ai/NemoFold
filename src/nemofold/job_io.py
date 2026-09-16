@@ -38,6 +38,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "cost_timeline",
         "subscription_reconcile",
         "medication_reconcile",
+        "database_reader",
         "alibi_weave",
         "contradiction_synopsis",
         "corpus_query",
@@ -187,6 +188,21 @@ WORKFLOW_PARAMETER_FIELDS = {
             "date_marker",
             "doctor_marker",
             "application_domain",
+        }
+    ),
+    "database_reader": frozenset(
+        {
+            "formats",
+            "database_profile",
+            "allowed_tables",
+            "forbidden_tables",
+            "target_tables",
+            "query",
+            "min_records",
+            "require_read_only",
+            "title",
+            "source_tables",
+            "structured_sources",
         }
     ),
     "alibi_weave": frozenset(
@@ -604,6 +620,28 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             job.parameters["user_corrections"], dict
         ):
             raise ValueError("user_corrections must be a dictionary")
+    elif job.workflow == "database_reader":
+        if "database_profile" in job.parameters:
+            choice("database_profile", {"hauslagerist", "mediplaner", "generic"})
+        min_recs = job.parameters.get("min_records")
+        if min_recs is not None and (
+            isinstance(min_recs, bool)
+            or not isinstance(min_recs, int)
+            or min_recs < 0
+        ):
+            raise ValueError("min_records must be a non-negative integer")
+        if "require_read_only" in job.parameters and not isinstance(
+            job.parameters["require_read_only"], bool
+        ):
+            raise ValueError("require_read_only must be a boolean")
+        if "query" in job.parameters and not isinstance(job.parameters["query"], str):
+            raise ValueError("query must be a string")
+        for list_param in ("allowed_tables", "forbidden_tables", "target_tables"):
+            val = job.parameters.get(list_param)
+            if val is not None and (
+                not isinstance(val, list) or any(not isinstance(x, str) for x in val)
+            ):
+                raise ValueError(f"{list_param} must be a list of strings")
     elif job.workflow in {"evidence_analyst", "platform_proof"}:
         choice("analysis_mode", {"local_extractive", "nemotron"})
         choice("citation_granularity", {"line_or_page"})

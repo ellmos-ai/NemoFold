@@ -129,6 +129,18 @@ COLUMN_TEMPLATES: dict[str, tuple[RegistryColumn, ...]] = {
         RegistryColumn("Hinweis", "Application notes or indications",
                        ("Hinweis", "Grund", "Indikation", "Wirkung", "Anmerkung", "Notes")),
     ),
+    "inventory": (
+        RegistryColumn("Gegenstand", "Item or property",
+                       ("Gegenstand", "Name", "Artikel", "Item", "Bezeichnung")),
+        RegistryColumn("Lagerort", "Location or room",
+                       ("Lagerort", "Ort", "Raum", "Zimmer", "Location")),
+        RegistryColumn("Menge", "Quantity or count",
+                       ("Menge", "Anzahl", "Stück", "Quantity", "Count")),
+        RegistryColumn("Kategorie", "Category or type",
+                       ("Kategorie", "Rubrik", "Typ", "Category", "Type")),
+        RegistryColumn("Zustand", "Condition or status",
+                       ("Zustand", "Status", "Condition")),
+    ),
 }
 
 DATE_PATTERNS = (

@@ -48,6 +48,7 @@ WORKFLOW_ORDER = {
     "cost_timeline": 83,
     "subscription_reconcile": 85,
     "medication_reconcile": 87,
+    "database_reader": 88,
     "alibi_weave": 84,
     "contradiction_synopsis": 86,
     "bundle_export": 80,
@@ -85,6 +86,7 @@ WORKFLOW_TITLES = {
     "cost_timeline": "Cost Timeline",
     "subscription_reconcile": "Subscription Reconciliation",
     "medication_reconcile": "Medication Reconciliation",
+    "database_reader": "Database Reader",
     "alibi_weave": "Alibi Weave",
     "contradiction_synopsis": "Contradiction Synopsis",
     "corpus_query": "Corpus Query",
@@ -175,6 +177,10 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "medication_reconcile": (
         "medikamente", "medikationsplan", "wirkstoff", "dosierung", "arztbericht",
         "entlassungsbrief", "rezept", "arzneimittel", "medication", "einnahmeplan",
+    ),
+    "database_reader": (
+        "datenbank", "sqlite", "hauslagerist", "mediplaner", "inventar", "lagerort",
+        "rezepte", "fachdatenbank", "database", "tabellen", "read_only",
     ),
     "alibi_weave": (
         "alibi", "wer war wo", "bestätigt", "belegt wo", "aufenthalt", "wochenende",
@@ -629,6 +635,10 @@ def _why(workflow: str) -> str:
             "Consolidates medication plans across medical reports, highlighting conflicting "
             "dosages and duplicate ingredients without guessing or claiming medical authority."
         ),
+        "database_reader": (
+            "Safely extracts records from local specialist SQLite databases (HausLagerist, "
+            "MediPlaner) under strict read-only and schema validation rules."
+        ),
         "alibi_weave": (
             "Keeps a self-report and an outside confirmation apart, and names everyone the "
             "sources place nowhere. Needs the places to compare."
@@ -744,6 +754,7 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
         "cost_timeline",
         "subscription_reconcile",
         "medication_reconcile",
+        "database_reader",
     }:
         return {"formats": ["md"]}
     if workflow == "alibi_weave":

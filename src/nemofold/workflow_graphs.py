@@ -81,6 +81,11 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Consolidate medication plans across multiple reports, identify conflicting dosages "
         "and schedules, and halt without medical authority unless explicitly confirmed."
     ),
+    "database_reader": (
+        "Safely read approved local SQLite specialist databases (HausLagerist, MediPlaner) "
+        "under strict read-only and schema contracts without executing arbitrary or mutating "
+        "queries."
+    ),
     "alibi_weave": (
         "Separate a self-reported position from one another source confirms at the same "
         "place and time, and report every person nothing places as a gap."
@@ -284,6 +289,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("gate", "Medical authority gate", "fail-closed if dosages conflict without confirmation"),
         ("operation", "Consolidation", "merge sources with verified anchor quotes"),
         ("operation", "Render", "medication plan and verification json"),
+    ),
+    "database_reader": (
+        ("operation", "Database contract", "resolve profile and verify table schema"),
+        ("gate", "Read-only enforcement", "fail-closed on mutation or query injection"),
+        ("gate", "Schema & table allowlist", "refuse unauthorized tables or missing columns"),
+        ("operation", "Normalization", "transform table records into typed domain items"),
+        ("operation", "Render", "structured JSON and safety-audited Markdown report"),
     ),
     "alibi_weave": (
         ("operation", "Collect", "stated positions"),
