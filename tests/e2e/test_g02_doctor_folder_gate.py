@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import re
 import sqlite3
 from pathlib import Path
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject, NumberObject
 
 from nemofold.application import ExecutionConfig
 from nemofold.document_extract import extract_document_text
@@ -18,6 +20,43 @@ from nemofold.report_studio import _render_pdf
 from nemofold.structured_sources import read_structured
 from nemofold.voyage_runs import run_voyage
 from nemofold.voyages import VoyageStore
+
+
+def _write_scanned_body_pdf_with_selectable_footer(path: Path) -> None:
+    """Write one text page plus a raster-body page whose footer alone is selectable."""
+    writer = PdfWriter()
+    writer.append(PdfReader(io.BytesIO(_render_pdf("Befund: Schilddrüse unauffällig.\n"))))
+    page = writer.add_blank_page(width=595, height=842)
+    image = DecodedStreamObject()
+    image.set_data(bytes([0, 0, 0] * 4))
+    image.update({
+        NameObject("/Type"): NameObject("/XObject"),
+        NameObject("/Subtype"): NameObject("/Image"),
+        NameObject("/Width"): NumberObject(2),
+        NameObject("/Height"): NumberObject(2),
+        NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+        NameObject("/BitsPerComponent"): NumberObject(8),
+    })
+    font = DictionaryObject({
+        NameObject("/Type"): NameObject("/Font"),
+        NameObject("/Subtype"): NameObject("/Type1"),
+        NameObject("/BaseFont"): NameObject("/Helvetica"),
+    })
+    page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/Im0"): writer._add_object(image),
+        }),
+        NameObject("/Font"): DictionaryObject({
+            NameObject("/F1"): writer._add_object(font),
+        }),
+    })
+    content = DecodedStreamObject()
+    content.set_data(
+        b"q 400 0 0 600 70 160 cm /Im0 Do Q "
+        b"BT /F1 12 Tf 72 50 Td (Seite 2) Tj ET"
+    )
+    page[NameObject("/Contents")] = writer._add_object(content)
+    writer.write(path)
 
 
 def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
@@ -130,6 +169,7 @@ def test_g02_fictional_doctor_folder_has_cited_pdf_and_verified_handoff(
         ).hexdigest(),
         "expected_pages": 1,
         "physical_pages": 1,
+        "extractable_text_pages": 1,
     }]
     snapshot = load_job_snapshot(
         tmp_path / "out" / "synopsis" / "jobs" / "g02_doctor_folder_02.json"
@@ -261,4 +301,67 @@ def test_g02_missing_expected_pdf_page_blocks_before_synopsis(tmp_path: Path) ->
         "expected_pdf_page_gap:01-endokrinologie.pdf",
     )
     assert not (tmp_path / "out" / "register" / "g02_missing_page_01.registry.json").exists()
+    assert not (tmp_path / "out" / "synopsis").exists()
+
+
+def test_g02_declared_pdf_with_scanned_second_page_blocks_before_synopsis(
+    tmp_path: Path,
+) -> None:
+    """Catches a scanned body passing because only its footer is selectable text."""
+    reports = tmp_path / "fictional-doctor-folder"
+    reports.mkdir()
+    _write_scanned_body_pdf_with_selectable_footer(
+        reports / "01-endokrinologie.pdf"
+    )
+    case = {
+        "name": "G02 · scanned declared page",
+        "steps": [
+            {
+                "workflow": "document_registry",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "document_registry",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "register"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {
+                        "column_template": "medical_reports",
+                        "topic_filter": ["Schilddrüse"],
+                        "expected_pdf_pages": {"01-endokrinologie.pdf": 2},
+                        "formats": ["md"],
+                    },
+                },
+            },
+            {
+                "workflow": "synopsis_merge",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "synopsis_merge",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "synopsis"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {"title": "Schilddrüse", "formats": ["md", "pdf"]},
+                },
+                "handoff": {"format": "document-registry", "mode": "selected_sources"},
+            },
+        ],
+    }
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="g02_scanned_page",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "stopped"
+    assert len(result.steps) == 1
+    assert result.steps[0].status == "blocked"
+    assert result.steps[0].errors == (
+        "expected_pdf_page_image_review_required:01-endokrinologie.pdf:page=2",
+    )
+    assert not (tmp_path / "out" / "register" / "g02_scanned_page_01.registry.json").exists()
     assert not (tmp_path / "out" / "synopsis").exists()

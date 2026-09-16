@@ -90,17 +90,51 @@ def _extract_odt(data: bytes, name: str) -> str:
     return _xml_paragraphs(data, paragraph_names=frozenset({"h", "p"}))
 
 
-def _extract_pdf(data: bytes, name: str) -> str:
+def _pdf_text_pages(data: bytes, name: str) -> tuple[str, ...]:
     try:
         from pypdf import PdfReader
     except ImportError as exc:  # pragma: no cover - packaging guarantees the dependency
         raise UnsupportedDocumentError("PDF extraction requires pypdf") from exc
     try:
         reader = PdfReader(io.BytesIO(data))
-        pages = [(page.extract_text() or "").strip() for page in reader.pages]
+        pages = tuple((page.extract_text() or "").strip() for page in reader.pages)
     except Exception as exc:
         raise ValueError(f"invalid or encrypted PDF document: {name}") from exc
-    return "\f".join(pages)
+    return pages
+
+
+def _extract_pdf(data: bytes, name: str) -> str:
+    return "\f".join(_pdf_text_pages(data, name))
+
+
+def extract_pdf_pages(path: str | Path, *, expected_sha256: str) -> tuple[str, ...]:
+    """Read each physical page separately from unchanged inventoried bytes."""
+    source = Path(path)
+    data = source.read_bytes()
+    if hashlib.sha256(data).hexdigest() != expected_sha256:
+        raise SourceHashMismatch("source_hash_mismatch")
+    return _pdf_text_pages(data, source.name)
+
+
+def pdf_image_page_numbers(path: str | Path, *, expected_sha256: str) -> tuple[int, ...]:
+    """Return physical pages carrying raster images from unchanged source bytes."""
+    try:
+        from pypdf import PdfReader
+    except ImportError as exc:  # pragma: no cover - packaging guarantees the dependency
+        raise UnsupportedDocumentError("PDF extraction requires pypdf") from exc
+    source = Path(path)
+    data = source.read_bytes()
+    if hashlib.sha256(data).hexdigest() != expected_sha256:
+        raise SourceHashMismatch("source_hash_mismatch")
+    try:
+        reader = PdfReader(io.BytesIO(data))
+        return tuple(
+            page_number
+            for page_number, page in enumerate(reader.pages, start=1)
+            if len(page.images) > 0
+        )
+    except Exception as exc:
+        raise ValueError(f"invalid or encrypted PDF document: {source.name}") from exc
 
 
 def count_pdf_pages(path: str | Path, *, expected_sha256: str) -> int:

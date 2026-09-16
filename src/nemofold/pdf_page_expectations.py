@@ -6,7 +6,11 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from .contracts import SourceRecord
-from .document_extract import count_pdf_pages
+from .document_extract import (
+    count_pdf_pages,
+    extract_pdf_pages,
+    pdf_image_page_numbers,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -16,6 +20,7 @@ class PdfPageCheck:
     sha256: str
     expected_pages: int
     physical_pages: int
+    extractable_text_pages: int
 
     def as_payload(self) -> dict[str, str | int]:
         return {
@@ -24,14 +29,17 @@ class PdfPageCheck:
             "sha256": self.sha256,
             "expected_pages": self.expected_pages,
             "physical_pages": self.physical_pages,
+            "extractable_text_pages": self.extractable_text_pages,
         }
 
 
 class PdfPageExpectationError(ValueError):
-    def __init__(self, code: str, display_name: str) -> None:
-        super().__init__(f"{code}:{display_name}")
+    def __init__(self, code: str, display_name: str, page_number: int | None = None) -> None:
+        suffix = f":page={page_number}" if page_number is not None else ""
+        super().__init__(f"{code}:{display_name}{suffix}")
         self.code = code
         self.display_name = display_name
+        self.page_number = page_number
 
 
 def verify_pdf_page_expectations(
@@ -67,8 +75,32 @@ def verify_pdf_page_expectations(
                 else "expected_pdf_page_extra",
                 display_name,
             )
+        try:
+            pages = extract_pdf_pages(path, expected_sha256=source.sha256)
+            image_page_numbers = pdf_image_page_numbers(
+                path, expected_sha256=source.sha256
+            )
+        except (OSError, RuntimeError, ValueError):
+            raise PdfPageExpectationError(
+                "expected_pdf_source_unreadable", display_name
+            ) from None
+        if len(pages) != physical_pages:
+            raise PdfPageExpectationError(
+                "expected_pdf_source_unreadable", display_name
+            )
+        if image_page_numbers:
+            raise PdfPageExpectationError(
+                "expected_pdf_page_image_review_required",
+                display_name,
+                image_page_numbers[0],
+            )
+        for page_number, text in enumerate(pages, start=1):
+            if not text.strip():
+                raise PdfPageExpectationError(
+                    "expected_pdf_page_text_missing", display_name, page_number
+                )
         checks.append(PdfPageCheck(
             source.source_id, display_name, source.sha256,
-            expected_pages, physical_pages,
+            expected_pages, physical_pages, len(pages),
         ))
     return tuple(checks)
