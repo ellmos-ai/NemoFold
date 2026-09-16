@@ -2143,6 +2143,75 @@ def _execute_fact_distill(
     )
 
 
+def _check_medical_synopsis_authority(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> dict[str, object]:
+    """Allow source summarisation, never clinical judgement or an ambiguous purpose."""
+    if job.parameters.get("application_domain") != "medical_reports":
+        return {}
+    purpose = job.parameters.get("medical_purpose")
+    if purpose == "source_summary":
+        return {
+            "medical_application_domain": "medical_reports",
+            "medical_authority": "not_granted",
+            "medical_purpose": purpose,
+        }
+
+    question = Question(
+        field="medical_purpose",
+        prompt=(
+            "Soll NemoFold die freigegebenen Arztberichte ausschließlich "
+            "ordnen, zitieren und zusammenfassen?"
+        ),
+        why=(
+            "NemoFold besitzt keine medizinische Diagnose-, Therapie- oder "
+            "Dringlichkeitsautorität."
+        ),
+        kind="choice",
+        choices=("source_summary",),
+    )
+    payload = needs_input_payload((question,), workflow=job.workflow)
+    denied = purpose in {
+        "diagnosis",
+        "treatment_recommendation",
+        "urgency_assessment",
+    }
+    error = (
+        f"medical_authority_denied:{purpose}"
+        if denied
+        else "needs_user_input:medical_purpose"
+    )
+    raise WorkflowBlocked(
+        (error,),
+        actions=(
+            "medical_authority_checked",
+            "medical_authority_denied" if denied else "medical_scope_needs_input",
+        ),
+        artifacts=(
+            write_text_artifact(
+                Path(job.output_dir) / f"{run_id}.needs-user-input.json",
+                json.dumps(payload, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+                "needs-user-input",
+            ),
+        ),
+        coverage=compute_coverage(
+            all_source_ids=(record.source_id for record in inventory.records),
+            read_source_ids=(),
+            cited_source_ids=(),
+        ),
+        metadata={
+            "medical_application_domain": "medical_reports",
+            "medical_authority": "denied" if denied else "not_granted",
+            "medical_purpose": purpose,
+            "needs_user_input": True,
+            "outcome_note": payload["outcome_note"],
+        },
+    )
+
+
 def _execute_synopsis_merge(
     job: JobEnvelope,
     inventory: InventoryResult,
@@ -2150,6 +2219,9 @@ def _execute_synopsis_merge(
     run_id: str,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     """Merge the approved sources into one synopsis, conflicts kept visible."""
+    medical_metadata = _check_medical_synopsis_authority(
+        job, inventory, run_id=run_id
+    )
     texts = _read_text_sources(inventory, job)
     structured_source_ids = frozenset(
         record.source_id for record in inventory.records
@@ -2268,6 +2340,7 @@ def _execute_synopsis_merge(
             "conflict_labels": [item.label for item in synopsis.conflicts],
             "merged_source_ids": list(synopsis.source_ids),
             "application_domain": job.parameters.get("application_domain"),
+            **medical_metadata,
         },
     )
 

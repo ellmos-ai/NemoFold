@@ -186,6 +186,59 @@ def test_public_synopsis_job_rejects_internal_page_review_overlay(tmp_path) -> N
         load_job_file(path)
 
 
+@pytest.mark.parametrize(
+    "medical_purpose",
+    ["source_summary", "diagnosis", "treatment_recommendation", "urgency_assessment"],
+)
+def test_medical_synopsis_job_accepts_an_explicit_bounded_purpose(
+    tmp_path, medical_purpose,
+) -> None:
+    """Catches the medical purpose being lost before the authority gate can inspect it."""
+    path = write_job(
+        tmp_path,
+        workflow="synopsis_merge",
+        questions=[],
+        parameters={
+            "application_domain": "medical_reports",
+            "medical_purpose": medical_purpose,
+        },
+    )
+
+    loaded = load_job_file(path)
+
+    assert loaded.job.parameters["medical_purpose"] == medical_purpose
+
+
+@pytest.mark.parametrize("medical_purpose", ["", "general_advice", True, 1])
+def test_medical_synopsis_job_rejects_an_unknown_or_untyped_purpose(
+    tmp_path, medical_purpose,
+) -> None:
+    path = write_job(
+        tmp_path,
+        workflow="synopsis_merge",
+        questions=[],
+        parameters={
+            "application_domain": "medical_reports",
+            "medical_purpose": medical_purpose,
+        },
+    )
+
+    with pytest.raises(JobFileError, match="medical_purpose"):
+        load_job_file(path)
+
+
+def test_nonmedical_synopsis_rejects_a_medical_purpose(tmp_path) -> None:
+    path = write_job(
+        tmp_path,
+        workflow="synopsis_merge",
+        questions=[],
+        parameters={"medical_purpose": "source_summary"},
+    )
+
+    with pytest.raises(JobFileError, match="requires application_domain"):
+        load_job_file(path)
+
+
 def test_registry_job_rejects_non_boolean_complete_pdf_inventory(tmp_path) -> None:
     path = write_job(
         tmp_path,

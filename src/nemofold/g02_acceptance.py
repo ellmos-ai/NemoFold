@@ -36,6 +36,7 @@ class G02AcceptanceBundle:
     register_path: Path
     positive_dossier_path: Path
     negative_dossier_path: Path
+    medical_authority_dossier_path: Path
     verification: dict[str, Any]
 
 
@@ -49,11 +50,18 @@ def run_g02_acceptance_bundle(
     root.mkdir(parents=True, exist_ok=True)
     positive_inputs = _write_positive_fixture(root)
     negative_input = _write_negative_fixture(root)
+    medical_authority_input = _write_medical_authority_fixture(root)
     config = ExecutionConfig(allowed_roots=(str(root),))
     positive = _run_positive_voyage(root, positive_inputs[0].parent, config)
     negative = _run_negative_voyage(root, negative_input.parent, config)
+    medical_authority = _run_medical_authority_voyage(
+        root, medical_authority_input.parent, config
+    )
     positive_report, output_artifacts = _verify_positive_result(root, positive)
     negative_report = _verify_negative_result(root, negative)
+    medical_authority_report, medical_authority_artifacts = (
+        _verify_medical_authority_result(root, medical_authority)
+    )
 
     handoff_path = root / "evidence" / "g02-handoff.json"
     handoff = positive.steps[-1].handoff
@@ -67,17 +75,23 @@ def run_g02_acceptance_bundle(
 
     input_artifacts = [
         _artifact_receipt(root, path)
-        for path in (*positive_inputs, negative_input)
+        for path in (*positive_inputs, negative_input, medical_authority_input)
     ]
     dossier_artifacts = (
         Path(positive.dossier_path),
         Path(positive.dossier_path).with_suffix(".md"),
         Path(negative.dossier_path),
         Path(negative.dossier_path).with_suffix(".md"),
+        Path(medical_authority.dossier_path),
+        Path(medical_authority.dossier_path).with_suffix(".md"),
     )
     output_receipts = [
         _artifact_receipt(root, path)
-        for path in (*output_artifacts, *dossier_artifacts)
+        for path in (
+            *output_artifacts,
+            *medical_authority_artifacts,
+            *dossier_artifacts,
+        )
     ]
     receipt = {
         "run_id": positive.steps[-1].run_id,
@@ -145,6 +159,22 @@ def run_g02_acceptance_bundle(
                 "sha256": _sha256(negative_report),
             },
         },
+        "additional_negative_paths": [
+            {
+                "case": "medical_diagnosis_requested",
+                "run_id": medical_authority.steps[-1].run_id,
+                "status": "blocked",
+                "blocked_as_expected": True,
+                "evidence": (
+                    "Ein ausdrücklich angeforderter Diagnosepfad wurde ohne "
+                    "Synopsis blockiert und als strukturierte Rückfrage ausgegeben."
+                ),
+                "run_report": {
+                    "path": _relative(root, medical_authority_report),
+                    "sha256": _sha256(medical_authority_report),
+                },
+            }
+        ],
     }
 
     register = load_gate_register()
@@ -166,6 +196,7 @@ def run_g02_acceptance_bundle(
         register_path=register_path,
         positive_dossier_path=Path(positive.dossier_path),
         negative_dossier_path=Path(negative.dossier_path),
+        medical_authority_dossier_path=Path(medical_authority.dossier_path),
         verification=verification,
     )
 
@@ -249,6 +280,22 @@ def _write_negative_fixture(root: Path) -> Path:
     return pdf
 
 
+def _write_medical_authority_fixture(root: Path) -> Path:
+    reports = root / "medical-authority-negative" / "inputs" / "fictional-doctor-folder"
+    reports.mkdir(parents=True)
+    pdf = reports / "01-endokrinologie.pdf"
+    pdf.write_bytes(
+        _render_pdf(
+            "Patient: Fallperson 204\n"
+            "Fachrichtung: Endokrinologie\n"
+            "Arzt: Dr. Mira Beispiel\n"
+            "Kontakt: praxis-mira@example.invalid · +49 30 000001\n"
+            "Befund: Schilddrüse unauffällig.\n"
+        )
+    )
+    return pdf
+
+
 def _run_positive_voyage(
     root: Path,
     reports: Path,
@@ -300,6 +347,27 @@ def _run_negative_voyage(
     )
 
 
+def _run_medical_authority_voyage(
+    root: Path,
+    reports: Path,
+    config: ExecutionConfig,
+) -> VoyageRunResult:
+    case = _g02_case(
+        reports,
+        root / "medical-authority-negative" / "out",
+        voyage_id="voyage_g02_acceptance_medical_authority",
+        expected_pages=1,
+        title="Schilddrüse · Diagnoseanfrage blockiert",
+        medical_purpose="diagnosis",
+    )
+    return run_voyage(
+        case,
+        config,
+        run_id="g02_acceptance_medical_authority",
+        base_dir=root,
+    )
+
+
 def _g02_case(
     reports: Path,
     output_root: Path,
@@ -308,6 +376,7 @@ def _g02_case(
     expected_pages: int,
     title: str,
     pdf_page_reviews: dict[str, list[dict[str, object]]] | None = None,
+    medical_purpose: str = "source_summary",
 ) -> dict[str, Any]:
     registry_parameters: dict[str, Any] = {
         "column_template": "medical_reports",
@@ -346,7 +415,12 @@ def _g02_case(
                     "output_dir": str(output_root / "synopsis"),
                     "privacy_mode": "local_only",
                     "action_mode": "dry_run",
-                    "parameters": {"title": title, "formats": ["md", "pdf"]},
+                    "parameters": {
+                        "title": title,
+                        "formats": ["md", "pdf"],
+                        "application_domain": "medical_reports",
+                        "medical_purpose": medical_purpose,
+                    },
                 },
                 "handoff": {
                     "format": "document-registry",
@@ -489,6 +563,41 @@ def _verify_negative_result(root: Path, result: VoyageRunResult) -> Path:
     if (root / "negative" / "out" / "synopsis").exists():
         raise G02AcceptanceError("g02_negative_synopsis_started")
     return Path(step.ledger_path)
+
+
+def _verify_medical_authority_result(
+    root: Path, result: VoyageRunResult
+) -> tuple[Path, tuple[Path, ...]]:
+    if result.status != "stopped" or len(result.steps) != 2:
+        raise G02AcceptanceError("g02_medical_authority_voyage_not_stopped")
+    if result.steps[0].status != "executed":
+        raise G02AcceptanceError("g02_medical_authority_registry_not_executed")
+    step = result.steps[1]
+    if step.status != "blocked" or step.errors != (
+        "medical_authority_denied:diagnosis",
+    ):
+        raise G02AcceptanceError("g02_medical_authority_reason_mismatch")
+    if step.ledger_path is None:
+        raise G02AcceptanceError("g02_medical_authority_run_report_missing")
+    report = RunLedger(Path(step.ledger_path).parent).load(step.run_id)
+    if (
+        report.metadata.get("medical_authority") != "denied"
+        or report.metadata.get("medical_purpose") != "diagnosis"
+        or report.metadata.get("needs_user_input") is not True
+    ):
+        raise G02AcceptanceError("g02_medical_authority_metadata_missing")
+    question_path = next(
+        (Path(item.path) for item in report.artifacts if item.format == "needs-user-input"),
+        None,
+    )
+    if question_path is None or not question_path.is_file():
+        raise G02AcceptanceError("g02_medical_authority_question_missing")
+    question = json.loads(question_path.read_text(encoding="utf-8"))
+    if question.get("questions", [{}])[0].get("choices") != ["source_summary"]:
+        raise G02AcceptanceError("g02_medical_authority_question_invalid")
+    if tuple((root / "medical-authority-negative" / "out" / "synopsis").glob("*.synopsis.md")):
+        raise G02AcceptanceError("g02_medical_authority_synopsis_written")
+    return Path(step.ledger_path), (question_path,)
 
 
 def _artifact_receipt(root: Path, path: Path) -> dict[str, str]:

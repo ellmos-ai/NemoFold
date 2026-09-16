@@ -252,6 +252,12 @@ RECURRENCE_KEYWORDS = (
     "jeden tag", "jede woche", "jeden monat", "tagesbericht",
 )
 
+MEDICAL_REPORT_KEYWORDS = (
+    "arztbericht", "arztbrief", "befundbericht", "laborbericht",
+    "medizinischer bericht", "medizinische berichte", "medical report",
+    "patientenakte",
+)
+
 
 @dataclass(frozen=True, slots=True)
 class RoadmapService:
@@ -510,6 +516,13 @@ def _questions_for(workflow: str, text: str, roots_missing: bool) -> tuple[str, 
             "Which columns should the table carry, or which template fits "
             "(medical_reports, insurance_registry, recurring_costs)?"
         )
+    elif workflow == "synopsis_merge" and any(
+        mentions(text, keyword) for keyword in MEDICAL_REPORT_KEYWORDS
+    ):
+        questions.append(
+            "Soll NemoFold die freigegebenen Arztberichte ausschließlich ordnen, "
+            "zitieren und zusammenfassen?"
+        )
     elif workflow == "contact_monitor":
         questions.append(
             "Which earlier snapshot should the contacts be compared against, if any?"
@@ -724,7 +737,15 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
     if workflow == "daily_arrivals":
         return {"summary_length": 3, "export_task_snippet": True, "formats": ["md"]}
     if workflow == "synopsis_merge":
-        return {"formats": ["pdf", "md"] if wants_pdf else ["md"]}
+        parameters: dict[str, Any] = {
+            "formats": ["pdf", "md"] if wants_pdf else ["md"],
+        }
+        if any(mentions(text.casefold(), keyword) for keyword in MEDICAL_REPORT_KEYWORDS):
+            # Recognising the document domain is not permission to diagnose,
+            # recommend treatment or assess urgency. The purpose stays absent
+            # until a person answers the paired question explicitly.
+            parameters["application_domain"] = "medical_reports"
+        return parameters
     if workflow == "fact_distill":
         return {
             "dedupe_scope": "normalized",

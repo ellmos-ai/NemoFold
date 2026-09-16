@@ -99,6 +99,27 @@ def test_every_planned_step_is_a_valid_job_for_an_active_workflow(tmp_path) -> N
             assert parsed.model_budget_usd == 0
 
 
+def test_medical_synopsis_plan_requires_a_source_summary_confirmation(tmp_path) -> None:
+    plan = plan_voyage(
+        "Fasse die Arztberichte zur Schilddrüse zu einer Synopse zusammen",
+        input_roots=(str(tmp_path),),
+    )
+
+    step = next(item for item in plan.steps if item.workflow == "synopsis_merge")
+    assert step.job["parameters"] == {
+        "application_domain": "medical_reports",
+        "formats": ["md"],
+    }
+    assert "medical_purpose" not in step.job["parameters"]
+    assert (
+        "Soll NemoFold die freigegebenen Arztberichte ausschließlich ordnen, "
+        "zitieren und zusammenfassen?"
+    ) in step.questions_to_user
+
+    parsed = parse_job_payload(step.job, base_dir=tmp_path)
+    validate_workflow_parameters(parsed)
+
+
 def test_chained_steps_read_the_previous_output(tmp_path) -> None:
     plan = plan_voyage(
         "bündle die unterlagen und analysiere sie, dann erstelle einen bericht",

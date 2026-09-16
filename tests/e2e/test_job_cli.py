@@ -94,6 +94,55 @@ def test_run_refuses_external_model_when_no_live_adapter_is_configured(tmp_path,
     assert result["cloud_proof"] is False
 
 
+def test_cli_preserves_the_medical_authority_block_and_receipt(tmp_path, capsys) -> None:
+    documents = tmp_path / "medical-documents"
+    documents.mkdir()
+    (documents / "bericht.txt").write_text(
+        "Befund: Schilddrüse vergrößert.\n", encoding="utf-8"
+    )
+    job = tmp_path / "medical-job.json"
+    job.write_text(
+        json.dumps(
+            {
+                "schema": "nemofold.job.v1",
+                "workflow": "synopsis_merge",
+                "input_roots": ["medical-documents"],
+                "output_dir": "medical-output",
+                "questions": [],
+                "privacy_mode": "local_only",
+                "action_mode": "dry_run",
+                "parameters": {
+                    "application_domain": "medical_reports",
+                    "medical_purpose": "diagnosis",
+                    "formats": ["md"],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    exit_code = main(
+        [
+            "run",
+            "--job",
+            str(job),
+            "--allow-root",
+            str(tmp_path),
+            "--run-id",
+            "cli_medical_diagnosis",
+        ]
+    )
+    result = json.loads(capsys.readouterr().out)
+    report = json.loads(Path(result["report_path"]).read_text(encoding="utf-8"))
+
+    assert exit_code == 2
+    assert result["status"] == "blocked"
+    assert result["errors"] == ["medical_authority_denied:diagnosis"]
+    assert report["metadata"]["medical_authority"] == "denied"
+    assert report["metadata"]["needs_user_input"] is True
+    assert not tuple((tmp_path / "medical-output").glob("*.synopsis.md"))
+
+
 def test_verify_detects_a_tampered_job_artifact(tmp_path, capsys) -> None:
     job = write_bundle_job(tmp_path)
     main(["run", "--job", str(job), "--allow-root", str(tmp_path), "--run-id", "run_2"])

@@ -19,7 +19,7 @@ def test_g02_acceptance_bundle_verifies_positive_and_negative_runs(tmp_path: Pat
 
     assert bundle.verification["verified_evidence_gates"] == ["G02"]
     assert bundle.verification["verified_done_gates"] == []
-    assert bundle.verification["checked_file_count"] == 16
+    assert bundle.verification["checked_file_count"] == 21
     register = json.loads(bundle.register_path.read_text(encoding="utf-8"))
     g02 = next(gate for gate in register["gates"] if gate["gate_id"] == "G02")
     assert g02["status"] == "partial"
@@ -28,6 +28,11 @@ def test_g02_acceptance_bundle_verifies_positive_and_negative_runs(tmp_path: Pat
     receipt = g02["evidence"]["run_receipts"][0]
     assert receipt["run_id"] == "g02_acceptance_positive_02"
     assert receipt["negative_path"]["run_id"] == "g02_acceptance_missing_page_01"
+    authority_path = receipt["additional_negative_paths"][0]
+    assert authority_path["case"] == "medical_diagnosis_requested"
+    assert authority_path["run_id"] == "g02_acceptance_medical_authority_02"
+    assert authority_path["status"] == "blocked"
+    assert authority_path["blocked_as_expected"] is True
     handoff = json.loads(
         (bundle.root / receipt["handoff_receipts"][0]["artifact_path"]).read_text(
             encoding="utf-8"
@@ -53,11 +58,22 @@ def test_g02_acceptance_bundle_verifies_positive_and_negative_runs(tmp_path: Pat
             encoding="utf-8"
         )
     )
+    authority_report = json.loads(
+        (
+            bundle.root
+            / authority_path["run_report"]["path"]
+        ).read_text(encoding="utf-8")
+    )
     assert positive_report["status"] == "executed"
     assert negative_report["status"] == "blocked"
     assert negative_report["errors"] == [
         "expected_pdf_page_gap:01-endokrinologie.pdf"
     ]
+    assert authority_report["status"] == "blocked"
+    assert authority_report["errors"] == ["medical_authority_denied:diagnosis"]
+    assert authority_report["metadata"]["medical_authority"] == "denied"
+    assert authority_report["metadata"]["needs_user_input"] is True
+    assert Path(bundle.medical_authority_dossier_path).is_file()
 
     assert all(
         hashlib.sha256((bundle.root / item["path"]).read_bytes()).hexdigest()
@@ -191,4 +207,7 @@ def test_g02_acceptance_bundle_uses_stable_voyage_identity(tmp_path: Path) -> No
     assert json.loads(first.negative_dossier_path.read_text(encoding="utf-8"))[
         "voyage_id"
     ] == "voyage_g02_acceptance_missing_page"
+    assert json.loads(
+        first.medical_authority_dossier_path.read_text(encoding="utf-8")
+    )["voyage_id"] == "voyage_g02_acceptance_medical_authority"
     assert not (first.root / "run-reports" / "web-console" / "voyages").exists()

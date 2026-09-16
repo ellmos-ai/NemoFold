@@ -194,6 +194,44 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert preview["report"]["coverage"]["read_sources"] == 1
 
 
+def test_web_api_preserves_the_medical_authority_block(tmp_path) -> None:
+    documents = tmp_path / "medical-documents"
+    documents.mkdir()
+    (documents / "bericht.txt").write_text(
+        "Befund: Schilddrüse vergrößert.\n", encoding="utf-8"
+    )
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "synopsis_merge",
+        "input_roots": ["medical-documents"],
+        "output_dir": "medical-output",
+        "questions": [],
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {
+            "application_domain": "medical_reports",
+            "medical_purpose": "diagnosis",
+            "formats": ["md"],
+        },
+    }
+
+    with running_server(tmp_path) as base_url, pytest.raises(HTTPError) as captured:
+        post_json(
+            base_url + "/api/run",
+            {"run_id": "web_medical_diagnosis", "job": job},
+        )
+
+    payload = json.load(captured.value)
+    assert captured.value.code == 409
+    assert payload["ok"] is False
+    assert payload["report"]["status"] == "blocked"
+    assert payload["report"]["errors"] == ["medical_authority_denied:diagnosis"]
+    assert payload["report"]["metadata"]["medical_authority"] == "denied"
+    assert payload["report"]["metadata"]["needs_user_input"] is True
+    assert Path(payload["report_path"]).is_file()
+    assert not tuple((tmp_path / "medical-output").glob("*.synopsis.md"))
+
+
 @pytest.mark.parametrize(
     ("route", "page", "tab"),
     [

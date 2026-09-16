@@ -256,6 +256,58 @@ def test_done_gate_verifies_referenced_files_and_blocks_mutation(tmp_path) -> No
         validate_gate_register(register, evidence_root=tmp_path)
 
 
+def test_declared_additional_negative_paths_are_hash_and_run_bound(tmp_path) -> None:
+    """Catches a second full-usecase blocker being declared but never verified."""
+    register, _ = _done_register_with_files(tmp_path)
+    path = tmp_path / "evidence" / "g01-medical-authority-run-report.json"
+    raw = b'{"run_id":"g01-20260916-medical-blocked","status":"blocked"}'
+    path.write_bytes(raw)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    receipt["additional_negative_paths"] = [
+        {
+            "case": "medical_diagnosis_requested",
+            "run_id": "g01-20260916-medical-blocked",
+            "status": "blocked",
+            "blocked_as_expected": True,
+            "evidence": "Diagnosewunsch wurde ohne klinische Autorität blockiert.",
+            "run_report": {
+                "path": "evidence/g01-medical-authority-run-report.json",
+                "sha256": hashlib.sha256(raw).hexdigest(),
+            },
+        }
+    ]
+
+    validated = validate_gate_register(register, evidence_root=tmp_path)
+    verification = verify_gate_evidence(validated, tmp_path)
+
+    assert "evidence/g01-medical-authority-run-report.json" in verification[
+        "checked_files"
+    ]
+    assert verification["checked_file_count"] == 7
+
+    path.write_bytes(b'{"run_id":"forged","status":"blocked"}')
+    with pytest.raises(GateRegisterError, match="evidence_sha256_mismatch:G01"):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+    receipt["additional_negative_paths"][0]["run_report"]["sha256"] = hashlib.sha256(
+        path.read_bytes()
+    ).hexdigest()
+    with pytest.raises(
+        GateRegisterError,
+        match="additional_negative_path_run_id_mismatch:G01",
+    ):
+        validate_gate_register(register, evidence_root=tmp_path)
+
+
+def test_additional_negative_paths_require_unique_run_ids(tmp_path) -> None:
+    register, _ = _done_register_with_files(tmp_path)
+    receipt = register["gates"][0]["evidence"]["run_receipts"][0]
+    receipt["additional_negative_paths"] = [dict(receipt["negative_path"])]
+
+    with pytest.raises(GateRegisterError, match="duplicate_negative_run_id:G01"):
+        validate_gate_register(register)
+
+
 def test_done_gate_requires_input_and_output_artifact_manifests(tmp_path) -> None:
     register, _ = _done_register_with_files(tmp_path)
     del register["gates"][0]["evidence"]["run_receipts"][0]["input_artifacts"]

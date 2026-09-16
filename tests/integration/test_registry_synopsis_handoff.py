@@ -65,7 +65,12 @@ def _case(tmp_path: Path) -> dict:
                     "output_dir": str(tmp_path / "out" / "02-synopsis"),
                     "privacy_mode": "local_only",
                     "action_mode": "dry_run",
-                    "parameters": {"title": "Schilddrüse", "formats": ["md", "pdf"]},
+                    "parameters": {
+                        "title": "Schilddrüse",
+                        "formats": ["md", "pdf"],
+                        "application_domain": "medical_reports",
+                        "medical_purpose": "source_summary",
+                    },
                 },
                 "handoff": {"format": "document-registry", "mode": "selected_sources"},
             },
@@ -770,6 +775,7 @@ def test_selected_original_changed_after_registry_is_not_reused(tmp_path: Path) 
 def test_declared_synopsis_cannot_hide_a_different_consumer_job(tmp_path: Path) -> None:
     case = _case(tmp_path)
     case["steps"][1]["job"]["workflow"] = "fact_distill"
+    case["steps"][1]["job"]["parameters"] = {"formats": ["md"]}
     store = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),))
 
     with pytest.raises(ValueError, match="selected_sources requires.*synopsis_merge"):

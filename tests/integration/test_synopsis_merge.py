@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from pathlib import Path
+
+import pytest
 
 from nemofold.application import ExecutionConfig, run_job
 from nemofold.contracts import RunStatus
 from nemofold.job_io import parse_job_payload
 from nemofold.synopsis_merge import merge_synopsis, synopsis_markdown
+from nemofold.wizard import plan_voyage
 
 OFFER_A = """# Leistung
 Die Deckung gilt weltweit.
@@ -131,3 +135,151 @@ def test_synopsis_merge_runs_end_to_end_with_conflict_claims(tmp_path) -> None:
         if artifact.format == "synopsis"
     ).read_text(encoding="utf-8")
     assert "## Conflicts (1)" in markdown
+
+
+def _medical_job(tmp_path, *, medical_purpose=None):
+    documents = tmp_path / "medical-documents"
+    documents.mkdir(exist_ok=True)
+    (documents / "bericht.txt").write_text(
+        "# Befund\nSchilddrüse vergrößert.\n", encoding="utf-8"
+    )
+    parameters = {
+        "application_domain": "medical_reports",
+        "formats": ["md"],
+        "title": "Schilddrüsenberichte",
+    }
+    if medical_purpose is not None:
+        parameters["medical_purpose"] = medical_purpose
+    return parse_job_payload(
+        {
+            "schema": "nemofold.job.v1",
+            "workflow": "synopsis_merge",
+            "input_roots": [str(documents)],
+            "output_dir": str(tmp_path / "medical-out"),
+            "privacy_mode": "local_only",
+            "action_mode": "dry_run",
+            "parameters": parameters,
+        },
+        base_dir=tmp_path,
+    )
+
+
+def test_medical_synopsis_without_explicit_purpose_stops_for_user_input(tmp_path) -> None:
+    """A removed purpose check must not let an ambiguous medical request execute."""
+    result = run_job(
+        _medical_job(tmp_path),
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="medical_purpose_missing",
+    )
+
+    assert result.report.status is RunStatus.BLOCKED
+    assert result.report.errors == ("needs_user_input:medical_purpose",)
+    assert result.report.actions == ("medical_authority_checked", "medical_scope_needs_input")
+    assert result.report.metadata["needs_user_input"] is True
+    assert result.report.metadata["medical_authority"] == "not_granted"
+    question_path = next(
+        Path(item.path)
+        for item in result.report.artifacts
+        if item.format == "needs-user-input"
+    )
+    payload = json.loads(question_path.read_text(encoding="utf-8"))
+    assert payload["questions"] == [
+        {
+            "choices": ["source_summary"],
+            "field": "medical_purpose",
+            "kind": "choice",
+            "prompt": (
+                "Soll NemoFold die freigegebenen Arztberichte ausschließlich "
+                "ordnen, zitieren und zusammenfassen?"
+            ),
+            "why": (
+                "NemoFold besitzt keine medizinische Diagnose-, Therapie- oder "
+                "Dringlichkeitsautorität."
+            ),
+        }
+    ]
+    assert not (tmp_path / "medical-out" / "medical_purpose_missing.synopsis.md").exists()
+
+
+@pytest.mark.parametrize(
+    "medical_purpose",
+    ["diagnosis", "treatment_recommendation", "urgency_assessment"],
+)
+def test_medical_synopsis_refuses_clinical_authority(
+    tmp_path, medical_purpose,
+) -> None:
+    """Changing the denied-purpose branch to execute must fail this real run."""
+    result = run_job(
+        _medical_job(tmp_path, medical_purpose=medical_purpose),
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id=f"medical_denied_{medical_purpose}",
+    )
+
+    assert result.report.status is RunStatus.BLOCKED
+    assert result.report.errors == (f"medical_authority_denied:{medical_purpose}",)
+    assert result.report.actions == ("medical_authority_checked", "medical_authority_denied")
+    assert result.report.metadata["medical_application_domain"] == "medical_reports"
+    assert result.report.metadata["medical_authority"] == "denied"
+    assert result.report.metadata["medical_purpose"] == medical_purpose
+    assert result.report.metadata["needs_user_input"] is True
+    assert any(item.format == "needs-user-input" for item in result.report.artifacts)
+    assert not (
+        tmp_path / "medical-out" / f"medical_denied_{medical_purpose}.synopsis.md"
+    ).exists()
+
+
+def test_medical_source_summary_executes_without_clinical_authority(tmp_path) -> None:
+    result = run_job(
+        _medical_job(tmp_path, medical_purpose="source_summary"),
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="medical_source_summary",
+    )
+
+    assert result.report.status is RunStatus.EXECUTED
+    assert result.report.metadata["medical_authority"] == "not_granted"
+    assert result.report.metadata["medical_purpose"] == "source_summary"
+    assert result.report.metadata["application_domain"] == "medical_reports"
+    synopsis = (
+        tmp_path / "medical-out" / "medical_source_summary.synopsis.md"
+    ).read_text(encoding="utf-8")
+    assert "Schilddrüse vergrößert" in synopsis
+    assert "keine medizinische Diagnose oder Handlungsempfehlung" in synopsis
+
+
+def test_medical_wizard_draft_blocks_then_executes_after_bounded_user_answer(tmp_path) -> None:
+    documents = tmp_path / "medical-documents"
+    documents.mkdir()
+    (documents / "bericht.txt").write_text(
+        "# Befund\nSchilddrüse vergrößert.\n", encoding="utf-8"
+    )
+    plan = plan_voyage(
+        "Fasse die Arztberichte zur Schilddrüse zu einer Synopse zusammen",
+        input_roots=(str(documents),),
+        output_dir=str(tmp_path / "wizard-output"),
+    )
+    step = next(item for item in plan.steps if item.workflow == "synopsis_merge")
+
+    unanswered = run_job(
+        parse_job_payload(step.job, base_dir=tmp_path),
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="medical_wizard_unanswered",
+    )
+    assert unanswered.report.status is RunStatus.BLOCKED
+    assert unanswered.report.errors == ("needs_user_input:medical_purpose",)
+
+    answered_job = {**step.job, "parameters": {**step.job["parameters"]}}
+    answered_job["parameters"]["medical_purpose"] = "source_summary"
+    answered = run_job(
+        parse_job_payload(answered_job, base_dir=tmp_path),
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="medical_wizard_answered",
+    )
+    assert answered.report.status is RunStatus.EXECUTED
+    assert answered.report.metadata["medical_authority"] == "not_granted"
+    assert answered.report.metadata["medical_purpose"] == "source_summary"
+    synopsis_path = next(
+        Path(item.path) for item in answered.report.artifacts if item.format == "synopsis"
+    )
+    synopsis = synopsis_path.read_text(encoding="utf-8")
+    assert "Schilddrüse vergrößert" in synopsis
+    assert "keine medizinische Diagnose oder Handlungsempfehlung" in synopsis

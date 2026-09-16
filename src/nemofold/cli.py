@@ -400,6 +400,9 @@ def _acceptance_g02_command(args: argparse.Namespace) -> int:
                 "register_path": str(bundle.register_path),
                 "positive_dossier_path": str(bundle.positive_dossier_path),
                 "negative_dossier_path": str(bundle.negative_dossier_path),
+                "medical_authority_dossier_path": str(
+                    bundle.medical_authority_dossier_path
+                ),
                 "verification": bundle.verification,
             },
             ensure_ascii=False,

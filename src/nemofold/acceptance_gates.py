@@ -369,33 +369,61 @@ def _validate_run_receipt(receipt: dict[str, Any], gate_id: str) -> None:
         if item.get("passed") is not True:
             raise GateRegisterError(f"result_check_not_passed:{gate_id}")
 
-    negative = _mapping(receipt.get("negative_path"), f"negative_path_must_be_object:{gate_id}")
-    for field in ("case", "run_id", "evidence"):
-        _nonplaceholder_string(
-            negative.get(field),
-            f"negative_path_{field}_missing:{gate_id}",
-            f"negative_path_{field}_placeholder:{gate_id}",
-        )
-    if negative.get("status") not in {"blocked", "failed"}:
-        raise GateRegisterError(f"negative_path_status_invalid:{gate_id}")
-    if negative.get("blocked_as_expected") is not True:
-        raise GateRegisterError(f"negative_path_not_confirmed:{gate_id}")
-    if negative.get("run_id") == receipt.get("run_id"):
-        raise GateRegisterError(f"positive_and_negative_run_id_same:{gate_id}")
-    negative_report = _mapping(
-        negative.get("run_report"), f"negative_path_run_report_must_be_object:{gate_id}"
-    )
-    negative_report_path = _canonical_relative_path(
-        negative_report.get("path"), gate_id, "negative_path"
-    )
-    negative_report_identity = _path_identity(negative_report_path)
-    if negative_report_identity in claimed_paths:
-        if negative_report_identity == positive_report_identity:
-            raise GateRegisterError(f"positive_and_negative_run_report_same_path:{gate_id}")
+    additional = receipt.get("additional_negative_paths", [])
+    if not isinstance(additional, list) or len(additional) > 20:
         raise GateRegisterError(
-            f"evidence_path_role_conflict:{gate_id}:negative_path:{negative_report_path}"
+            f"additional_negative_paths_must_be_bounded_list:{gate_id}"
         )
-    _validate_evidence_sha(negative_report.get("sha256"), gate_id, "negative_path")
+    negative_paths = [
+        _mapping(
+            receipt.get("negative_path"),
+            f"negative_path_must_be_object:{gate_id}",
+        ),
+        *(
+            _mapping(item, f"additional_negative_path_must_be_object:{gate_id}")
+            for item in additional
+        ),
+    ]
+    negative_run_ids: set[str] = set()
+    for index, negative in enumerate(negative_paths):
+        prefix = "negative_path" if index == 0 else "additional_negative_path"
+        for field in ("case", "run_id", "evidence"):
+            _nonplaceholder_string(
+                negative.get(field),
+                f"{prefix}_{field}_missing:{gate_id}",
+                f"{prefix}_{field}_placeholder:{gate_id}",
+            )
+        if negative.get("status") not in {"blocked", "failed"}:
+            raise GateRegisterError(f"{prefix}_status_invalid:{gate_id}")
+        if negative.get("blocked_as_expected") is not True:
+            raise GateRegisterError(f"{prefix}_not_confirmed:{gate_id}")
+        negative_run_id = str(negative["run_id"])
+        if negative_run_id == receipt.get("run_id"):
+            raise GateRegisterError(f"positive_and_negative_run_id_same:{gate_id}")
+        if negative_run_id in negative_run_ids:
+            raise GateRegisterError(f"duplicate_negative_run_id:{gate_id}")
+        negative_run_ids.add(negative_run_id)
+        negative_report = _mapping(
+            negative.get("run_report"),
+            f"{prefix}_run_report_must_be_object:{gate_id}",
+        )
+        negative_report_path = _canonical_relative_path(
+            negative_report.get("path"), gate_id, prefix
+        )
+        negative_report_identity = _path_identity(negative_report_path)
+        if negative_report_identity in claimed_paths:
+            if negative_report_identity == positive_report_identity:
+                raise GateRegisterError(
+                    f"positive_and_negative_run_report_same_path:{gate_id}"
+                )
+            raise GateRegisterError(
+                f"evidence_path_role_conflict:{gate_id}:{prefix}:"
+                f"{negative_report_path}"
+            )
+        claimed_paths.add(negative_report_identity)
+        _validate_evidence_sha(
+            negative_report.get("sha256"), gate_id, prefix
+        )
 
 
 def _validate_evidence_sha(value: object, gate_id: str, prefix: str) -> str:
@@ -475,17 +503,22 @@ def _verify_done_gate_files(
                     kind="run_report",
                 )
             )
-            negative_report = receipt["negative_path"]["run_report"]
-            checked.append(
-                _verify_run_report_file(
-                    root,
-                    negative_report,
-                    gate_id,
-                    expected_run_id=receipt["negative_path"]["run_id"],
-                    expected_status=receipt["negative_path"]["status"],
-                    kind="negative_path",
+            negative_paths = [
+                receipt["negative_path"],
+                *receipt.get("additional_negative_paths", []),
+            ]
+            for index, negative in enumerate(negative_paths):
+                kind = "negative_path" if index == 0 else "additional_negative_path"
+                checked.append(
+                    _verify_run_report_file(
+                        root,
+                        negative["run_report"],
+                        gate_id,
+                        expected_run_id=negative["run_id"],
+                        expected_status=negative["status"],
+                        kind=kind,
+                    )
                 )
-            )
     return sorted(set(checked))
 
 

@@ -223,6 +223,7 @@ WORKFLOW_PARAMETER_FIELDS = {
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
     "synopsis_merge": frozenset({
         "application_domain",
+        "medical_purpose",
         "source_tables",
         "structured_sources",
         "source_selected_lines",
@@ -488,6 +489,22 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
                 raise ValueError("reference_date must be an ISO date string") from exc
     elif job.workflow == "synopsis_merge":
         choice("application_domain", {"medical_reports"})
+        choice(
+            "medical_purpose",
+            {
+                "source_summary",
+                "diagnosis",
+                "treatment_recommendation",
+                "urgency_assessment",
+            },
+        )
+        if (
+            "medical_purpose" in job.parameters
+            and job.parameters.get("application_domain") != "medical_reports"
+        ):
+            raise ValueError(
+                "medical_purpose requires application_domain=medical_reports"
+            )
     elif job.workflow == "report_studio":
         choice("template", {"default"})
         choice("language", {"en"})
