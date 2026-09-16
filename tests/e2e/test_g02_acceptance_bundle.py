@@ -19,7 +19,7 @@ def test_g02_acceptance_bundle_verifies_positive_and_negative_runs(tmp_path: Pat
 
     assert bundle.verification["verified_evidence_gates"] == ["G02"]
     assert bundle.verification["verified_done_gates"] == []
-    assert bundle.verification["checked_file_count"] == 14
+    assert bundle.verification["checked_file_count"] == 16
     register = json.loads(bundle.register_path.read_text(encoding="utf-8"))
     g02 = next(gate for gate in register["gates"] if gate["gate_id"] == "G02")
     assert g02["status"] == "partial"
@@ -28,6 +28,22 @@ def test_g02_acceptance_bundle_verifies_positive_and_negative_runs(tmp_path: Pat
     receipt = g02["evidence"]["run_receipts"][0]
     assert receipt["run_id"] == "g02_acceptance_positive_02"
     assert receipt["negative_path"]["run_id"] == "g02_acceptance_missing_page_01"
+    handoff = json.loads(
+        (bundle.root / receipt["handoff_receipts"][0]["artifact_path"]).read_text(
+            encoding="utf-8"
+        )
+    )
+    reviewed_text = "Befund: Schilddrüse Verlaufskontrolle empfohlen."
+    assert handoff["source_scope"]["reviewed_pdf_page_count"] == 1
+    assert handoff["consumer_source_scope"]["reviewed_pdf_page_count"] == 1
+    assert handoff["verified_pdf_pages"][0]["reviewed_pages"][0][
+        "text_sha256"
+    ] == hashlib.sha256(reviewed_text.encode()).hexdigest()
+    assert reviewed_text not in json.dumps(handoff, ensure_ascii=False)
+    assert sum(
+        item["path"].endswith(".json") and "/jobs/" in item["path"]
+        for item in receipt["output_artifacts"]
+    ) == 2
 
     positive_report = json.loads(
         (bundle.root / receipt["run_report"]["path"]).read_text(encoding="utf-8")
@@ -80,6 +96,7 @@ def test_g02_acceptance_bundle_verifies_positive_and_negative_runs(tmp_path: Pat
     pdf_text = "\n".join(page.extract_text() or "" for page in PdfReader(pdf_path).pages)
     assert "Schilddrüse unauffällig" in pdf_text
     assert "Schilddrüse vergrößert" in pdf_text
+    assert "Schilddrüse Verlaufskontrolle empfohlen" in pdf_text
     assert "Knieverletzung" not in pdf_text
     assert "Leberwert auffällig" not in pdf_text
 

@@ -223,7 +223,6 @@ WORKFLOW_PARAMETER_FIELDS = {
     "report_studio": frozenset({"formats", "include_coverage", "language", "template"}),
     "synopsis_merge": frozenset({
         "application_domain",
-        "source_page_reviews",
         "source_tables",
         "structured_sources",
         "source_selected_lines",
@@ -336,8 +335,6 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
         expectations = job.parameters.get("expected_pdf_pages", {})
         if not isinstance(expectations, dict) or set(reviews) - set(expectations):
             raise ValueError("pdf_page_reviews must name declared expected_pdf_pages")
-    if "source_page_reviews" in job.parameters:
-        parse_source_page_reviews(job.parameters["source_page_reviews"])
     if "source_selected_lines" in job.parameters:
         selections = job.parameters["source_selected_lines"]
         if not isinstance(selections, dict) or len(selections) > 500:
@@ -507,6 +504,29 @@ class JobFileError(ValueError):
     """Raised when a job file fails the public fail-closed contract."""
 
 
+HANDOFF_CONTEXT_SCHEMA = "nemofold.selected-source-handoff.v1"
+
+
+def validate_handoff_context(job: JobEnvelope) -> None:
+    """Validate internal receipt-bound data that public job files cannot set."""
+    context = job.handoff_context
+    if not isinstance(context, dict):
+        raise ValueError("handoff_context must be an object")
+    if not context:
+        return
+    if set(context) != {"schema", "source_page_reviews", "reviewed_page_receipts"}:
+        raise ValueError("handoff_context fields are invalid")
+    if context.get("schema") != HANDOFF_CONTEXT_SCHEMA:
+        raise ValueError("handoff_context schema is invalid")
+    reviews = parse_source_page_reviews(context.get("source_page_reviews"))
+    expected_receipts = {
+        source_id: [review.as_summary() for review in source_reviews]
+        for source_id, source_reviews in reviews.items()
+    }
+    if context.get("reviewed_page_receipts") != expected_receipts:
+        raise ValueError("handoff_context review receipts do not match")
+
+
 @dataclass(frozen=True, slots=True)
 class LoadedJob:
     job: JobEnvelope
@@ -656,8 +676,10 @@ def load_job_snapshot(path: str | Path) -> JobEnvelope:
             response_schema=value.get("response_schema", "nemofold.claims.v1"),
             resume_run_id=value.get("resume_run_id"),
             parameters=dict(value.get("parameters", {})),
+            handoff_context=dict(value.get("handoff_context", {})),
         )
         validate_workflow_parameters(job)
+        validate_handoff_context(job)
         return job
     except (KeyError, TypeError, ValueError) as exc:
         raise JobFileError(f"job snapshot contract is invalid: {exc}") from exc

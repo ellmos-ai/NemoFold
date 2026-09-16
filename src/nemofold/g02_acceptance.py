@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import sqlite3
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from pypdf import PdfReader
+from pypdf import PdfReader, PdfWriter
+from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject, NumberObject
 
 from .acceptance_gates import (
     artifact_manifest_sha256,
@@ -23,6 +25,9 @@ from .voyage_runs import VoyageRunResult, run_voyage
 
 class G02AcceptanceError(RuntimeError):
     """Raised when the executable G02 acceptance chain does not meet its contract."""
+
+
+REVIEWED_SCAN_TEXT = "Befund: Schilddrüse Verlaufskontrolle empfohlen."
 
 
 @dataclass(frozen=True, slots=True)
@@ -104,8 +109,9 @@ def run_g02_acceptance_bundle(
                 "name": "medical_synopsis_scope_and_citations",
                 "passed": True,
                 "evidence": (
-                    "PDF und Markdown enthalten beide Schilddrüsenbefunde, den "
-                    "Nichtdiagnose-Hinweis und keine Knie- oder Leberfremdquelle."
+                    "PDF und Markdown enthalten native, strukturierte und manuell "
+                    "geprüfte Schilddrüsenbefunde, den Nichtdiagnose-Hinweis und "
+                    "keine Knie- oder Leberfremdquelle."
                 ),
             },
             {
@@ -168,7 +174,8 @@ def _write_positive_fixture(root: Path) -> tuple[Path, Path, Path]:
     reports = root / "positive" / "inputs" / "fictional-doctor-folder"
     reports.mkdir(parents=True)
     pdf = reports / "01-endokrinologie.pdf"
-    pdf.write_bytes(
+    writer = PdfWriter()
+    writer.append(PdfReader(io.BytesIO(
         _render_pdf(
             "# Tabelle bericht\nPatient: Fallperson 204\n"
             "Fachrichtung: Endokrinologie\n"
@@ -176,7 +183,27 @@ def _write_positive_fixture(root: Path) -> tuple[Path, Path, Path]:
             "Kontakt: praxis-mira@example.invalid · +49 30 000001\n"
             "Befund: Schilddrüse unauffällig.\n"
         )
-    )
+    )))
+    scanned_page = writer.add_blank_page(width=595, height=842)
+    image = DecodedStreamObject()
+    image.set_data(bytes([0, 0, 0] * 4))
+    image.update({
+        NameObject("/Type"): NameObject("/XObject"),
+        NameObject("/Subtype"): NameObject("/Image"),
+        NameObject("/Width"): NumberObject(2),
+        NameObject("/Height"): NumberObject(2),
+        NameObject("/ColorSpace"): NameObject("/DeviceRGB"),
+        NameObject("/BitsPerComponent"): NumberObject(8),
+    })
+    scanned_page[NameObject("/Resources")] = DictionaryObject({
+        NameObject("/XObject"): DictionaryObject({
+            NameObject("/Im0"): writer._add_object(image),
+        }),
+    })
+    content = DecodedStreamObject()
+    content.set_data(b"q 400 0 0 600 70 160 cm /Im0 Do Q")
+    scanned_page[NameObject("/Contents")] = writer._add_object(content)
+    writer.write(pdf)
     text = reports / "02-orthopaedie.txt"
     text.write_text(
         "Patient: Fallperson 204\nFachrichtung: Orthopädie\n"
@@ -230,8 +257,20 @@ def _run_positive_voyage(
     case = _g02_case(
         reports,
         root / "positive" / "out",
-        expected_pages=1,
+        voyage_id="voyage_g02_acceptance_positive",
+        expected_pages=2,
         title="Schilddrüse · fiktiver Verlauf",
+        pdf_page_reviews={
+            "01-endokrinologie.pdf": [{
+                "page": 2,
+                "source_sha256": _sha256(reports / "01-endokrinologie.pdf"),
+                "method": "manual",
+                "reviewer": "human:acceptance-fixture-reviewer",
+                "reviewed_at": "2026-09-16T07:50:00+02:00",
+                "content_complete": True,
+                "text": REVIEWED_SCAN_TEXT,
+            }],
+        },
     )
     return run_voyage(
         case,
@@ -249,6 +288,7 @@ def _run_negative_voyage(
     case = _g02_case(
         reports,
         root / "negative" / "out",
+        voyage_id="voyage_g02_acceptance_missing_page",
         expected_pages=2,
         title="Schilddrüse · fehlende Seite",
     )
@@ -264,15 +304,25 @@ def _g02_case(
     reports: Path,
     output_root: Path,
     *,
+    voyage_id: str,
     expected_pages: int,
     title: str,
+    pdf_page_reviews: dict[str, list[dict[str, object]]] | None = None,
 ) -> dict[str, Any]:
+    registry_parameters: dict[str, Any] = {
+        "column_template": "medical_reports",
+        "topic_filter": ["Schilddrüse"],
+        "source_tables": ["bericht"],
+        "expected_pdf_pages": {
+            "01-endokrinologie.pdf": expected_pages
+        },
+        "require_complete_pdf_inventory": True,
+        "formats": ["md"],
+    }
+    if pdf_page_reviews is not None:
+        registry_parameters["pdf_page_reviews"] = pdf_page_reviews
     return {
-        "voyage_id": (
-            "voyage_g02_acceptance_positive"
-            if expected_pages == 1
-            else "voyage_g02_acceptance_missing_page"
-        ),
+        "voyage_id": voyage_id,
         "name": title,
         "steps": [
             {
@@ -284,16 +334,7 @@ def _g02_case(
                     "output_dir": str(output_root / "register"),
                     "privacy_mode": "local_only",
                     "action_mode": "dry_run",
-                    "parameters": {
-                        "column_template": "medical_reports",
-                        "topic_filter": ["Schilddrüse"],
-                        "source_tables": ["bericht"],
-                        "expected_pdf_pages": {
-                            "01-endokrinologie.pdf": expected_pages
-                        },
-                        "require_complete_pdf_inventory": True,
-                        "formats": ["md"],
-                    },
+                    "parameters": registry_parameters,
                 },
             },
             {
@@ -319,12 +360,20 @@ def _g02_case(
 def _verify_positive_result(
     root: Path,
     result: VoyageRunResult,
-) -> tuple[Path, tuple[Path, Path, Path]]:
+) -> tuple[Path, tuple[Path, ...]]:
     if result.status != "executed" or len(result.steps) != 2:
         raise G02AcceptanceError("g02_positive_voyage_not_executed")
     handoff = result.steps[-1].handoff or {}
     if handoff.get("status") != "verified":
         raise G02AcceptanceError("g02_positive_handoff_not_verified")
+    if (
+        handoff.get("source_scope", {}).get("reviewed_pdf_page_count") != 1
+        or handoff.get("consumer_source_scope", {}).get(
+            "reviewed_pdf_page_count"
+        ) != 1
+        or len(handoff.get("reviewed_page_receipts", {})) != 1
+    ):
+        raise G02AcceptanceError("g02_positive_reviewed_page_receipt_missing")
     selected_names = {Path(item["path"]).name for item in handoff.get("source_lineage", [])}
     if selected_names != {"01-endokrinologie.pdf", "03-verlauf.sqlite"}:
         raise G02AcceptanceError("g02_positive_source_scope_mismatch")
@@ -334,6 +383,27 @@ def _verify_positive_result(
     producer_report = RunLedger(Path(producer_ledger_path).parent).load(
         result.steps[0].run_id
     )
+    producer_job = (
+        root / "positive" / "out" / "register" / "jobs"
+        / f"{result.steps[0].run_id}.json"
+    )
+    consumer_job = (
+        root / "positive" / "out" / "synopsis" / "jobs"
+        / f"{result.steps[-1].run_id}.json"
+    )
+    if not producer_job.is_file() or not consumer_job.is_file():
+        raise G02AcceptanceError("g02_positive_job_snapshot_missing")
+    producer_snapshot = json.loads(producer_job.read_text(encoding="utf-8"))
+    consumer_snapshot = json.loads(consumer_job.read_text(encoding="utf-8"))
+    if (
+        producer_snapshot.get("job", {}).get("parameters", {}).get(
+            "pdf_page_reviews"
+        ) is None
+        or consumer_snapshot.get("job", {}).get("handoff_context", {}).get(
+            "source_page_reviews"
+        ) is None
+    ):
+        raise G02AcceptanceError("g02_positive_job_review_binding_missing")
     registry_path = next(
         (
             Path(item.path)
@@ -389,6 +459,7 @@ def _verify_positive_result(
     for expected in (
         "Schilddrüse unauffällig",
         "Schilddrüse vergrößert",
+        "Schilddrüse Verlaufskontrolle empfohlen",
         "keine medizinische Diagnose",
     ):
         if expected not in markdown_text or expected not in pdf_text:
@@ -396,7 +467,13 @@ def _verify_positive_result(
     for excluded in ("Knieverletzung", "Leberwert auffällig"):
         if excluded in markdown_text or excluded in pdf_text:
             raise G02AcceptanceError(f"g02_positive_scope_widened:{excluded}")
-    return Path(ledger_path), (registry_path, markdown, pdf)
+    return Path(ledger_path), (
+        registry_path,
+        markdown,
+        pdf,
+        producer_job,
+        consumer_job,
+    )
 
 
 def _verify_negative_result(root: Path, result: VoyageRunResult) -> Path:

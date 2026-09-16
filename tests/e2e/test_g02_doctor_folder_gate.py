@@ -457,8 +457,9 @@ def test_g02_reviewed_scanned_page_flows_into_registry_and_synopsis(
     consumer = load_job_snapshot(
         tmp_path / "out" / "synopsis" / "jobs" / "g02_reviewed_scan_02.json"
     )
-    assert len(consumer.parameters["source_page_reviews"]) == 1
-    assert next(iter(consumer.parameters["source_page_reviews"].values())) == [review]
+    assert "source_page_reviews" not in consumer.parameters
+    assert len(consumer.handoff_context["source_page_reviews"]) == 1
+    assert next(iter(consumer.handoff_context["source_page_reviews"].values())) == [review]
     registry = json.loads((
         tmp_path / "out" / "register" / "g02_reviewed_scan_01.registry.json"
     ).read_text(encoding="utf-8"))
@@ -475,13 +476,17 @@ def test_g02_reviewed_scanned_page_flows_into_registry_and_synopsis(
     original_run_job = voyage_runs.run_job
 
     def run_with_tampered_review(job, *args, **kwargs):
-        if job.workflow == "synopsis_merge" and job.parameters.get(
+        if job.workflow == "synopsis_merge" and job.handoff_context.get(
             "source_page_reviews"
         ):
-            parameters = json.loads(json.dumps(job.parameters))
-            reviews = next(iter(parameters["source_page_reviews"].values()))
-            reviews[0]["text"] = "Befund: manipulierte Übergabe."
-            job = replace(job, parameters=parameters)
+            context = json.loads(json.dumps(job.handoff_context))
+            source_id, reviews = next(iter(context["source_page_reviews"].items()))
+            tampered_text = "Befund: manipulierte Übergabe."
+            reviews[0]["text"] = tampered_text
+            context["reviewed_page_receipts"][source_id][0]["text_sha256"] = (
+                hashlib.sha256(tampered_text.encode()).hexdigest()
+            )
+            job = replace(job, handoff_context=context)
         return original_run_job(job, *args, **kwargs)
 
     monkeypatch.setattr(voyage_runs, "run_job", run_with_tampered_review)

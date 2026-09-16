@@ -96,7 +96,12 @@ from .interrater import (
     validate_codes,
 )
 from .inventory import InventoryResult, scan_paths
-from .job_io import job_snapshot_payload, load_job_snapshot, validate_workflow_parameters
+from .job_io import (
+    job_snapshot_payload,
+    load_job_snapshot,
+    validate_handoff_context,
+    validate_workflow_parameters,
+)
 from .ledger import RunLedger, validate_run_id
 from .mail_workflows import build_controlled_draft, build_mail_case, parse_eml
 from .nemoclaw_package import NemoClawPackage, export_job_package
@@ -191,6 +196,7 @@ def prepare_nemoclaw_package(
 ) -> NemoClawPackage:
     validate_run_id(run_id)
     validate_workflow_parameters(job)
+    validate_handoff_context(job)
     if job.workflow not in {"evidence_analyst", "platform_proof"}:
         raise ValueError("NemoClaw packages support only analysis workflows")
     gate = _gate(config)
@@ -517,7 +523,7 @@ def _read_text_sources(
             tables = tuple(str(item) for item in raw_tables)
         labelled_csv = bool(job.parameters.get("structured_sources", False))
         source_page_reviews = parse_source_page_reviews(
-            job.parameters.get("source_page_reviews")
+            job.handoff_context.get("source_page_reviews")
         )
     inventory_source_ids = {source.source_id for source in inventory.records}
     if set(source_page_reviews) - inventory_source_ids:
@@ -2360,6 +2366,7 @@ def _dispatch_workflow(
     config: ExecutionConfig | None = None,
 ) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
     validate_workflow_parameters(job)
+    validate_handoff_context(job)
     if job.workflow == "controlled_email":
         return _execute_controlled_email(job, inventory, run_id=run_id, config=config)
     if job.workflow == "bundle_export":

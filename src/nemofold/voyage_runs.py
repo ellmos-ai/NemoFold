@@ -19,7 +19,7 @@ from .application import ExecutionConfig, run_job
 from .artifacts import write_text_artifact
 from .contracts import RunReport, RunStatus
 from .inventory import scan_paths
-from .job_io import load_job_snapshot, parse_job_payload
+from .job_io import load_job_snapshot, parse_job_payload, validate_handoff_context
 from .model_authority import (
     AUTHORITY_LINKS_WIN,
     LOCAL_CORE,
@@ -546,7 +546,7 @@ def _selected_registry_sources(
 
 def _bind_selected_source_scope(
     job_payload: dict[str, Any], receipt: dict[str, Any]
-) -> None:
+) -> dict[str, Any]:
     """Keep a consumer from reading a wider or differently rendered source."""
     scope = receipt["source_scope"]
     parameters = dict(job_payload.get("parameters") or {})
@@ -571,15 +571,6 @@ def _bind_selected_source_scope(
     elif consumer_structured is not producer_structured:
         raise ValueError("handoff_source_scope_changed:structured_sources")
     producer_page_reviews = receipt.pop("_consumer_page_reviews", {})
-    consumer_page_reviews = parameters.get("source_page_reviews")
-    if producer_page_reviews:
-        if consumer_page_reviews is not None and consumer_page_reviews != (
-            producer_page_reviews
-        ):
-            raise ValueError("handoff_page_reviews_changed")
-        parameters["source_page_reviews"] = producer_page_reviews
-    elif consumer_page_reviews:
-        raise ValueError("handoff_source_scope_widened:source_page_reviews")
     selected_lines = receipt["selected_source_lines"]
     if "source_selected_lines" in parameters and parameters["source_selected_lines"] != (
         selected_lines
@@ -600,8 +591,15 @@ def _bind_selected_source_scope(
         "structured_sources": parameters.get("structured_sources", False),
         "reviewed_pdf_page_count": sum(
             len(reviews)
-            for reviews in parameters.get("source_page_reviews", {}).values()
+            for reviews in producer_page_reviews.values()
         ),
+    }
+    if not producer_page_reviews:
+        return {}
+    return {
+        "schema": "nemofold.selected-source-handoff.v1",
+        "source_page_reviews": producer_page_reviews,
+        "reviewed_page_receipts": receipt["reviewed_page_receipts"],
     }
 
 
@@ -625,7 +623,7 @@ def _consumer_matches_lineage(
         return False
     try:
         snapshot_page_reviews = parse_source_page_reviews(
-            snapshot.parameters.get("source_page_reviews")
+            snapshot.handoff_context.get("source_page_reviews")
         )
     except ValueError:
         return False
@@ -697,6 +695,7 @@ def run_voyage(
         job_payload = dict(step["job"])
         step_run_id = f"{run_id}_{order:02d}"
         handoff_receipt: dict[str, Any] | None = None
+        handoff_context: dict[str, Any] = {}
         if step.get("reads_previous_output") and previous_output is not None:
             # Declared in the saved plan, applied here - never guessed.
             job_payload["input_roots"] = [previous_output]
@@ -720,7 +719,9 @@ def run_voyage(
                             output_dir=previous_output or "",
                         )
                     )
-                    _bind_selected_source_scope(job_payload, handoff_receipt)
+                    handoff_context = _bind_selected_source_scope(
+                        job_payload, handoff_receipt
+                    )
             except ValueError as exc:
                 rights, rights_level = resolve_rights(step.get("rights"), chain_rights)
                 results.append(
@@ -759,6 +760,9 @@ def run_voyage(
                 job_payload["parameters"] = parameters
             policy_note = f"Cleanup rules came from {origin}."
         job = parse_job_payload(job_payload, base_dir=base_dir)
+        if handoff_context:
+            job = replace(job, handoff_context=handoff_context)
+            validate_handoff_context(job)
         resolution = resolve_authority(
             step_pref=step.get("model_pref"),
             chain_pref=chain_pref,

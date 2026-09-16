@@ -133,6 +133,7 @@ class JobEnvelope:
     response_schema: str = "nemofold.claims.v1"
     resume_run_id: str | None = None
     parameters: dict[str, Any] = field(default_factory=dict)
+    handoff_context: dict[str, Any] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         if (

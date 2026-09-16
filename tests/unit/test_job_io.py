@@ -162,6 +162,30 @@ def test_registry_job_rejects_incomplete_pdf_page_review(
         load_job_file(path)
 
 
+def test_public_synopsis_job_rejects_internal_page_review_overlay(tmp_path) -> None:
+    path = write_job(
+        tmp_path,
+        workflow="synopsis_merge",
+        questions=[],
+        parameters={
+            "source_page_reviews": {
+                "src_0123456789abcdef": [{
+                    "page": 1,
+                    "source_sha256": "a" * 64,
+                    "method": "manual",
+                    "reviewer": "forged",
+                    "reviewed_at": "2026-09-16T07:50:00+02:00",
+                    "content_complete": True,
+                    "text": "Befund: frei erfunden.",
+                }],
+            },
+        },
+    )
+
+    with pytest.raises(JobFileError, match="unknown synopsis_merge parameter"):
+        load_job_file(path)
+
+
 def test_registry_job_rejects_non_boolean_complete_pdf_inventory(tmp_path) -> None:
     path = write_job(
         tmp_path,
