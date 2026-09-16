@@ -46,6 +46,7 @@ WORKFLOW_ORDER = {
     "person_timeline": 80,
     "coverage_timeline": 82,
     "cost_timeline": 83,
+    "subscription_reconcile": 85,
     "alibi_weave": 84,
     "contradiction_synopsis": 86,
     "bundle_export": 80,
@@ -81,6 +82,7 @@ WORKFLOW_TITLES = {
     "person_timeline": "Person Timeline",
     "coverage_timeline": "Coverage Timeline",
     "cost_timeline": "Cost Timeline",
+    "subscription_reconcile": "Subscription Reconciliation",
     "alibi_weave": "Alibi Weave",
     "contradiction_synopsis": "Contradiction Synopsis",
     "corpus_query": "Corpus Query",
@@ -163,6 +165,10 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "cost_timeline": (
         "kosten", "fälligkeit", "ausgaben", "budget", "turnus", "wiederkehrend",
         "kostenplan", "cost", "fälligkeiten", "sondereffekte",
+    ),
+    "subscription_reconcile": (
+        "abo", "abonnements", "nachrichten", "abgleich", "reconciliation", "vertrag",
+        "preiserhöhung", "rechnung", "subscriptions", "vertragsabgleich",
     ),
     "alibi_weave": (
         "alibi", "wer war wo", "bestätigt", "belegt wo", "aufenthalt", "wochenende",
@@ -609,6 +615,10 @@ def _why(workflow: str) -> str:
             "Projects recurring and irregular costs into future periods, keeping unknown "
             "due dates separate instead of guessing exact moments."
         ),
+        "subscription_reconcile": (
+            "Reconciles declared subscriptions with incoming message and invoice evidence, "
+            "highlighting price changes and cancellation status mismatches without guessing."
+        ),
         "alibi_weave": (
             "Keeps a self-report and an outside confirmation apart, and names everyone the "
             "sources place nowhere. Needs the places to compare."
@@ -718,7 +728,12 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
         return {"formats": ["md"], "match_surnames": False}
     if workflow == "relation_model":
         return {"formats": ["md"], "pseudonymous": False}
-    if workflow in {"person_timeline", "coverage_timeline", "cost_timeline"}:
+    if workflow in {
+        "person_timeline",
+        "coverage_timeline",
+        "cost_timeline",
+        "subscription_reconcile",
+    }:
         return {"formats": ["md"]}
     if workflow == "alibi_weave":
         # Places stay empty until a person names them: guessing a place

@@ -142,6 +142,7 @@ from .structured_sources import (
     read_structured,
     select_topic_rows,
 )
+from .subscription_reconcile import execute_subscription_reconcile
 from .synopsis_merge import merge_synopsis, synopsis_markdown
 from .version_resolver import (
     VersionCandidate,
@@ -3491,6 +3492,7 @@ CHRONICLE_EXECUTORS = {
     "person_timeline": execute_person_timeline,
     "coverage_timeline": execute_coverage_timeline,
     "cost_timeline": execute_cost_timeline,
+    "subscription_reconcile": execute_subscription_reconcile,
     "alibi_weave": execute_alibi_weave,
     "contradiction_synopsis": execute_contradiction_synopsis,
     "corpus_query": execute_corpus_query,

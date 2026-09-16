@@ -192,6 +192,11 @@ const workflowDefaults = {
     parameters: {formats: ["md"], contract_field: "Vertrag", amount_field: "Betrag", cadence_field: "Turnus", due_date_field: "Nächste Fälligkeit"},
     hint: "Cost Timeline plans recurring and irregular costs from declared contract fields, keeping unknown due dates separate rather than guessing exact moments."
   },
+  subscription_reconcile: {
+    questions: [],
+    parameters: {formats: ["md"], min_subscriptions: 1, require_unambiguous_matches: true},
+    hint: "Subscription Reconciliation reconciles declared subscriptions with incoming message/invoice evidence, identifying price discrepancies and status mismatches."
+  },
   alibi_weave: {
     questions: [],
     parameters: {formats: ["md"], places: [], tolerance_minutes: 90},
@@ -661,6 +666,10 @@ const workflowCards = {
     title: "Cost Timeline",
     benefit: "Project upcoming recurring costs and irregular charges without guessing unknown due dates."
   },
+  subscription_reconcile: {
+    title: "Subscription Reconciliation",
+    benefit: "Reconcile declared subscriptions with incoming invoice and message evidence without guessing on ambiguity."
+  },
   alibi_weave: {
     title: "Alibi Weave",
     benefit: "Tell a self-report from an outside confirmation, and see who nothing places at all."
@@ -1002,7 +1011,7 @@ const registryGroups = [
   {title: "Reading a corpus", workflows: ["evidence_analyst", "bundle_export", "fact_distill",
     "synopsis_merge", "document_registry", "corpus_query", "pattern_mining"]},
   {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
-    "coverage_timeline", "cost_timeline", "alibi_weave", "contradiction_synopsis"]},
+    "coverage_timeline", "cost_timeline", "subscription_reconcile", "alibi_weave", "contradiction_synopsis"]},
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "version_resolver",
     "contact_monitor"]},
   {title: "Outward and status", workflows: ["web_research", "dossier", "platform_proof"]},

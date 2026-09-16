@@ -36,6 +36,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "person_timeline",
         "coverage_timeline",
         "cost_timeline",
+        "subscription_reconcile",
         "alibi_weave",
         "contradiction_synopsis",
         "corpus_query",
@@ -150,6 +151,23 @@ WORKFLOW_PARAMETER_FIELDS = {
             "reference_date",
             "require_deterministic_due_dates",
             "title",
+        }
+    ),
+    "subscription_reconcile": frozenset(
+        {
+            "formats",
+            "min_subscriptions",
+            "require_unambiguous_matches",
+            "auto_status_change",
+            "title",
+            "sub_marker",
+            "amount_marker",
+            "cadence_marker",
+            "status_marker",
+            "account_marker",
+            "sender_marker",
+            "subject_marker",
+            "date_marker",
         }
     ),
     "alibi_weave": frozenset(
@@ -535,6 +553,22 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
             or not re.match(r"^\d{4}-\d{2}$", forecast_month.strip())
         ):
             raise ValueError("forecast_month must be formatted YYYY-MM")
+    elif job.workflow == "subscription_reconcile":
+        min_subs = job.parameters.get("min_subscriptions")
+        if min_subs is not None and (
+            isinstance(min_subs, bool)
+            or not isinstance(min_subs, int)
+            or min_subs < 0
+        ):
+            raise ValueError("min_subscriptions must be a non-negative integer")
+        if "require_unambiguous_matches" in job.parameters and not isinstance(
+            job.parameters["require_unambiguous_matches"], bool
+        ):
+            raise ValueError("require_unambiguous_matches must be a boolean")
+        if "auto_status_change" in job.parameters and not isinstance(
+            job.parameters["auto_status_change"], bool
+        ):
+            raise ValueError("auto_status_change must be a boolean")
     elif job.workflow in {"evidence_analyst", "platform_proof"}:
         choice("analysis_mode", {"local_extractive", "nemotron"})
         choice("citation_granularity", {"line_or_page"})

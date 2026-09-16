@@ -73,6 +73,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "project upcoming period totals, and keep unknown due dates separate rather "
         "than guessing exact moments."
     ),
+    "subscription_reconcile": (
+        "Reconcile declared subscriptions against observed message and invoice evidence, "
+        "flag price discrepancies and cancellation mismatches, and halt on ambiguous matches."
+    ),
     "alibi_weave": (
         "Separate a self-reported position from one another source confirms at the same "
         "place and time, and report every person nothing places as a gap."
@@ -262,6 +266,13 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("gate", "Honest due dates", "unknown dates never placed on exact moments"),
         ("operation", "Forecast", "recurring vs special effects"),
         ("operation", "Render", "timeline and cost schedule"),
+    ),
+    "subscription_reconcile": (
+        ("operation", "Extract", "declared subscriptions and message evidence"),
+        ("gate", "Account / match check", "unique correlation between contract and invoice"),
+        ("gate", "Ambiguity gate", "fail-closed if evidence belongs to multiple candidates"),
+        ("operation", "Discrepancy audit", "detect price changes and cancellation status"),
+        ("operation", "Render", "reconciliation report and verification json"),
     ),
     "alibi_weave": (
         ("operation", "Collect", "stated positions"),
