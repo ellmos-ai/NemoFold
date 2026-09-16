@@ -361,17 +361,49 @@ def _selected_registry_sources(
         or set(selected_ids) | set(skipped) != set(sources)
     ):
         raise ValueError("handoff_registry_selection_incomplete")
+    verification_sources = snapshot.sources
+    current_pdf_identity: tuple[tuple[str, str, str, str], ...] | None = None
+    snapshot_pdf_identity = tuple(sorted(
+        (
+            source.display_name,
+            source.path,
+            source.sha256,
+            source.extraction_status,
+        )
+        for source in snapshot.sources
+        if Path(source.path).suffix.casefold() == ".pdf"
+    ))
     try:
+        if require_complete_pdf_inventory:
+            current_inventory = scan_paths(snapshot.input_roots)
+            verification_sources = current_inventory.records
+            current_pdf_identity = tuple(sorted(
+                (
+                    source.display_name,
+                    source.path,
+                    source.sha256,
+                    source.extraction_status,
+                )
+                for source in current_inventory.records
+                if Path(source.path).suffix.casefold() == ".pdf"
+            ))
         verified_pdf_pages = [
             check.as_payload()
             for check in verify_pdf_page_expectations(
-                snapshot.sources,
+                verification_sources,
                 expected_pdf_pages,
                 require_complete_inventory=require_complete_pdf_inventory,
             )
         ]
     except PdfPageExpectationError as exc:
         raise ValueError(f"handoff_{exc}") from exc
+    except (OSError, ValueError) as exc:
+        raise ValueError("handoff_pdf_inventory_unavailable") from exc
+    if (
+        current_pdf_identity is not None
+        and current_pdf_identity != snapshot_pdf_identity
+    ):
+        raise ValueError("handoff_pdf_inventory_changed")
 
     roots = [Path(root).resolve() for root in snapshot.input_roots]
     paths: list[str] = []

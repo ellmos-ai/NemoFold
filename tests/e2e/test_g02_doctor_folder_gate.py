@@ -12,6 +12,7 @@ from pathlib import Path
 from pypdf import PdfReader, PdfWriter
 from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject, NumberObject
 
+import nemofold.voyage_runs as voyage_runs
 from nemofold.application import ExecutionConfig
 from nemofold.document_extract import extract_document_text
 from nemofold.job_io import load_job_snapshot
@@ -428,4 +429,75 @@ def test_g02_complete_pdf_inventory_blocks_an_undeclared_report(tmp_path: Path) 
         "expected_pdf_source_undeclared:02-undeclared.pdf",
     )
     assert not (tmp_path / "out" / "register" / "g02_undeclared_pdf_01.registry.json").exists()
+    assert not (tmp_path / "out" / "synopsis").exists()
+
+
+def test_g02_handoff_rechecks_for_a_pdf_added_after_the_producer(
+    tmp_path: Path, monkeypatch,
+) -> None:
+    reports = tmp_path / "fictional-doctor-folder"
+    reports.mkdir()
+    (reports / "01-endokrinologie.pdf").write_bytes(
+        _render_pdf("Patient: Fallperson 204\nBefund: Schilddrüse unauffällig.\n")
+    )
+    case = {
+        "name": "G02 · late PDF",
+        "steps": [
+            {
+                "workflow": "document_registry",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "document_registry",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "register"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {
+                        "column_template": "medical_reports",
+                        "topic_filter": ["Schilddrüse"],
+                        "expected_pdf_pages": {"01-endokrinologie.pdf": 1},
+                        "require_complete_pdf_inventory": True,
+                        "formats": ["md"],
+                    },
+                },
+            },
+            {
+                "workflow": "synopsis_merge",
+                "job": {
+                    "schema": "nemofold.job.v1",
+                    "workflow": "synopsis_merge",
+                    "input_roots": [str(reports)],
+                    "output_dir": str(tmp_path / "out" / "synopsis"),
+                    "privacy_mode": "local_only",
+                    "action_mode": "dry_run",
+                    "parameters": {"title": "Schilddrüse", "formats": ["md", "pdf"]},
+                },
+                "handoff": {"format": "document-registry", "mode": "selected_sources"},
+            },
+        ],
+    }
+    saved = VoyageStore(base_dir=tmp_path, allowed_roots=(str(tmp_path),)).save(case)
+    original = voyage_runs._selected_registry_sources
+
+    def add_late_pdf(*args, **kwargs):
+        (reports / "02-late.pdf").write_bytes(
+            _render_pdf("Patient: Fallperson 204\nBefund: Schilddrüse vergrößert.\n")
+        )
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(voyage_runs, "_selected_registry_sources", add_late_pdf)
+
+    result = run_voyage(
+        saved,
+        ExecutionConfig(allowed_roots=(str(tmp_path),)),
+        run_id="g02_late_pdf",
+        base_dir=tmp_path,
+    )
+
+    assert result.status == "stopped"
+    assert result.steps[0].status == "executed"
+    assert result.steps[1].status == "handoff_blocked"
+    assert result.steps[1].errors == (
+        "handoff_expected_pdf_source_undeclared:02-late.pdf",
+    )
     assert not (tmp_path / "out" / "synopsis").exists()
