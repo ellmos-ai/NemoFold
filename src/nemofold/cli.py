@@ -41,6 +41,7 @@ from .g11_acceptance import G11AcceptanceError, run_g11_acceptance_bundle
 from .g12_acceptance import G12AcceptanceError, run_g12_acceptance_bundle
 from .g13_acceptance import G13AcceptanceError, run_g13_acceptance_bundle
 from .g14_acceptance import G14AcceptanceError, run_g14_acceptance_bundle
+from .g15_acceptance import G15AcceptanceError, run_g15_acceptance_bundle
 from .inventory import scan_root
 from .job_io import JobFileError, load_job_file, load_job_snapshot
 from .ledger import RunLedger, validate_run_id
@@ -321,6 +322,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="run the synthetic G14 positive and blocking paths and seal their evidence",
     )
     acceptance_g14.add_argument("--output", required=True)
+    acceptance_g15 = commands.add_parser(
+        "acceptance-g15",
+        help="run the synthetic G15 positive and blocking paths and seal their evidence",
+    )
+    acceptance_g15.add_argument("--output", required=True)
     return parser
 
 
@@ -432,6 +438,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _acceptance_g13_command(args)
     if args.command == "acceptance-g14":
         return _acceptance_g14_command(args)
+    if args.command == "acceptance-g15":
+        return _acceptance_g15_command(args)
     parser.print_help()
     return 0
 
@@ -985,6 +993,40 @@ def _acceptance_g14_command(args: argparse.Namespace) -> int:
                 "unapproved_dossier_path": str(bundle.unapproved_dossier_path),
                 "sensitive_dossier_path": str(bundle.sensitive_dossier_path),
                 "missing_subject_dossier_path": str(bundle.missing_subject_dossier_path),
+                "verification": bundle.verification,
+            },
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+def _acceptance_g15_command(args: argparse.Namespace) -> int:
+    try:
+        bundle = run_g15_acceptance_bundle(args.output)
+    except (G15AcceptanceError, OSError, ValueError) as exc:
+        print(
+            json.dumps(
+                {"ok": False, "gate_id": "G15", "errors": [str(exc)]},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(
+        json.dumps(
+            {
+                "ok": True,
+                "gate_id": "G15",
+                "root": str(bundle.root),
+                "register_path": str(bundle.register_path),
+                "positive_dossier_path": str(bundle.positive_dossier_path),
+                "broken_links_report_path": str(bundle.broken_links_report_path),
+                "cyclic_hierarchy_report_path": str(bundle.cyclic_hierarchy_report_path),
+                "empty_corpus_report_path": str(bundle.empty_corpus_report_path),
                 "verification": bundle.verification,
             },
             ensure_ascii=False,

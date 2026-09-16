@@ -163,6 +163,12 @@ from .web_research import (
     execute_dossier,
     execute_web_research,
 )
+from .wiki_navigation import (
+    build_metawiki_manifest,
+    check_hierarchy_acyclic,
+    render_metawiki_overview,
+    verify_wiki_links,
+)
 
 _SOURCE_READ_NOTES: ContextVar[dict[str, tuple[str, ...]] | None] = ContextVar(
     "nemofold_source_read_notes", default=None
@@ -2898,17 +2904,95 @@ def _execute_wiki_export(
     """Write the corpus as a walkable wiki without summarising anything."""
     texts = _read_text_sources(inventory, job)
     source_ids = tuple(record.source_id for record in inventory.records)
+    require_sources = bool(job.parameters.get("require_sources", False))
+    if require_sources and not texts:
+        empty_cov = compute_coverage(
+            all_source_ids=source_ids,
+            read_source_ids={},
+            cited_source_ids=set(),
+        )
+        raise WorkflowBlocked(
+            ("wiki_source_corpus_empty",),
+            actions=("wiki_export_planned", "wiki_source_corpus_empty"),
+            artifacts=(),
+            coverage=empty_cov,
+            metadata={"reason": "wiki_source_corpus_empty"},
+        )
     names = _display_names(inventory)
+    title = str(job.parameters.get("title") or "Wiki")
     pages, index = compose_wiki(
-        source_ids, texts, labels=names, title=str(job.parameters.get("title") or "Wiki")
+        source_ids, texts, labels=names, title=title
     )
+
+    link_report = verify_wiki_links(pages, index)
+    if job.parameters.get("require_valid_links", False) and not link_report.is_valid:
+        blocked_cov = compute_coverage(
+            all_source_ids=source_ids,
+            read_source_ids=texts,
+            cited_source_ids=set(),
+        )
+        raise WorkflowBlocked(
+            ("broken_wiki_links_detected",),
+            actions=("wiki_export_planned", "broken_wiki_links_detected"),
+            artifacts=(),
+            coverage=blocked_cov,
+            metadata={"broken_links": list(link_report.broken_links)},
+        )
+
+    raw_hierarchy = job.parameters.get("hierarchy")
+    hierarchy = (
+        {str(k): [str(c) for c in v] for k, v in raw_hierarchy.items()}
+        if isinstance(raw_hierarchy, dict)
+        else None
+    )
+    hierarchy_report = check_hierarchy_acyclic(hierarchy or {})
+    if hierarchy and not hierarchy_report.is_acyclic:
+        blocked_cov = compute_coverage(
+            all_source_ids=source_ids,
+            read_source_ids=texts,
+            cited_source_ids=set(),
+        )
+        raise WorkflowBlocked(
+            ("cyclic_wiki_hierarchy_detected",),
+            actions=("wiki_export_planned", "cyclic_wiki_hierarchy_detected"),
+            artifacts=(),
+            coverage=blocked_cov,
+            metadata={"cycles": [list(c) for c in hierarchy_report.cycles]},
+        )
+
     folder = Path(job.output_dir) / str(job.parameters.get("wiki_dir") or f"{run_id}-wiki")
+    output_dir = Path(job.output_dir)
     artifacts: list[ArtifactRecord] = [
         write_text_artifact(folder / "index.md", index, "wiki-index")
     ]
     artifacts.extend(
         write_text_artifact(folder / f"{page.slug}.md", page.body, "wiki-page")
         for page in pages
+    )
+    manifest = build_metawiki_manifest(
+        title=title,
+        run_id=run_id,
+        pages=pages,
+        wiki_dir=str(folder),
+        link_report=link_report,
+        hierarchy_report=hierarchy_report,
+    )
+    artifacts.append(
+        write_text_artifact(
+            output_dir / f"{run_id}.metawiki-manifest.json",
+            json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "metawiki-manifest",
+        )
+    )
+    overview_md = render_metawiki_overview(
+        title, pages, hierarchy=hierarchy, link_report=link_report
+    )
+    artifacts.append(
+        write_text_artifact(
+            output_dir / f"{run_id}.metawiki.md",
+            overview_md,
+            "metawiki-overview",
+        )
     )
     coverage = compute_coverage(
         all_source_ids=source_ids,
@@ -2922,6 +3006,9 @@ def _execute_wiki_export(
         {
             "page_count": len(pages),
             "wiki_dir": str(folder),
+            "manifest_path": str(output_dir / f"{run_id}.metawiki-manifest.json"),
+            "link_status": "verified" if link_report.is_valid else "broken_links_found",
+            "hierarchy_status": "verified" if hierarchy_report.is_acyclic else "cyclic",
             "fidelity_note": (
                 "Each page carries its document unchanged. A wiki whose pages disagree "
                 "with the files they came from would be worse than no wiki."

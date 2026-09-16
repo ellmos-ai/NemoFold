@@ -328,7 +328,16 @@ WORKFLOW_PARAMETER_FIELDS = {
         }
     ),
     "guide_compose": frozenset({"dedupe_scope", "formats", "title"}),
-    "wiki_export": frozenset({"formats", "title", "wiki_dir"}),
+    "wiki_export": frozenset(
+        {
+            "formats",
+            "hierarchy",
+            "require_sources",
+            "require_valid_links",
+            "title",
+            "wiki_dir",
+        }
+    ),
     "pattern_mining": frozenset(
         {"focus_terms", "formats", "max_patterns", "min_support", "partition_size",
          "title"}
