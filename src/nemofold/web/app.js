@@ -2607,6 +2607,96 @@ $("inputRoots").addEventListener("input", updateNotebookSnapshot);
 $("questions").addEventListener("input", updateNotebookSnapshot);
 loadStatus();
 
+const introSeenKey = "nemofold_intro_seen_v1";
+
+function initCinematicIntro() {
+  const overlay = $("introOverlay");
+  const video = $("introVideo");
+  const whiteout = $("introWhiteout");
+  const muteBtn = $("introMuteBtn");
+  const muteLabel = $("introMuteLabel");
+  const skipBtn = $("introSkipBtn");
+  const openBtn = $("openIntroBtn");
+  if (!overlay || !video) return;
+
+  let isTransitioning = false;
+
+  function closeIntro() {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    overlay.classList.add("dissolve-out");
+    setTimeout(() => {
+      video.pause();
+      overlay.hidden = true;
+      overlay.classList.remove("dissolve-out");
+      if (whiteout) whiteout.style.opacity = "0";
+      isTransitioning = false;
+    }, 800);
+    try {
+      localStorage.setItem(introSeenKey, "true");
+    } catch (_) {}
+  }
+
+  function openIntro(fromUser = false) {
+    video.currentTime = 0;
+    if (whiteout) whiteout.style.opacity = "0";
+    overlay.classList.remove("dissolve-out");
+    overlay.hidden = false;
+    video.muted = !fromUser;
+    if (muteLabel) muteLabel.textContent = video.muted ? "Unmute" : "Mute";
+    const playPromise = video.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        video.muted = true;
+        if (muteLabel) muteLabel.textContent = "Unmute";
+        video.play().catch(() => {});
+      });
+    }
+  }
+
+  muteBtn?.addEventListener("click", () => {
+    video.muted = !video.muted;
+    if (muteLabel) muteLabel.textContent = video.muted ? "Unmute" : "Mute";
+  });
+
+  skipBtn?.addEventListener("click", closeIntro);
+  openBtn?.addEventListener("click", () => openIntro(true));
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !overlay.hidden) {
+      closeIntro();
+    }
+  });
+
+  video.addEventListener("timeupdate", () => {
+    const t = video.currentTime;
+    if (t >= 21.8 && t < 23.3) {
+      const p = (t - 21.8) / (23.3 - 21.8);
+      if (whiteout) whiteout.style.opacity = String(Math.min(1, Math.max(0, p)));
+    } else if (t >= 23.3) {
+      if (whiteout) whiteout.style.opacity = "1";
+      if (!isTransitioning) {
+        closeIntro();
+      }
+    }
+  });
+
+  video.addEventListener("ended", () => {
+    if (!overlay.hidden && !isTransitioning) {
+      closeIntro();
+    }
+  });
+
+  try {
+    const hasSeen = localStorage.getItem(introSeenKey);
+    if (!hasSeen && currentPage === "overview") {
+      openIntro(false);
+    }
+  } catch (_) {}
+}
+
+initCinematicIntro();
+
 // --------------------------------------------------------------------------- //
 // My use cases: the saved voyage library
 // --------------------------------------------------------------------------- //

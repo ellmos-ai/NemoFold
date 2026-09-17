@@ -46,6 +46,12 @@
         <a href="/governance" data-page-link="governance">Governance</a>
         <a href="/connections" data-page-link="connections">Connections</a>
       </div>
+      <button type="button" id="openIntroBtn" class="intro-trigger-btn" aria-label="Play cinematic intro video">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true">
+          <polygon points="6 4 20 12 6 20 6 4"/>
+        </svg>
+        <span>Intro</span>
+      </button>
       <div class="masthead-state" role="note"><span aria-hidden="true"></span>DEFAULT: LOCAL AUTHORITY</div>
     </nav>
   </header>
@@ -732,5 +738,32 @@ Which earlier wording changed?</textarea></label>
     <span>Engine room</span>
   </button>
   <footer><span>NemoFold 0.1</span><span>Evidence before inference</span><span>Live Nebius proof remains an explicit gate</span></footer>
+
+  <!-- Cinematic Intro Video Modal Overlay -->
+  <aside id="introOverlay" class="intro-overlay" role="dialog" aria-modal="true" aria-label="NemoFold Cinematic Intro" hidden>
+    <div class="intro-card">
+      <div class="intro-screen">
+        <video id="introVideo" class="intro-video" playsinline preload="auto">
+          <source src="/assets/nemofold-intro.mp4" type="video/mp4">
+          Your browser does not support HTML5 video.
+        </video>
+        <div id="introWhiteout" class="intro-whiteout" aria-hidden="true"></div>
+      </div>
+      <div class="intro-hud">
+        <div class="intro-hud-left">
+          <span class="intro-hud-badge">PROLOGUE</span>
+          <span class="intro-hud-title">Descent to the Nautilus Lab</span>
+        </div>
+        <div class="intro-hud-actions">
+          <button type="button" id="introMuteBtn" class="intro-hud-btn" aria-label="Toggle sound">
+            <span id="introMuteLabel">Mute</span>
+          </button>
+          <button type="button" id="introSkipBtn" class="intro-hud-btn intro-hud-skip">
+            <span>Skip to Dashboard</span> &rarr;
+          </button>
+        </div>
+      </div>
+    </div>
+  </aside>
 </body>
 </html>
