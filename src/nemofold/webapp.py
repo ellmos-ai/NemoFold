@@ -67,6 +67,10 @@ STATIC_ROUTES: dict[str, tuple[Path, str]] = {
         WEB_ROOT / "assets/theme-chart.jpg",
         "image/jpeg",
     ),
+    "/assets/nemofold-intro.mp4": (
+        WEB_ROOT / "assets/nemofold-intro.mp4",
+        "video/mp4",
+    ),
 }
 # D-036b: five areas. Analysis, Routines and Artifacts are no longer rooms of
 # their own - they are three tabs of one "Processes & Workflows" area, because
