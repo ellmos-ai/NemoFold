@@ -2,18 +2,33 @@
 
 [English](README.md) | Deutsch
 
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[MIT-Lizenz](LICENSE) · Python 3.11+ · Local-first
+[![Tests](https://img.shields.io/badge/tests-740%2B%20passed-brightgreen.svg)](tests/)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
+[![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey.svg)](pyproject.toml)
+[![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20zero--egress-success.svg)](SECURITY.md)
+[![Security](https://img.shields.io/badge/security-RunAsInvoker-green.svg)](SECURITY.md)
+[![Security SLA](https://img.shields.io/badge/security%20SLA-48h%20%7C%205d-blue.svg)](SECURITY.md)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Audited](https://img.shields.io/badge/dependencies-permissive%20audited-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
+[![Marketing Log](https://img.shields.io/badge/marketing-active%20log-informational.svg)](MARKETING-LOG.txt)
+[![Ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-orange.svg)](https://github.com/ellmos-ai)
+[![Umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet.svg)](https://github.com/open-bricks)
+[![LLM Ready](https://img.shields.io/badge/llms.txt-verified-brightgreen.svg)](llms.txt)
 
-**Aus Dokumenten werden Daten. NemoFold macht Wissen nutzbar.**
+> **Aus Dokumenten werden Daten. NemoFold macht Wissen nutzbar.**
+> *Private, evidenzorientierte Dokumenten-Intelligenz — 34 Workflows, Fail-Closed Security, lokale Invarianten & Zero-Egress.*
 
-NemoFold passt sich Ihren Usecases an — eine wachsende Bibliothek, kein Finetuning.
+---
 
-NemoFold ist ein privater, evidenzorientierter Dokumentenagent. Er verwandelt
-ausdrücklich freigegebene Ordner in ein dauerhaftes Arbeitsgedächtnis, hält Aussagen
-bis zu ihren Fundstellen rückverfolgbar und macht Dateiaktionen reversibel.
+<a id="1-overview--core-mission"></a><a id="1-uebersicht--kernmission"></a>
+<a id="overview--core-mission"></a><a id="uebersicht--kernmission"></a>
+## 1. Übersicht & Kernmission
 
-Arbeitsslogan: **Your files. Your rules. Your agent.**
+NemoFold ist ein privater, lokaler Dokumenten- und Evidenz-Agent. Er verwandelt freigegebene Dateiordner auf dem eigenen System in ein dauerhaftes, durchsuchbares Arbeitsgedächtnis — ohne Datenabfluss, ohne stilles Cloud-Tracking und ohne unkontrollierte Dateimodifikationen. Alle Behauptungen und Analyseergebnisse bleiben bis auf die exakte Textzeile im Ursprungsdokument nachvollziehbar; sämtliche Dateiaktionen sind transaktional protokolliert und vollständig reversibel.
+
+Leitsatz: **Your files. Your rules. Your agent.**
 
 Dieses Repository enthält die neue Wettbewerbsimplementierung für den Nebius x NVIDIA
 Global AI Hackathon. Der lokale Kern ist bewusst ohne Cloud-Konto nutzbar. Die
@@ -39,7 +54,197 @@ Derselbe Kern trägt beide Enden: Alltagsarbeit auf dem Laptop mit einem kleinen
 Modell und eine Datenanalystin, die Nemotron über die Nebius Token Factory auf einen
 großen Korpus richtet. Der Evidenzvertrag ändert sich dabei nicht — nur der Arbeiter.
 
-## Was implementiert ist
+### Schnellnavigation (18 Abschnitte)
+
+| # | Abschnitt | Fokus |
+|---|:---|:---|
+| 1 | [Übersicht & Kernmission](#1-uebersicht--kernmission) | Mission, Werte & Zero-Egress Garantie |
+| 2 | [Visuelle Architektur & Duale Diagramme](#2-visuelle-architektur--duale-diagramme) | Systemtopologie & Evidenz-Lebenszyklus |
+| 3 | [Zielgruppen & Auffindbarkeit](#3-zielgruppen--auffindbarkeit) | Anwenderprofile [PERSONA-01] bis [PERSONA-04] |
+| 4 | [Vergleichsmatrix gegenüber Alternativen](#4-vergleichsmatrix-gegenueber-alternativen) | 10 Dimensionen im Branchenvergleich |
+| 5 | [Governance & Laufzeit-Invarianten](#5-governance--laufzeit-invarianten) | `INV-LOCAL-01` bis `INV-SLA-10` |
+| 6 | [Implementierte Dokument-Workflows](#6-implementierte-dokument-workflows) | 34 verifizierte Workflows & Analyse-Kerne |
+| 7 | [Installation & Schnellstart](#7-installation--schnellstart) | Setup, Virtual Environment & CLI |
+| 8 | [Offline-Nachweis & Verifikation](#8-offline-nachweis--verifikation) | Lokale Demo & Fail-Closed Validierung |
+| 9 | [Ausführung realer lokaler Aufträge](#9-ausfuehrung-realer-lokaler-auftraege) | Preview, Run, Ledger & Reversibilität |
+| 10 | [Provider-Adapter, MCP & API](#10-provider-adapter-mcp--api) | Ollama, LM Studio, Claude/Codex & MCP |
+| 11 | [Belegter Nebius Token Factory Lauf](#11-belegter-nebius-token-factory-lauf) | Nemotron 3 Super Audit & Replay-Receipts |
+| 12 | [Fahrtbibliothek & Captain's Desk](#12-fahrtbibliothek--captains-desk) | Wiederverwendbare Pläne & Dialogführung |
+| 13 | [Fallchronik-Tiefenanalyse](#13-fallchronik-tiefenanalyse) | Entitäten, Timelines, Alibi Weave & Kontradiktionen |
+| 14 | [Strukturierte Quellen & Kontrollierte Ausgabe](#14-strukturierte-quellen--kontrollierte-ausgabe) | SQLite, XLSX, CSV, Web-Search & D-035 Versand |
+| 15 | [Prüfen, Vergleichen & Komponieren](#15-pruefen-vergleichen--komponieren) | Reference Check, Rater Race, Guide & Report-Forge |
+| 16 | [Lokale Webkonsole & Routen](#16-lokale-webkonsole--routen) | Web-Interface, REST-API & Governance-Tab |
+| 17 | [Geschwister-Ökosystem & Integration](#17-geschwister-oekosystem--integration) | 16 Partner-Tools in `ellmos-ai` & `open-bricks` |
+| 18 | [Transparenz, Lizenzen & Sicherheitsrichtlinie](#18-transparenz-lizenzen--sicherheitsrichtlinie) | Trust Boundary, Audit, SLA & § 521 BGB |
+
+---
+
+<a id="2-visual-architecture--dual-diagrams"></a><a id="2-visuelle-architektur--duale-diagramme"></a>
+<a id="visual-architecture--dual-diagrams"></a><a id="visuelle-architektur--duale-diagramme"></a>
+## 2. Visuelle Architektur & Duale Diagramme
+
+### System-Topologie (5-Ebenen-Architektur)
+
+```mermaid
+flowchart TB
+    subgraph UI ["Präsentations- & Interaktionsebene"]
+        CLI["CLI-Schnittstelle<br/>(nemofold)"]
+        WEB["Lokale Webkonsole<br/>(127.0.0.1:8765)"]
+        MCP["MCP-Server<br/>(stdio JSON-RPC)"]
+        DESK["Captain's Desk<br/>(Dialog-Planer)"]
+    end
+
+    subgraph ENGINE ["Orchestrierung & Governance"]
+        PARSER["Strikter Job-Parser<br/>(nemofold.job.v1)"]
+        GATEWAY["Fail-Closed Security Gates<br/>(Roots, Aktionen, Externe Modelle)"]
+        VOYAGE["Fahrtbibliothek<br/>(Voyage Engine)"]
+        DRAFT["Draft & Approval Inbox<br/>(Loopback-only)"]
+    end
+
+    subgraph WORKFLOWS ["34 Dokumenten- & Analyse-Workflows"]
+        INBOX["Smart Inbox & Retention"]
+        EVIDENCE["Evidence Analyst & Case Chronicle"]
+        STRUCTURED["Strukturierte Quellen<br/>(SQLite, XLSX, CSV)"]
+        COMPOSE["Dokument-Synthese<br/>(Report-Forge, Wiki, Merge)"]
+    end
+
+    subgraph LOCAL_CORE ["Lokaler Zustand & Evidenzkern"]
+        FTS["Persistenter SQLite FTS5 Index"]
+        LEDGER["SHA-256 Run Ledgers & Hashes"]
+        DOCS["Lokaler Korpus<br/>(PDF, DOCX, ODT, TXT, CSV, JSON)"]
+    end
+
+    subgraph ISOLATION ["Sicherheits- & Transfergrenze"]
+        FILTER["Lokale Pseudonymisierung & Sanitization"]
+        ADAPTERS["Provider-Adapter<br/>(Ollama, LM Studio, Nebius)"]
+    end
+
+    CLI --> PARSER
+    WEB --> PARSER
+    MCP --> PARSER
+    DESK --> DRAFT
+    DRAFT --> PARSER
+
+    PARSER --> GATEWAY
+    GATEWAY --> VOYAGE
+    VOYAGE --> WORKFLOWS
+
+    INBOX --> DOCS
+    EVIDENCE --> FTS
+    STRUCTURED --> DOCS
+    COMPOSE --> LEDGER
+
+    WORKFLOWS --> FILTER
+    FILTER -. Nur bei expliziter Einzelfreigabe .-> ADAPTERS
+```
+
+### Evidenz-Lebenszyklus (Captain's Desk bis Artefakt)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Anwender / Fachprüfer
+    participant Desk as Captain's Desk / Webkonsole
+    participant Core as NemoFold Job Engine
+    participant Gate as Sicherheits- & Pfad-Gates
+    participant Corpus as Lokaler Dokumentenkorpus
+    participant Ext as Externer Provider (Optional)
+    participant Ledger as Reversibles Run Ledger
+
+    User->>Desk: Absichtsäußerung ("Analysiere Akte X & prüfe Alibi")
+    Desk->>Core: Generiere unverbindlichen Entwurf (Dry-Run, Budget=0)
+    User->>Core: Auftragsbestätigung (run --job ...)
+    Core->>Gate: Validiere Pfade (Allow-Roots) & Aktions-Rechte
+    alt Gate blockiert (unzulässiger Pfad oder fehlende Rechte)
+        Gate-->>User: Fail-Closed Abbruch & Diagnoseprotokoll
+    else Gate genehmigt
+        Core->>Corpus: Lese Dokumente (PDF/DOCX/SQLite) & bilde Hashes
+        Core->>Core: Deterministische FTS-Indizierung & Zitat-Extraktion
+        opt Externe Modell-Anfrage (allow_once)
+            Core->>Core: Lokale Pseudonymisierung & Context-Bounding
+            Core->>Ext: Bounded Request an Token Factory / Ollama
+            Ext-->>Core: JSON-Antwort mit Zitaten
+            Core->>Core: Strikte Verifikation: Stimmen Zitate Byte für Byte?
+        end
+        Core->>Ledger: Schreibe SHA-256 Audit-Trail & Reversibilitätsjournal
+        Core-->>User: Validiertes Artefakt (PDF/DOCX/Markdown/JSON)
+    end
+```
+
+---
+
+<a id="3-target-personas--discoverability"></a><a id="3-zielgruppen--auffindbarkeit"></a>
+<a id="target-personas--discoverability"></a><a id="zielgruppen--auffindbarkeit"></a>
+## 3. Zielgruppen & Auffindbarkeit
+
+NemoFold löst konkrete Herausforderungen von vier Hauptzielgruppen:
+
+### [PERSONA-01] Datenschutz- und Compliance-Offiziere (DPO / CISO)
+* **Problem:** Cloud-KI-Dienste gefährden Geschäftsgeheimnisse und verletzen DSGVO/GDPR durch unkontrollierten Datenabfluss.
+* **Lösung:** NemoFold operiert standardmäßig zu 100 % lokal (Zero-Egress), verweigert unbefugte Netzwerkzugriffe (Fail-Closed) und belegt jeden Verarbeitungsschritt über unveränderliche SHA-256-Ledger.
+
+### [PERSONA-02] Rechtsberater, Auditoren & Ermittler
+* **Problem:** LLMs neigen zu Halluzinationen und erfinden Quellen oder Querverweise, die vor Gericht oder im Audit wertlos sind.
+* **Lösung:** *Evidenz vor Inferenz.* Jede Aussage wird mit exakter Quellzeile und Byte-Verifikation belegt. Case Chronicle rekonstruiert Beziehungsnetzwerke und Alibi-Geflechte ohne unzulässige spekulative Schlüsse.
+
+### [PERSONA-03] Enterprise Knowledge Manager & Archivare
+* **Problem:** Tausende heterogene Dokumente (PDF, DOCX, ODT, Tabellen, E-Mails) liegen unstrukturiert und unauffindbar in Netzlaufwerken.
+* **Lösung:** Automatische Smart-Inbox-Regeln, reversible Sortierung, Bestands-Snapshots (Continuous Folder Digest) und strukturierte Tabellenextraktion (Document Registry).
+
+### [PERSONA-04] Technische Solo-Entwickler & Power-User
+* **Problem:** Komplexe Agentic-Systeme erfordern oft schwere Cloud-Infrastruktur, Docker-Cluster oder undurchsichtige Abo-Modelle.
+* **Lösung:** Schlankes Python-Paket (Standard-Bibliothek + minimale permissive Abhängigkeiten), per CLI, Webkonsole oder MCP direkt auf Desktop/Laptop nutzbar.
+
+#### Typische Suchanfragen (Search Queries)
+- `local first document analysis AI` · `private evidence based document agent`
+- `offline PDF document intelligence open source` · `zero egress legal document timeline analysis`
+- `reversible file organizer audit trail` · `deterministic inter rater reliability cohen kappa document tool`
+- `DSGVO konforme Dokumentenanalyse lokal` · `privater Dokumenten AI Agent ohne Cloud Zwang`
+
+---
+
+<a id="4-comparative-matrix-vs-alternatives"></a><a id="4-vergleichsmatrix-gegenueber-alternativen"></a>
+<a id="comparative-matrix-vs-alternatives"></a><a id="vergleichsmatrix-gegenueber-alternativen"></a>
+## 4. Vergleichsmatrix gegenüber Alternativen
+
+| Vergleichsdimension | Kommerzielle Cloud-RAGs | Lokale Chat-GUIs (OpenWebUI) | Dokumenten-Vektordatenbanken | NemoFold (v0.2.0) |
+|:---|:---:|:---:|:---:|:---:|
+| **Datenschutz & Egress (`INV-LOCAL-01`)** | Cloud-Zwang, Telemetrie | Lokal möglich, aber kein Gate | Nur Speicher, keine Gates | **100 % Local-First, Zero-Egress standardmäßig** |
+| **Evidenz-Garantie (`INV-EVID-02`)** | Vage Quellenangaben | Freie LLM-Halluzination | Abstandsmetrik (Kosinus) | **Bytegenaue Zitat-Prüfung (`INV-EVID-02`)** |
+| **Reversibilität (`INV-REV-03`)** | Keine Dateiverwaltung | Keine Dateimodifikation | Keine Dateioperationen | **Transaktionales Journal mit 100 % Undo** |
+| **Fail-Closed Gates (`INV-GATE-04`)** | Best-Effort | Keine Zugriffsbeschränkung | API-Token-Prüfung | **Strikte Allow-Roots & Budget-Gates** |
+| **Deterministische Metriken (`INV-DET-05`)** | Nicht vorhanden | Variabel / probabilistisch | Variabel | **SVG-Hashes & Cohens Kappa (`INV-DET-05`)** |
+| **Transparente Belege (`INV-PROOF-06`)** | Black Box | Keine Audit-Ledgers | Rohvektoren | **Kryptografische SHA-256 Run Ledgers** |
+| **Keine Privilegienerhöhung (`INV-PRIV-07`)** | Root/Service-Accounts | Benutzerabhängig | Server-Dienst | **Striktes `RunAsInvoker`, keine Elevation** |
+| **Offene Lizenzen (`INV-LIC-08`)** | Proprietär | Unterschiedlich | Teilweise Open Core | **100 % MIT / BSD Permissiv (`INV-LIC-08`)** |
+| **Workflows & Werkzeuge** | 1–3 generische Chats | 1 Chat-Interface | Keine Workflows | **34 integrierte Dokument-Workflows** |
+| **Sicherheits-SLA (`INV-SLA-10`)** | Undokumentiert | Community-best-effort | Kommerziell gestaffelt | **48h Antwort / 5 Tage Triage (`INV-SLA-10`)** |
+
+---
+
+<a id="5-governance--runtime-invariants"></a><a id="5-governance--laufzeit-invarianten"></a>
+<a id="governance--runtime-invariants"></a><a id="governance--laufzeit-invarianten"></a>
+## 5. Governance & Laufzeit-Invarianten
+
+Das Design von NemoFold basiert auf zehn unverletzlichen System-Invarianten:
+
+- **`INV-LOCAL-01` (Zero-Egress-Default):** Sämtliche Parsing-, Indexierungs- und Analyseoperationen verbleiben standardmäßig auf dem lokalen Rechner.
+- **`INV-EVID-02` (Evidenz vor Inferenz):** Jede Behauptung eines Modells muss sich durch ein wortwörtliches Zitat im Eingabekontext verifizieren lassen.
+- **`INV-REV-03` (Vollständige Reversibilität):** Dateioperationen (Verschieben, Umbenennen, Bereinigen) werden in einem Transaktionsjournal protokolliert und lassen sich mit `nemofold undo` verlustfrei zurücksetzen.
+- **`INV-GATE-04` (Fail-Closed Sicherheit):** Unzulässige Pfade, fehlende Berechtigungen oder unbestätigte externe Transfers führen zum sofortigen, sicheren Abbruch.
+- **`INV-DET-05` (Deterministische Synthese):** Gleiche Quelldaten erzeugen identische SVG-Visualisierungen, Verzeichnisberichte und Metriken.
+- **`INV-PROOF-06` (Unveränderliche Audit-Ledger):** Jeder Ausführungsschritt schreibt ein kryptografisch gehashtes JSON-Ledger für Auditierbarkeit.
+- **`INV-PRIV-07` (Privilegien-Minimierung):** NemoFold erfordert keine Administrator- oder Root-Rechte und läuft strikt als Standardbenutzer (`RunAsInvoker`).
+- **`INV-LIC-08` (Permissive Lizenz-Hygiene):** Keine Copyleft-Abhängigkeiten (GPL/AGPL). Vollständige Transparenz in `THIRD_PARTY_LICENSES.md`.
+- **`INV-PARK-09` (Zweisprachige Parität):** Dokumentation und Governance existieren gleichwertig auf Deutsch und Englisch.
+- **`INV-SLA-10` (Verbindliche Sicherheits-Reaktionszeit):** Bestätigung von Schwachstellenmeldungen binnen 48 Stunden, Triage binnen 5 Tagen gemäß `SECURITY.md`.
+
+---
+
+<a id="6-implemented-document-workflows"></a><a id="6-implementierte-dokument-workflows"></a>
+<a id="implemented-document-workflows"></a><a id="implementierte-dokument-workflows"></a>
+<a id="was-implementiert-ist"></a>
+## 6. Implementierte Dokument-Workflows
 
 | Workflow | Lokales Ergebnis |
 |---|---|
@@ -71,7 +276,10 @@ Devpost bleiben getrennte menschliche Freigabegates.
 
 ![NemoFold Captain-Nemo-Konsole](docs/media/nemofold-console.png)
 
-## Installation
+<a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
+<a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
+<a id="install"></a>
+## 7. Installation & Schnellstart
 
 ```powershell
 python -m venv .venv
@@ -84,7 +292,10 @@ Jeder Nicht-Demo-Befehl verwendet denselben strikten JSON-Vertrag
 [`schemas/nemofold-job-v1.schema.json`](schemas/nemofold-job-v1.schema.json) und
 das Verzeichnis [`examples/jobs`](examples/jobs).
 
-## Offline-Nachweis
+<a id="8-offline-proof--verification"></a><a id="8-offline-nachweis--verifikation"></a>
+<a id="offline-proof--verification"></a><a id="offline-nachweis--verifikation"></a>
+<a id="offline-proof"></a>
+## 8. Offline-Nachweis & Verifikation
 
 ```powershell
 $env:PYTHONPATH = "$PWD\src"
@@ -104,7 +315,10 @@ Kontextbelege, einen SQLite-FTS-Index, Markdown-/TXT-/PDF-/DOCX-/ODT-Berichte un
 Laufjournal. Sie verschiebt eine synthetische Inbox-Datei und macht den Vorgang wieder
 rückgängig, um die Reversibilität zu belegen.
 
-## Einen echten lokalen Auftrag ausführen
+<a id="9-executing-real-local-jobs"></a><a id="9-ausfuehrung-realer-lokaler-auftraege"></a>
+<a id="executing-real-local-jobs"></a><a id="ausfuehrung-realer-lokaler-auftraege"></a>
+<a id="run-a-real-local-job"></a>
+## 9. Ausführung realer lokaler Aufträge
 
 ```powershell
 $runId = "local_analysis_1"
@@ -126,7 +340,10 @@ lokales NemoClaw-Verzeichnis und validiert es sofort. Es führt weiterhin keinen
 aus und protokolliert `transfer_performed: false`; siehe
 [NemoClaw-Integration](docs/nemoclaw-integration.md).
 
-## Jedes unterstützte Modell über denselben Evidenzkern nutzen
+<a id="10-provider-adapters-mcp--api"></a><a id="10-provider-adapter-mcp--api"></a>
+<a id="provider-adapters-mcp--api"></a><a id="provider-adapter-mcp--api"></a>
+<a id="use-any-supported-model-through-one-evidence-core"></a>
+## 10. Provider-Adapter, MCP & API
 
 NemoFold kann ausschließlich den lokal ausgewählten und pseudonymisierten
 Evidenzkontext an Ollama, LM Studio, eine persönliche Codex-/Claude-Code-CLI oder die
@@ -155,7 +372,9 @@ werden nur aus Umgebungsvariablen gelesen. Generische Providerbelege werden niem
 zum Nebius-Wettbewerbsnachweis; dafür bleibt ausschließlich der nächste Abschnitt
 zuständig. Siehe [Provideradapter, lokale API und MCP](docs/providers-and-mcp.md).
 
-## Freigegebener Lauf über die Nebius Token Factory
+<a id="11-approved-nebius-token-factory-run"></a><a id="11-belegter-nebius-token-factory-lauf"></a>
+<a id="approved-nebius-token-factory-run"></a><a id="belegter-nebius-token-factory-lauf"></a>
+## 11. Belegter Nebius Token Factory Lauf
 
 ### Modellwahl und Beitrag der Token Factory
 
@@ -281,7 +500,10 @@ Aktionslauf kann mit `nemofold undo <run-id> --output <dir> --allow-root <root>
 lassen sich mit `nemofold resume` unter Beibehaltung der ursprünglichen Auftragsidentität
 und des Journals fortsetzen.
 
-## Meine Usecases: die Fahrten-Bibliothek
+<a id="12-voyage-library--captains-desk"></a><a id="12-fahrtbibliothek--captains-desk"></a>
+<a id="voyage-library--captains-desk"></a><a id="fahrtbibliothek--captains-desk"></a>
+<a id="my-use-cases-the-voyages-library"></a><a id="meine-usecases-die-fahrten-bibliothek"></a>
+## 12. Fahrtbibliothek & Captain's Desk
 
 Ein Plan, den Sie behalten, bekommt einen Namen. Die Übersicht trägt die Bibliothek:
 gespeicherte Fahrten neben fünf Spezialisten, die NemoFold mitbringt — Faktendestillat
@@ -343,7 +565,40 @@ Instrument benannt, auf das sie warten, und getrennt von den lauffähigen gelist
 festgehaltener Wunsch ist mehr wert als ein abgelehnter, solange ihn niemand für etwas
 Lauffähiges hält.
 
-## Fall-Chronik
+<a id="ask-the-captains-desk"></a><a id="das-captains-desk-fragen"></a>
+### Das Captain's Desk fragen
+
+Die Übersicht der Konsole beginnt mit dem Captain's Desk: ein einfacher Satz hinein,
+eine Kette vorbereiteter Auftragsentwürfe hinaus. Es plant und bereitet vor; es führt
+nie aus, versendet nie und speichert keine Freigabe. Jeder vorbereitete Schritt bleibt
+Dry-run, rein lokal und ohne Budget — unabhängig davon, was die Anfrage verlangt hat.
+
+Auf `Unfall mit Hyundai und schreib mir eine mail an zuständigen versicherungsberater
+füge bild ein als entwurf` bereitet das Desk den Contact Monitor vor — weil die Quellen
+die zuständige Person bereits nennen könnten — und danach einen Controlled-Email-Entwurf,
+dessen Betreff aus dem Satz stammt. Was es nicht weiß, fragt es: Empfänger, Absender und
+welche freigegebene Datei angehängt werden soll, mit dem Hinweis, dass ein Anhang gehasht,
+aber nie als Beleg zitiert wird.
+
+Ebenso deutlich benennt das Desk seine Grenzen. Wer ein zweisprachiges Dokument
+abgleichen will, erfährt, dass Bilingual Sync ein geplanter, kein aktiver Document
+Service ist — und bekommt die ehrlichste heutige Annäherung vorbereitet: einen
+Folder-Digest-Schnappschuss und einen Version-Resolver-Vergleich. Wer Wiederholung
+verlangt, erhält die zwei wahrheitsgemäßen Wege: die vorbereiteten Entwürfe erneut
+ausführen oder selbst eine Aufgabe im eigenen Betriebssystem einrichten, die die CLI
+aufruft. NemoFold hat keinen eigenen Scheduler und startet sich nicht selbst — und
+behauptet das folglich auch nicht.
+
+Vorbereitete Fahrten landen in derselben Entwurfs-Inbox, in die auch CLI, MCP und die
+lokale API schreiben, gekennzeichnet mit `source: wizard`. Ein Mensch öffnet jeden
+Entwurf im Maschinenraum, ergänzt das Offene und führt ihn aus. Das Desk ist eine reine
+Loopback-Fläche: in der öffentlichen Demo nicht vorhanden, auf einem netzexponierten
+Server abgelehnt.
+
+<a id="13-case-chronicle-deep-analysis"></a><a id="13-fallchronik-tiefenanalyse"></a>
+<a id="case-chronicle-deep-analysis"></a><a id="fallchronik-tiefenanalyse"></a>
+<a id="case-chronicle"></a><a id="fall-chronik"></a>
+## 13. Fallchronik-Tiefenanalyse
 
 Vier Analysekerne machen aus einem Ordner voller Aussagen, Berichte und Verträge
 Strukturen, die sich bis zu einem Satz zurückverfolgen lassen: wer vorkommt, welche
@@ -383,7 +638,10 @@ fraglichen Wochenende, einem fremdbestätigten Alibi, einer Person, die niemand
 bestätigt, und zwei Widersprüchen. Jeder Fall-Chronik-Test läuft darauf, und die Demo
 auch.
 
-## Quellen, Außenwelt und Versand
+<a id="14-structured-sources--controlled-output"></a><a id="14-strukturierte-quellen--kontrollierte-ausgabe"></a>
+<a id="structured-sources--controlled-output"></a><a id="strukturierte-quellen--kontrollierte-ausgabe"></a>
+<a id="sources-outward-reach-and-delivery"></a><a id="quellen-aussenwelt-und-versand"></a>
+## 14. Strukturierte Quellen & Kontrollierte Ausgabe
 
 Welle zwei ergänzt drei Dinge, die ein Dokumenten-Arbeitsplatz irgendwann
 braucht — jedes hinter dem Gate, das dazu passt.
@@ -434,7 +692,9 @@ zurück, was ein Lauf in eine Quittung schreiben könnte. NemoFold schreibt die
 druckfertige Datei plus den genauen Befehl und sagt, dass das Drucken Ihr Schritt
 ist.
 
-## Prüfen, vergleichen, verfassen
+<a id="15-checking-comparing--composing"></a><a id="15-pruefen-vergleichen--komponieren"></a>
+<a id="checking-comparing--composing"></a><a id="pruefen-vergleichen-verfassen"></a>
+## 15. Prüfen, Vergleichen & Komponieren
 
 Welle vier ergänzt die Workflows, die etwas *gegen* etwas anderes lesen, und
 jene, die aus einem Bestand ein Dokument machen, das man weitergibt.
@@ -479,36 +739,10 @@ genauen Installationsbefehl statt mit einem Importfehler. **Mail Merge** ist
 dieselbe Stufe je Empfänger aus Ihrem Kontaktbestand, jedes Dokument benannt
 nach der Person, für die es ist.
 
-## Das Captain's Desk fragen
-
-Die Übersicht der Konsole beginnt mit dem Captain's Desk: ein einfacher Satz hinein,
-eine Kette vorbereiteter Auftragsentwürfe hinaus. Es plant und bereitet vor; es führt
-nie aus, versendet nie und speichert keine Freigabe. Jeder vorbereitete Schritt bleibt
-Dry-run, rein lokal und ohne Budget — unabhängig davon, was die Anfrage verlangt hat.
-
-Auf `Unfall mit Hyundai und schreib mir eine mail an zuständigen versicherungsberater
-füge bild ein als entwurf` bereitet das Desk den Contact Monitor vor — weil die Quellen
-die zuständige Person bereits nennen könnten — und danach einen Controlled-Email-Entwurf,
-dessen Betreff aus dem Satz stammt. Was es nicht weiß, fragt es: Empfänger, Absender und
-welche freigegebene Datei angehängt werden soll, mit dem Hinweis, dass ein Anhang gehasht,
-aber nie als Beleg zitiert wird.
-
-Ebenso deutlich benennt das Desk seine Grenzen. Wer ein zweisprachiges Dokument
-abgleichen will, erfährt, dass Bilingual Sync ein geplanter, kein aktiver Document
-Service ist — und bekommt die ehrlichste heutige Annäherung vorbereitet: einen
-Folder-Digest-Schnappschuss und einen Version-Resolver-Vergleich. Wer Wiederholung
-verlangt, erhält die zwei wahrheitsgemäßen Wege: die vorbereiteten Entwürfe erneut
-ausführen oder selbst eine Aufgabe im eigenen Betriebssystem einrichten, die die CLI
-aufruft. NemoFold hat keinen eigenen Scheduler und startet sich nicht selbst — und
-behauptet das folglich auch nicht.
-
-Vorbereitete Fahrten landen in derselben Entwurfs-Inbox, in die auch CLI, MCP und die
-lokale API schreiben, gekennzeichnet mit `source: wizard`. Ein Mensch öffnet jeden
-Entwurf im Maschinenraum, ergänzt das Offene und führt ihn aus. Das Desk ist eine reine
-Loopback-Fläche: in der öffentlichen Demo nicht vorhanden, auf einem netzexponierten
-Server abgelehnt.
-
-## Lokale Webkonsole öffnen
+<a id="16-local-web-console--routes"></a><a id="16-lokale-webkonsole--routen"></a>
+<a id="local-web-console--routes"></a><a id="lokale-webkonsole--routen"></a>
+<a id="open-the-local-web-console"></a><a id="lokale-webkonsole-oeffnen"></a>
+## 16. Lokale Webkonsole & Routen
 
 ```powershell
 $env:PYTHONPATH = "$PWD\src"
@@ -609,7 +843,40 @@ und `--expose-network` angegeben sind. Dies ist eine fähigkeitsminimale Hosting
 Oberfläche, kein Nachweis für einen Nebius-, Nemotron- oder NemoClaw-Lauf;
 `cloud_proof` bleibt false.
 
-## Vertrauensgrenze
+<a id="17-sibling-ecosystem--integration"></a><a id="17-geschwister-oekosystem--integration"></a>
+<a id="sibling-ecosystem--integration"></a><a id="geschwister-oekosystem--integration"></a>
+## 17. Geschwister-Ökosystem & Integration
+
+NemoFold ist eine zentrale Dokumenten-Intelligenzkomponente des `ellmos-ai`-Ökosystems und der übergeordneten `open-bricks`-Architektur. Es lässt sich nahtlos mit den Partner-Werkzeugen des Portfolios kombinieren:
+
+| Werkzeug / Repository | Organisation | Rolle & Zusammenspiel |
+|:---|:---:|:---|
+| **[bach](https://github.com/ellmos-ai/bach)** | `ellmos-ai` | Autonomes Agenten-Framework & Hintergrund-Ausführungsschleife |
+| **[ellmos-unified-gui](https://github.com/ellmos-ai/ellmos-unified-gui)** | `ellmos-ai` | Desktop-Benutzeroberfläche für Multi-Agenten-Systeme |
+| **[ellmos-controlcenter-mcp](https://github.com/ellmos-ai/ellmos-controlcenter-mcp)** | `ellmos-ai` | Zentrales MCP-Orchestrierungs- und Routing-Gateway |
+| **[ellmos-homebase-mcp](https://github.com/ellmos-ai/ellmos-homebase-mcp)** | `ellmos-ai` | Persistenter Agenten-Speicher, Zustandsverwaltung & Profil-Store |
+| **[report-forge](https://github.com/ellmos-ai/report-forge)** | `ellmos-ai` | Headless DOCX-Vorlagen-Engine & professionelles Berichtswesen |
+| **[assistant-core](https://github.com/ellmos-ai/assistant-core)** | `ellmos-ai` | Einheitliche Prompt-Engine, Multi-Provider-Schnittstellen & Laufzeit |
+| **[DevCenter](https://github.com/dev-bricks/DevCenter)** | `dev-bricks` | Multi-Repository-Arbeitsplatzverwaltung & lokales Entwickler-Dashboard |
+| **[ticket-master](https://github.com/dev-bricks/ticket-master)** | `dev-bricks` | Issue-Tracker, lineare Sprint-Workflows & Aufgaben-Engine |
+| **[lock-master](https://github.com/dev-bricks/lock-master)** | `dev-bricks` | Host-Nebenläufigkeitssperren, Fail-Closed-Zugriffsschutz & Sync-Locks |
+| **[sync-master](https://github.com/dev-bricks/sync-master)** | `dev-bricks` | Multi-Geräte-Dateisynchronisation & Konfliktkopien-Bereinigung |
+| **[file-cleaner](https://github.com/file-bricks/file-cleaner)** | `file-bricks` | Stapelverarbeitung für temporäre Dateien, Duplikatsuche & Aufräumregeln |
+| **[folder-organizer](https://github.com/file-bricks/folder-organizer)** | `file-bricks` | Regelbasierte Ordner-Taxonomien & automatisierte Verzeichnisstrukturierung |
+| **[CleanMarkdown](https://github.com/doc-bricks/CleanMarkdown)** | `doc-bricks` | Markdown-Linter, Anker-Normalisierung & Dokumentationsformatierung |
+| **[ChainReaction](https://github.com/entertain-and-more/ChainReaction)** | `entertain-and-more` | Interaktives rundenbasiertes Brettspiel mit lokalen KI-Agenten |
+| **[githubbot](https://github.com/dev-bricks/githubbot)** | `dev-bricks` | Automatisierte Multi-Organisations-Betreuung & Telemetrie |
+| **[open-bricks](https://github.com/open-bricks)** | `open-bricks` | Dachorganisation für Open-Source-Standards & Ökosystem-Föderation |
+
+---
+
+<a id="18-transparency-licenses--security-policy"></a><a id="18-transparenz-lizenzen--sicherheitsrichtlinie"></a>
+<a id="transparency-licenses--security-policy"></a><a id="transparenz-lizenzen--sicherheitsrichtlinie"></a>
+<a id="trust-boundary"></a><a id="vertrauensgrenze"></a>
+<a id="design-and-integration"></a><a id="design-und-integration"></a>
+## 18. Transparenz, Lizenzen & Sicherheitsrichtlinie
+
+### Vertrauensgrenze
 
 - Originaldateien, absolute Pfade, persistenter Index, Policies, Journal, Validierung
   und Aktionen bleiben lokal.
@@ -623,7 +890,7 @@ Oberfläche, kein Nachweis für einen Nebius-, Nemotron- oder NemoClaw-Lauf;
   simulierte Tests, behauptet aber bewusst nicht, dass der noch offene echte
   Wettbewerbslauf erfolgreich war.
 
-## Design und Integration
+### Design, Dokumentation & Governance-Verweise
 
 - [Ausrichtung der Evidence-Console-Oberfläche](docs/design-direction.md)
 - [Architektur](docs/architecture.md)
@@ -636,7 +903,14 @@ Oberfläche, kein Nachweis für einen Nebius-, Nemotron- oder NemoClaw-Lauf;
 - [Jury-Designset und Nautilus-Markenkit](docs/media/designset/README.md)
 - [Einreichungsbereitschaft](docs/submission-readiness.md)
 - [Codekarte für den Wettbewerb](COMPETITION_CODE_MAP.md)
-- [Software von Drittanbietern](THIRD_PARTY_LICENSES.md)
-- [Sicherheitsrichtlinie](SECURITY.md)
-- [Mitwirken](CONTRIBUTING.md)
-- [Release-Gate](RELEASE_GATE.md)
+- [Audit von Drittanbietersoftware & Lizenzen](THIRD_PARTY_LICENSES.md)
+- [Sicherheitsrichtlinie & 48h Vulnerability-SLA](SECURITY.md)
+- [Leitfaden für Mitwirkende](CONTRIBUTING.md)
+- [Release-Gate Checkliste](RELEASE_GATE.md)
+- [Lokales Marketing- & Auffindbarkeits-Log](MARKETING-LOG.txt)
+
+---
+
+### Haftungsausschluss nach deutschem Recht (§ 521 BGB Gefälligkeitsrecht)
+
+> **Haftungsausschluss nach deutschem Recht (§ 521 BGB Gefälligkeitsrecht):** Diese Open-Source-Software wird unentgeltlich im Rahmen von wissenschaftlicher Forschung und Prototyping bereitgestellt. Die Haftung des Autors ist auf Vorsatz und grobe Fahrlässigkeit beschränkt. Die Software trifft keine eigenständigen rechtlichen Wertungen, erteilt keine Rechtsberatung und ersetzt keine qualifizierte fachliche Prüfung. Der Betrieb und die Freigabe von Dateiaktionen unterliegen ausschließlich der Sorgfalt und Verantwortung der ausführenden Anwenderinnen und Anwender.

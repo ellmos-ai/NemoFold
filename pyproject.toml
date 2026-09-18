@@ -4,12 +4,32 @@ build-backend = "hatchling.build"
 
 [project]
 name = "nemofold"
-version = "0.1.0"
+version = "0.2.0"
 description = "Private, evidence-first document agent with reversible actions"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Lukas Geiger" }]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: End Users/Desktop",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: Legal Industry",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Security",
+  "Topic :: Office/Business",
+  "Topic :: Utilities",
+  "Topic :: Scientific/Engineering :: Information Analysis",
+]
 dependencies = [
   "mcp>=1.27,<2",
   "pypdf>=6,<7",
@@ -17,8 +37,16 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/ellmos-ai/NemoFold"
+Documentation = "https://github.com/ellmos-ai/NemoFold#readme"
 Repository = "https://github.com/ellmos-ai/NemoFold"
 Issues = "https://github.com/ellmos-ai/NemoFold/issues"
+Changelog = "https://github.com/ellmos-ai/NemoFold/blob/main/CHANGELOG.md"
+Security = "https://github.com/ellmos-ai/NemoFold/blob/main/SECURITY.md"
+"Third-Party Licenses" = "https://github.com/ellmos-ai/NemoFold/blob/main/THIRD_PARTY_LICENSES.md"
+"Marketing Log" = "https://github.com/ellmos-ai/NemoFold/blob/main/MARKETING-LOG.txt"
+"Parent Organization" = "https://github.com/ellmos-ai"
+"Umbrella Ecosystem" = "https://github.com/open-bricks"
+"LLM Ready" = "https://github.com/ellmos-ai/NemoFold/blob/main/llms.txt"
 
 [project.optional-dependencies]
 dev = [

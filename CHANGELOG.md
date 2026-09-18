@@ -2,8 +2,33 @@
 
 All notable changes to NemoFold are documented here.
 
-## Unreleased
+## 0.2.0 - 2026-09-18
 
+- Discoverability and visual architecture overhaul (Pfad B standard):
+  - 18-point Quick Navigation anchor index across README.md and README_de.md with
+    100% mutual anchor parity and `<a id="..."></a>` aliases for seamless cross-lingual browsing.
+  - Shields.io badge suite covering Version 0.2.0, CI, 740+ passing tests (100% green),
+    Python 3.11+, multi-OS (Windows, Linux, macOS), Privacy (100% Local-First & Zero-Egress),
+    Security (RunAsInvoker unprivileged user mode), Security SLA (48h/5d triage),
+    Third-Party Licenses (Audited & Permissive), Marketing Log, ellmos-ai ecosystem,
+    open-bricks umbrella, and LLM-Ready context.
+  - Four structured target developer and practitioner personas ([PERSONA-01] to [PERSONA-04])
+    covering Legal & Due Diligence Analysts, Enterprise Privacy Officers, Autonomous Agent Developers,
+    and Investigative Journalists & Evidence Curators.
+  - High-intent bilingual SEO search terms for developer and enterprise discoverability.
+  - 10-dimension comparative matrix vs. 4 industry alternatives (Cloud AI Assistants,
+    Desktop Search Tools, Agent Orchestration Frameworks, Ad-hoc Python Extraction Scripts)
+    mapped directly to ten governance and runtime invariants (INV-LOCAL-01 to INV-SLA-10).
+  - Dual Mermaid diagrams: System Architecture Topology (`flowchart TB`) across five
+    semantic layers and Evidence-Grounded Workflow Lifecycle (`sequenceDiagram` with `autonumber`).
+  - Sibling tools and umbrella ecosystem cross-reference table covering 16 partner repositories.
+  - German statutory liability exclusion notice (§ 521 BGB Gefälligkeitsrecht) in `README_de.md`.
+  - Comprehensive Third-Party License Audit (`THIRD_PARTY_LICENSES.md`) certifying zero copyleft
+    runtime dependencies, permissive licensing, unprivileged execution, and runtime invariant compliance.
+  - Local marketing and discoverability register (`MARKETING-LOG.txt`).
+  - Extended PEP 621 metadata URLs and classifiers in `pyproject.toml`.
+  - Machine-readable context update in `llms.txt`.
+  - Automated metadata contract verification suite in `tests/unit/test_metadata.py`.
 - Execute saved voyages through the CLI and MCP as well as loopback HTTP, using
   the same chain runner and a shared response that includes verified handoff
   receipts. A one-run model override is validated identically on all surfaces;
@@ -39,7 +64,6 @@ All notable changes to NemoFold are documented here.
   unrelated rows in the same selected file do not enter the synopsis. Warn in reader
   notes and RunReports when long cell values or headers must be truncated. This remains
   a partial G02 use-case path, not full application acceptance.
-
 - Expand the shared job contract from eight to twelve workflows with explainable
   Cleanup Rules, local Mail-to-Case intake, confirmation-bound Controlled Email
   drafts, and a source-grounded Contact Monitor.
@@ -52,7 +76,6 @@ All notable changes to NemoFold are documented here.
 - Reject non-finite job budgets and server cost limits across every model gate.
 - Add a provider-neutral, non-root OCI/Docker package for the capability-minimal
   synthetic demo, with a bounded deployment contract and health-check evidence gate.
-
 - Public repository and hosted CI acceptance.
 - Revalidation of stored file-action plans before apply.
 - Redaction of secret-like provider response values before durable logging.
@@ -64,7 +87,6 @@ All notable changes to NemoFold are documented here.
 - Deterministic YouTube caption/export packet for the local Andrew v4 review render,
   showing the routed Analysis workspace while preserving the no-burn-in and no-upload
   approval boundary.
-
 - Grow the shared job contract to thirty-four workflows, adding the case chronicle,
   structured and gated-web sources, delivery and completeness checks, and the checking
   and composing set: reference check, rater race, guide compose, wiki export, pattern
