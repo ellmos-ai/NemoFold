@@ -2609,6 +2609,12 @@ async function loadStatus() {
 }
 
 configureRoutedPage();
+// Root cause of the old two-stage banner: this used to run only after the
+// async loadStatus() fetch resolved, so the page painted with the static
+// HTML's default scene first and the real one only appeared once /api/status
+// answered. currentPage/currentTab/activeTag are already known from the URL,
+// so the scene can be set in this same synchronous render step.
+updateVoyageScene();
 renderTaskCards();
 if ($("engineHandle")) {
   $("engineHandle").addEventListener("click", () => setEngineDrawer(!engineDrawerIsOpen()));
