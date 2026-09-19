@@ -43,8 +43,16 @@ def _sha256(path: Path) -> str:
 def _relativize(text: str, bundle_root: Path) -> str:
     """Replace every spelling of the run directory with the evidence-root token."""
     raw = str(bundle_root)
+    # Derive every spelling from the string itself: on POSIX hosts ``as_posix()``
+    # leaves a Windows path's backslashes untouched, so the forward-slash spelling
+    # must be built explicitly or a run directory would survive relativisation.
     variants = sorted(
-        {raw, raw.replace("\\", "\\\\"), bundle_root.as_posix()},
+        {
+            raw,
+            raw.replace("\\", "\\\\"),
+            raw.replace("\\", "/"),
+            bundle_root.as_posix(),
+        },
         key=len,
         reverse=True,
     )
