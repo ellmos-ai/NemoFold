@@ -6,7 +6,7 @@ English | [Deutsch](README_de.md)
 
 **Demo video (2:16):** https://youtu.be/wOToLqDBvvE · built for the Nebius x NVIDIA Global AI Hackathon
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](pyproject.toml)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-1082%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
@@ -207,7 +207,7 @@ sequenceDiagram
 <a id="comparative-matrix-vs-alternatives"></a><a id="vergleichsmatrix-gegenueber-alternativen"></a>
 ## 4. Comparative Matrix vs. Alternatives
 
-| Evaluation Dimension | NemoFold (v0.2.0) | Cloud AI Assistants (Copilot / NotebookLM) | Desktop Search Tools (DocFetcher / Copernic) | Agent Frameworks (LangChain / LlamaIndex) | Invariant Mapping |
+| Evaluation Dimension | NemoFold (v0.2.1) | Cloud AI Assistants (Copilot / NotebookLM) | Desktop Search Tools (DocFetcher / Copernic) | Agent Frameworks (LangChain / LlamaIndex) | Invariant Mapping |
 |:---|:---:|:---:|:---:|:---:|:---:|
 | **1. Execution Boundary** | **100% Local-First / Zero-Egress** | Cloud Ingestion Mandatory | 100% Local | Mixed / Cloud Default | `INV-LOCAL-01` |
 | **2. Citation Rigor** | **Verbatim Byte-Exact Quote Verification** | Probabilistic Synthesis | Raw Text Snippets Only | Prompt-Dependent Hallucinations | `INV-EVID-02` |

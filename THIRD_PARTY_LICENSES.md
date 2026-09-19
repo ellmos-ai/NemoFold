@@ -1,8 +1,8 @@
 # Third-Party Licenses & Dependency Inventory
 
 > **Project:** `ellmos-ai/NemoFold`<br>
-> **Version:** `0.2.0`<br>
-> **Audited:** 2026-09-18<br>
+> **Version:** `0.2.1`<br>
+> **Audited:** 2026-09-19<br>
 > **Repository License:** [MIT License](LICENSE)<br>
 > **Architecture & Privacy:** 100% Local-First, Zero-Egress by default, Unprivileged User-Mode (`RunAsInvoker`)
 

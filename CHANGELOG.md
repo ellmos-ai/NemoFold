@@ -2,7 +2,16 @@
 
 All notable changes to NemoFold are documented here.
 
-## Unreleased
+## 0.2.1 - 2026-09-19
+
+- Pfad A Technical Hygiene & Lifecycle Hardening:
+  - CI workflow lifecycle hardening: added concurrency controls (`cancel-in-progress: true`) and 15-minute job timeout to `.github/workflows/ci.yml`.
+  - Added canonical automated lifecycle workflows `.github/workflows/stale.yml` (actions/stale@v9, 10 min timeout, least-privilege) and `.github/workflows/welcome.yml` (actions/first-interaction@v3, 5 min timeout).
+  - Multi-host synchronization & canonical lock defense: hardened `.gitignore` with multi-host cloud-sync conflict patterns (`*conflicted copy*`, `*-WORKSTATION*`, `*-LAPTOP*`, `*-ASUS*`), canonical lock patterns (`LOCK`, `LOCK.*`), and local cache protections while explicitly preserving `uv.lock`.
+  - Tooling & packaging hardening: configured `[tool.pytest.ini_options]` with `minversion = "7.0"`, `addopts = "-ra -v"`, and comprehensive `norecursedirs`.
+  - Expanded `[tool.ruff.lint].select` with pycodestyle warnings (`"W"`).
+  - Extended contract verification suite in `tests/unit/test_metadata.py` validating CI timeouts, concurrency, lifecycle workflows, gitignore defense, and pytest options.
+  - Synchronized version 0.2.1 across `pyproject.toml`, `src/nemofold/__init__.py`, `llms.txt`, `THIRD_PARTY_LICENSES.md`, `README.md`, and `README_de.md`.
 
 - Acceptance gates G01 through G16 now claim `done` in the shipped register, backed by
   committed evidence under `examples/acceptance-evidence/`. Each gate carries the pytest

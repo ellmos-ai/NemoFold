@@ -13,8 +13,38 @@ build/
 !.env.example
 run-reports/
 artifacts/
-LOCK.*.txt
 videos/
+
+# Multi-host cloud synchronization & conflict artifacts
+*conflicted copy*
+* (Kopie)*
+* (Copy)*
+*-LAPTOP*
+*-Mac Studio*
+*-MacBook*
+*-ASUS*
+*-ASUS-GEI*
+*-WORKSTATION*
+*-WORKSTATION-LG*
+*.orig
+*.rej
+
+# Canonical Lock-System Defense (Fail-Closed)
+LOCK
+LOCK.*
+LOCK.user.*
+LOCK.until.*
+LOCK.condition.*
+LOCK.permissions.json
+!package-lock.json
+!uv.lock
+
+# Local caches & test runs
+.hypothesis/
+.turbo/
+.nyc_output/
+.tox/
+.mypy_cache/
 
 # Private working documents never belong in a public repository.
 AGENTS.md

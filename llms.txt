@@ -3,7 +3,7 @@
 > Private, evidence-first document agent with persistent local memory, exact citations,
 > reversible actions, and bounded external reasoning.
 
-Version: 0.2.0
+Version: 0.2.1
 Organization: ellmos-ai
 Umbrella: open-bricks
 Last-checked: 2026-09-19
