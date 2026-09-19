@@ -143,7 +143,7 @@ def test_unmatched_request_says_so_instead_of_guessing() -> None:
     assert plan.unavailable == ()
     assert plan.matched is False
     assert any("could not be matched" in note for note in plan.notes)
-    assert any("Command Bridge" in note for note in plan.notes)
+    assert any("Governance and Connections" in note for note in plan.notes)
 
 
 def test_missing_root_becomes_a_question_rather_than_a_guess() -> None:
