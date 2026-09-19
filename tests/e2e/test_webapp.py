@@ -65,6 +65,13 @@ def get_json(url: str) -> tuple[dict, object]:
         return json.load(response), response.headers
 
 
+# A POST may execute a whole workflow (``/api/run``), and a shared CI runner under
+# load has exceeded 5 s for that once (Windows, run 35438124671: the client timed
+# out and the server saw the aborted socket). The bound is a hang guard, not a
+# performance assertion, so it is generous; GET requests keep the tight bound.
+POST_TIMEOUT_SECONDS = 30
+
+
 def post_json(url: str, payload: dict, *, origin: str | None = None) -> dict:
     headers = {"Content-Type": "application/json"}
     if origin:
@@ -75,7 +82,7 @@ def post_json(url: str, payload: dict, *, origin: str | None = None) -> dict:
         headers=headers,
         method="POST",
     )
-    with urlopen(request, timeout=5) as response:  # noqa: S310 - loopback test server
+    with urlopen(request, timeout=POST_TIMEOUT_SECONDS) as response:  # noqa: S310 - loopback
         return json.load(response)
 
 
