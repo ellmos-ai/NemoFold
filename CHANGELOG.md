@@ -2,6 +2,28 @@
 
 All notable changes to NemoFold are documented here.
 
+## Unreleased
+
+- Acceptance gates G01 through G16 now claim `done` in the shipped register, backed by
+  committed evidence under `examples/acceptance-evidence/`. Each gate carries the pytest
+  nodes that exercise it and one run receipt whose input and output manifests, verified
+  handoffs, executed run report, passed result checks and blocked negative run are
+  re-hashed from the committed files by `nemofold acceptance-gates --evidence-root .`.
+  G17 and G18 remain `not_supported`.
+- New `nemofold acceptance-evidence --work-dir <dir>` regenerates that evidence: it runs
+  every gate bundle, exports the files its receipt references and rewrites the register.
+  A gate whose bundle stops producing a verifiable receipt loses `done` instead of
+  keeping a stale claim.
+- Bundle reports carry the absolute path of the directory they ran in, which cannot be
+  committed. The export replaces that prefix with an `<evidence-root>` token and leaves
+  run ids, statuses, claims and check results untouched.
+- `load_gate_register()` now refuses the shipped register without `--evidence-root`,
+  because a `done` claim is unreadable without the files behind it. Bundles and tests
+  start from the new `load_gate_register_template()` instead.
+- Fixed all 82 mypy errors that had kept hosted CI red since 2026-09-17, plus the ruff
+  findings in the metadata contract tests. CI now also type-checks for Linux and macOS
+  and verifies the gate register against the committed evidence.
+
 ## 0.2.0 - 2026-09-18
 
 - Discoverability and visual architecture overhaul (Pfad B standard):

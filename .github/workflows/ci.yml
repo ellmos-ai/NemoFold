@@ -37,10 +37,14 @@ jobs:
         run: python -m ruff check src tests
       - name: Type check
         run: python -m mypy src
+      - name: Type check for Linux and macOS
+        run: python -m mypy src --platform linux && python -m mypy src --platform darwin
       - name: Test
         run: python -m pytest -q
       - name: Compile Python
         run: python -m compileall -q src tests
+      - name: Verify the acceptance gate register against the committed evidence
+        run: nemofold acceptance-gates --evidence-root .
       - name: Check browser JavaScript syntax
         run: node --check src/nemofold/web/app.js
       - name: Build distributions

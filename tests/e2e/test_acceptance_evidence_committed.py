@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -100,3 +101,33 @@ def test_tampering_with_one_evidence_byte_fails_the_register(tmp_path: Path) -> 
 
     with pytest.raises(GateRegisterError, match="evidence_sha256_mismatch"):
         verify_gate_evidence(single, tmp_path)
+
+
+def test_git_hands_evidence_bytes_back_unchanged() -> None:
+    """Evidence is bound by its bytes, so git must not normalise its line endings.
+
+    A CRLF mail draft under G12 once verified locally and failed in a fresh clone,
+    because the checkout rewrote it to LF and the SHA-256 no longer matched.
+    """
+    if not (REPO_ROOT / ".git").exists():
+        pytest.skip("not a git checkout")
+
+    candidates = [
+        path.relative_to(REPO_ROOT).as_posix()
+        for path in sorted(EVIDENCE_ROOT.rglob("*"))
+        if path.is_file() and b"\r\n" in path.read_bytes()
+    ]
+    if not candidates:
+        candidates = [
+            next(EVIDENCE_ROOT.rglob("*.json")).relative_to(REPO_ROOT).as_posix()
+        ]
+
+    result = subprocess.run(
+        ["git", "check-attr", "text", "--", *candidates],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    unprotected = [line for line in result.stdout.splitlines() if not line.endswith(": unset")]
+    assert not unprotected, f"git may rewrite these evidence files: {unprotected[:3]}"
