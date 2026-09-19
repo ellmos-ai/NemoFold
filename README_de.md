@@ -2,6 +2,8 @@
 
 [English](README.md) | Deutsch
 
+[![NemoFold-Demovideo (2:16) auf YouTube](docs/media/nemofold-demo-video.jpg)](https://youtu.be/wOToLqDBvvE)
+
 **Demovideo (2:16):** https://youtu.be/wOToLqDBvvE · gebaut für den Nebius x NVIDIA Global AI Hackathon
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](pyproject.toml)
