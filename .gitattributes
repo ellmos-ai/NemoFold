@@ -5,3 +5,10 @@
 *.zip binary
 *.sqlite3 binary
 *.mp4 binary
+
+# Acceptance evidence is bound to the register by SHA-256, so git must hand back
+# the exact bytes that were hashed. Any end-of-line normalisation would silently
+# invalidate a done gate on checkout (an RFC 5322 mail draft with CRLF did exactly
+# that before this rule existed).
+examples/acceptance-evidence/** -text
+examples/proven-run/** -text
