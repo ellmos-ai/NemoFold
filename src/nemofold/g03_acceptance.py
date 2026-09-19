@@ -8,7 +8,7 @@ from typing import Any
 
 from .acceptance_gates import (
     artifact_manifest_sha256,
-    load_gate_register,
+    load_gate_register_template,
     verify_gate_evidence,
 )
 from .application import ExecutionConfig
@@ -197,7 +197,7 @@ def run_g03_acceptance_bundle(
         ],
     }
 
-    register = load_gate_register()
+    register = load_gate_register_template()
     gate = next(item for item in register["gates"] if item["gate_id"] == "G03")
     gate["status"] = "partial"
     gate["evidence"] = {

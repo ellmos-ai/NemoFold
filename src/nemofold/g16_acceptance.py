@@ -24,7 +24,7 @@ from typing import Any
 
 from .acceptance_gates import (
     artifact_manifest_sha256,
-    load_gate_register,
+    load_gate_register_template,
     verify_gate_evidence,
 )
 from .application import ExecutionConfig, run_job
@@ -661,7 +661,7 @@ def run_g16_acceptance_bundle(
 
     # 10. Update Register and Verify Evidence
     register_path = evidence_dir / "nf_fin_gates_g16.json"
-    packaged_register = load_gate_register(evidence_root=root)
+    packaged_register = load_gate_register_template()
     updated_gates = []
     for g in packaged_register.get("gates", []):
         if g.get("gate_id") == "G16":

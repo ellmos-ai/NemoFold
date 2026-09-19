@@ -15,7 +15,7 @@ from typing import Any
 
 from .acceptance_gates import (
     artifact_manifest_sha256,
-    load_gate_register,
+    load_gate_register_template,
     require_ledger_path,
     verify_gate_evidence,
 )
@@ -667,7 +667,7 @@ def run_g10_acceptance_bundle(
         "markdown",
     )
 
-    register = load_gate_register()
+    register = load_gate_register_template()
     for gate in register["gates"]:
         if gate["gate_id"] == "G10":
             gate["status"] = "partial"

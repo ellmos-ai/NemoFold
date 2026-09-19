@@ -15,7 +15,7 @@ from typing import Any
 
 from .acceptance_gates import (
     artifact_manifest_sha256,
-    load_gate_register,
+    load_gate_register_template,
     verify_gate_evidence,
 )
 from .application import ExecutionConfig
@@ -215,7 +215,7 @@ def run_g09_acceptance_bundle(
         "markdown",
     )
 
-    register = load_gate_register()
+    register = load_gate_register_template()
     for gate in register["gates"]:
         if gate["gate_id"] == "G09":
             gate["status"] = "partial"

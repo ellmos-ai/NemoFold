@@ -13,7 +13,7 @@ from typing import Any
 
 from .acceptance_gates import (
     artifact_manifest_sha256,
-    load_gate_register,
+    load_gate_register_template,
     require_ledger_path,
     verify_gate_evidence,
 )
@@ -226,7 +226,7 @@ def run_g06_acceptance_bundle(
         "markdown",
     )
 
-    register = load_gate_register()
+    register = load_gate_register_template()
     gate = next(item for item in register["gates"] if item["gate_id"] == "G06")
     gate["status"] = "partial"
     gate["evidence"] = {

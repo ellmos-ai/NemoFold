@@ -10,6 +10,7 @@ import pytest
 from nemofold.acceptance_gates import (
     GateRegisterError,
     load_gate_register,
+    load_gate_register_template,
     summarize_gate_register,
     validate_gate_register,
     verify_ellmos_catalog,
@@ -56,7 +57,7 @@ def _done_register_with_files(root) -> tuple[dict, dict[str, object]]:
         path.write_bytes(content)
         paths[relative] = path
 
-    register = copy.deepcopy(load_gate_register())
+    register = copy.deepcopy(load_gate_register_template())
     input_artifacts = [
         {
             "path": "inputs/source.txt",
@@ -130,7 +131,12 @@ def _done_register_with_files(root) -> tuple[dict, dict[str, object]]:
 
 
 def test_shipped_gate_register_is_complete_without_false_done_claims() -> None:
-    register = load_gate_register()
+    # The shipped register claims done gates, and a done claim cannot be read
+    # without the files that back it.
+    with pytest.raises(GateRegisterError, match="done_gate_requires_evidence_root"):
+        load_gate_register()
+
+    register = load_gate_register_template()
 
     assert [gate["gate_id"] for gate in register["gates"]] == EXPECTED_GATE_IDS
     assert {item["id"] for item in register["source_catalog"]["selected_usecases"]} == {
@@ -166,15 +172,15 @@ def test_shipped_gate_register_is_complete_without_false_done_claims() -> None:
         "counts": {
             "done": 0,
             "not_supported": 2,
-            "partial": 1,
-            "planned": 15,
+            "partial": 0,
+            "planned": 16,
         },
         "open_gates": EXPECTED_GATE_IDS,
     }
 
 
 def test_done_gate_without_full_run_receipt_is_rejected() -> None:
-    register = copy.deepcopy(load_gate_register())
+    register = copy.deepcopy(load_gate_register_template())
     register["gates"][0]["status"] = "done"
     register["gates"][0]["evidence"]["test_nodes"] = [_dummy_test_node()]
     register["gates"][0]["evidence"]["run_receipts"] = []
@@ -184,7 +190,7 @@ def test_done_gate_without_full_run_receipt_is_rejected() -> None:
 
 
 def test_done_gate_rejects_placeholder_run_receipt_values() -> None:
-    register = copy.deepcopy(load_gate_register())
+    register = copy.deepcopy(load_gate_register_template())
     register["gates"][0]["status"] = "done"
     register["gates"][0]["evidence"]["test_nodes"] = [_dummy_test_node()]
     register["gates"][0]["evidence"]["run_receipts"] = [
@@ -200,7 +206,7 @@ def test_done_gate_rejects_placeholder_run_receipt_values() -> None:
 
 
 def test_done_gate_rejects_semantically_empty_structured_placeholders() -> None:
-    register = copy.deepcopy(load_gate_register())
+    register = copy.deepcopy(load_gate_register_template())
     gate = register["gates"][0]
     gate["status"] = "done"
     gate["evidence"]["test_nodes"] = [_dummy_test_node()]
@@ -490,7 +496,7 @@ def test_done_gate_blocks_evidence_path_escape(tmp_path) -> None:
 
 
 def test_catalog_verification_blocks_hash_and_semantic_drift(tmp_path) -> None:
-    register = copy.deepcopy(load_gate_register())
+    register = copy.deepcopy(load_gate_register_template())
     catalog_path = tmp_path / "usecases.json"
     catalog = {"usecases": register["source_catalog"]["selected_usecases"]}
     raw = json.dumps(catalog, ensure_ascii=False).encode("utf-8")

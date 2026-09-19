@@ -8,6 +8,11 @@ from dataclasses import replace
 from pathlib import Path
 
 from . import __version__
+from .acceptance_evidence import (
+    BUNDLED_GATE_IDS,
+    EvidenceExportError,
+    rebuild_gate_evidence,
+)
 from .acceptance_gates import (
     GateRegisterError,
     load_gate_register,
@@ -253,6 +258,31 @@ def build_parser() -> argparse.ArgumentParser:
         "--evidence-root",
         help="required when a gate is done; verifies referenced files and SHA-256 values",
     )
+    acceptance_evidence = commands.add_parser(
+        "acceptance-evidence",
+        help="re-run the gate bundles and rewrite the register they back",
+    )
+    acceptance_evidence.add_argument(
+        "--work-dir",
+        required=True,
+        help="scratch directory the bundles run in; its contents are not committed",
+    )
+    acceptance_evidence.add_argument(
+        "--repo-root",
+        default=".",
+        help="repository root the exported evidence is written to and verified against",
+    )
+    acceptance_evidence.add_argument(
+        "--gate",
+        action="append",
+        dest="gates",
+        help="limit the rebuild to these gate ids; repeatable, defaults to G01-G16",
+    )
+    acceptance_evidence.add_argument(
+        "--register",
+        dest="register_out",
+        help="register file to rewrite; defaults to the packaged register",
+    )
     acceptance_g01 = commands.add_parser(
         "acceptance-g01",
         help="run the synthetic G01 positive and blocking paths and seal their evidence",
@@ -416,6 +446,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _mcp_command(args)
     if args.command == "acceptance-gates":
         return _acceptance_gates_command(args)
+    if args.command == "acceptance-evidence":
+        return _acceptance_evidence_command(args)
     if args.command == "acceptance-g01":
         return _acceptance_g01_command(args)
     if args.command == "acceptance-g02":
@@ -494,6 +526,35 @@ def _acceptance_gates_command(args: argparse.Namespace) -> int:
         return 2
     print(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True))
     return 0
+
+
+def _acceptance_evidence_command(args: argparse.Namespace) -> int:
+    try:
+        result = rebuild_gate_evidence(
+            args.repo_root,
+            args.work_dir,
+            gate_ids=tuple(args.gates) if args.gates else BUNDLED_GATE_IDS,
+            register_path=args.register_out,
+        )
+    except (EvidenceExportError, GateRegisterError, OSError, ValueError) as exc:
+        print(
+            json.dumps(
+                {"ok": False, "errors": [str(exc)]},
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 2
+    print(
+        json.dumps(
+            {"ok": not result["refused"], **result},
+            ensure_ascii=False,
+            indent=2,
+            sort_keys=True,
+        )
+    )
+    return 0 if not result["refused"] else 2
 
 
 def _acceptance_g01_command(args: argparse.Namespace) -> int:

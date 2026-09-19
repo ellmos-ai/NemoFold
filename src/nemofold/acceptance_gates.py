@@ -23,21 +23,48 @@ class GateRegisterError(ValueError):
     """Raised when the acceptance register or its provenance is invalid."""
 
 
-def load_gate_register(
-    path: str | Path | None = None,
-    *,
-    evidence_root: str | Path | None = None,
-) -> dict[str, Any]:
+def _read_register_payload(path: str | Path | None) -> Any:
     if path is None:
         resource = files("nemofold").joinpath("data", "nf_fin_gates.json")
         raw = resource.read_text(encoding="utf-8")
     else:
         raw = Path(path).read_text(encoding="utf-8")
     try:
-        payload = json.loads(raw)
+        return json.loads(raw)
     except json.JSONDecodeError as exc:
         raise GateRegisterError(f"invalid_gate_register_json:{exc.msg}") from exc
-    return validate_gate_register(payload, evidence_root=evidence_root)
+
+
+def load_gate_register(
+    path: str | Path | None = None,
+    *,
+    evidence_root: str | Path | None = None,
+) -> dict[str, Any]:
+    return validate_gate_register(
+        _read_register_payload(path), evidence_root=evidence_root
+    )
+
+
+def load_gate_register_template(path: str | Path | None = None) -> dict[str, Any]:
+    """Load the register with collected evidence stripped, ready to be filled in.
+
+    The shipped register carries ``done`` gates, and a ``done`` gate cannot be
+    loaded without an evidence root holding its files. A bundle that is about to
+    produce that evidence has no such root yet, so it starts from this template:
+    every gate resting on run receipts falls back to ``planned`` and its receipts
+    are dropped. Declared test nodes stay, because they are verified against the
+    repository rather than against a run directory.
+    """
+    register = _read_register_payload(path)
+    for gate in register.get("gates", []) if isinstance(register, dict) else []:
+        if not isinstance(gate, dict):
+            continue
+        evidence = gate.get("evidence")
+        if isinstance(evidence, dict) and evidence.get("run_receipts"):
+            evidence["run_receipts"] = []
+            if gate.get("status") == "done":
+                gate["status"] = "planned"
+    return validate_gate_register(register)
 
 
 def validate_gate_register(
