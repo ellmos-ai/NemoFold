@@ -1,8 +1,9 @@
 """Contract tests for repository metadata, discoverability, bilingual parity, and legal notices."""
 
-from pathlib import Path
 import re
 import tomllib
+from pathlib import Path
+
 import nemofold
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -48,7 +49,9 @@ def test_pyproject_project_urls():
     for key in expected_keys:
         assert key in urls, f"Missing project URL key: {key}"
         val = urls[key]
-        assert isinstance(val, str) and val.startswith("https://"), f"URL for {key} must start with https://, got {val}"
+        assert isinstance(val, str) and val.startswith("https://"), (
+            f"URL for {key} must start with https://, got {val}"
+        )
 
 
 def test_pyproject_classifiers():
@@ -69,7 +72,8 @@ def test_pyproject_classifiers():
 
 
 def test_bilingual_readme_structural_parity():
-    """Verify that both README.md and README_de.md have all 18 numbered sections with reciprocal anchors."""
+    """Verify README.md and README_de.md share all 18 numbered sections with
+    reciprocal anchors."""
     readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
     readme_de = (REPO_ROOT / "README_de.md").read_text(encoding="utf-8")
 
