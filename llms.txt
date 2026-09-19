@@ -22,7 +22,6 @@ Primary documentation:
 - skills/nemofold/SKILL.md
 - schemas/nemofold-job-v1.schema.json
 - THIRD_PARTY_LICENSES.md (Permissive dependency audit & INV-LOCAL-01..INV-SLA-10)
-- MARKETING-LOG.txt (Personas, search queries, 10-dimension comparative matrix)
 - SECURITY.md (48h security acknowledgment / 5-day triage SLA)
 
 Current local implementation boundary:

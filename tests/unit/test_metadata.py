@@ -40,7 +40,6 @@ def test_pyproject_project_urls():
         "Changelog",
         "Security",
         "Third-Party Licenses",
-        "Marketing Log",
         "Parent Organization",
         "Umbrella Ecosystem",
         "LLM Ready",
@@ -121,17 +120,3 @@ def test_third_party_licenses_audit():
     assert "INV-SLA-10" in lic_text
     assert "MIT" in lic_text
     assert "Apache-2.0" in lic_text
-
-
-def test_marketing_log_structure():
-    """Verify MARKETING-LOG.txt includes all 9 required canonical sections."""
-    marketing_text = (REPO_ROOT / "MARKETING-LOG.txt").read_text(encoding="utf-8")
-    assert "1. EXECUTIVE SUMMARY & VALUE PROPOSITION" in marketing_text
-    assert "2. TARGET AUDIENCES & PERSONAS" in marketing_text
-    assert "3. SEARCH PHRASES & DISCOVERABILITY KEYWORDS" in marketing_text
-    assert "4. COMPARATIVE MATRIX VS. ALTERNATIVES" in marketing_text
-    assert "5. SIBLING TOOLS & UMBRELLA ECOSYSTEM MATRIX" in marketing_text
-    assert "6. GOVERNANCE & RUNTIME INVARIANTS" in marketing_text
-    assert "7. VISUAL ARCHITECTURE & DUAL MERMAID DIAGRAMS" in marketing_text
-    assert "8. THIRD-PARTY LICENSES & TRANSPARENCY SUMMARY" in marketing_text
-    assert "9. RELEASE & VERIFICATION AUDIT" in marketing_text

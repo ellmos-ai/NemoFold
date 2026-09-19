@@ -12,7 +12,6 @@
 [![Security SLA](https://img.shields.io/badge/security%20SLA-48h%20%7C%205d-blue.svg)](SECURITY.md)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Audited](https://img.shields.io/badge/dependencies-permissive%20audited-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
-[![Marketing Log](https://img.shields.io/badge/marketing-active%20log-informational.svg)](MARKETING-LOG.txt)
 [![Ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-orange.svg)](https://github.com/ellmos-ai)
 [![Umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet.svg)](https://github.com/open-bricks)
 [![LLM Ready](https://img.shields.io/badge/llms.txt-verified-brightgreen.svg)](llms.txt)
@@ -965,7 +964,6 @@ NemoFold ist eine zentrale Dokumenten-Intelligenzkomponente des `ellmos-ai`-Öko
 - [Sicherheitsrichtlinie & 48h Vulnerability-SLA](SECURITY.md)
 - [Leitfaden für Mitwirkende](CONTRIBUTING.md)
 - [Release-Gate Checkliste](RELEASE_GATE.md)
-- [Lokales Marketing- & Auffindbarkeits-Log](MARKETING-LOG.txt)
 
 ---
 

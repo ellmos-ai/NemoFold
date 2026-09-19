@@ -63,7 +63,7 @@ All notable changes to NemoFold are documented here.
   - German statutory liability exclusion notice (§ 521 BGB Gefälligkeitsrecht) in `README_de.md`.
   - Comprehensive Third-Party License Audit (`THIRD_PARTY_LICENSES.md`) certifying zero copyleft
     runtime dependencies, permissive licensing, unprivileged execution, and runtime invariant compliance.
-  - Local marketing and discoverability register (`MARKETING-LOG.txt`).
+  - Local marketing and discoverability register (`MARKETING-LOG.txt`, since untracked as an internal working document).
   - Extended PEP 621 metadata URLs and classifiers in `pyproject.toml`.
   - Machine-readable context update in `llms.txt`.
   - Automated metadata contract verification suite in `tests/unit/test_metadata.py`.
