@@ -2,6 +2,8 @@
 
 English | [Deutsch](README_de.md)
 
+**Demo video (2:16):** https://youtu.be/wOToLqDBvvE · built for the Nebius x NVIDIA Global AI Hackathon
+
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-1082%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)

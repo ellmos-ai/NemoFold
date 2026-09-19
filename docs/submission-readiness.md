@@ -42,11 +42,11 @@ submission should choose one primary track and keep the pitch focused.
   contract is statically tested, but no local Docker client was available for a container
   build and no host was changed; **deployment URL OPEN**.
 - Public YouTube demo, no longer than three minutes, with audio explaining Nebius and
-  Nemotron use: a URL is present on Devpost. The local 73.07-second Andrew v4 draft uses
-  the current routed product UI, contains no embedded subtitle stream, and has passed audio,
-  layout, contrast, render, window-attribution and frame readback checks. A deterministic
-  19-cue English VTT plus SRT fallback and a hashed upload packet are prepared locally,
-  but the video is not yet user-approved or uploaded; **video-content acceptance OPEN**.
+  Nemotron use: **DONE 2026-09-19** at <https://youtu.be/wOToLqDBvvE> (v6: the user-approved
+  113-second v5 cut with the caption-free cinematic intro in front, 136.5 s in total,
+  1920x1080, -18 LUFS; read back via YouTube oEmbed). No caption files by design, YouTube
+  generates captions. The Devpost project still embeds the placeholder video from the
+  precautionary submission; **replacing the Devpost video URL remains OPEN** (user action).
 - Project description, technology list, track, model/prompting/comparison answers, and
   honest Nebius/Nemotron feedback: product story ready; the live run itself is done
   (see above), but drafting the experience-dependent answers from it and updating the
