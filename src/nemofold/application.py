@@ -1333,7 +1333,7 @@ def _finalize_action_plans(
                 doc_name = reason.split(":", 1)[1]
                 category_choices = tuple(
                     dict.fromkeys(
-                        rule.category for rule in routes if getattr(rule, "category", None)
+                        rule.category for rule in routes if rule.category
                     )
                 ) or ("patient", "wissen")
                 questions.append(
@@ -1355,7 +1355,7 @@ def _finalize_action_plans(
                 json.dumps(asked, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
                 "needs-user-input",
             )
-            action_artifacts = (plan_record, question_artifact)
+            action_artifacts: tuple[ArtifactRecord, ...] = (plan_record, question_artifact)
             action_metadata["needs_user_input"] = True
             action_metadata["question_count"] = len(questions)
             action_metadata["outcome_note"] = asked["outcome_note"]

@@ -6,6 +6,7 @@ import json
 import os
 import re
 from collections import Counter
+from collections.abc import Sequence
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -160,11 +161,11 @@ def validate_gate_register(
         raise GateRegisterError(
             f"done_gate_requires_evidence_root:{done_gates[0]['gate_id']}"
         )
-    if evidenced_gates and evidence_root is None:
-        raise GateRegisterError(
-            f"gate_receipts_require_evidence_root:{evidenced_gates[0]['gate_id']}"
-        )
     if evidenced_gates:
+        if evidence_root is None:
+            raise GateRegisterError(
+                f"gate_receipts_require_evidence_root:{evidenced_gates[0]['gate_id']}"
+            )
         _verify_done_gate_files(evidenced_gates, evidence_root)
     return register
 
@@ -454,15 +455,22 @@ def _path_identity(path: str) -> str:
     return os.path.normcase(str(Path(path))).replace("\\", "/")
 
 
-def artifact_manifest_sha256(artifacts: list[object]) -> str:
+def artifact_manifest_sha256(artifacts: Sequence[object]) -> str:
     """Hash the canonical path/hash list used by a gate run receipt."""
     canonical = json.dumps(
-        artifacts,
+        list(artifacts),
         ensure_ascii=False,
         separators=(",", ":"),
         sort_keys=True,
     ).encode("utf-8")
     return hashlib.sha256(canonical).hexdigest()
+
+
+def require_ledger_path(ledger_path: str | None, context: str) -> Path:
+    """Return a completed step's ledger path, failing loudly when it was never written."""
+    if ledger_path is None:
+        raise GateRegisterError(f"ledger_path_missing:{context}")
+    return Path(ledger_path)
 
 
 def _verify_done_gate_files(

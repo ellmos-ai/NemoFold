@@ -492,12 +492,12 @@ def read_specialist_database(
                 inv_items.extend(extracted)
                 notes.extend(n)
             elif profile == "mediplaner" and tbl in ("rezepte", "medikamente"):
-                extracted, n = _extract_mediplaner(connection, tbl, source_id)
-                med_items.extend(extracted)
+                med_extracted, n = _extract_mediplaner(connection, tbl, source_id)
+                med_items.extend(med_extracted)
                 notes.extend(n)
             else:
-                extracted, n = _extract_generic(connection, tbl, source_id)
-                gen_records.extend(extracted)
+                gen_extracted, n = _extract_generic(connection, tbl, source_id)
+                gen_records.extend(gen_extracted)
                 notes.extend(n)
     finally:
         connection.close()

@@ -26,6 +26,7 @@ import json
 import os
 import urllib.error
 import urllib.request
+from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Protocol
@@ -484,7 +485,7 @@ def build_briefing_payload(
     subject: str,
     question: str,
     meeting_context: str = "",
-    results: list[dict[str, Any]] | tuple[WebResult, ...],
+    results: Sequence[dict[str, Any] | WebResult],
     allowed: bool,
     blocked_reasons: list[str] | tuple[str, ...],
     min_sources: int = 2,

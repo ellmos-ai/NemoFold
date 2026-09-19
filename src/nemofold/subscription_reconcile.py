@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -143,7 +144,7 @@ def _normalize_name(name: str) -> str:
 
 
 def extract_subscriptions_from_texts(
-    source_ids: list[str],
+    source_ids: Sequence[str],
     texts: dict[str, str],
     *,
     sub_marker: str = "Abo",
@@ -220,7 +221,7 @@ def extract_subscriptions_from_texts(
 
 
 def extract_messages_from_texts(
-    source_ids: list[str],
+    source_ids: Sequence[str],
     texts: dict[str, str],
     *,
     sender_marker: str = "Absender",
@@ -357,45 +358,47 @@ def reconcile_subscriptions(
     ambiguous_sub_evidence: dict[int, list[MessageRecord]] = {}
 
     # Direction 1: One message matches multiple subscriptions without account differentiation
-    for msg_idx, cands in cand_subs_for_msg.items():
-        if len(cands) > 1:
-            top_score = cands[0][2]
-            competing = [c for c in cands if c[2] >= top_score - 1.5]
-            if len(competing) > 1:
+    for msg_idx, sub_cands in cand_subs_for_msg.items():
+        if len(sub_cands) > 1:
+            top_score = sub_cands[0][2]
+            sub_competing = [c for c in sub_cands if c[2] >= top_score - 1.5]
+            if len(sub_competing) > 1:
                 msg = messages[msg_idx]
                 has_unique_acc = False
                 if msg.account_id:
-                    matched_acc = [
+                    sub_matched_acc = [
                         c
-                        for c in competing
+                        for c in sub_competing
                         if c[1].account_id
                         and c[1].account_id.strip().casefold() == msg.account_id.strip().casefold()
                     ]
-                    if len(matched_acc) == 1:
+                    if len(sub_matched_acc) == 1:
                         has_unique_acc = True
                 if not has_unique_acc:
-                    for c in competing:
+                    for c in sub_competing:
                         ambiguous_sub_evidence.setdefault(c[0], []).append(msg)
 
     # Direction 2: One subscription matches multiple messages without account differentiation
-    for sub_idx, cands in cand_msgs_for_sub.items():
-        if len(cands) > 1:
-            top_score = cands[0][2]
-            competing = [c for c in cands if c[2] >= top_score - 0.5]
-            if len(competing) > 1:
+    for sub_idx, msg_cands in cand_msgs_for_sub.items():
+        if len(msg_cands) > 1:
+            top_score = msg_cands[0][2]
+            msg_competing = [c for c in msg_cands if c[2] >= top_score - 0.5]
+            if len(msg_competing) > 1:
                 sub = subscriptions[sub_idx]
                 has_unique_acc = False
                 if sub.account_id:
-                    matched_acc = [
+                    msg_matched_acc = [
                         c
-                        for c in competing
+                        for c in msg_competing
                         if c[1].account_id
                         and c[1].account_id.strip().casefold() == sub.account_id.strip().casefold()
                     ]
-                    if len(matched_acc) == 1:
+                    if len(msg_matched_acc) == 1:
                         has_unique_acc = True
                 if not has_unique_acc:
-                    ambiguous_sub_evidence.setdefault(sub_idx, []).extend(c[1] for c in competing)
+                    ambiguous_sub_evidence.setdefault(sub_idx, []).extend(
+                        c[1] for c in msg_competing
+                    )
 
     # Evaluate each subscription
     for sub_idx, sub in enumerate(subscriptions):
@@ -653,9 +656,14 @@ def execute_subscription_reconcile(
     for m in summary.matches:
         cited_sources.add(m.subscription.anchor.source_id)
         if m.status == "reconciled":
+            evidence = m.matched_message
+            if evidence is None:
+                raise ValueError(
+                    f"reconciled_match_without_message:{m.subscription.name}"
+                )
             stmt = (
                 f"Abo '{m.subscription.name}': Bestätigt durch Beleg von "
-                f"{m.matched_message.sender} ({m.subscription.amount_raw})."
+                f"{evidence.sender} ({m.subscription.amount_raw})."
             )
             locators = [
                 EvidenceLocator(
@@ -664,12 +672,12 @@ def execute_subscription_reconcile(
                     section=f"line {m.subscription.anchor.line}",
                 ),
                 EvidenceLocator(
-                    source_id=m.matched_message.anchor.source_id,
-                    quote=m.matched_message.quote,
-                    section=f"line {m.matched_message.anchor.line}",
+                    source_id=evidence.anchor.source_id,
+                    quote=evidence.quote,
+                    section=f"line {evidence.anchor.line}",
                 ),
             ]
-            cited_sources.add(m.matched_message.anchor.source_id)
+            cited_sources.add(evidence.anchor.source_id)
         elif m.status == "discrepancy":
             disc_text = "; ".join(d.description for d in m.discrepancies)
             stmt = f"Abo '{m.subscription.name}': Abweichung erkannt: {disc_text}"

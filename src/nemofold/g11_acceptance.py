@@ -14,6 +14,7 @@ from typing import Any
 from .acceptance_gates import (
     artifact_manifest_sha256,
     load_gate_register,
+    require_ledger_path,
     verify_gate_evidence,
 )
 from .application import ExecutionConfig
@@ -368,7 +369,9 @@ def _verify_low_quality_result(root: Path, result: VoyageRunResult) -> tuple[Pat
     if not needs_input.is_file():
         raise G11AcceptanceError("g11_low_qual_needs_user_input_missing")
 
-    ledger_path = Path(result.steps[-1].ledger_path)
+    ledger_path = require_ledger_path(
+        result.steps[-1].ledger_path, "G11:_verify_low_quality_result"
+    )
     report = json.loads(ledger_path.read_text(encoding="utf-8"))
     if not any("low_ocr_quality_review_required" in str(e) for e in report.get("errors", [])):
         raise G11AcceptanceError("g11_low_qual_error_missing_in_ledger")
@@ -384,7 +387,7 @@ def _verify_corrupted_result(root: Path, result: VoyageRunResult) -> tuple[Path,
             f"g11_corrupt_step_not_blocked:status={result.steps[-1].status}"
         )
 
-    ledger_path = Path(result.steps[-1].ledger_path)
+    ledger_path = require_ledger_path(result.steps[-1].ledger_path, "G11:_verify_corrupted_result")
     report = json.loads(ledger_path.read_text(encoding="utf-8"))
     if not any("corrupted_or_unreadable" in str(e) for e in report.get("errors", [])):
         raise G11AcceptanceError("g11_corrupt_error_missing_in_ledger")
@@ -400,7 +403,9 @@ def _verify_retrieval_fail_result(root: Path, result: VoyageRunResult) -> tuple[
             f"g11_retrieval_step_not_blocked:status={result.steps[-1].status}"
         )
 
-    ledger_path = Path(result.steps[-1].ledger_path)
+    ledger_path = require_ledger_path(
+        result.steps[-1].ledger_path, "G11:_verify_retrieval_fail_result"
+    )
     report = json.loads(ledger_path.read_text(encoding="utf-8"))
     if not any("retrieval_probe_no_hits" in str(e) for e in report.get("errors", [])):
         raise G11AcceptanceError("g11_retrieval_error_missing_in_ledger")

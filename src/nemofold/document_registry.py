@@ -276,7 +276,7 @@ def registry_to_csv(table: RegistryTable) -> str:
     for row in table.rows:
         line = [row.source_id, row.display_name]
         if has_record_lines:
-            line.append(row.record_line or "")
+            line.append(str(row.record_line or ""))
         for cell in row.cells:
             line.append(cell.value or "")
             line.append(

@@ -16,6 +16,7 @@ from typing import Any
 from .acceptance_gates import (
     artifact_manifest_sha256,
     load_gate_register,
+    require_ledger_path,
     verify_gate_evidence,
 )
 from .application import ExecutionConfig
@@ -426,7 +427,9 @@ def _verify_insufficient_result(root: Path, result: VoyageRunResult) -> tuple[Pa
     if not needs_input.is_file():
         raise G10AcceptanceError("g10_insufficient_needs_user_input_missing")
 
-    ledger_path = Path(result.steps[-1].ledger_path)
+    ledger_path = require_ledger_path(
+        result.steps[-1].ledger_path, "G10:_verify_insufficient_result"
+    )
     return ledger_path, [needs_input]
 
 
@@ -438,7 +441,9 @@ def _verify_invalid_cadence_result(root: Path, result: VoyageRunResult) -> tuple
             f"g10_invalid_cadence_step_not_blocked:status={result.steps[-1].status}"
         )
 
-    ledger_path = Path(result.steps[-1].ledger_path)
+    ledger_path = require_ledger_path(
+        result.steps[-1].ledger_path, "G10:_verify_invalid_cadence_result"
+    )
     report = json.loads(ledger_path.read_text(encoding="utf-8"))
     if not any("invalid_routine_cadence" in str(e) for e in report.get("errors", [])):
         raise G10AcceptanceError("g10_invalid_cadence_error_missing_in_ledger")
@@ -454,7 +459,7 @@ def _verify_mutation_result(root: Path, result: VoyageRunResult) -> tuple[Path, 
             f"g10_mutation_step_not_blocked:status={result.steps[-1].status}"
         )
 
-    ledger_path = Path(result.steps[-1].ledger_path)
+    ledger_path = require_ledger_path(result.steps[-1].ledger_path, "G10:_verify_mutation_result")
     report = json.loads(ledger_path.read_text(encoding="utf-8"))
     if not any("database_modification_blocked" in str(e) for e in report.get("errors", [])):
         raise G10AcceptanceError("g10_mutation_error_missing_in_ledger")

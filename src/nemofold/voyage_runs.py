@@ -471,9 +471,9 @@ def _selected_registry_sources(
     if not isinstance(raw_topic_lines, dict):
         raise ValueError("handoff_topic_lines_missing")
     selected_source_lines: dict[str, list[int]] = {}
-    for item in lineage:
-        source_id = item["producer_source_id"]
-        suffix = Path(item["path"]).suffix.casefold()
+    for entry in lineage:
+        source_id = entry["producer_source_id"]
+        suffix = Path(entry["path"]).suffix.casefold()
         if suffix not in STRUCTURED_SUFFIXES and not (
             suffix == ".csv" and structured_sources
         ):
@@ -492,7 +492,7 @@ def _selected_registry_sources(
             raise ValueError("handoff_topic_lines_invalid")
         try:
             rendering = read_structured(
-                item["path"],
+                entry["path"],
                 tables=tuple(source_tables),
                 expected_sha256=source_hashes[source_id],
             )
@@ -510,15 +510,15 @@ def _selected_registry_sources(
             registry_lines == [None] and len(lines) == 1
         ):
             raise ValueError("handoff_registry_lines_mismatch")
-        selected_source_lines[item["consumer_source_id"]] = list(lines)
+        selected_source_lines[entry["consumer_source_id"]] = list(lines)
     checks_by_source_id = {check.source_id: check for check in page_checks}
     consumer_page_reviews: dict[str, list[dict[str, object]]] = {}
     reviewed_page_receipts: dict[str, list[dict[str, object]]] = {}
-    for item in lineage:
-        check = checks_by_source_id.get(item["producer_source_id"])
+    for entry in lineage:
+        check = checks_by_source_id.get(entry["producer_source_id"])
         if check is None or not check.reviewed_pages:
             continue
-        consumer_source_id = item["consumer_source_id"]
+        consumer_source_id = entry["consumer_source_id"]
         consumer_page_reviews[consumer_source_id] = [
             review.as_parameter_payload() for review in check.reviewed_pages
         ]

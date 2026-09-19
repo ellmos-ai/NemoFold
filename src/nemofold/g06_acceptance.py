@@ -14,6 +14,7 @@ from typing import Any
 from .acceptance_gates import (
     artifact_manifest_sha256,
     load_gate_register,
+    require_ledger_path,
     verify_gate_evidence,
 )
 from .application import ExecutionConfig
@@ -618,7 +619,9 @@ def _verify_positive_result(
             artifacts.append(art_path)
 
     reconcile_step = result.steps[1]
-    reconcile_ledger = Path(reconcile_step.ledger_path)
+    reconcile_ledger = require_ledger_path(
+        reconcile_step.ledger_path, "G06:_verify_positive_result"
+    )
     reconcile_report = RunLedger(reconcile_ledger.parent).load(reconcile_step.run_id)
     if reconcile_report.metadata.get("total_declared") != 4:
         raise G06AcceptanceError("g06_total_declared_mismatch")
@@ -630,7 +633,7 @@ def _verify_positive_result(
         raise G06AcceptanceError("g06_total_unconfirmed_mismatch")
 
     final_step = result.steps[-1]
-    final_ledger = Path(final_step.ledger_path)
+    final_ledger = require_ledger_path(final_step.ledger_path, "G06:_verify_positive_result")
     return final_ledger, tuple(artifacts)
 
 

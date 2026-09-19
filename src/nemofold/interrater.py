@@ -254,14 +254,14 @@ def supplied_coding(
     for item, code in value.items():
         if not isinstance(item, str) or not isinstance(code, str):
             raise ValueError("supplied coding keys and codes must be strings")
-        source_id = item if item in expected else by_name.get(item)
-        if source_id is None:
+        resolved_id = item if item in expected else by_name.get(item)
+        if resolved_id is None:
             raise ValueError(f"supplied coding contains an unknown item: {item}")
-        if source_id in codes:
+        if resolved_id in codes:
             raise ValueError(f"supplied coding repeats an item: {item}")
         if code not in allowed_codes and code != UNCODED:
             raise ValueError(f"supplied coding contains an undeclared code: {code}")
-        codes[source_id] = code
+        codes[resolved_id] = code
     missing = expected - set(codes)
     if missing:
         raise ValueError(f"supplied coding omits {len(missing)} readable item(s)")

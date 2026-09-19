@@ -9,6 +9,7 @@ from typing import Any
 from .acceptance_gates import (
     artifact_manifest_sha256,
     load_gate_register,
+    require_ledger_path,
     verify_gate_evidence,
 )
 from .application import ExecutionConfig
@@ -580,7 +581,7 @@ def _verify_positive_result(
             artifacts.append(art_path)
 
     timeline_step = result.steps[1]
-    timeline_ledger = Path(timeline_step.ledger_path)
+    timeline_ledger = require_ledger_path(timeline_step.ledger_path, "G05:_verify_positive_result")
     timeline_report = RunLedger(timeline_ledger.parent).load(timeline_step.run_id)
     if timeline_report.metadata.get("item_count") != 5:
         raise G05AcceptanceError("g05_cost_item_count_mismatch")
@@ -592,7 +593,7 @@ def _verify_positive_result(
         raise G05AcceptanceError("g05_projected_total_mismatch")
 
     final_step = result.steps[-1]
-    final_ledger = Path(final_step.ledger_path)
+    final_ledger = require_ledger_path(final_step.ledger_path, "G05:_verify_positive_result")
     return final_ledger, tuple(artifacts)
 
 

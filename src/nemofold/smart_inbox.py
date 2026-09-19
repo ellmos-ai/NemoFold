@@ -139,11 +139,11 @@ def plan_inbox(
                 continue
             route = candidates[0][0]
         else:
-            route = next(
+            fallback = next(
                 (rule for rule in rules if source_path.suffix.casefold() in rule.suffixes),
                 None,
             )
-            if route is None:
+            if fallback is None:
                 plans.append(
                     StoragePlan(
                         source=str(source_path),
@@ -155,6 +155,7 @@ def plan_inbox(
                     )
                 )
                 continue
+            route = fallback
 
         try:
             policy = policies.resolve(source_path)

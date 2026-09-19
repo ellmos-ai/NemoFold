@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
@@ -138,7 +139,7 @@ def _normalize_ingredient(ingredient: str | None) -> str | None:
 
 
 def extract_medications_from_texts(
-    source_ids: list[str],
+    source_ids: Sequence[str],
     texts: dict[str, str],
     *,
     medication_marker: str = "Medikament",
