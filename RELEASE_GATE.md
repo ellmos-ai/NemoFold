@@ -1,6 +1,43 @@
 # Public release gate
 
-Gate date: 2026-09-01
+## Gate 2026-09-19
+
+- `python -m ruff check src tests`: pass.
+- `python -m mypy src`: pass for 93 source files, and separately with
+  `--platform linux` and `--platform darwin`: 0 errors each.
+- `python -m pytest -q`: 1082 passed, 1 skipped (the same Windows privilege-dependent
+  symlink test in `tests/e2e/test_webapp.py` as the 2026-09-01 gate below).
+- `nemofold acceptance-gates --evidence-root .`: 16 of 18 registered Ellmos use-case
+  acceptance gates (`G01`-`G18`) claim `done`, each re-verified against committed
+  evidence (444 files, 1.8 MB, under `examples/acceptance-evidence/`; 476 files checked
+  by the command). `G17` and `G18` remain `not_supported` with recorded boundary
+  reasons. Without `--evidence-root` the command fails closed with exit code 2 by
+  design (`done_gate_requires_evidence_root:G01`); this is asserted, not a defect.
+- Every registered job contract runs end to end: all 43 names in `SUPPORTED_WORKFLOWS`
+  reach either a completed or a blocked outcome with a stated reason, write nothing
+  outside their output directory, and leave the read corpus unchanged.
+- `git diff --check`: pass.
+- `.github/workflows/ci.yml` gained two steps not present at the 2026-09-01 gate: the
+  gate-register verification above, and `mypy src --platform linux && mypy src
+  --platform darwin` alongside the existing host-platform `mypy src`.
+- Fixed all 82 mypy errors that had kept hosted CI red since 2026-09-17 (five root
+  causes, not 82 independent bugs: an invariant `list[object]` parameter, ten
+  unguarded optional `Path` dereferences, twenty-six loop variables mypy bound to
+  their first branch, four parameters that only needed `Sequence`, and a handful of
+  individual dereference/formatting fixes); no `type: ignore` and no `Any` were added.
+- Not independently re-measured at this gate (unchanged from 2026-09-01 unless noted
+  above): `python -m compileall -q src tests`, `node --check src/nemofold/web/app.js`,
+  `python -m build`, ruff format check, the Token Factory preflight, the synthetic HTTP
+  demo runtime, the OCI/Docker contract tests, the evidence-console UI tests, the
+  provider-neutral evidence core, the MCP stdio acceptance, and the Chrome readback.
+- The first "External evidence still open" item below (real Nebius Token Factory run)
+  was resolved the day after the 2026-09-01 gate: a real paid run completed
+  2026-09-02, committed and offline-reverifiable at `examples/proven-run/`
+  (`python -m nemofold verify-result examples/proven-run`). The remaining items in
+  that list (live provider acceptance, NemoClaw runtime proof, public deployment,
+  video upload, final Devpost readback) were not re-checked at this gate.
+
+## Gate 2026-09-01
 
 ## Local acceptance
 

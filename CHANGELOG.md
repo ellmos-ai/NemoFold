@@ -23,6 +23,22 @@ All notable changes to NemoFold are documented here.
 - Fixed all 82 mypy errors that had kept hosted CI red since 2026-09-17, plus the ruff
   findings in the metadata contract tests. CI now also type-checks for Linux and macOS
   and verifies the gate register against the committed evidence.
+- Corrected README.md, README_de.md, RELEASE_GATE.md, COMPETITION_CODE_MAP.md and
+  llms.txt to the measured state: `SUPPORTED_WORKFLOWS` registers 43 workflows, not the
+  34 (or, in older passages, 16) the docs previously claimed; the test suite runs 1082
+  passed / 1 skipped, not "740+ passed"; the Python/platform badges now name only what
+  CI actually runs (3.11, 3.12 on Ubuntu and Windows; macOS is type-checked, not run).
+  Documented the 16-of-18 acceptance gate register, its `nemofold acceptance-gates
+  --evidence-root .` command and fail-closed exit code, and the
+  `nemofold acceptance-evidence --work-dir <dir>` regeneration command in the README
+  (new subsections in Section 6 and Section 8, both languages). Added the thirteen
+  previously untabled workflows (`cost_timeline`, `subscription_reconcile`,
+  `medication_reconcile`, `database_reader`, `knowledge_composer`, `routine_query`,
+  `ocr_pipeline`, `document_qa`, `dossier`, `briefing`, `web_research`,
+  `bundle_completeness_check`, `print_action`) to the README workflow tables.
+  Corrected `docs/submission-readiness.md`, which had not been touched since
+  2026-08-30: the real Nebius Token Factory run (2026-09-02, `examples/proven-run/`)
+  was still listed as "OPEN and mandatory" there.
 
 ## 0.2.0 - 2026-09-18
 

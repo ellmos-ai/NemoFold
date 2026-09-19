@@ -107,3 +107,43 @@ the chunk-uniqueness rule, and binding the three usage counters while tolerating
 additive provider detail fields) plus the committed receipt chain in
 `examples/proven-run/`, which `python -m nemofold verify-result examples/proven-run`
 re-verifies offline. The package contains no secrets and no real personal data.
+
+The G02 medical-synopsis application gate hardening (canonical PDF-page binding,
+reviewed-page receipts, clinical-authority blocks) and the executable acceptance gate
+register that all eighteen gates report into are captured in the 16 commits from
+`8c80a1b` through `8affd23` (2026-09-16), classified NEW_CORE.
+The Ellmos use-case acceptance gates G01 and G03 through G16 - one commit per gate ID
+(tax document search, document intake/index sync, insurance registry, cost planning,
+subscription reconciliation, medication reconciliation, specialist database access,
+grounded document generation, routine/reminder query, OCR and knowledge indexing,
+contact export bridge, document QA and publication packaging, dossier/briefing,
+metawiki export, interrater agreement) - are captured in the 15 commits from `79115bd`
+through `5ad8f37` (2026-09-16), classified NEW_CORE. Nine of these gates ship a new
+`SUPPORTED_WORKFLOWS` entry - G05 `cost_timeline`, G06 `subscription_reconcile`, G07
+`medication_reconcile`, G08 `database_reader`, G09 `knowledge_composer`, G10
+`routine_query`, G11 `ocr_pipeline`, G13 `document_qa`, G14 `briefing` (`dossier` and
+`web_research` predate this series, from Wave two of the Document Services below); the
+other six - G01 (`corpus_query`, `folder_digest`), G03 (`folder_digest`,
+`smart_inbox`), G04 (`coverage_timeline`, `document_registry`, `folder_digest`), G12
+(`contact_monitor`, `controlled_email`, `document_registry`), G15 (`guide_compose`,
+`wiki_export`, `document_registry`) and G16 (`rater_race`, `document_registry`,
+`folder_digest`) - add acceptance evidence for already-registered workflows instead.
+The cinematic intro-video overlay and its registry/wizard/workflow-graph alignment for
+`briefing` and `document_qa` are captured in commits `e4d68bf` and `5e5c55d`
+(2026-09-17), classified NEW_CORE.
+The Pfad B discoverability and visual-architecture pass - 18-point bilingual Quick
+Navigation, the Shields.io badge suite, dual Mermaid diagrams, the comparative matrix,
+`THIRD_PARTY_LICENSES.md`, `MARKETING-LOG.txt`, and `tests/unit/test_metadata.py` - is
+captured in commit `9ca33fd` (2026-09-18, author login `lukisch`), classified
+NEW_CORE. The workflow and job-contract counts that commit introduced (740+ tests,
+34/16 workflows) reflected that day's measurement and are corrected in the commits
+below as the counts changed.
+Clearing all 82 mypy errors at their roots, promoting gates G01-G16 to `done` with
+committed re-hashable evidence under `examples/acceptance-evidence/`, the new
+`nemofold acceptance-evidence` command, the `.gitattributes` fix that stops line-ending
+normalization from invalidating hash-bound evidence, the CI steps that verify the gate
+register and type-check for Linux and macOS, and this documentation-parity pass
+(README/README_de, RELEASE_GATE, this file, `llms.txt`, `docs/submission-readiness.md`,
+CHANGELOG) bringing every workflow/test/gate count to the measured 2026-09-19 state -
+are captured in commits `9b58720` through the current `HEAD`, classified NEW_CORE and
+GENERATED_OR_TEST_DATA respectively.

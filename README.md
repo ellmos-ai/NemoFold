@@ -4,9 +4,9 @@ English | [Deutsch](README_de.md)
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-740%2B%20passed%20%7C%20100%25%20green-brightgreen.svg)](tests/)
-[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
-[![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS-lightgrey.svg)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-1082%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
+[![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-success.svg)](#5-governance--runtime-invariants)
 [![Security](https://img.shields.io/badge/security-RunAsInvoker%20%7C%20Non--Elevated-blue.svg)](THIRD_PARTY_LICENSES.md)
 [![Security SLA](https://img.shields.io/badge/security%20SLA-48h%20%2F%205d%20triage-blue.svg)](SECURITY.md)
@@ -63,7 +63,7 @@ corpus. The evidence contract does not change between them - only the worker doe
 | 3 | [Target Personas & Discoverability](#3-target-personas--discoverability) | 4 user personas ([PERSONA-01] to [PERSONA-04]) & high-intent search queries |
 | 4 | [Comparative Matrix vs. Alternatives](#4-comparative-matrix-vs-alternatives) | 10-dimension architectural matrix against 4 industry alternatives |
 | 5 | [Governance & Runtime Invariants](#5-governance--runtime-invariants) | Core security guarantees: INV-LOCAL-01 through INV-SLA-10 |
-| 6 | [Implemented Document Workflows](#6-implemented-document-workflows) | 34 production-ready workflows built from 4 shared primitives |
+| 6 | [Implemented Document Workflows](#6-implemented-document-workflows) | 43 production-ready workflows built from 4 shared primitives |
 | 7 | [Installation & Quick Start](#7-installation--quick-start) | Environment setup, editable install, and CLI verification |
 | 8 | [Offline Proof & Verification](#8-offline-proof--verification) | Local synthetic corpus verification, zero cloud proof, fail-closed path |
 | 9 | [Executing Real Local Jobs](#9-executing-real-local-jobs) | Single-command workflow execution with preview and rollback |
@@ -186,7 +186,7 @@ sequenceDiagram
 - **[PERSONA-04] Investigative Journalists, Researchers & Evidence Curators**
   - *Context:* Investigating massive document leaks, public records, and conflicting historical testimonies.
   - *Pain Point:* Manual cross-referencing is slow; conventional summarizers suppress dissenting voices and silently discard duplicate evidence.
-  - *Solution:* 34 specialized workflows including Fact Distill (deduplicates while archiving struck occurrences in a dedicated appendix) and Synopsis Merge (highlights conflicting narratives as explicit conflict blocks).
+  - *Solution:* 43 specialized workflows including Fact Distill (deduplicates while archiving struck occurrences in a dedicated appendix) and Synopsis Merge (highlights conflicting narratives as explicit conflict blocks).
 
 ### High-Intent Search Queries
 
@@ -212,7 +212,7 @@ sequenceDiagram
 | **4. Approval Gates** | **Multi-Tier (Local / Remote / Spend)** | Implicit Cloud Upload | N/A (No Automation) | Often Ungated Auto-Execution | `INV-GATE-04` |
 | **5. Package Sanitization** | **Path-Free / Hash-Verified Packages** | Raw File Transmission | N/A | Variable / Host Leaks Common | `INV-ISOL-05` |
 | **6. Attack Surface** | **Loopback-Only (127.0.0.1)** | Public Multi-Tenant SaaS | Local GUI Only | Often Exposed HTTP Endpoints | `INV-PROV-06` |
-| **7. Workflow Architecture** | **4 Primitives / 34 Workflows** | Monolithic Chat Interface | Keyword Search Index | Complex Dynamic Graphs | `INV-POLICY-07` |
+| **7. Workflow Architecture** | **4 Primitives / 43 Workflows** | Monolithic Chat Interface | Keyword Search Index | Complex Dynamic Graphs | `INV-POLICY-07` |
 | **8. Privilege Boundary** | **Unprivileged `RunAsInvoker`** | Browser Sandbox | Standard User Space | Often Demands Root/Sudo | `INV-RUNAS-08` |
 | **9. Auditability** | **Cryptographic SHA-256 Ledgers** | Proprietary Session Log | Minimal Plaintext Log | Transient Memory Dumps | `INV-DET-09` |
 | **10. Vulnerability SLA** | **48h Ack / 5d Triage Public SLA** | Enterprise Support Contract | Volunteer / Inactive | Best-Effort GitHub Issues | `INV-SLA-10` |
@@ -233,7 +233,7 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 | **INV-GATE-04** | Multi-Tier Explicit Approval Gates | File actions, external model transfers, cloud spend ceilings, and network exposure require explicit operator flags. | Verified in `tests/unit/test_gates.py` |
 | **INV-ISOL-05** | Path-Free Sanitized Packaging | Outbound packages strip host paths, secrets, symlinks, and unapproved files; preflight validates package before network transit. | Verified in `tests/unit/test_package_validator.py` |
 | **INV-PROV-06** | Provider-Neutral Loopback Surface | Pluggable local and remote backends; unauthenticated interfaces and Captain's Desk restricted strictly to loopback (127.0.0.1). | Verified in `tests/e2e/test_webapp.py` |
-| **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 34 document workflows; reusable voyage drafts adapt without model fine-tuning. | Verified in `tests/unit/test_primitives.py` |
+| **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 43 document workflows; reusable voyage drafts adapt without model fine-tuning. | Verified in `tests/unit/test_primitives.py` |
 | **INV-RUNAS-08** | Unprivileged User-Mode (`RunAsInvoker`) | Operates entirely under standard user privileges (`RunAsInvoker`); zero system daemon or administrative elevation required. | Verified in `THIRD_PARTY_LICENSES.md` |
 | **INV-DET-09** | Deterministic Artifacts & Ledgers | Deterministic SVG figures, structured reports, and cryptographic SHA-256 run ledgers guarantee reproducible audit trails. | Verified in `tests/unit/test_report_studio.py` |
 | **INV-SLA-10** | 48h Security & Triage SLA | Security vulnerability disclosures acknowledged within 48h; triage and remediation assessment completed within 5 business days. | Verified in `SECURITY.md` |
@@ -244,6 +244,12 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 <a id="implemented-document-workflows"></a><a id="implementierte-dokument-workflows"></a>
 <a id="what-is-implemented"></a>
 ## 6. Implemented Document Workflows
+
+`SUPPORTED_WORKFLOWS` registers 43 job contracts. The founding sixteen are below;
+Case Chronicle deep analysis adds seven more ([Section 13](#13-case-chronicle-deep-analysis)),
+the checking/comparing/composing set adds seven ([Section 15](#15-checking-comparing--composing)),
+and thirteen further gate-verified structured-source, web and specialist workflows
+are listed in the second table further down (16 + 7 + 7 + 13 = 43).
 
 | Workflow | Local result |
 |---|---|
@@ -263,6 +269,29 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 | Synopsis Merge | Section-wise merge of several documents with a source anchor per paragraph and disagreeing labels shown as conflict blocks instead of a silent choice |
 | Daily Arrivals | Comparison against a named snapshot with name, size, time and short content per new file, the owner where the platform can name one, and a task file you install yourself |
 | NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; proven by a real Token Factory run committed under `examples/proven-run/` |
+
+### Gate-verified structured-source, web & specialist workflows
+
+Thirteen more workflows were built against the Ellmos use-case acceptance gates
+(`G05`-`G14`, see [Section 8](#8-offline-proof--verification)) and structured/web
+sources ([Section 14](#14-structured-sources--controlled-output)); none had a
+table row before this pass.
+
+| Workflow | Local result |
+|---|---|
+| Cost Timeline (`cost_timeline`, G05) | Recurring and irregular costs planned from declared contract fields; an amount the sources leave open stays undetermined |
+| Subscription Reconcile (`subscription_reconcile`, G06) | Deterministic match between declared subscriptions and observed message/invoice evidence; price or status mismatches and ambiguous matches block rather than guess |
+| Medication Reconcile (`medication_reconcile`, G07) | Deterministic consolidation of medication plans across reports and discharge summaries; conflicting dosages or schedules stop for confirmation instead of being decided automatically |
+| Database Reader (`database_reader`, G08) | Strict read-only access to a declared specialist SQLite database under a schema allowlist, with mutation attempts rejected |
+| Knowledge Composer (`knowledge_composer`, G09) | Grounded documents (e.g. an ASCII CV, a support worksheet) generated from local knowledge sources, keeping generated structure separate from source evidence |
+| Routine Query (`routine_query`, G10) | Read-only cadence check against a local routine/reminder database; reports the next due date and states plainly that no background scheduler is installed |
+| OCR Pipeline (`ocr_pipeline`, G11) | Scanned-page detection, per-page OCR quality verification, deterministic duplicate/delta indexing; halts for review below the quality threshold |
+| Document QA (`document_qa`, G13) | Finished-document validation (format integrity, completeness, unreplaced template placeholders, SHA-256 preservation) and sealed publication packages |
+| Dossier (`dossier`, G14) | A cited reading list on a declared subject, assembled from gated web search results; states it is a reading list, not a finding |
+| Briefing (`briefing`, G14) | Cited web findings on a declared subject structured into facts, inferences and open uncertainties; a sparse source set yields a limited briefing instead of false completeness |
+| Web Research (`web_research`) | Gated web search behind server approval, per-call approval, adapter readiness and a pseudonymization preflight; keeps only results that carry a source address |
+| Bundle Completeness Check (`bundle_completeness_check`) | Reports from coverage alone whether every approved source was read and every required part produced, without judging content |
+| Print Action (`print_action`) | Hands one named file to the OS-registered print handler and records that printing, not the run, is the user's own step |
 
 The Analysis Lab also includes the local **Research Notebook** workspace. It keeps an
 investigation goal, approved roots, reusable questions/prompts, provider configuration,
@@ -313,6 +342,33 @@ python -m nemofold demo --input examples\synthetic-home --output run-reports\blo
 The normal demo creates a text/manifest/ZIP bundle, folder digest, context receipts,
 SQLite FTS index, Markdown/TXT/PDF/DOCX/ODT reports, and one run ledger. It moves and
 undoes a synthetic inbox file to prove reversibility.
+
+### Acceptance gate register
+
+16 of 18 internal Ellmos use-case acceptance gates (`G01`-`G18`) claim `done` in the
+shipped register, each backed by committed, re-hashable evidence: 444 files (1.8 MB)
+under `examples/acceptance-evidence/`, 476 files checked by the command below. `G17`
+and `G18` remain `not_supported`, with their boundary reasons recorded in the register
+itself.
+
+```powershell
+nemofold acceptance-gates --evidence-root .
+```
+
+Without `--evidence-root` the command fails closed with exit code 2
+(`done_gate_requires_evidence_root:G01`) by design: a `done` claim is unreadable
+without the files behind it, so it refuses to report a status it cannot verify rather
+than trusting the register text. Regenerate the evidence after a bundle or contract
+change with:
+
+```powershell
+nemofold acceptance-evidence --work-dir <dir>
+```
+
+This reruns all 16 gate bundles, exports only the files each receipt references (host
+paths replaced with an `<evidence-root>` token, hashes recomputed over the exported
+bytes) and rewrites the register; a gate whose bundle stops producing a verifiable
+receipt loses `done` instead of keeping a stale claim.
 
 <a id="9-executing-real-local-jobs"></a><a id="9-ausfuehrung-realer-lokaler-auftraege"></a>
 <a id="executing-real-local-jobs"></a><a id="ausfuehrung-realer-lokaler-auftraege"></a>
@@ -750,7 +806,7 @@ What stands in front changed, not the rooms. Use-case tiles are the primary obje
 filtered by topic tags, and a routine is simply a use case that carries a schedule and
 the derived `scheduled` tag — choosing that filter is what turns the porthole into the
 echo sounder and surfaces the last routine ledgers. The single instruments, meaning the
-sixteen job contracts on their own, live in one non-thematic registry with the engine
+43 job contracts on their own, live in one non-thematic registry with the engine
 room as their editor. Folders is the home of your folders: which ones are watched, what
 is actually on board, and the use cases bound to them. The overview itself stays
 deliberately bare — one headline, one sentence and the area cards — and folds the

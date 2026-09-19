@@ -6,9 +6,10 @@
 Version: 0.2.0
 Organization: ellmos-ai
 Umbrella: open-bricks
-Last-checked: 2026-09-18
-Tests: 740+ passed (100% green)
-Workflows: 34 registered document workflows
+Last-checked: 2026-09-19
+Tests: 1082 passed, 1 skipped
+Workflows: 43 registered document workflows
+Acceptance gates: 16 of 18 done, re-verifiable offline (`nemofold acceptance-gates --evidence-root .`)
 
 Primary documentation:
 - README.md (Bilingual 18-point Quick Navigation & Dual Mermaid Diagrams)
@@ -25,7 +26,7 @@ Primary documentation:
 - SECURITY.md (48h security acknowledgment / 5-day triage SLA)
 
 Current local implementation boundary:
-- Thirty-four workflow contracts share the strict job service.
+- Forty-three workflow contracts share the strict job service.
 - Saved voyages can be run through loopback HTTP, `nemofold voyage-run`, and
   `nemofold_run_voyage` MCP with the same root, policy, action, and model gates.
 - Runnable saved voyages require a `nemofold.voyage-receipt.v1` SHA-256 bound
@@ -64,7 +65,7 @@ Core Invariants & Trust Rules:
 - INV-GATE-04: Multi-tier explicit approval gates (local/remote/spend).
 - INV-ISOL-05: Path-free sanitized packaging; host paths stripped before transfer.
 - INV-PROV-06: Provider-neutral loopback surface; unauthenticated APIs restricted to 127.0.0.1.
-- INV-POLICY-07: Composable shared primitives; 34 workflows from 4 shared building blocks.
+- INV-POLICY-07: Composable shared primitives; 43 workflows from 4 shared building blocks.
 - INV-RUNAS-08: Unprivileged user-mode execution (RunAsInvoker); non-elevated.
 - INV-DET-09: Deterministic artifacts and cryptographic SHA-256 ledgers.
 - INV-SLA-10: Transparent disclosure and 48h SLA / 5-day triage response.

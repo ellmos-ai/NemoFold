@@ -4,9 +4,9 @@
 
 [![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-740%2B%20passed-brightgreen.svg)](tests/)
-[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13-blue.svg)](pyproject.toml)
-[![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey.svg)](pyproject.toml)
+[![Tests](https://img.shields.io/badge/tests-1082%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
+[![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20(CI)%20%7C%20macos%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20zero--egress-success.svg)](SECURITY.md)
 [![Security](https://img.shields.io/badge/security-RunAsInvoker-green.svg)](SECURITY.md)
 [![Security SLA](https://img.shields.io/badge/security%20SLA-48h%20%7C%205d-blue.svg)](SECURITY.md)
@@ -18,7 +18,7 @@
 [![LLM Ready](https://img.shields.io/badge/llms.txt-verified-brightgreen.svg)](llms.txt)
 
 > **Aus Dokumenten werden Daten. NemoFold macht Wissen nutzbar.**
-> *Private, evidenzorientierte Dokumenten-Intelligenz — 34 Workflows, Fail-Closed Security, lokale Invarianten & Zero-Egress.*
+> *Private, evidenzorientierte Dokumenten-Intelligenz — 43 Workflows, Fail-Closed Security, lokale Invarianten & Zero-Egress.*
 
 ---
 
@@ -63,7 +63,7 @@ großen Korpus richtet. Der Evidenzvertrag ändert sich dabei nicht — nur der 
 | 3 | [Zielgruppen & Auffindbarkeit](#3-zielgruppen--auffindbarkeit) | Anwenderprofile [PERSONA-01] bis [PERSONA-04] |
 | 4 | [Vergleichsmatrix gegenüber Alternativen](#4-vergleichsmatrix-gegenueber-alternativen) | 10 Dimensionen im Branchenvergleich |
 | 5 | [Governance & Laufzeit-Invarianten](#5-governance--laufzeit-invarianten) | `INV-LOCAL-01` bis `INV-SLA-10` |
-| 6 | [Implementierte Dokument-Workflows](#6-implementierte-dokument-workflows) | 34 verifizierte Workflows & Analyse-Kerne |
+| 6 | [Implementierte Dokument-Workflows](#6-implementierte-dokument-workflows) | 43 verifizierte Workflows & Analyse-Kerne |
 | 7 | [Installation & Schnellstart](#7-installation--schnellstart) | Setup, Virtual Environment & CLI |
 | 8 | [Offline-Nachweis & Verifikation](#8-offline-nachweis--verifikation) | Lokale Demo & Fail-Closed Validierung |
 | 9 | [Ausführung realer lokaler Aufträge](#9-ausfuehrung-realer-lokaler-auftraege) | Preview, Run, Ledger & Reversibilität |
@@ -101,7 +101,7 @@ flowchart TB
         DRAFT["Draft & Approval Inbox<br/>(Loopback-only)"]
     end
 
-    subgraph WORKFLOWS ["34 Dokumenten- & Analyse-Workflows"]
+    subgraph WORKFLOWS ["43 Dokumenten- & Analyse-Workflows"]
         INBOX["Smart Inbox & Retention"]
         EVIDENCE["Evidence Analyst & Case Chronicle"]
         STRUCTURED["Strukturierte Quellen<br/>(SQLite, XLSX, CSV)"]
@@ -217,7 +217,7 @@ NemoFold löst konkrete Herausforderungen von vier Hauptzielgruppen:
 | **Transparente Belege (`INV-PROOF-06`)** | Black Box | Keine Audit-Ledgers | Rohvektoren | **Kryptografische SHA-256 Run Ledgers** |
 | **Keine Privilegienerhöhung (`INV-PRIV-07`)** | Root/Service-Accounts | Benutzerabhängig | Server-Dienst | **Striktes `RunAsInvoker`, keine Elevation** |
 | **Offene Lizenzen (`INV-LIC-08`)** | Proprietär | Unterschiedlich | Teilweise Open Core | **100 % MIT / BSD Permissiv (`INV-LIC-08`)** |
-| **Workflows & Werkzeuge** | 1–3 generische Chats | 1 Chat-Interface | Keine Workflows | **34 integrierte Dokument-Workflows** |
+| **Workflows & Werkzeuge** | 1–3 generische Chats | 1 Chat-Interface | Keine Workflows | **43 integrierte Dokument-Workflows** |
 | **Sicherheits-SLA (`INV-SLA-10`)** | Undokumentiert | Community-best-effort | Kommerziell gestaffelt | **48h Antwort / 5 Tage Triage (`INV-SLA-10`)** |
 
 ---
@@ -246,6 +246,13 @@ Das Design von NemoFold basiert auf zehn unverletzlichen System-Invarianten:
 <a id="was-implementiert-ist"></a>
 ## 6. Implementierte Dokument-Workflows
 
+`SUPPORTED_WORKFLOWS` registriert 43 Jobverträge. Die gründenden sechzehn stehen
+unten; die Fallchronik-Tiefenanalyse ergänzt sieben weitere
+([Abschnitt 13](#13-fallchronik-tiefenanalyse)), das Prüf-/Vergleichs-/Komponier-Set
+sieben ([Abschnitt 15](#15-pruefen-vergleichen--komponieren)), und dreizehn weitere
+gate-geprüfte Struktur-, Web- und Spezial-Workflows stehen in der zweiten Tabelle
+weiter unten (16 + 7 + 7 + 13 = 43).
+
 | Workflow | Lokales Ergebnis |
 |---|---|
 | Smart Inbox | Dateiendungsbasierter Ablageplan, Alles-oder-nichts-Kollisionsgate, protokollierte Verschiebungen, Fortsetzen und Rückgängig |
@@ -264,6 +271,29 @@ Das Design von NemoFold basiert auf zehn unverletzlichen System-Invarianten:
 | Synopsis Merge | Abschnittsweise Zusammenführung mehrerer Dokumente mit Quellanker je Absatz; abweichende Labels erscheinen als Konfliktblöcke statt als stille Entscheidung |
 | Daily Arrivals | Vergleich gegen einen benannten Snapshot mit Name, Größe, Zeit und Kurzinhalt je neuer Datei, Eigentümer wo die Plattform ihn nennen kann, plus selbst zu installierende Aufgabendatei |
 | NemoClaw Platform & Proof | Pfadfreie, gehashte Auftragspakete mit Fail-closed-Adapter für die Nebius Token Factory und unabhängig prüfbarem Ergebnisbeleg; belegt durch einen echten Token-Factory-Lauf, eingecheckt unter `examples/proven-run/` |
+
+### Gate-geprüfte Struktur-, Web- & Spezial-Workflows
+
+Dreizehn weitere Workflows entstanden gegen die Ellmos-Usecase-Abnahmegates
+(`G05`–`G14`, siehe [Abschnitt 8](#8-offline-nachweis--verifikation)) und
+strukturierte/Web-Quellen ([Abschnitt 14](#14-strukturierte-quellen--kontrollierte-ausgabe));
+keiner davon hatte vor diesem Durchgang eine Tabellenzeile.
+
+| Workflow | Lokales Ergebnis |
+|---|---|
+| Cost Timeline (`cost_timeline`, G05) | Wiederkehrende und unregelmäßige Kosten aus erklärten Vertragsfeldern geplant; ein Betrag, den die Quellen offenlassen, bleibt unbestimmt |
+| Subscription Reconcile (`subscription_reconcile`, G06) | Deterministischer Abgleich zwischen erklärten Abonnements und beobachteten Nachrichten-/Rechnungsbelegen; Preis- oder Statusabweichungen und mehrdeutige Treffer blockieren statt zu raten |
+| Medication Reconcile (`medication_reconcile`, G07) | Deterministische Konsolidierung von Medikationsplänen über Arztbriefe und Entlassbriefe hinweg; widersprüchliche Dosierungen oder Zeitpläne stoppen zur Bestätigung statt automatisch entschieden zu werden |
+| Database Reader (`database_reader`, G08) | Strikt schreibgeschützter Zugriff auf eine erklärte Spezialisten-SQLite-Datenbank unter einer Schema-Allowlist; Änderungsversuche werden abgelehnt |
+| Knowledge Composer (`knowledge_composer`, G09) | Belegte Dokumente (z. B. ein ASCII-Lebenslauf, ein Unterstützungsarbeitsblatt) aus lokalen Wissensquellen generiert; erzeugte Struktur bleibt von der Quellevidenz getrennt |
+| Routine Query (`routine_query`, G10) | Schreibgeschützte Turnusprüfung gegen eine lokale Routinen-/Erinnerungsdatenbank; meldet das nächste Fälligkeitsdatum und sagt ausdrücklich, dass kein Hintergrund-Scheduler installiert ist |
+| OCR Pipeline (`ocr_pipeline`, G11) | Scan-Seiten-Erkennung, seitenweise OCR-Qualitätsprüfung, deterministische Duplikat-/Delta-Indizierung; hält bei Qualität unter dem Schwellenwert zur Prüfung an |
+| Document QA (`document_qa`, G13) | Prüfung fertiger Dokumente (Formatintegrität, Vollständigkeit, nicht ersetzte Vorlagenplatzhalter, SHA-256-Erhalt) und versiegelte Publikationspakete |
+| Dossier (`dossier`, G14) | Eine zitierte Leseliste zu einem erklärten Thema, zusammengestellt aus gate-geprüften Websuchergebnissen; nennt sich selbst Leseliste, keinen Befund |
+| Briefing (`briefing`, G14) | Zitierte Webfunde zu einem erklärten Thema, strukturiert in Fakten, Schlussfolgerungen und offene Unsicherheiten; ein dünner Quellenbestand ergibt ein begrenztes Briefing statt falscher Vollständigkeit |
+| Web Research (`web_research`) | Gate-geprüfte Websuche hinter Serverfreigabe, Einzelfreigabe, Adapter-Bereitschaft und Pseudonymisierungs-Preflight; behält nur Ergebnisse mit Quelladresse |
+| Bundle Completeness Check (`bundle_completeness_check`) | Meldet allein aus der Abdeckung, ob jede freigegebene Quelle gelesen und jeder Pflichtteil erzeugt wurde, ohne den Inhalt zu bewerten |
+| Print Action (`print_action`) | Übergibt eine benannte Datei an das betriebssystemseitig registrierte Druckprogramm und hält fest, dass das Drucken selbst Ihr Schritt ist, nicht der Lauf |
 
 Die gemeinsamen Kerne sind Laufzeit, Policy-/Privacy-Gate, Laufjournal und
 Wiederherstellung, Evidenz-Engine, providerneutraler Adapterkern, MCP-Oberfläche und
@@ -314,6 +344,34 @@ Die normale Demo erzeugt ein Text-/Manifest-/ZIP-Bündel, einen Ordner-Digest,
 Kontextbelege, einen SQLite-FTS-Index, Markdown-/TXT-/PDF-/DOCX-/ODT-Berichte und ein
 Laufjournal. Sie verschiebt eine synthetische Inbox-Datei und macht den Vorgang wieder
 rückgängig, um die Reversibilität zu belegen.
+
+### Abnahmegate-Register
+
+16 von 18 internen Ellmos-Usecase-Abnahmegates (`G01`–`G18`) tragen im ausgelieferten
+Register den Status `done`, jedes belegt durch committete, neu hashbare Evidenz: 444
+Dateien (1,8 MB) unter `examples/acceptance-evidence/`, 476 vom folgenden Befehl
+geprüfte Dateien. `G17` und `G18` bleiben `not_supported`, mit ihren Abgrenzungsgründen
+im Register selbst festgehalten.
+
+```powershell
+nemofold acceptance-gates --evidence-root .
+```
+
+Ohne `--evidence-root` scheitert der Befehl bewusst fail-closed mit Exit-Code 2
+(`done_gate_requires_evidence_root:G01`): Ein `done`-Anspruch ist ohne die Dateien
+dahinter nicht lesbar, also verweigert der Befehl einen Status zu melden, den er nicht
+prüfen kann, statt dem Registertext zu vertrauen. Nach einer Bundle- oder
+Vertragsänderung wird die Evidenz neu erzeugt mit:
+
+```powershell
+nemofold acceptance-evidence --work-dir <dir>
+```
+
+Das führt alle 16 Gate-Bundles erneut aus, exportiert nur die Dateien, die der
+jeweilige Receipt referenziert (Hostpfade durch das Token `<evidence-root>` ersetzt,
+Hashes über die exportierten Bytes neu berechnet), und schreibt das Register neu; ein
+Gate, dessen Bundle keinen prüfbaren Receipt mehr liefert, verliert `done` statt einen
+veralteten Anspruch zu behalten.
 
 <a id="9-executing-real-local-jobs"></a><a id="9-ausfuehrung-realer-lokaler-auftraege"></a>
 <a id="executing-real-local-jobs"></a><a id="ausfuehrung-realer-lokaler-auftraege"></a>
@@ -771,7 +829,7 @@ Verändert hat sich, was vorn steht, nicht die Räume. Usecase-Kacheln sind das
 Primärobjekt, thematisch über Tags filterbar, und eine Routine ist schlicht ein Usecase
 mit Zeitplan und dem abgeleiteten Tag `scheduled` — dieser Filter macht aus dem Bullauge
 das Echolot und holt die letzten Routineläufe nach vorn. Die Einzelinstrumente, also die
-sechzehn Jobverträge für sich, leben in einem nicht-thematischen Register, dessen Editor
+43 Jobverträge für sich, leben in einem nicht-thematischen Register, dessen Editor
 der Maschinenraum ist. Folders ist das Zuhause der Ordner: welche überwacht werden, was
 tatsächlich an Bord ist, und welche Usecases daran hängen. Die Übersicht selbst bleibt
 bewusst karg — eine Überschrift, ein Satz und die Bereichskarten — und faltet
