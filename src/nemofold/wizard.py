@@ -985,8 +985,8 @@ def plan_voyage(
     if not steps and not unavailable:
         notes.append(
             "This request could not be matched to an active workflow. The active work areas "
-            "are Document Center, Analysis Lab, Folder Routines, Artifact Studio and the "
-            "Command Bridge; naming a document task in one of them usually resolves it."
+            "are Folders, Processes & Workflows, Governance and Connections; naming a "
+            "document task in one of them usually resolves it."
         )
     elif not steps:
         notes.append(

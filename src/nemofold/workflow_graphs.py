@@ -173,7 +173,7 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "ODT artifacts with the same source references."
     ),
     "smart_inbox": (
-        "Open the Document Center, apply its Storage Policies to the complete inbox batch, check "
+        "Open the Folders area, apply its Storage Policies to the complete inbox batch, check "
         "collisions, and perform only explicitly authorized reversible actions."
     ),
     "storage_policy": (
