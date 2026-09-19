@@ -8,7 +8,7 @@ English | [Deutsch](README_de.md)
 
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1082%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1085%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-success.svg)](#5-governance--runtime-invariants)
@@ -296,9 +296,10 @@ table row before this pass.
 | Bundle Completeness Check (`bundle_completeness_check`) | Reports from coverage alone whether every approved source was read and every required part produced, without judging content |
 | Print Action (`print_action`) | Hands one named file to the OS-registered print handler and records that printing, not the run, is the user's own step |
 
-The Analysis Lab also includes the local **Research Notebook** workspace. It keeps an
-investigation goal, approved roots, reusable questions/prompts, provider configuration,
-and a trail of verified run ledgers together without storing API keys or approvals.
+The Registry tab under Processes & Workflows also holds the local **Research Notebook**
+workspace. It keeps an investigation goal, approved roots, reusable questions/prompts,
+provider configuration, and a trail of verified run ledgers together without storing
+API keys or approvals.
 
 The shared cores are the runtime, policy/privacy gate, run ledger/recovery, evidence
 engine, provider adapter core, MCP surface, and artifact export. Local extraction
@@ -308,7 +309,7 @@ unreadable files remain visible as coverage gaps.
 Cloud spend, uploads, live NemoClaw/Nebius execution, and further Devpost changes
 remain separate human approval gates.
 
-![NemoFold Captain Nemo console](docs/media/nemofold-console.png)
+![NemoFold console, Processes & Workflows: the use-case library with saved voyages and the shipped specialists](docs/media/nemofold-console.png)
 
 <a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
 <a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
@@ -829,6 +830,8 @@ intake, Controlled Email drafts, the source-grounded Contact Monitor, determinis
 bundle preparation, privacy preflight, Evidence Analyst, reusable prompt sets and
 persistent Research Notebooks. A model can prepare the same settings for browser review
 through `draft-save`, MCP, or the loopback draft API; approvals are always reset.
+
+![NemoFold console, Governance: the gates, approved roots and budget ceiling the server was started with](docs/media/nemofold-console-governance.png)
 
 ### Rules and policies
 

@@ -5,7 +5,7 @@
 - `python -m ruff check src tests`: pass.
 - `python -m mypy src`: pass for 93 source files, and separately with
   `--platform linux` and `--platform darwin`: 0 errors each.
-- `python -m pytest -q`: 1082 passed, 1 skipped (the same Windows privilege-dependent
+- `python -m pytest -q`: 1085 passed, 1 skipped (the same Windows privilege-dependent
   symlink test in `tests/e2e/test_webapp.py` as the 2026-09-01 gate below).
 - `nemofold acceptance-gates --evidence-root .`: 16 of 18 registered Ellmos use-case
   acceptance gates (`G01`-`G18`) claim `done`, each re-verified against committed

@@ -8,7 +8,7 @@
 
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1082%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1085%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20(CI)%20%7C%20macos%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20zero--egress-success.svg)](SECURITY.md)
@@ -298,6 +298,11 @@ keiner davon hatte vor diesem Durchgang eine Tabellenzeile.
 | Bundle Completeness Check (`bundle_completeness_check`) | Meldet allein aus der Abdeckung, ob jede freigegebene Quelle gelesen und jeder Pflichtteil erzeugt wurde, ohne den Inhalt zu bewerten |
 | Print Action (`print_action`) | Übergibt eine benannte Datei an das betriebssystemseitig registrierte Druckprogramm und hält fest, dass das Drucken selbst Ihr Schritt ist, nicht der Lauf |
 
+Der Reiter Registry unter Processes & Workflows enthält außerdem den lokalen
+**Research-Notebook**-Arbeitsbereich. Er hält Untersuchungsziel, freigegebene Wurzeln,
+wiederverwendbare Fragen/Prompts, Provider-Konfiguration und die Spur verifizierter
+Laufjournale zusammen, ohne API-Schlüssel oder Freigaben zu speichern.
+
 Die gemeinsamen Kerne sind Laufzeit, Policy-/Privacy-Gate, Laufjournal und
 Wiederherstellung, Evidenz-Engine, providerneutraler Adapterkern, MCP-Oberfläche und
 Artefaktexport. Die lokale Extraktion unterstützt Textdateien, JSON, CSV, HTML, PDF,
@@ -307,7 +312,7 @@ Abdeckungslücken erhalten.
 Cloud-Kosten, Uploads, echte NemoClaw-/Nebius-Ausführung und weitere Änderungen an
 Devpost bleiben getrennte menschliche Freigabegates.
 
-![NemoFold Captain-Nemo-Konsole](docs/media/nemofold-console.png)
+![NemoFold-Konsole, Processes & Workflows: die Use-Case-Bibliothek mit gespeicherten Voyages und den mitgelieferten Spezialisten](docs/media/nemofold-console.png)
 
 <a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
 <a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
@@ -854,6 +859,8 @@ Bundle-Vorbereitung, Datenschutz-Preflight, Evidence Analyst, wiederverwendbare
 Prompt-Sammlungen und persistente Research Notebooks. Ein Modell kann dieselben
 Einstellungen über `draft-save`, MCP oder die Loopback-Draft-API zur Browserprüfung
 vorbereiten; Freigaben werden dabei immer zurückgesetzt.
+
+![NemoFold-Konsole, Governance: Gates, freigegebene Wurzeln und Budgetgrenze, mit denen der Server gestartet wurde](docs/media/nemofold-console-governance.png)
 
 ### Regeln und Policies
 
