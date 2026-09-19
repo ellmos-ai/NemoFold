@@ -1,0 +1,49 @@
+{
+  "actions": [
+    "routine_query",
+    "insufficient_records_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\insufficient_step1\\inventory\\g10_insuf_01.json",
+      "sha256": "7f82e12b0b6cedd5d7682d9f886d162ef1ae68f020e98242f4c117a9c3d6cfa5",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\work\\insufficient_step1\\g10_insuf_01.needs-user-input.json",
+      "sha256": "acfc667b6ee194965cc2927d985527ab79d0cf7163450b48b94e43451b8316d7",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_07981d2d760c8d46"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "insufficient_routine_records:0_min_1"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_4a1a70ee620b6379de07e111e9a88f588df136aabf57ba7f64980c61a1fe22d5",
+  "metadata": {
+    "cloud_proof": false,
+    "found_routines": 0,
+    "min_required": 1,
+    "source_count": 1
+  },
+  "run_id": "g10_insuf_01",
+  "status": "blocked",
+  "workflow": "routine_query"
+}

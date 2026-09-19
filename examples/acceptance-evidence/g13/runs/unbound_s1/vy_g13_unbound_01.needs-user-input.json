@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "unbound_fields",
+      "kind": "text",
+      "prompt": "Im Dokument wurden 4 unersetzte Platzhalter gefunden. Bitte die Werte vor der Publikation ergaenzen.",
+      "why": "Publikation von Dokumenten mit ungebundenen Template-Tokens ist verboten."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "document_qa"
+}

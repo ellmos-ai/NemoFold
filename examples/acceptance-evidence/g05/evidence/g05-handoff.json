@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\outputs\\positive_02_timeline\\g05_pos_02_cost_plan.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g05_pos_02",
+  "producer_workflow": "cost_timeline",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "fdf3e36bd73221a0eebee80c2bb1eb3acd7f37d0ebf8d254e912d7a81888a3e1",
+  "status": "verified"
+}

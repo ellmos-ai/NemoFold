@@ -1,0 +1,10 @@
+Versicherungsschein
+Versicherungsnehmer: Alex Beispiel
+Police: HR-2023-4102
+Tarif: Hausrat Premium
+Deckung ab: 15.03.2023
+Deckung bis: unbestimmt
+Abdeckung: Feuer, Leitungswasser, Sturm, Hagel, Einbruchdiebstahl
+Kosten: 144,00 EUR pro Jahr
+Turnus: jährlich
+Kontakt: info@hausrat-schadenservice.de

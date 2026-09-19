@@ -1,0 +1,6 @@
+{
+  "consumer": "rater_race",
+  "producer": "document_registry",
+  "status": "verified",
+  "topic": "frageboegen_bestand"
+}

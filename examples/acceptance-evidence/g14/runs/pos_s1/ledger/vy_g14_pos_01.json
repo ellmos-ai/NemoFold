@@ -1,0 +1,58 @@
+{
+  "actions": [
+    "searched 2 query(ies) through tavily and kept 2 result(s), each with its address"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\pos_s1\\inventory\\vy_g14_pos_01.json",
+      "sha256": "3eaa27ae52c805a15c97f33198dca0a30fc4d0e67ceff795289240a83a6bfc6e",
+      "status": "written"
+    },
+    {
+      "format": "web-research",
+      "path": "<evidence-root>\\runs\\pos_s1\\vy_g14_pos_01.web-research.json",
+      "sha256": "c5b3c98054aed970ae4e341fb68ce34830eec5cce8f0fe6b30aa162204092b9d",
+      "status": "written"
+    },
+    {
+      "format": "web-notes",
+      "path": "<evidence-root>\\runs\\pos_s1\\vy_g14_pos_01_web-notes.md",
+      "sha256": "0aea59e641af8db6c3bc6259d76d3c84e0e6c9c58c6de159f8ab8a4294b5557f",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_4f7ea57a393983d1"
+    ]
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_adc242c25484d887ea4f5e0936140ce6646470d3e1e790564774c21ebc4fc592",
+  "metadata": {
+    "citation_note": "Every line here came back from a search with the address it came from. Nothing was summarised into a claim without one.",
+    "cloud_proof": false,
+    "reads_local_sources": false,
+    "result_count": 2,
+    "source_count": 1,
+    "web_adapter": "tavily",
+    "web_query_count": 2,
+    "web_search_allowed": true,
+    "web_search_blocked_reasons": [],
+    "web_transfer_performed": true
+  },
+  "run_id": "vy_g14_pos_01",
+  "status": "executed",
+  "workflow": "web_research"
+}

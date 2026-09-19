@@ -1,0 +1,75 @@
+{
+  "actions": [
+    "inventory_scanned",
+    "sections_merged",
+    "conflicts_marked",
+    "coverage_recorded"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\positive\\out\\synopsis\\inventory\\g02_acceptance_positive_02.json",
+      "sha256": "ccee3739b6ad129c7ffb83d84b8ad293d851c7726b91adbb7d9c2091bfa729b3",
+      "status": "written"
+    },
+    {
+      "format": "synopsis",
+      "path": "<evidence-root>\\positive\\out\\synopsis\\g02_acceptance_positive_02.synopsis.md",
+      "sha256": "3058fff9ef4274ae858ea59f3f92d54178c34c71a7a9f9b1d2c568bc2a870940",
+      "status": "written"
+    },
+    {
+      "format": "markdown",
+      "path": "<evidence-root>\\positive\\out\\synopsis\\g02_acceptance_positive_02_synopsis.md",
+      "sha256": "263b57643d9d37599089575cf37ca7a9e0168f538ff8b45992a5bc4d1f897a9f",
+      "status": "written"
+    },
+    {
+      "format": "pdf",
+      "path": "<evidence-root>\\positive\\out\\synopsis\\g02_acceptance_positive_02_synopsis.pdf",
+      "sha256": "f005a3936dd3bba6c8c883bd3be3568419f6340ab79469a3478a63c61195ffa6",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 2,
+    "read_sources": 2,
+    "total_sources": 2,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": []
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_0955e03c7cfb40ec5cb16b1dfbe5dceed53e97c1b395ce33c1d14ff16f1a7575",
+  "metadata": {
+    "application_domain": "medical_reports",
+    "cloud_proof": false,
+    "conflict_labels": [
+      "arzt",
+      "befund",
+      "kontakt"
+    ],
+    "conflicts": 3,
+    "medical_application_domain": "medical_reports",
+    "medical_authority": "not_granted",
+    "medical_purpose": "source_summary",
+    "merged_source_ids": [
+      "src_3566f5f70e6c9854",
+      "src_4a3021e7498a2ef3"
+    ],
+    "paragraphs": 12,
+    "sections": [
+      "Tabelle bericht"
+    ],
+    "source_count": 2
+  },
+  "run_id": "g02_acceptance_positive_02",
+  "status": "executed",
+  "workflow": "synopsis_merge"
+}

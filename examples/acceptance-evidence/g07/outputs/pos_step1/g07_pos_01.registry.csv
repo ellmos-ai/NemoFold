@@ -1,0 +1,3 @@
+source_id,display_name,Medikament,Medikament [source],Wirkstoff,Wirkstoff [source],Dosierung,Dosierung [source],Einnahme,Einnahme [source],Hinweis,Hinweis [source]
+src_8383efaba204e87f,01_arztbrief_hausarzt.txt,L-Thyroxin Henning,src_8383efaba204e87f:4,Levothyroxin-Natrium,src_8383efaba204e87f:5,75 µg,src_8383efaba204e87f:6,1-0-0-0 morgens nüchtern,src_8383efaba204e87f:7,Hypothyreose,src_8383efaba204e87f:8
+src_8ef8d0a6e07aec01,02_klinikbericht_entlassung.txt,L-Thyroxin Henning,src_8ef8d0a6e07aec01:4,Levothyroxin-Natrium,src_8ef8d0a6e07aec01:5,100 µg,src_8ef8d0a6e07aec01:6,1-0-0-0 morgens nüchtern,src_8ef8d0a6e07aec01:7,Hypothyreose,src_8ef8d0a6e07aec01:8

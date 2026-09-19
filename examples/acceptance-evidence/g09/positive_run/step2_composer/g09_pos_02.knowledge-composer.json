@@ -1,0 +1,68 @@
+{
+  "audit_notice": "QUELLEN-EVIDENZ: Alle aufgeführten Fachinhalte, Stationen und Methoden sind lückenlos durch die angegebenen Quellendokumente belegt. Unbelegte Aussagen oder freie Fakten-Erfindungen sind vertraglich ausgeschlossen.",
+  "cited_source_ids": [
+    "src_7cf1a4798e8a2033",
+    "src_98dfb98e18c47521"
+  ],
+  "client_context": {
+    "contact": "erika@example.org",
+    "name": "Erika Muster"
+  },
+  "items": [
+    {
+      "employer": "Beta Solutions AG",
+      "line": 2,
+      "period": "2023 - heute",
+      "position": "Lead Software Architect",
+      "quote": "Unternehmen: Beta Solutions AG",
+      "source_id": "src_7cf1a4798e8a2033",
+      "tasks": [
+        "Architektur modularer Backend-Plattformen und Code-Governance."
+      ]
+    },
+    {
+      "employer": "Alpha Engineering GmbH",
+      "line": 2,
+      "period": "2020 - 2023",
+      "position": "Senior Systems Engineer",
+      "quote": "Arbeitgeber: Alpha Engineering GmbH",
+      "source_id": "src_98dfb98e18c47521",
+      "tasks": [
+        "Entwicklung ausfallsicherer Verteilungsdienste und API-Gateways."
+      ]
+    }
+  ],
+  "profile": "cv_ascii",
+  "run_id": "g09_pos_02",
+  "schema": "nemofold.knowledge-composer.v1",
+  "source_grounding_verified": true,
+  "stations": [
+    {
+      "employer": "Beta Solutions AG",
+      "line": 2,
+      "period": "2023 - heute",
+      "position": "Lead Software Architect",
+      "quote": "Unternehmen: Beta Solutions AG",
+      "source_id": "src_7cf1a4798e8a2033",
+      "tasks": [
+        "Architektur modularer Backend-Plattformen und Code-Governance."
+      ]
+    },
+    {
+      "employer": "Alpha Engineering GmbH",
+      "line": 2,
+      "period": "2020 - 2023",
+      "position": "Senior Systems Engineer",
+      "quote": "Arbeitgeber: Alpha Engineering GmbH",
+      "source_id": "src_98dfb98e18c47521",
+      "tasks": [
+        "Entwicklung ausfallsicherer Verteilungsdienste und API-Gateways."
+      ]
+    }
+  ],
+  "tasks": [],
+  "title": "Curriculum Vitae - Erika Muster",
+  "total_knowledge_items": 2,
+  "total_stations": 2,
+  "total_tasks": 0
+}

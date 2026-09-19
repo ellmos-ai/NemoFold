@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\positive\\out\\timeline\\g04_acceptance_positive_02_coverage.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g04_acceptance_positive_02",
+  "producer_workflow": "coverage_timeline",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "543488fbe9dcac474ea1822d478ab46d96ca1995fc3f0825b0088e5f29587548",
+  "status": "verified"
+}

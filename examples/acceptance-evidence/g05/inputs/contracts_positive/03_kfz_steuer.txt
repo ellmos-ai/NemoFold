@@ -1,0 +1,6 @@
+Vertrag: KFZ-Steuer Hauptzollamt
+Betrag: 148,00 €
+Turnus: jährlich
+Nächste Fälligkeit: 2026-10-20
+Kategorie: Sondereffekt
+Kontakt: kfz@zoll-beispiel.de

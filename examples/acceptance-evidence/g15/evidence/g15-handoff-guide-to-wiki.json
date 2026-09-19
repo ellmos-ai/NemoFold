@@ -1,0 +1,6 @@
+{
+  "consumer": "wiki_export",
+  "producer": "guide_compose",
+  "status": "verified",
+  "topic": "metawiki_autismus"
+}

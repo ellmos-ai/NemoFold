@@ -1,0 +1,121 @@
+{
+  "conflicts": [
+    {
+      "description": "Widersprüchliche Dosierungsangaben für 'L-Thyroxin Henning': src_8383efaba204e87f (kein Datum): 75 µg; src_8ef8d0a6e07aec01 (kein Datum): 100 µg",
+      "kind": "conflicting_dosages",
+      "medication_name": "L-Thyroxin Henning",
+      "resolution_note": "Dr. Weber telefonisch am 05.09.2026 bestätigt",
+      "resolved": true,
+      "resolved_by": "user_confirmed"
+    }
+  ],
+  "duplicate_active_ingredients": 0,
+  "medical_non_authority_notice": "HINWEIS: Dieser konsolidierte Medikationsplan dient ausschließlich der strukturierten Dokumentenübersicht und Information. Er ersetzt keine ärztliche oder pharmazeutische Beratung. Änderungen oder Festlegungen von Dosierungen dürfen ausschließlich durch medizinisches Fachpersonal erfolgen.",
+  "medications": [
+    {
+      "active_ingredient": "Levothyroxin-Natrium",
+      "conflict": {
+        "description": "Widersprüchliche Dosierungsangaben für 'L-Thyroxin Henning': src_8383efaba204e87f (kein Datum): 75 µg; src_8ef8d0a6e07aec01 (kein Datum): 100 µg",
+        "kind": "conflicting_dosages",
+        "resolution_note": "Dr. Weber telefonisch am 05.09.2026 bestätigt",
+        "resolved": true
+      },
+      "dosage": "100 µg",
+      "dosage_numeric": 100.0,
+      "dosage_unit": "µg",
+      "indication": "Hypothyreose",
+      "name": "L-Thyroxin Henning",
+      "schedule": "1-0-0-0 morgens nüchtern",
+      "sources": [
+        {
+          "date": null,
+          "doctor": null,
+          "line": 4,
+          "quote": "Medikament: L-Thyroxin Henning · Wirkstoff: Levothyroxin-Natrium · Dosierung: 75 µg · Einnahme: 1-0-0-0 morgens nüchtern · Indikation: Hypothyreose · Status: laufend",
+          "source_id": "src_8383efaba204e87f"
+        },
+        {
+          "date": null,
+          "doctor": null,
+          "line": 4,
+          "quote": "Medikament: L-Thyroxin Henning · Wirkstoff: Levothyroxin-Natrium · Dosierung: 100 µg · Einnahme: 1-0-0-0 morgens nüchtern · Indikation: Hypothyreose · Status: laufend",
+          "source_id": "src_8ef8d0a6e07aec01"
+        }
+      ],
+      "status": "laufend"
+    },
+    {
+      "active_ingredient": "Ramipril",
+      "conflict": null,
+      "dosage": "5 mg",
+      "dosage_numeric": 5.0,
+      "dosage_unit": "mg",
+      "indication": "Hypertonie",
+      "name": "Ramipril-ratiopharm",
+      "schedule": "1-0-0-0 morgens",
+      "sources": [
+        {
+          "date": null,
+          "doctor": null,
+          "line": 11,
+          "quote": "Medikament: Ramipril-ratiopharm · Wirkstoff: Ramipril · Dosierung: 5 mg · Einnahme: 1-0-0-0 morgens · Indikation: Hypertonie · Status: laufend",
+          "source_id": "src_8383efaba204e87f"
+        },
+        {
+          "date": null,
+          "doctor": null,
+          "line": 11,
+          "quote": "Medikament: Ramipril-ratiopharm · Wirkstoff: Ramipril · Dosierung: 5 mg · Einnahme: 1-0-0-0 morgens · Indikation: Hypertonie · Status: laufend",
+          "source_id": "src_8ef8d0a6e07aec01"
+        }
+      ],
+      "status": "laufend"
+    },
+    {
+      "active_ingredient": "Pantoprazol",
+      "conflict": null,
+      "dosage": "20 mg",
+      "dosage_numeric": 20.0,
+      "dosage_unit": "mg",
+      "indication": "Magenschutz",
+      "name": "Pantoprazol TAD",
+      "schedule": "0-0-1-0 abends",
+      "sources": [
+        {
+          "date": null,
+          "doctor": null,
+          "line": 18,
+          "quote": "Medikament: Pantoprazol TAD · Wirkstoff: Pantoprazol · Dosierung: 20 mg · Einnahme: 0-0-1-0 abends · Indikation: Magenschutz · Status: laufend",
+          "source_id": "src_8383efaba204e87f"
+        }
+      ],
+      "status": "laufend"
+    },
+    {
+      "active_ingredient": "Metforminhydrochlorid",
+      "conflict": null,
+      "dosage": "1000 mg",
+      "dosage_numeric": 1000.0,
+      "dosage_unit": "mg",
+      "indication": "Diabetes mellitus Typ 2",
+      "name": "Metformin HEXAL",
+      "schedule": "1-0-1-0 zu den Mahlzeiten",
+      "sources": [
+        {
+          "date": null,
+          "doctor": null,
+          "line": 18,
+          "quote": "Medikament: Metformin HEXAL · Wirkstoff: Metforminhydrochlorid · Dosierung: 1000 mg · Einnahme: 1-0-1-0 zu den Mahlzeiten · Indikation: Diabetes mellitus Typ 2 · Status: laufend",
+          "source_id": "src_8ef8d0a6e07aec01"
+        }
+      ],
+      "status": "laufend"
+    }
+  ],
+  "resolved_conflicts": 1,
+  "schema": "nemofold.medication-reconciliation.v1",
+  "title": "Konsolidierter Medikationsplan",
+  "total_medications": 4,
+  "total_sources": 2,
+  "unresolved_conflicts": 0
+}

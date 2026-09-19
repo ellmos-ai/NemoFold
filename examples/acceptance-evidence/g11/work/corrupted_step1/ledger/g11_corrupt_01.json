@@ -1,0 +1,41 @@
+{
+  "actions": [
+    "ocr_pipeline",
+    "error_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\corrupted_step1\\inventory\\g11_corrupt_01.json",
+      "sha256": "4ff46ba5f84f7a99b12c17ed3f886c227c6242be00a1b42230f6bc512674cf3c",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_c92563bab1b3286e"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "ocr_pipeline_execution_error:corrupted_or_unreadable_pdf:corrupted.pdf:invalid or encrypted PDF document: corrupted.pdf"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_c4fec31791ec48d4ab6da38f29b6c59556fa2c5d61bf0264377aa48d2721d496",
+  "metadata": {
+    "cloud_proof": false,
+    "source_count": 1
+  },
+  "run_id": "g11_corrupt_01",
+  "status": "blocked",
+  "workflow": "ocr_pipeline"
+}

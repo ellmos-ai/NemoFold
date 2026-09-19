@@ -1,0 +1,46 @@
+{
+  "actions": [
+    "inventory_scanned",
+    "pdf_page_expectation_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\negative\\out\\register\\inventory\\g02_acceptance_missing_page_01.json",
+      "sha256": "14e341d94ca36ef91d1f877a16ef02d300e720db45d2933f9777ae6ae7abebae",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_3566f5f70e6c9854"
+    ]
+  },
+  "errors": [
+    "expected_pdf_page_gap:01-endokrinologie.pdf"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_ec4da015668b85cb96b9253cb35fe6e881dedd7ebdbb26b03de1da3cc9257340",
+  "metadata": {
+    "cloud_proof": false,
+    "expected_pdf_pages": {
+      "01-endokrinologie.pdf": 2
+    },
+    "pdf_page_reviews_declared": false,
+    "require_complete_pdf_inventory": true,
+    "source_count": 1
+  },
+  "run_id": "g02_acceptance_missing_page_01",
+  "status": "blocked",
+  "workflow": "document_registry"
+}

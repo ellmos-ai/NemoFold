@@ -1,0 +1,5 @@
+Abo: Streaming Plus
+Betrag: 14,99 €
+Turnus: monatlich
+Status: aktiv
+Konto: ACC-STREAM-01

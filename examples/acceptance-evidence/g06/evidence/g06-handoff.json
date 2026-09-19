@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\outputs\\positive_02_reconcile\\g06_pos_02_reconciliation_report.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g06_pos_02",
+  "producer_workflow": "subscription_reconcile",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "bc5f0d97ab4f32c62f1348fcaddeec3bbc6e736024e2b8194dd241d9399c8159",
+  "status": "verified"
+}

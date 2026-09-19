@@ -1,0 +1,52 @@
+{
+  "actions": [
+    "compose_planned",
+    "template_engine_unavailable"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\template_s1\\inventory\\vy_g13_template_engine_01.json",
+      "sha256": "34c5ec5388141a8be5c5fe712a41ce9c341588c27f706885a5fbfaee4c400dd9",
+      "status": "written"
+    },
+    {
+      "format": "document-compose-blocked",
+      "path": "<evidence-root>\\runs\\template_s1\\vy_g13_template_engine_01.document-compose.json",
+      "sha256": "ee48ce9a6a09386afd907251db914e0a0848e0ebc07345a161a9cb84d39f3829",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_3cf204cfe8f8a430"
+    ]
+  },
+  "errors": [
+    "template_engine_unavailable"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_3670b68314aea3e7b0be1c6d8910ac5a5389f6a1f252ed530bd4b4c684ad304f",
+  "metadata": {
+    "cloud_proof": false,
+    "planned_documents": 1,
+    "source_count": 1,
+    "template_engine": "report-forge",
+    "template_engine_available": false,
+    "template_engine_note": "the optional 'templates' extra is not installed, so no template can be filled. Install it with: pip install \"nemofold[templates]\" (No module named 'report_forge')",
+    "template_engine_version": ""
+  },
+  "run_id": "vy_g13_template_engine_01",
+  "status": "blocked",
+  "workflow": "document_compose"
+}

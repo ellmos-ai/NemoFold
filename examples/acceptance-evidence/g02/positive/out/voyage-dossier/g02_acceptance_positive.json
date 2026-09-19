@@ -1,0 +1,140 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": true,
+  "model_authority": "links_win",
+  "name": "Schilddr\u00fcse \u00b7 fiktiver Verlauf",
+  "run_id": "g02_acceptance_positive",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:42.053474+00:00",
+  "status": "executed",
+  "steps": [
+    {
+      "artifact_count": 4,
+      "errors": [],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\positive\\out\\register\\ledger\\g02_acceptance_positive_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\positive\\out\\register",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g02_acceptance_positive_01",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "document_registry"
+    },
+    {
+      "artifact_count": 4,
+      "errors": [],
+      "handoff": {
+        "application_domain": "medical_reports",
+        "consumer_source_scope": {
+          "reviewed_pdf_page_count": 1,
+          "source_tables": [
+            "bericht"
+          ],
+          "structured_sources": false
+        },
+        "format": "document-registry",
+        "mode": "selected_sources",
+        "path": "<evidence-root>\\positive\\out\\register\\g02_acceptance_positive_01.registry.json",
+        "privacy_mode": "local_only",
+        "producer_run_id": "g02_acceptance_positive_01",
+        "producer_workflow": "document_registry",
+        "reviewed_page_receipts": {
+          "src_3566f5f70e6c9854": [
+            {
+              "content_complete": true,
+              "method": "manual",
+              "page": 2,
+              "reviewed_at": "2026-09-16T07:50:00+02:00",
+              "reviewer": "human:acceptance-fixture-reviewer",
+              "text_sha256": "b4a633797891743280d813cf6fcec5e83674ace35d19b428678520611e2de535"
+            }
+          ]
+        },
+        "schema": "nemofold.artifact-handoff.v1",
+        "selected_source_ids": [
+          "src_3566f5f70e6c9854",
+          "src_67e6377d72eacdfd"
+        ],
+        "selected_source_lines": {
+          "src_4a3021e7498a2ef3": [
+            5
+          ]
+        },
+        "selected_source_sha256": {
+          "src_3566f5f70e6c9854": "d6ba7479cc3ecb189fbd02eba236bb840b98e0d08c46cc6813bc065befb18313",
+          "src_67e6377d72eacdfd": "8d045050adeb4b9cd7418b6c7bd0734884d750042b0ad0c446307f4690dd70d5"
+        },
+        "sha256": "5d9ac89376dbdb2b4ad8c4c00f4382d171d3e133d5213278c2284eca44829381",
+        "source_lineage": [
+          {
+            "consumer_source_id": "src_3566f5f70e6c9854",
+            "path": "<evidence-root>\\positive\\inputs\\fictional-doctor-folder\\01-endokrinologie.pdf",
+            "producer_source_id": "src_3566f5f70e6c9854",
+            "sha256": "d6ba7479cc3ecb189fbd02eba236bb840b98e0d08c46cc6813bc065befb18313"
+          },
+          {
+            "consumer_source_id": "src_4a3021e7498a2ef3",
+            "path": "<evidence-root>\\positive\\inputs\\fictional-doctor-folder\\03-verlauf.sqlite",
+            "producer_source_id": "src_67e6377d72eacdfd",
+            "sha256": "8d045050adeb4b9cd7418b6c7bd0734884d750042b0ad0c446307f4690dd70d5"
+          }
+        ],
+        "source_scope": {
+          "require_complete_pdf_inventory": true,
+          "reviewed_pdf_page_count": 1,
+          "source_tables": [
+            "bericht"
+          ],
+          "structured_sources": false
+        },
+        "status": "verified",
+        "topic_filter": [
+          "Schilddr\u00fcse"
+        ],
+        "verified_pdf_pages": [
+          {
+            "display_name": "01-endokrinologie.pdf",
+            "expected_pages": 2,
+            "extractable_text_pages": 2,
+            "physical_pages": 2,
+            "producer_source_id": "src_3566f5f70e6c9854",
+            "reviewed_pages": [
+              {
+                "content_complete": true,
+                "method": "manual",
+                "page": 2,
+                "reviewed_at": "2026-09-16T07:50:00+02:00",
+                "reviewer": "human:acceptance-fixture-reviewer",
+                "text_sha256": "b4a633797891743280d813cf6fcec5e83674ace35d19b428678520611e2de535"
+              }
+            ],
+            "sha256": "d6ba7479cc3ecb189fbd02eba236bb840b98e0d08c46cc6813bc065befb18313"
+          }
+        ]
+      },
+      "ledger_path": "<evidence-root>\\positive\\out\\synopsis\\ledger\\g02_acceptance_positive_02.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 2,
+      "output_dir": "<evidence-root>\\positive\\out\\synopsis",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g02_acceptance_positive_02",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "synopsis_merge"
+    }
+  ],
+  "stopped_at_step": null,
+  "voyage_id": "voyage_g02_acceptance_positive"
+}

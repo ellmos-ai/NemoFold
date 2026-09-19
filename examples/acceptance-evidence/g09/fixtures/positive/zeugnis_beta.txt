@@ -1,0 +1,5 @@
+Referenzschreiben
+Unternehmen: Beta Solutions AG
+Position: Lead Software Architect
+Zeitraum: 2023 - heute
+Aufgaben: Architektur modularer Backend-Plattformen und Code-Governance.

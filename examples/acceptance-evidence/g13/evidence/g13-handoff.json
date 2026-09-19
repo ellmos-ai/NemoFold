@@ -1,0 +1,7 @@
+{
+  "consumer": "document_qa",
+  "document_name": "vy_g13_pos_01.knowledge-composer.md",
+  "producer": "knowledge_composer",
+  "publication_consumer": "print_action",
+  "qa_verifier": "document_qa"
+}

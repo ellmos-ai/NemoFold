@@ -1,0 +1,5 @@
+Muster-Krankenkasse
+Mitgliedsbescheinigung
+Name: Alex Beispiel
+Versichertennummer: X123456789
+Versicherungsstatus: Pflichtversichert.

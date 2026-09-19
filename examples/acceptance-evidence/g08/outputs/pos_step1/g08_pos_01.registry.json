@@ -1,0 +1,399 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Gegenstand",
+        "Name",
+        "Artikel",
+        "Item",
+        "Bezeichnung"
+      ],
+      "description": "Item or property",
+      "name": "Gegenstand"
+    },
+    {
+      "aliases": [
+        "Lagerort",
+        "Ort",
+        "Raum",
+        "Zimmer",
+        "Location"
+      ],
+      "description": "Location or room",
+      "name": "Lagerort"
+    },
+    {
+      "aliases": [
+        "Menge",
+        "Anzahl",
+        "St\u00fcck",
+        "Quantity",
+        "Count"
+      ],
+      "description": "Quantity or count",
+      "name": "Menge"
+    },
+    {
+      "aliases": [
+        "Kategorie",
+        "Rubrik",
+        "Typ",
+        "Category",
+        "Type"
+      ],
+      "description": "Category or type",
+      "name": "Kategorie"
+    },
+    {
+      "aliases": [
+        "Zustand",
+        "Status",
+        "Condition"
+      ],
+      "description": "Condition or status",
+      "name": "Zustand"
+    }
+  ],
+  "empty_cells": 22,
+  "filled_cells": 18,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": 5,
+          "quote": "gegenstand: Akkuschrauber",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "Akkuschrauber"
+        },
+        {
+          "column": "Lagerort",
+          "line": 5,
+          "quote": "lagerort: Werkstatt",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "Werkstatt"
+        },
+        {
+          "column": "Menge",
+          "line": 5,
+          "quote": "menge: 1",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "1"
+        },
+        {
+          "column": "Kategorie",
+          "line": 5,
+          "quote": "kategorie: Werkzeug",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "Werkzeug"
+        },
+        {
+          "column": "Zustand",
+          "line": 5,
+          "quote": "zustand: gut",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "gut"
+        }
+      ],
+      "display_name": "hauslagerist.db",
+      "record_line": 5,
+      "source_id": "src_0e09a5290dd603c8"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": 6,
+          "quote": "gegenstand: Kaffeemaschine",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "Kaffeemaschine"
+        },
+        {
+          "column": "Lagerort",
+          "line": 6,
+          "quote": "lagerort: K\u00fcche",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "K\u00fcche"
+        },
+        {
+          "column": "Menge",
+          "line": 6,
+          "quote": "menge: 1",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "1"
+        },
+        {
+          "column": "Kategorie",
+          "line": 6,
+          "quote": "kategorie: Haushaltsger\u00e4t",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "Haushaltsger\u00e4t"
+        },
+        {
+          "column": "Zustand",
+          "line": 6,
+          "quote": "zustand: neuwertig",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "neuwertig"
+        }
+      ],
+      "display_name": "hauslagerist.db",
+      "record_line": 6,
+      "source_id": "src_0e09a5290dd603c8"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": 7,
+          "quote": "gegenstand: Aktenordner",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "Aktenordner"
+        },
+        {
+          "column": "Lagerort",
+          "line": 7,
+          "quote": "lagerort: B\u00fcro",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "B\u00fcro"
+        },
+        {
+          "column": "Menge",
+          "line": 7,
+          "quote": "menge: 5",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "5"
+        },
+        {
+          "column": "Kategorie",
+          "line": 7,
+          "quote": "kategorie: B\u00fcromaterial",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "B\u00fcromaterial"
+        },
+        {
+          "column": "Zustand",
+          "line": 7,
+          "quote": "zustand: gut",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "gut"
+        }
+      ],
+      "display_name": "hauslagerist.db",
+      "record_line": 7,
+      "source_id": "src_0e09a5290dd603c8"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": 13,
+          "quote": "name: Werkstatt",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "Werkstatt"
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "hauslagerist.db",
+      "record_line": 13,
+      "source_id": "src_0e09a5290dd603c8"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": 14,
+          "quote": "name: K\u00fcche",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "K\u00fcche"
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "hauslagerist.db",
+      "record_line": 14,
+      "source_id": "src_0e09a5290dd603c8"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": 15,
+          "quote": "name: B\u00fcro",
+          "source_id": "src_0e09a5290dd603c8",
+          "value": "B\u00fcro"
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "hauslagerist.db",
+      "record_line": 15,
+      "source_id": "src_0e09a5290dd603c8"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "mediplaner.sqlite",
+      "record_line": 5,
+      "source_id": "src_de55bf62469a8c7f"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "mediplaner.sqlite",
+      "record_line": 6,
+      "source_id": "src_de55bf62469a8c7f"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

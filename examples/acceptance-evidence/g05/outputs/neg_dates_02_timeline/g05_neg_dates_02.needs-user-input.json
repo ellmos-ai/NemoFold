@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "cost_due_dates",
+      "kind": "text",
+      "prompt": "Unbekannte oder unvollständige Fälligkeiten für 1 Vertrag/Verträge gefunden (Nebenkostenabrechnung Nachzahlung). Unbekannte Fälligkeiten dürfen nicht als exakte Prognosen dargestellt werden. Bitte tragen Sie die Fälligkeiten nach.",
+      "why": "Unbekannte Fälligkeiten werden nicht als exakte Prognosen dargestellt; ohne belegte Fälligkeit kann kein exaktes Fälligkeitsdatum prognostiziert werden."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "cost_timeline"
+}

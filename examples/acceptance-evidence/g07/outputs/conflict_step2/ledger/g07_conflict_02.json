@@ -1,0 +1,51 @@
+{
+  "actions": [
+    "analyzed 2 source(s)",
+    "conflicting_dosages_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\conflict_step2\\inventory\\g07_conflict_02.json",
+      "sha256": "37903068de3d845a06d8dd1a8a7c50ee599991209a0d438d5f3a4baa0e1d1009",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\outputs\\conflict_step2\\g07_conflict_02.needs-user-input.json",
+      "sha256": "b53b4706ae03aa5366481bf047623e267c8896e7966884da5ff701f7ad925ab8",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 2,
+    "total_sources": 2,
+    "uncited_read_source_ids": [
+      "src_5a4b41216883f8e7",
+      "src_a05784818866d22f"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "conflicting_dosages:1"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_c21ce5fa4e441c43b005af85aedf78b7f4f9d5a2cab5d271b2af993a186364ea",
+  "metadata": {
+    "cloud_proof": false,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "source_count": 2,
+    "unresolved_conflicts": 1
+  },
+  "run_id": "g07_conflict_02",
+  "status": "blocked",
+  "workflow": "medication_reconcile"
+}

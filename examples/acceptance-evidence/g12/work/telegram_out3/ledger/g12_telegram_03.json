@@ -1,0 +1,14 @@
+{
+  "actions": [],
+  "artifacts": [],
+  "coverage": null,
+  "errors": [
+    "recipient_bridge_telegram_not_implemented"
+  ],
+  "gate_decision": null,
+  "idempotency_key": "g12_telegram_03",
+  "metadata": {},
+  "run_id": "g12_telegram_03",
+  "status": "blocked",
+  "workflow": "controlled_email"
+}

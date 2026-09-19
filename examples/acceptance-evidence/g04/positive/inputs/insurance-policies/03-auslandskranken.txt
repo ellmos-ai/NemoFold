@@ -1,0 +1,10 @@
+Versicherungsschein
+Versicherungsnehmer: Alex Beispiel
+Police: AKV-2025-0091
+Tarif: Auslandskranken Schutz
+Deckung ab: 01.06.2025
+Deckung bis: 31.05.2026
+Abdeckung: Notfall-Heilbehandlung im Ausland weltweit
+Kosten: 36,00 EUR pro Jahr
+Turnus: jährlich
+Kontakt: hilfe@weltweit-notfall.de

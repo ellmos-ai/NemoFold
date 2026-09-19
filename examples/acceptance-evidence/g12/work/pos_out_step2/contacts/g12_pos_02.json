@@ -1,0 +1,45 @@
+{
+  "automatic_deletion": false,
+  "candidates": [
+    {
+      "contact_class": "doctor",
+      "email": "becker@labor-berlin.de",
+      "evidence": [
+        {
+          "display_name": "02-laborbericht-becker.pdf",
+          "quote": "\u00c4rztliche Leitung: Dr. med. Sabine Becker <becker@labor-berlin.de>",
+          "source_id": "src_8eb5f71178999ee9"
+        }
+      ],
+      "name": "Dr. med. Sabine Becker",
+      "phone": "030-98765432",
+      "responsibility": "\u00c4rztliche Leitung: Dr. med. Sabine Becker <becker@labor-berlin.de>"
+    },
+    {
+      "contact_class": "doctor",
+      "email": "weber@nuklearmedizin-praxis.de",
+      "evidence": [
+        {
+          "display_name": "01-arztbrief-weber.pdf",
+          "quote": "Behandelnder Arzt: Dr. med. Frank Weber <weber@nuklearmedizin-praxis.de>",
+          "source_id": "src_0148c212f2f8540b"
+        }
+      ],
+      "name": "Dr. med. Frank Weber",
+      "phone": "+49 30 12345678",
+      "responsibility": "Behandelnder Arzt: Dr. med. Frank Weber <weber@nuklearmedizin-praxis.de>"
+    }
+  ],
+  "changes": {
+    "changed": [],
+    "missing_from_current_sources": [],
+    "new": [
+      "becker@labor-berlin.de",
+      "weber@nuklearmedizin-praxis.de"
+    ],
+    "stable": []
+  },
+  "run_id": "g12_pos_02",
+  "schema": "nemofold.contacts.v1",
+  "since_run_id": null
+}

@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "database_records",
+      "kind": "text",
+      "prompt": "Zu wenige Datensätze in Datenbank 'hauslagerist_empty.db' gefunden (0 < 1). Bitte stellen Sie eine Datenbank mit hinterlegten Datensätzen bereit.",
+      "why": "Das Datenbank-Gate verlangt mindestens die deklarierte Anzahl an Datensätzen."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "database_reader"
+}

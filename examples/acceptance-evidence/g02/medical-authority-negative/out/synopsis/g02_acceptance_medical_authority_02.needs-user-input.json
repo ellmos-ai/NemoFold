@@ -1,0 +1,17 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "choices": [
+        "source_summary"
+      ],
+      "field": "medical_purpose",
+      "kind": "choice",
+      "prompt": "Soll NemoFold die freigegebenen Arztberichte ausschließlich ordnen, zitieren und zusammenfassen?",
+      "why": "NemoFold besitzt keine medizinische Diagnose-, Therapie- oder Dringlichkeitsautorität."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "synopsis_merge"
+}

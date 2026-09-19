@@ -1,0 +1,52 @@
+{
+  "actions": [
+    "medical_authority_checked",
+    "medical_authority_denied"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\medical-authority-negative\\out\\synopsis\\inventory\\g02_acceptance_medical_authority_02.json",
+      "sha256": "c4277b9964cc1ee47104b57fa3946e8556bef7eb6db5a47a3d6bd1c2b9443a41",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\medical-authority-negative\\out\\synopsis\\g02_acceptance_medical_authority_02.needs-user-input.json",
+      "sha256": "7200bae9c73deabf7e0027c4eb37135ac0417547bd70e4df7ba1368da96f25af",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_3566f5f70e6c9854"
+    ]
+  },
+  "errors": [
+    "medical_authority_denied:diagnosis"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_8af9d615d8e81dc5d35d4e522c96c009707fda52e0ce6ef06c80f2972b9d573c",
+  "metadata": {
+    "cloud_proof": false,
+    "medical_application_domain": "medical_reports",
+    "medical_authority": "denied",
+    "medical_purpose": "diagnosis",
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "source_count": 1
+  },
+  "run_id": "g02_acceptance_medical_authority_02",
+  "status": "blocked",
+  "workflow": "synopsis_merge"
+}

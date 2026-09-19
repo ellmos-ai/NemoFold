@@ -1,0 +1,56 @@
+{
+  "job": {
+    "action_mode": "dry_run",
+    "handoff_context": {},
+    "input_roots": [
+      "<evidence-root>\\positive\\inputs\\personal-records"
+    ],
+    "model_budget_usd": 0.0,
+    "model_id": null,
+    "output_dir": "<evidence-root>\\positive\\out\\query",
+    "parameters": {
+      "formats": [
+        "md"
+      ],
+      "max_matches": 1,
+      "min_matches": 1,
+      "terms": [
+        "Steuernummer"
+      ],
+      "title": "Steuernummer \u00b7 fiktiver Steuerbescheid"
+    },
+    "privacy_mode": "local_only",
+    "questions": [],
+    "response_schema": "nemofold.claims.v1",
+    "resume_run_id": null,
+    "sources": [
+      {
+        "display_name": "01-steuerbescheid-2025.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\positive\\inputs\\personal-records\\01-steuerbescheid-2025.txt",
+        "sha256": "6e177b06203bfb27f9f45af0904f1be9b62aaadf9afac1061a8c3d7ee371afa3",
+        "source_id": "src_059e3d6a1a86906d"
+      },
+      {
+        "display_name": "02-versicherungsnachweis.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\positive\\inputs\\personal-records\\02-versicherungsnachweis.txt",
+        "sha256": "b403cf5df35c7ce0e0b8d165f644d8897a12c82a358cf5dcde4e7772a42930ce",
+        "source_id": "src_dd8d6c47cafdae6b"
+      },
+      {
+        "display_name": "03-kontoauszug.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\positive\\inputs\\personal-records\\03-kontoauszug.txt",
+        "sha256": "41f304c6fe61153e9dd367bcf60e01c65c29b3558455fc9c9a474fb38ecfce19",
+        "source_id": "src_07c8c0444fa0e9b8"
+      }
+    ],
+    "target_roots": [],
+    "workflow": "corpus_query"
+  },
+  "schema": "nemofold.job-snapshot.v1"
+}

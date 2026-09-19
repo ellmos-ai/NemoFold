@@ -1,0 +1,14 @@
+{
+  "actions": [],
+  "artifacts": [],
+  "coverage": null,
+  "errors": [
+    "ambiguous_recipient_in_contact_book:Dr. Weber:matches=['Dr. med. Claudia Weber', 'Dr. med. Frank Weber']"
+  ],
+  "gate_decision": null,
+  "idempotency_key": "g12_ambig_03",
+  "metadata": {},
+  "run_id": "g12_ambig_03",
+  "status": "blocked",
+  "workflow": "controlled_email"
+}

@@ -1,0 +1,5 @@
+# NemoFold Contact Book
+# Run ID: g12_pos_02
+
+name: Dr. med. Sabine Becker · class: doctor · email: becker@labor-berlin.de · phone: 030-98765432 · note: Ärztliche Leitung: Dr. med. Sabine Becker <becker@labor-berlin.de>
+name: Dr. med. Frank Weber · class: doctor · email: weber@nuklearmedizin-praxis.de · phone: +49 30 12345678 · note: Behandelnder Arzt: Dr. med. Frank Weber <weber@nuklearmedizin-praxis.de>

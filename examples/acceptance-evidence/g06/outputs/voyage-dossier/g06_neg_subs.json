@@ -1,0 +1,54 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "g06_insufficient_subs_voyage",
+  "run_id": "g06_neg_subs",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:49.395906+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 4,
+      "errors": [],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\outputs\\neg_subs_01_registry\\ledger\\g06_neg_subs_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\outputs\\neg_subs_01_registry",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g06_neg_subs_01",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "document_registry"
+    },
+    {
+      "artifact_count": 2,
+      "errors": [
+        "insufficient_subscriptions:1<5"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\outputs\\neg_subs_02_reconcile\\ledger\\g06_neg_subs_02.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 2,
+      "output_dir": "<evidence-root>\\outputs\\neg_subs_02_reconcile",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g06_neg_subs_02",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "subscription_reconcile"
+    }
+  ],
+  "stopped_at_step": 2,
+  "voyage_id": ""
+}

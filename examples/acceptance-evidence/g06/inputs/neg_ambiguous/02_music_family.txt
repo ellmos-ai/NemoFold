@@ -1,0 +1,4 @@
+Abo: Musik Streaming
+Betrag: 14,99 €
+Turnus: monatlich
+Status: aktiv

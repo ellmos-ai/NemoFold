@@ -1,0 +1,36 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "Versicherungsberatung \u00b7 unautorisierte Vermittlerempfehlung",
+  "run_id": "g04_acceptance_unauthorized_advice",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:45.041207+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 2,
+      "errors": [
+        "insurance_authority_denied:broker_recommendation"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\unauthorized-advice-negative\\out\\digest\\ledger\\g04_acceptance_unauthorized_advice_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\unauthorized-advice-negative\\out\\digest",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g04_acceptance_unauthorized_advice_01",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "folder_digest"
+    }
+  ],
+  "stopped_at_step": 1,
+  "voyage_id": "voyage_g04_unauthorized_advice"
+}

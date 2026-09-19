@@ -1,0 +1,43 @@
+{
+  "match_count": 1,
+  "matches": [
+    {
+      "anchor_total": 1,
+      "anchors": [
+        {
+          "line": 4,
+          "source_id": "src_059e3d6a1a86906d"
+        }
+      ],
+      "statement": "Die Steuernummer für diesen Bescheid lautet 12/345/67890 beim Finanzamt.",
+      "support": 1
+    }
+  ],
+  "notes": [],
+  "partition_count": 1,
+  "quote_rule": "Every match is a sentence lifted from a source. Nothing here is a summary, so an answer with no match means the corpus does not contain one.",
+  "schema": "nemofold.corpus-query.v1",
+  "stages": [
+    {
+      "dropped": 0,
+      "inputs": 1,
+      "name": "partition",
+      "outputs": 1
+    },
+    {
+      "dropped": 0,
+      "inputs": 1,
+      "name": "fold-partition",
+      "outputs": 1
+    },
+    {
+      "dropped": 0,
+      "inputs": 1,
+      "name": "fold-final",
+      "outputs": 1
+    }
+  ],
+  "terms": [
+    "Steuernummer"
+  ]
+}

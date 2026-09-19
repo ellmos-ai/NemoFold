@@ -1,0 +1,64 @@
+{
+  "actions": [
+    "document_qa_evaluated",
+    "format_verified",
+    "completeness_verified",
+    "hash_anchored",
+    "publication_package_sealed"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\pos_s3\\inventory\\vy_g14_pos_03.json",
+      "sha256": "cbd205841ada236fa1002caa7816c474613d4bea3d4ebf67d3ce088d0ce7a5e0",
+      "status": "written"
+    },
+    {
+      "format": "document-qa",
+      "path": "<evidence-root>\\runs\\pos_s3\\vy_g14_pos_03.document-qa.json",
+      "sha256": "6f4a5eb3b41a224ae78cd7959162ff1a70f511da7509427dd3f11ca1015df393",
+      "status": "written"
+    },
+    {
+      "format": "publication-package",
+      "path": "<evidence-root>\\runs\\pos_s3\\vy_g14_pos_03.publication-package.json",
+      "sha256": "29f85c46e65f7ef9c4a2f7a5001869dc556a98e60e69b95f3d79f7963121fd7d",
+      "status": "written"
+    },
+    {
+      "format": "markdown",
+      "path": "<evidence-root>\\runs\\pos_s3\\vy_g14_pos_03.publication-package.md",
+      "sha256": "427d5c08612c173c54c46c351baaae209eccd73c02f4ce51fda44670005bd963",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_bd357dcc7e8a54c9"
+    ]
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_345ee6f8801948a5bd5d0ec6e5209f4374745a78611481b94373a1f5068ba25a",
+  "metadata": {
+    "checks_count": 5,
+    "cloud_proof": false,
+    "document_sha256": "2dbb36ea1da04d290d8da58bc937b252f873633e49534435237441b4d52731a7",
+    "qa_passed": true,
+    "source_count": 1,
+    "version": "1.0"
+  },
+  "run_id": "vy_g14_pos_03",
+  "status": "executed",
+  "workflow": "document_qa"
+}

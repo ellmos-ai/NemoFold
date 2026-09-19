@@ -1,0 +1,33 @@
+{
+  "job": {
+    "action_mode": "dry_run",
+    "handoff_context": {},
+    "input_roots": [
+      "<evidence-root>\\positive\\out\\query\\g01_acceptance_positive_01_query.md"
+    ],
+    "model_budget_usd": 0.0,
+    "model_id": null,
+    "output_dir": "<evidence-root>\\positive\\out\\digest",
+    "parameters": {
+      "digest_depth": "full",
+      "summary_length": 3
+    },
+    "privacy_mode": "local_only",
+    "questions": [],
+    "response_schema": "nemofold.claims.v1",
+    "resume_run_id": null,
+    "sources": [
+      {
+        "display_name": "g01_acceptance_positive_01_query.md",
+        "extraction_status": "new",
+        "mime_type": "application/octet-stream",
+        "path": "<evidence-root>\\positive\\out\\query\\g01_acceptance_positive_01_query.md",
+        "sha256": "aaa77833b10441775d2713470272bec17878ca14617f46e11300f4d49c8a0ddb",
+        "source_id": "src_95ef760a09efbde6"
+      }
+    ],
+    "target_roots": [],
+    "workflow": "folder_digest"
+  },
+  "schema": "nemofold.job-snapshot.v1"
+}

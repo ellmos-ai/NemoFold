@@ -1,0 +1,35 @@
+{
+  "actions": [
+    "routine_query",
+    "mutation_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\mutation_step1\\inventory\\g10_mutation_01.json",
+      "sha256": "09fe658ca8a57941a3eaf5b3662a9ce49ff5987a7be316941948f873166853ef",
+      "status": "written"
+    }
+  ],
+  "coverage": null,
+  "errors": [
+    "database_modification_blocked:keyword_delete"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_15e63135793a28c1d488bc2939e88400f3efc0077945d91bfdc19e07fcd8d259",
+  "metadata": {
+    "cloud_proof": false,
+    "forbidden_keyword": "delete",
+    "query": "DELETE FROM routinen WHERE id = 1;",
+    "source_count": 1
+  },
+  "run_id": "g10_mutation_01",
+  "status": "blocked",
+  "workflow": "routine_query"
+}

@@ -1,0 +1,22 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 2,
+  "questions": [
+    {
+      "field": "columns.Police",
+      "kind": "text",
+      "prompt": "Welchen Wert hat 'Police' für 01-haftpflicht-unvollstaendig.txt? Die Quellen sagen dazu nichts.",
+      "why": "'Police' ist als Pflichtspalte erklärt, und src_356173a32a724582 enthält keine Zeile dazu."
+    },
+    {
+      "field": "columns.Abdeckung",
+      "kind": "text",
+      "prompt": "Welchen Wert hat 'Abdeckung' für 01-haftpflicht-unvollstaendig.txt? Die Quellen sagen dazu nichts.",
+      "why": "'Abdeckung' ist als Pflichtspalte erklärt, und src_356173a32a724582 enthält keine Zeile dazu."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "total_question_count": 2,
+  "unshown_question_count": 0,
+  "workflow": "document_registry"
+}

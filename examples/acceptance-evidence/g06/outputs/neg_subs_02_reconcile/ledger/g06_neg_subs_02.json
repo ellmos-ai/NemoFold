@@ -1,0 +1,50 @@
+{
+  "actions": [
+    "analyzed 1 source(s)",
+    "subscriptions_insufficient"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\neg_subs_02_reconcile\\inventory\\g06_neg_subs_02.json",
+      "sha256": "9e8071825530a97d4731a55f3b48530965b0ffe2635e73ed575dd9315d670f8c",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\outputs\\neg_subs_02_reconcile\\g06_neg_subs_02.needs-user-input.json",
+      "sha256": "0ffb11f80ea80ca75927bdbdca98cccc3b1cff85d5a48e8c3a79ee1a169e96d5",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_7921ed32cfb43741"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "insufficient_subscriptions:1<5"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_acaca55e7d3a88d3ab888b25882ce6206ae3d7b933c3988d6dabbd133cc4feeb",
+  "metadata": {
+    "cloud_proof": false,
+    "needs_user_input": true,
+    "source_count": 1,
+    "sub_count": 1,
+    "target_min": 5
+  },
+  "run_id": "g06_neg_subs_02",
+  "status": "blocked",
+  "workflow": "subscription_reconcile"
+}

@@ -1,0 +1,84 @@
+{
+  "audit_notice": "QUELLEN-EVIDENZ: Alle aufgeführten Fachinhalte, Stationen und Methoden sind lückenlos durch die angegebenen Quellendokumente belegt. Unbelegte Aussagen oder freie Fakten-Erfindungen sind vertraglich ausgeschlossen.",
+  "cited_source_ids": [
+    "src_afef2cb85933423c"
+  ],
+  "client_context": {
+    "age": 11,
+    "client_name": "Max Mustermann",
+    "module": "Autismus-Foerderung"
+  },
+  "items": [
+    {
+      "category": "Routinen",
+      "instruction": "Führe die Einheit 'Feste Pausenzeiten um 12:00 Uhr und Vorankuendigung bei Raumwechseln.' gemäß Handlungsplan durch.",
+      "line": 3,
+      "quote": "Routinen: Feste Pausenzeiten um 12:00 Uhr und Vorankuendigung bei Raumwechseln.",
+      "source_id": "src_afef2cb85933423c",
+      "step_number": 1,
+      "title": "Feste Pausenzeiten um 12:00 Uhr und Vorankuendigung bei Raumwechseln.",
+      "visual_support": "Piktogramm / Strukturkarte"
+    },
+    {
+      "category": "Kommunikation",
+      "instruction": "Führe die Einheit 'Schriftliche Aufgabenstellung mit klaren Prioritaeten bevorzugt.' gemäß Handlungsplan durch.",
+      "line": 4,
+      "quote": "Kommunikation: Schriftliche Aufgabenstellung mit klaren Prioritaeten bevorzugt.",
+      "source_id": "src_afef2cb85933423c",
+      "step_number": 2,
+      "title": "Schriftliche Aufgabenstellung mit klaren Prioritaeten bevorzugt.",
+      "visual_support": "Piktogramm / Strukturkarte"
+    },
+    {
+      "category": "Notfall-Anker",
+      "instruction": "Führe die Einheit 'Zehn Minuten Rueckzug in den Ruheraum.' gemäß Handlungsplan durch.",
+      "line": 5,
+      "quote": "Notfall-Anker: Zehn Minuten Rueckzug in den Ruheraum.",
+      "source_id": "src_afef2cb85933423c",
+      "step_number": 3,
+      "title": "Zehn Minuten Rueckzug in den Ruheraum.",
+      "visual_support": "Piktogramm / Strukturkarte"
+    }
+  ],
+  "profile": "autism_support",
+  "run_id": "vy_g13_pos_01",
+  "schema": "nemofold.knowledge-composer.v1",
+  "source_grounding_verified": true,
+  "stations": [],
+  "tasks": [
+    {
+      "category": "Routinen",
+      "instruction": "Führe die Einheit 'Feste Pausenzeiten um 12:00 Uhr und Vorankuendigung bei Raumwechseln.' gemäß Handlungsplan durch.",
+      "line": 3,
+      "quote": "Routinen: Feste Pausenzeiten um 12:00 Uhr und Vorankuendigung bei Raumwechseln.",
+      "source_id": "src_afef2cb85933423c",
+      "step_number": 1,
+      "title": "Feste Pausenzeiten um 12:00 Uhr und Vorankuendigung bei Raumwechseln.",
+      "visual_support": "Piktogramm / Strukturkarte"
+    },
+    {
+      "category": "Kommunikation",
+      "instruction": "Führe die Einheit 'Schriftliche Aufgabenstellung mit klaren Prioritaeten bevorzugt.' gemäß Handlungsplan durch.",
+      "line": 4,
+      "quote": "Kommunikation: Schriftliche Aufgabenstellung mit klaren Prioritaeten bevorzugt.",
+      "source_id": "src_afef2cb85933423c",
+      "step_number": 2,
+      "title": "Schriftliche Aufgabenstellung mit klaren Prioritaeten bevorzugt.",
+      "visual_support": "Piktogramm / Strukturkarte"
+    },
+    {
+      "category": "Notfall-Anker",
+      "instruction": "Führe die Einheit 'Zehn Minuten Rueckzug in den Ruheraum.' gemäß Handlungsplan durch.",
+      "line": 5,
+      "quote": "Notfall-Anker: Zehn Minuten Rueckzug in den Ruheraum.",
+      "source_id": "src_afef2cb85933423c",
+      "step_number": 3,
+      "title": "Zehn Minuten Rueckzug in den Ruheraum.",
+      "visual_support": "Piktogramm / Strukturkarte"
+    }
+  ],
+  "title": "Autismus-Foerderblatt Alltagsstrukturierung",
+  "total_knowledge_items": 3,
+  "total_stations": 0,
+  "total_tasks": 3
+}

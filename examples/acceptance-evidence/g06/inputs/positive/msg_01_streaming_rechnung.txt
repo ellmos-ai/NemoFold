@@ -1,0 +1,7 @@
+Absender: service@streaming-plus.de
+Betreff: Ihre Monatsrechnung Streaming Plus
+Datum: 2026-09-01
+Betrag: 14,99 €
+Konto: ACC-STREAM-01
+
+Vielen Dank für Ihre Zahlung. Ihr Streaming Plus Abonnement bleibt aktiv.

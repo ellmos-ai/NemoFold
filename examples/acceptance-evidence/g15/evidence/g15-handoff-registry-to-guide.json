@@ -1,0 +1,6 @@
+{
+  "consumer": "guide_compose",
+  "producer": "document_registry",
+  "status": "verified",
+  "topic": "autismus_wissensbestand"
+}

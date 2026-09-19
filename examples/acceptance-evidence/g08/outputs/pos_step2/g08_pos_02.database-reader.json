@@ -1,0 +1,83 @@
+{
+  "boundary_note": "Ausschließlich autorisierte Tabellen im Read-Only-Modus ausgelesen.",
+  "database_file": "hauslagerist.db",
+  "database_profile": "hauslagerist",
+  "database_sha256": "17058752270995c801296bb0b2650f38c9a9b1c7824710ddc3255360c59a0d15",
+  "generic_records": [
+    {
+      "fields": {
+        "beschreibung": "Kellerraum 2",
+        "id": "1",
+        "name": "Werkstatt"
+      },
+      "id": "1",
+      "row": 1,
+      "source_id": "src_0e09a5290dd603c8",
+      "table": "lagerorte"
+    },
+    {
+      "fields": {
+        "beschreibung": "Erdgeschoss",
+        "id": "2",
+        "name": "Küche"
+      },
+      "id": "2",
+      "row": 2,
+      "source_id": "src_0e09a5290dd603c8",
+      "table": "lagerorte"
+    },
+    {
+      "fields": {
+        "beschreibung": "1. Obergeschoss",
+        "id": "3",
+        "name": "Büro"
+      },
+      "id": "3",
+      "row": 3,
+      "source_id": "src_0e09a5290dd603c8",
+      "table": "lagerorte"
+    }
+  ],
+  "inventory_items": [
+    {
+      "gegenstand": "Akkuschrauber",
+      "kategorie": "Werkzeug",
+      "lagerort": "Werkstatt",
+      "menge": "1",
+      "notiz": "Im blauen Koffer",
+      "row": 1,
+      "source_id": "src_0e09a5290dd603c8",
+      "table": "gegenstaende",
+      "zustand": "gut"
+    },
+    {
+      "gegenstand": "Kaffeemaschine",
+      "kategorie": "Haushaltsgerät",
+      "lagerort": "Küche",
+      "menge": "1",
+      "notiz": "Regelmäßig entkalkt",
+      "row": 2,
+      "source_id": "src_0e09a5290dd603c8",
+      "table": "gegenstaende",
+      "zustand": "neuwertig"
+    },
+    {
+      "gegenstand": "Aktenordner",
+      "kategorie": "Büromaterial",
+      "lagerort": "Büro",
+      "menge": "5",
+      "notiz": "Steuerunterlagen",
+      "row": 3,
+      "source_id": "src_0e09a5290dd603c8",
+      "table": "gegenstaende",
+      "zustand": "gut"
+    }
+  ],
+  "medication_items": [],
+  "read_only_verified": true,
+  "tables_read": [
+    "gegenstaende",
+    "lagerorte"
+  ],
+  "total_records": 6
+}

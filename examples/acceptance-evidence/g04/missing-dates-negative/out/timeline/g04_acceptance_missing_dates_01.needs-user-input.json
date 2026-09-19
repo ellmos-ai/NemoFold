@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "coverage_dates",
+      "kind": "text",
+      "prompt": "Keine ausreichenden Deckungszeiträume gefunden (0 < 1). Bitte prüfen Sie die Vertragsdokumente auf deklarierte Datumsangaben.",
+      "why": "Fehlende Vertragsdaten erzeugen Unsicherheitshinweise statt erfundener Abdeckung; ohne deklarierte Deckungsdaten kann keine Zeitachse gezeichnet werden."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "coverage_timeline"
+}

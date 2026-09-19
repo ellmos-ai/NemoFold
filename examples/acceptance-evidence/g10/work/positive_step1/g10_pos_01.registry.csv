@@ -1,0 +1,6 @@
+source_id,display_name,record_line,Gegenstand,Gegenstand [source],Lagerort,Lagerort [source],Menge,Menge [source],Kategorie,Kategorie [source],Zustand,Zustand [source]
+src_8148b26460b770e5,routine_master.db,5,,,,,,,,,offen,src_8148b26460b770e5:5
+src_8148b26460b770e5,routine_master.db,11,,,,,,,haushalt,src_8148b26460b770e5:11,,
+src_8148b26460b770e5,routine_master.db,12,,,,,,,it,src_8148b26460b770e5:12,,
+src_8148b26460b770e5,routine_master.db,13,,,,,,,gesundheit,src_8148b26460b770e5:13,,
+src_8148b26460b770e5,routine_master.db,14,,,,,,,finanzen,src_8148b26460b770e5:14,,

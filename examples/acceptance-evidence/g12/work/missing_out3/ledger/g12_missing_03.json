@@ -1,0 +1,14 @@
+{
+  "actions": [],
+  "artifacts": [],
+  "coverage": null,
+  "errors": [
+    "recipient_not_found_in_contact_book:Dr. med. Nicht Vorhanden"
+  ],
+  "gate_decision": null,
+  "idempotency_key": "g12_missing_03",
+  "metadata": {},
+  "run_id": "g12_missing_03",
+  "status": "blocked",
+  "workflow": "controlled_email"
+}

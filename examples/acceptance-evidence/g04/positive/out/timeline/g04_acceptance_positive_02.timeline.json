@@ -1,0 +1,52 @@
+{
+  "event_count": 3,
+  "events": [
+    {
+      "determined": true,
+      "end": null,
+      "end_precision": "unbestimmt",
+      "kind": "interval",
+      "label": "Hausrat Premium",
+      "line": 5,
+      "quote": "Deckung ab: 15.03.2023 · Deckung bis: unbestimmt",
+      "source_id": "src_4ecfd50339b8670a",
+      "start": "2023-03-15",
+      "start_precision": "day",
+      "start_raw": "15.03.2023",
+      "subject": "Alex Beispiel"
+    },
+    {
+      "determined": true,
+      "end": "2026-12-31",
+      "end_precision": "day",
+      "kind": "interval",
+      "label": "Privat-Haftpflicht Basis",
+      "line": 5,
+      "quote": "Deckung ab: 01.01.2024 · Deckung bis: 31.12.2026",
+      "source_id": "src_5885f9524541e5d3",
+      "start": "2024-01-01",
+      "start_precision": "day",
+      "start_raw": "01.01.2024",
+      "subject": "Alex Beispiel"
+    },
+    {
+      "determined": true,
+      "end": "2026-05-31",
+      "end_precision": "day",
+      "kind": "interval",
+      "label": "Auslandskranken Schutz",
+      "line": 5,
+      "quote": "Deckung ab: 01.06.2025 · Deckung bis: 31.05.2026",
+      "source_id": "src_a62647151291ab08",
+      "start": "2025-06-01",
+      "start_precision": "day",
+      "start_raw": "01.06.2025",
+      "subject": "Alex Beispiel"
+    }
+  ],
+  "honesty_note": "A time the sources do not state is carried as undetermined. It is never placed at a guessed moment to make the chart look complete.",
+  "notes": [],
+  "schema": "nemofold.timeline.v1",
+  "title": "Versicherungsverlauf & Abdeckungsanalyse",
+  "undetermined_count": 0
+}

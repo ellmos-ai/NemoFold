@@ -1,0 +1,23 @@
+Arzt: Dr. med. Weber (Hausarzt)
+Datum: 2026-08-15
+
+Medikament: L-Thyroxin Henning
+Wirkstoff: Levothyroxin-Natrium
+Dosierung: 75 µg
+Einnahme: 1-0-0-0 morgens nüchtern
+Indikation: Hypothyreose
+Status: laufend
+
+Medikament: Ramipril-ratiopharm
+Wirkstoff: Ramipril
+Dosierung: 5 mg
+Einnahme: 1-0-0-0 morgens
+Indikation: Hypertonie
+Status: laufend
+
+Medikament: Pantoprazol TAD
+Wirkstoff: Pantoprazol
+Dosierung: 20 mg
+Einnahme: 0-0-1-0 abends
+Indikation: Magenschutz
+Status: laufend

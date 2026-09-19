@@ -1,0 +1,42 @@
+{
+  "agreed": 16,
+  "coding_mode": "supplied_codings",
+  "coding_note": "Two separately supplied coding sheets were compared; NemoFold does not verify that their raters worked independently.",
+  "cohens_kappa": 0.661,
+  "disagreed": 4,
+  "disagreements": [
+    {
+      "code_a": "negativ",
+      "code_b": "neutral",
+      "display_name": "fragebogen_19.txt",
+      "item_id": "src_453c4585438b897a"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "fragebogen_20.txt",
+      "item_id": "src_6aebb81e94b74002"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "fragebogen_17.txt",
+      "item_id": "src_6b87dda5f1e93d20"
+    },
+    {
+      "code_a": "neutral",
+      "code_b": "negativ",
+      "display_name": "fragebogen_18.txt",
+      "item_id": "src_988a1a9a246cb56f"
+    }
+  ],
+  "item_count": 20,
+  "kappa_note": "",
+  "only_in_a": [],
+  "only_in_b": [],
+  "percent_agreement": 80.0,
+  "rater_a": "Dr. Anna Weber",
+  "rater_b": "Dr. Boris Lindemann",
+  "reading_note": "Percent agreement is misleading whenever one code dominates, which is why kappa stands next to it. Where kappa is undefined it says so rather than printing a number that would be read as a result. The disagreements are the output worth reading: they mark where the coding scheme is ambiguous, not where a rater was wrong.",
+  "schema": "nemofold.interrater.v1"
+}

@@ -1,0 +1,20 @@
+{
+  "plans": [
+    {
+      "allowed": false,
+      "category": null,
+      "conversion_target": null,
+      "operation": "move",
+      "original_policy": "keep",
+      "reasons": [
+        "ambiguous_classification:01-mischdokument.txt"
+      ],
+      "retention_action": "keep",
+      "source": "<evidence-root>\\ambiguous\\inputs\\inbox\\01-mischdokument.txt",
+      "target": "<evidence-root>\\ambiguous\\inputs\\inbox\\01-mischdokument.txt"
+    }
+  ],
+  "run_id": "g03_acceptance_ambiguous_01",
+  "schema": "nemofold.action-plan.v1",
+  "workflow": "smart_inbox"
+}

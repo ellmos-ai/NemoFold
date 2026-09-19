@@ -1,0 +1,20 @@
+{
+  "plans": [
+    {
+      "allowed": false,
+      "category": null,
+      "conversion_target": null,
+      "operation": "move",
+      "original_policy": "keep",
+      "reasons": [
+        "unclassifiable_input:01-einkaufszettel.txt"
+      ],
+      "retention_action": "keep",
+      "source": "<evidence-root>\\unclassifiable\\inputs\\inbox\\01-einkaufszettel.txt",
+      "target": "<evidence-root>\\unclassifiable\\inputs\\inbox\\01-einkaufszettel.txt"
+    }
+  ],
+  "run_id": "g03_acceptance_unclassifiable_01",
+  "schema": "nemofold.action-plan.v1",
+  "workflow": "smart_inbox"
+}

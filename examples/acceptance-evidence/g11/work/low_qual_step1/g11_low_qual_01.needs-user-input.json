@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "ocr_review_src_83d683ac08bce8a2",
+      "kind": "text",
+      "prompt": "Dokument 'scan-degraded.pdf' enthält unzureichende oder ungeprüfte Bildseiten (page_1_conf_0.40_synthetic_ocr_extraction_low_quality). Bitte führen Sie einen OCR-Durchlauf durch oder bestätigen Sie die Textextraktion manuell.",
+      "why": "Niedrige OCR-Qualität darf nicht still als vollständig indexiert gelten."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "ocr_pipeline"
+}

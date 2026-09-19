@@ -1,0 +1,50 @@
+{
+  "actions": [
+    "wiki_export_planned",
+    "broken_wiki_links_detected"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\workspace\\neg1_broken\\out\\inventory\\g15_neg1_broken.json",
+      "sha256": "9dc74824e220901394334589f24724dc20657780b25db1b011f22aba89d9b983",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_06d8bcdd2fd50685"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "broken_wiki_links_detected"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_a49e457e7a9e7b1346cf85b09668560da1a2c7774ccb9af84f1e7051365f04c4",
+  "metadata": {
+    "broken_links": [
+      {
+        "line": 7,
+        "raw_target": "nicht-existent-999.md",
+        "source_slug": "broken-page-md",
+        "target_slug": "nicht-existent-999",
+        "text": "Unbekannt"
+      }
+    ],
+    "cloud_proof": false,
+    "source_count": 1
+  },
+  "run_id": "g15_neg1_broken",
+  "status": "blocked",
+  "workflow": "wiki_export"
+}

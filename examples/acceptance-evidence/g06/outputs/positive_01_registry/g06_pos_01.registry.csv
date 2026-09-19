@@ -1,0 +1,8 @@
+source_id,display_name,Vertrag,Vertrag [source],Betrag,Betrag [source],Turnus,Turnus [source],Nächste Fälligkeit,Nächste Fälligkeit [source],Kontakt,Kontakt [source]
+src_067cdcf16c2b605e,01_streaming.txt,Streaming Plus,src_067cdcf16c2b605e:1,"14,99 €",src_067cdcf16c2b605e:2,monatlich,src_067cdcf16c2b605e:3,,,,
+src_e5f66e03b06f79d5,02_cloud.txt,Cloud Speicher Pro,src_e5f66e03b06f79d5:1,"9,99 €",src_e5f66e03b06f79d5:2,monatlich,src_e5f66e03b06f79d5:3,,,,
+src_d4408422630e5f66,03_gym.txt,Fitnessstudio StudioNord,src_d4408422630e5f66:1,"39,90 €",src_d4408422630e5f66:2,monatlich,src_d4408422630e5f66:3,,,,
+src_9663a3ffb272580c,04_newspaper.txt,Tageszeitung Digital,src_9663a3ffb272580c:1,"19,90 €",src_9663a3ffb272580c:2,monatlich,src_9663a3ffb272580c:3,,,,
+src_51b18fe9a0ef6f66,msg_01_streaming_rechnung.txt,,,"14,99 €",src_51b18fe9a0ef6f66:4,,,,,,
+src_ae1cc426668da37a,msg_02_cloud_preiserhoehung.txt,,,"12,99 €",src_ae1cc426668da37a:4,,,,,,
+src_b57ede70650d147c,msg_03_gym_kuendigung.txt,,,,,,,,,,

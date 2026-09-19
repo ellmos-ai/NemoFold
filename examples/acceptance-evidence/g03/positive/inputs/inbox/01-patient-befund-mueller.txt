@@ -1,0 +1,7 @@
+Arztpraxis Dr. med. Weber - Innere Medizin
+Patient: Max Mueller
+Geburtsdatum: 1980-05-12
+Befund: Sonographie der Schilddruese ohne pathologischen Befund. Regelrechte Lage und normale Groesse beider Schilddruesenlappen.
+Diagnose: Euthyreote Struma nodosa Grad I.
+Therapieempfehlung: Verlaufskontrolle in 12 Monaten empfohlen.
+Behandelnder Arzt: Dr. med. Weber

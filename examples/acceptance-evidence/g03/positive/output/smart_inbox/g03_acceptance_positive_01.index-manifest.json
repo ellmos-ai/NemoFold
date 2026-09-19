@@ -1,0 +1,12 @@
+{
+  "index_status": {
+    "src_8bb65dd6773d0957": "indexed",
+    "src_95eefd2b7d09388b": "updated",
+    "src_ff751d647690bdf4": "indexed"
+  },
+  "pruned_source_ids": [
+    "src_obsolete_draft"
+  ],
+  "run_id": "g03_acceptance_positive_01",
+  "schema": "nemofold.index-manifest.v1"
+}

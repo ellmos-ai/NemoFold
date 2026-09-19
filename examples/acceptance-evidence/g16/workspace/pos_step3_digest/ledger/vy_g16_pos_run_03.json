@@ -1,0 +1,64 @@
+{
+  "actions": [
+    "inventory_scanned",
+    "folder_digest_built",
+    "coverage_recorded"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\workspace\\pos_step3_digest\\inventory\\vy_g16_pos_run_03.json",
+      "sha256": "dc4a5468ab6ee37da1bede139d89734b6337f0b13a6a3a8fdcbb67071a59ed9e",
+      "status": "written"
+    },
+    {
+      "format": "folder-digest",
+      "path": "<evidence-root>\\workspace\\pos_step3_digest\\vy_g16_pos_run_03.digest.md",
+      "sha256": "01c3dcfaaf88bf8362b2352a87b20ad4c34285188ba737d8cb8aa6d3ba20024c",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 6,
+    "total_sources": 6,
+    "uncited_read_source_ids": [
+      "src_07b5e8e3d5fc08b3",
+      "src_217ed8982a69edef",
+      "src_2f6199ad11099326",
+      "src_33edeb7dbcd065b6",
+      "src_b2ae7fb924321354",
+      "src_ed46adb605dc20eb"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_5fa47eee209bcbfde22c626a789857daee05f0364c25cb53b7edec09a1136356",
+  "metadata": {
+    "changed_source_ids": [],
+    "cloud_proof": false,
+    "deleted_source_ids": [],
+    "digest_depth": "full",
+    "gap_source_ids": [],
+    "new_source_ids": [
+      "src_b2ae7fb924321354",
+      "src_07b5e8e3d5fc08b3",
+      "src_ed46adb605dc20eb",
+      "src_2f6199ad11099326",
+      "src_33edeb7dbcd065b6",
+      "src_217ed8982a69edef"
+    ],
+    "source_count": 6,
+    "unchanged_source_ids": []
+  },
+  "run_id": "vy_g16_pos_run_03",
+  "status": "executed",
+  "workflow": "folder_digest"
+}

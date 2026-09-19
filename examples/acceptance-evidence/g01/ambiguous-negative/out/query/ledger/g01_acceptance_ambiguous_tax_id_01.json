@@ -1,0 +1,51 @@
+{
+  "actions": [
+    "searched 2 source(s)",
+    "ambiguous_matches_found"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\ambiguous-negative\\out\\query\\inventory\\g01_acceptance_ambiguous_tax_id_01.json",
+      "sha256": "8ef9c7bfc953041a88c4d78ddaf15d6c061ffc3102f556880ef9f9ad4854877a",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\ambiguous-negative\\out\\query\\g01_acceptance_ambiguous_tax_id_01.needs-user-input.json",
+      "sha256": "27ff15704b9e6fcc357178d106ae8d80983766feb55e6a5db0df34b481cf291b",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 2,
+    "read_sources": 2,
+    "total_sources": 2,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "ambiguous_matches:2>1"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_13f53da2336ff7b143cbea58a498085f310cd174169e51502066f46923c6a77c",
+  "metadata": {
+    "cloud_proof": false,
+    "match_count": 2,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "source_count": 2,
+    "terms": [
+      "Steuernummer"
+    ]
+  },
+  "run_id": "g01_acceptance_ambiguous_tax_id_01",
+  "status": "blocked",
+  "workflow": "corpus_query"
+}

@@ -1,0 +1,40 @@
+{
+  "actions": [
+    "wiki_export_planned",
+    "wiki_source_corpus_empty"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\workspace\\neg3_empty\\out\\inventory\\g15_neg3_empty.json",
+      "sha256": "ab76c6754daba5b963fafafe792eedb233c84de06c3e4116557042b2f06535ba",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 0,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "wiki_source_corpus_empty"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_f8e7ebeaa47d86e852c56caf611dc5a1876670101b802472439a888efbe040e4",
+  "metadata": {
+    "cloud_proof": false,
+    "reason": "wiki_source_corpus_empty",
+    "source_count": 0
+  },
+  "run_id": "g15_neg3_empty",
+  "status": "blocked",
+  "workflow": "wiki_export"
+}

@@ -1,0 +1,79 @@
+{
+  "actions": [
+    "mail_draft_written",
+    "mail_confirmation_receipt_written"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\pos_out_step3\\inventory\\g12_pos_03.json",
+      "sha256": "20b801ac77a8f52be16f66e27e25a91e27dfeb470792a6b32b2cc68b607b11aa",
+      "status": "written"
+    },
+    {
+      "format": "email-draft",
+      "path": "<evidence-root>\\work\\pos_out_step3\\mail-drafts\\g12_pos_03\\draft.eml",
+      "sha256": "af815b2290da2bcc8d08ff70ed79c2f2435074d16d2a6be86494325739c27ab2",
+      "status": "written"
+    },
+    {
+      "format": "mail-approval-receipt",
+      "path": "<evidence-root>\\work\\pos_out_step3\\mail-drafts\\g12_pos_03\\approval.json",
+      "sha256": "72fac6b0c2fd7f9736bb3e93fd66619399c63a11b3cedb9478ce69c5d8c5b907",
+      "status": "written"
+    },
+    {
+      "format": "outbound-decision",
+      "path": "<evidence-root>\\work\\pos_out_step3\\g12_pos_03.outbound.json",
+      "sha256": "8d92ff032dc8641b61796f316bf24d3b2f8f090ee5621b64982d4cae2f52fd47",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 2,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_0148c212f2f8540b",
+      "src_8eb5f71178999ee9"
+    ]
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_c063b771a5b17f8b442cca6199ab46c2c8513ee82c23bd8b11bd19214b353ea6",
+  "metadata": {
+    "approval_digest": "5cc33eecf223b3344b59f806bdb61c95a53243975c4d50e664d43379e381e52f",
+    "cloud_proof": false,
+    "contact_notes": [],
+    "mail_adapter": "smtp",
+    "mail_adapter_configured": false,
+    "outbound_allowed": false,
+    "outbound_blocked_reasons": [
+      "no_send_was_requested",
+      "right_is_draft_only",
+      "send_requires_apply_mode",
+      "send_not_allowed_on_this_server",
+      "smtp_not_configured:host,sender,port"
+    ],
+    "outbound_right": "draft_only",
+    "recipient_class_break": false,
+    "recipient_classes": [
+      "doctor"
+    ],
+    "recipient_policy_used": false,
+    "recipient_rule": "every recipient is doctor: draft_only",
+    "send_performed": false,
+    "send_requested": false,
+    "source_count": 2
+  },
+  "run_id": "g12_pos_03",
+  "status": "executed",
+  "workflow": "controlled_email"
+}

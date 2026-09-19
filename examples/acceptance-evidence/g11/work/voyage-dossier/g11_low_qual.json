@@ -1,0 +1,37 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "",
+  "run_id": "g11_low_qual",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:49:00.353213+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 2,
+      "errors": [
+        "low_ocr_quality_review_required:1_documents",
+        "scan-degraded.pdf:page_1_conf_0.40_synthetic_ocr_extraction_low_quality"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\work\\low_qual_step1\\ledger\\g11_low_qual_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\work\\low_qual_step1",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g11_low_qual_01",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "ocr_pipeline"
+    }
+  ],
+  "stopped_at_step": 1,
+  "voyage_id": "vy_g11_acceptance_low_qual"
+}

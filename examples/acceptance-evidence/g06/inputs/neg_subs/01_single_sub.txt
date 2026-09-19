@@ -1,0 +1,4 @@
+Abo: Einzelnes Magazin
+Betrag: 5,00 €
+Turnus: monatlich
+Status: aktiv

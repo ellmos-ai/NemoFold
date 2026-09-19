@@ -1,0 +1,36 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "Schilddr\u00fcse \u00b7 fehlende Seite",
+  "run_id": "g02_acceptance_missing_page",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:42.123984+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 1,
+      "errors": [
+        "expected_pdf_page_gap:01-endokrinologie.pdf"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\negative\\out\\register\\ledger\\g02_acceptance_missing_page_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\negative\\out\\register",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g02_acceptance_missing_page_01",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "document_registry"
+    }
+  ],
+  "stopped_at_step": 1,
+  "voyage_id": "voyage_g02_acceptance_missing_page"
+}

@@ -1,0 +1,45 @@
+{
+  "hierarchy_verification": {
+    "cycles": [],
+    "depth": 2,
+    "is_acyclic": true,
+    "root_nodes": [
+      "wissensbasis"
+    ]
+  },
+  "integrity_status": "verified",
+  "link_verification": {
+    "broken_links": [],
+    "is_valid": true,
+    "total_links": 9,
+    "valid_links": 9
+  },
+  "page_count": 3,
+  "pages": [
+    {
+      "body_length": 412,
+      "filename": "01-diagnostik-md.md",
+      "slug": "01-diagnostik-md",
+      "source_id": "src_26429067f547f2c8",
+      "title": "01_diagnostik.md"
+    },
+    {
+      "body_length": 332,
+      "filename": "02-therapie-md.md",
+      "slug": "02-therapie-md",
+      "source_id": "src_44225492d294e2ee",
+      "title": "02_therapie.md"
+    },
+    {
+      "body_length": 329,
+      "filename": "03-foerderung-md.md",
+      "slug": "03-foerderung-md",
+      "source_id": "src_69bebd48cfb20143",
+      "title": "03_foerderung.md"
+    }
+  ],
+  "run_id": "vy_g15_pos_run_03",
+  "schema": "nemofold.metawiki-manifest.v1",
+  "title": "MetaWiki Autismus-Wissen",
+  "wiki_dir": "<evidence-root>\\workspace\\pos_step3_wiki\\autismus_metawiki"
+}

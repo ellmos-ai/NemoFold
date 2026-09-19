@@ -1,0 +1,50 @@
+{
+  "actions": [
+    "knowledge_scan",
+    "insufficient_knowledge_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\insufficient_run\\step1_composer\\inventory\\g09_insuf_01.json",
+      "sha256": "a4eec1be4545158b65fa9b50d86cefc41e4250bc2d47b7db800c4c8a26abb744",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\insufficient_run\\step1_composer\\g09_insuf_01.needs-user-input.json",
+      "sha256": "6ff2497714fe5a9c4e61893382bb26fd35ae3583c0db3bbda09ba4c2bf43e227",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_c37aa0e5825d6b72"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "insufficient_knowledge_base:found_0_min_1"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_05f3a22a2ba1a2efc1c19dc9c20d7790ecff9078a726fd800b031a7d005edb71",
+  "metadata": {
+    "cloud_proof": false,
+    "found_items": 0,
+    "min_required": 1,
+    "profile": "cv_ascii",
+    "source_count": 1
+  },
+  "run_id": "g09_insuf_01",
+  "status": "blocked",
+  "workflow": "knowledge_composer"
+}

@@ -1,0 +1,57 @@
+{
+  "actions": [
+    "inventory_scanned",
+    "folder_digest_built",
+    "coverage_recorded"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\positive\\out\\digest\\inventory\\g04_acceptance_positive_03.json",
+      "sha256": "729cb47cf56d83e6951561010749d842d288dc90709d22cc7cce382d554ec4ae",
+      "status": "written"
+    },
+    {
+      "format": "folder-digest",
+      "path": "<evidence-root>\\positive\\out\\digest\\g04_acceptance_positive_03.digest.md",
+      "sha256": "b4435e1e761b59fa39408e211578935bd2a8936ed41dd3f687ffc2e48ea32a51",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_7caddb20e16835b9"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_70ced2deec13d0cd02fd5f30393b3c3111aa7845645e4ede079c2bc0fb1f6f7b",
+  "metadata": {
+    "changed_source_ids": [],
+    "cloud_proof": false,
+    "deleted_source_ids": [],
+    "digest_depth": "full",
+    "gap_source_ids": [],
+    "insurance_application_domain": "insurance",
+    "insurance_authority": "not_granted",
+    "insurance_purpose": "coverage_analysis",
+    "new_source_ids": [
+      "src_7caddb20e16835b9"
+    ],
+    "source_count": 1,
+    "unchanged_source_ids": []
+  },
+  "run_id": "g04_acceptance_positive_03",
+  "status": "executed",
+  "workflow": "folder_digest"
+}

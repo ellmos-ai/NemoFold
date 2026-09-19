@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "cost_items",
+      "kind": "text",
+      "prompt": "Keine ausreichenden Kostenpositionen gefunden (1 < 5). Bitte prüfen Sie die Vertragsdokumente auf deklarierte Kosten.",
+      "why": "Fehlende Vertragsdaten erzeugen Unsicherheitshinweise statt erfundener Kostenpositionen; ohne deklarierte Kosten kann keine Kostenplanung erfolgen."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "cost_timeline"
+}

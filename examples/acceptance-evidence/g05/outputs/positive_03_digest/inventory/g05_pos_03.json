@@ -1,0 +1,17 @@
+{
+  "deleted_source_ids": [],
+  "hashes_by_source_id": {
+    "src_ba7a4c92fef8e634": "fdf3e36bd73221a0eebee80c2bb1eb3acd7f37d0ebf8d254e912d7a81888a3e1"
+  },
+  "run_id": "g05_pos_03",
+  "schema": "nemofold.inventory.v1",
+  "sources": [
+    {
+      "change_status": "new",
+      "display_name": "g05_pos_02_cost_plan.md",
+      "mime_type": "application/octet-stream",
+      "sha256": "fdf3e36bd73221a0eebee80c2bb1eb3acd7f37d0ebf8d254e912d7a81888a3e1",
+      "source_id": "src_ba7a4c92fef8e634"
+    }
+  ]
+}

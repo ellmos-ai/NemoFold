@@ -1,0 +1,61 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": true,
+  "model_authority": "links_win",
+  "name": "Dokumenteingang \u00b7 Automatische Klassifikation und Index-Aktualisierung",
+  "run_id": "g03_acceptance_positive",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:43.287950+00:00",
+  "status": "executed",
+  "steps": [
+    {
+      "artifact_count": 3,
+      "errors": [],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\positive\\output\\smart_inbox\\ledger\\g03_acceptance_positive_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\positive\\output\\smart_inbox",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g03_acceptance_positive_01",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "smart_inbox"
+    },
+    {
+      "artifact_count": 2,
+      "errors": [],
+      "handoff": {
+        "format": "action-plan",
+        "path": "<evidence-root>\\positive\\output\\smart_inbox\\g03_acceptance_positive_01.action-plan.json",
+        "privacy_mode": "local_only",
+        "producer_run_id": "g03_acceptance_positive_01",
+        "producer_workflow": "smart_inbox",
+        "schema": "nemofold.artifact-handoff.v1",
+        "sha256": "5201331f486c08a345fa25f04eb994977040ccdb6d68725bc4905844bff4598c",
+        "status": "verified"
+      },
+      "ledger_path": "<evidence-root>\\positive\\output\\digest\\ledger\\g03_acceptance_positive_02.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 2,
+      "output_dir": "<evidence-root>\\positive\\output\\digest",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g03_acceptance_positive_02",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "folder_digest"
+    }
+  ],
+  "stopped_at_step": null,
+  "voyage_id": "g03_acceptance_positive"
+}

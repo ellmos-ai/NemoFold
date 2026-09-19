@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="860" height="204" viewBox="0 0 860 204" role="img" aria-label="Timeline with 2 lane(s). Points and bars are times the sources state; 0 entr(y/ies) are hatched because the sources leave the time undetermined and it is not placed at a guessed moment.">
+  <title>Kosten- und Fälligkeitsplanung Oktober 2026</title>
+  <desc>Timeline with 2 lane(s). Points and bars are times the sources state; 0 entr(y/ies) are hatched because the sources leave the time undetermined and it is not placed at a guessed moment.</desc>
+  <rect width="860" height="204" fill="#f6f2e6"/>
+  <defs><pattern id="nf-gap" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="8" height="8" fill="#f6f2e6"/><line x1="0" y1="0" x2="0" y2="8" stroke="#5d7078" stroke-width="1.4"/></pattern></defs>
+  <text x="24" y="32" font-family="monospace" font-size="12" fill="#0d2b33">KOSTEN- UND FÄLLIGKEITSPLANUNG OKTOBER 2026</text>
+  <text x="24" y="66.00" font-family="monospace" font-size="10" fill="#0d2b33">Wiederkehrende Kosten</text>
+  <line x1="190.00" y1="62.00" x2="820.00" y2="62.00" stroke="#c9cfc7" stroke-width="0.8"/>
+  <circle cx="190.00" cy="62.00" r="4.5" fill="#1c7f86"><title>Fitnessstudio StudioNord: 39,90 €</title></circle>
+  <circle cx="246.00" cy="62.00" r="4.5" fill="#1c7f86"><title>Streaming Plus: 17,99 €</title></circle>
+  <circle cx="386.00" cy="62.00" r="4.5" fill="#1c7f86"><title>Rundfunkbeitrag ARD ZDF: 55,08 €</title></circle>
+  <text x="24" y="100.00" font-family="monospace" font-size="10" fill="#0d2b33">Erwartbare Sondereffe…</text>
+  <line x1="190.00" y1="96.00" x2="820.00" y2="96.00" stroke="#c9cfc7" stroke-width="0.8"/>
+  <circle cx="456.00" cy="96.00" r="4.5" fill="#1c7f86"><title>KFZ-Steuer Hauptzollamt: 148,00 €</title></circle>
+  <circle cx="820.00" cy="96.00" r="4.5" fill="#1c7f86"><title>TÜV Hauptuntersuchung: 140,00 €</title></circle>
+  <line x1="190.00" y1="138.00" x2="820.00" y2="138.00" stroke="#c9cfc7" stroke-width="1"/>
+  <text x="190.00" y="154.00" font-family="monospace" font-size="9" fill="#5d7078">earliest stated</text>
+  <text x="820.00" y="154.00" font-family="monospace" font-size="9" fill="#5d7078" text-anchor="end">latest stated</text>
+  <g class="legend" font-family="monospace" font-size="10">
+    <text x="24.00" y="158.00" fill="#5d7078">● point in time stated by a source</text>
+    <text x="24.00" y="172.00" fill="#5d7078">▬ interval stated by a source</text>
+    <text x="24.00" y="186.00" fill="#5d7078">▨ time the sources leave undetermined</text>
+  </g>
+</svg>

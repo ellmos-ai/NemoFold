@@ -1,0 +1,74 @@
+{
+  "job": {
+    "action_mode": "dry_run",
+    "handoff_context": {},
+    "input_roots": [
+      "<evidence-root>\\positive\\inputs\\fictional-doctor-folder"
+    ],
+    "model_budget_usd": 0.0,
+    "model_id": null,
+    "output_dir": "<evidence-root>\\positive\\out\\register",
+    "parameters": {
+      "column_template": "medical_reports",
+      "expected_pdf_pages": {
+        "01-endokrinologie.pdf": 2
+      },
+      "formats": [
+        "md"
+      ],
+      "pdf_page_reviews": {
+        "01-endokrinologie.pdf": [
+          {
+            "content_complete": true,
+            "method": "manual",
+            "page": 2,
+            "reviewed_at": "2026-09-16T07:50:00+02:00",
+            "reviewer": "human:acceptance-fixture-reviewer",
+            "source_sha256": "d6ba7479cc3ecb189fbd02eba236bb840b98e0d08c46cc6813bc065befb18313",
+            "text": "Befund: Schilddr\u00fcse Verlaufskontrolle empfohlen."
+          }
+        ]
+      },
+      "require_complete_pdf_inventory": true,
+      "source_tables": [
+        "bericht"
+      ],
+      "topic_filter": [
+        "Schilddr\u00fcse"
+      ]
+    },
+    "privacy_mode": "local_only",
+    "questions": [],
+    "response_schema": "nemofold.claims.v1",
+    "resume_run_id": null,
+    "sources": [
+      {
+        "display_name": "01-endokrinologie.pdf",
+        "extraction_status": "new",
+        "mime_type": "application/pdf",
+        "path": "<evidence-root>\\positive\\inputs\\fictional-doctor-folder\\01-endokrinologie.pdf",
+        "sha256": "d6ba7479cc3ecb189fbd02eba236bb840b98e0d08c46cc6813bc065befb18313",
+        "source_id": "src_3566f5f70e6c9854"
+      },
+      {
+        "display_name": "02-orthopaedie.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\positive\\inputs\\fictional-doctor-folder\\02-orthopaedie.txt",
+        "sha256": "022a5dc49024052301d93a4830ee576a5950f8de7a915d29693edc1b8889d7a2",
+        "source_id": "src_22a8c8b3a9564802"
+      },
+      {
+        "display_name": "03-verlauf.sqlite",
+        "extraction_status": "new",
+        "mime_type": "application/octet-stream",
+        "path": "<evidence-root>\\positive\\inputs\\fictional-doctor-folder\\03-verlauf.sqlite",
+        "sha256": "8d045050adeb4b9cd7418b6c7bd0734884d750042b0ad0c446307f4690dd70d5",
+        "source_id": "src_67e6377d72eacdfd"
+      }
+    ],
+    "target_roots": [],
+    "workflow": "document_registry"
+  },
+  "schema": "nemofold.job-snapshot.v1"
+}

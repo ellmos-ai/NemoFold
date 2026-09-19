@@ -1,0 +1,5 @@
+Abo: Tageszeitung Digital
+Betrag: 19,90 €
+Turnus: monatlich
+Status: aktiv
+Konto: ACC-NEWS-05

@@ -1,0 +1,65 @@
+{
+  "deleted_source_ids": [],
+  "hashes_by_source_id": {
+    "src_067cdcf16c2b605e": "6adbbaf1e66edced0274c8365289e0d8688e689def76b625f73a13c0f0e53fdc",
+    "src_51b18fe9a0ef6f66": "a5cfc156c79fa1efb31c9e152d397bb30e44156b7a2ccc8077ac199b8001b22f",
+    "src_9663a3ffb272580c": "63b86c79f08700c97ecad2b5ec7a8e2036af55030263ca1a9e0f8d52ba17fa4a",
+    "src_ae1cc426668da37a": "46a72ef8d430433095af0c422dba63b2de2788a3c01bb70871d8a5589f631247",
+    "src_b57ede70650d147c": "294778af7813a21e52ccf5d6e4ae34a4028a9d9b1cafa6d6c6294b6ae45f136f",
+    "src_d4408422630e5f66": "43a602a03517dde578fcb304bd1d05847dd241a98393f10ccffd4eb881aa4757",
+    "src_e5f66e03b06f79d5": "c957d370d21d5f9d01b191fd1676f6cc3bcac140de2294ee7e921fcde6cb590e"
+  },
+  "run_id": "g06_pos_02",
+  "schema": "nemofold.inventory.v1",
+  "sources": [
+    {
+      "change_status": "new",
+      "display_name": "01_streaming.txt",
+      "mime_type": "text/plain",
+      "sha256": "6adbbaf1e66edced0274c8365289e0d8688e689def76b625f73a13c0f0e53fdc",
+      "source_id": "src_067cdcf16c2b605e"
+    },
+    {
+      "change_status": "new",
+      "display_name": "02_cloud.txt",
+      "mime_type": "text/plain",
+      "sha256": "c957d370d21d5f9d01b191fd1676f6cc3bcac140de2294ee7e921fcde6cb590e",
+      "source_id": "src_e5f66e03b06f79d5"
+    },
+    {
+      "change_status": "new",
+      "display_name": "03_gym.txt",
+      "mime_type": "text/plain",
+      "sha256": "43a602a03517dde578fcb304bd1d05847dd241a98393f10ccffd4eb881aa4757",
+      "source_id": "src_d4408422630e5f66"
+    },
+    {
+      "change_status": "new",
+      "display_name": "04_newspaper.txt",
+      "mime_type": "text/plain",
+      "sha256": "63b86c79f08700c97ecad2b5ec7a8e2036af55030263ca1a9e0f8d52ba17fa4a",
+      "source_id": "src_9663a3ffb272580c"
+    },
+    {
+      "change_status": "new",
+      "display_name": "msg_01_streaming_rechnung.txt",
+      "mime_type": "text/plain",
+      "sha256": "a5cfc156c79fa1efb31c9e152d397bb30e44156b7a2ccc8077ac199b8001b22f",
+      "source_id": "src_51b18fe9a0ef6f66"
+    },
+    {
+      "change_status": "new",
+      "display_name": "msg_02_cloud_preiserhoehung.txt",
+      "mime_type": "text/plain",
+      "sha256": "46a72ef8d430433095af0c422dba63b2de2788a3c01bb70871d8a5589f631247",
+      "source_id": "src_ae1cc426668da37a"
+    },
+    {
+      "change_status": "new",
+      "display_name": "msg_03_gym_kuendigung.txt",
+      "mime_type": "text/plain",
+      "sha256": "294778af7813a21e52ccf5d6e4ae34a4028a9d9b1cafa6d6c6294b6ae45f136f",
+      "source_id": "src_b57ede70650d147c"
+    }
+  ]
+}

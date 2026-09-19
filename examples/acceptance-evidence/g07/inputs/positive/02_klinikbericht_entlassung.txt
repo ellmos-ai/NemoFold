@@ -1,0 +1,23 @@
+Arzt: Klinikum Mitte, Abt. Endokrinologie
+Datum: 2026-09-02
+
+Medikament: L-Thyroxin Henning
+Wirkstoff: Levothyroxin-Natrium
+Dosierung: 100 µg
+Einnahme: 1-0-0-0 morgens nüchtern
+Indikation: Hypothyreose
+Status: laufend
+
+Medikament: Ramipril-ratiopharm
+Wirkstoff: Ramipril
+Dosierung: 5 mg
+Einnahme: 1-0-0-0 morgens
+Indikation: Hypertonie
+Status: laufend
+
+Medikament: Metformin HEXAL
+Wirkstoff: Metforminhydrochlorid
+Dosierung: 1000 mg
+Einnahme: 1-0-1-0 zu den Mahlzeiten
+Indikation: Diabetes mellitus Typ 2
+Status: laufend

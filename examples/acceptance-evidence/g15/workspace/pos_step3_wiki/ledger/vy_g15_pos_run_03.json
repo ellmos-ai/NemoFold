@@ -1,0 +1,78 @@
+{
+  "actions": [
+    "wrote 3 page(s) and an index"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\workspace\\pos_step3_wiki\\inventory\\vy_g15_pos_run_03.json",
+      "sha256": "e188537afa609433ae2331e9c0d3198c3f284ce082ae9f1f0e512242acb433ef",
+      "status": "written"
+    },
+    {
+      "format": "wiki-index",
+      "path": "<evidence-root>\\workspace\\pos_step3_wiki\\autismus_metawiki\\index.md",
+      "sha256": "6cb21959c07745db98a8982ddbde8a4e0f99e4ba3a9d57946954cdc07cc35c9d",
+      "status": "written"
+    },
+    {
+      "format": "wiki-page",
+      "path": "<evidence-root>\\workspace\\pos_step3_wiki\\autismus_metawiki\\01-diagnostik-md.md",
+      "sha256": "5b1e0e921dc5471570f5922e1e866a684220a22760f0a32bc7f08f94d4c3fe04",
+      "status": "written"
+    },
+    {
+      "format": "wiki-page",
+      "path": "<evidence-root>\\workspace\\pos_step3_wiki\\autismus_metawiki\\02-therapie-md.md",
+      "sha256": "4fd6180b04566e46f76a78421e8b42f6cf7c8b98f3e44f2d17492be326146759",
+      "status": "written"
+    },
+    {
+      "format": "wiki-page",
+      "path": "<evidence-root>\\workspace\\pos_step3_wiki\\autismus_metawiki\\03-foerderung-md.md",
+      "sha256": "ee68a45643b5cd3b49a55f3e554c3e78b4225bdd1cdb7d665d0250b5e7113765",
+      "status": "written"
+    },
+    {
+      "format": "metawiki-manifest",
+      "path": "<evidence-root>\\workspace\\pos_step3_wiki\\vy_g15_pos_run_03.metawiki-manifest.json",
+      "sha256": "d7773456630cc18de0f33298e50577d93bf0a4365fced3215f69eaae9e75b7f6",
+      "status": "written"
+    },
+    {
+      "format": "metawiki-overview",
+      "path": "<evidence-root>\\workspace\\pos_step3_wiki\\vy_g15_pos_run_03.metawiki.md",
+      "sha256": "dac89439dae60d84bcd7e39206e2b40266b878ab7903b3f05f7f82b7f9fcc1e6",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 3,
+    "read_sources": 3,
+    "total_sources": 3,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": []
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_c12366eee0a2c8ce11b963fbc6e52c07291674d66f2c5ad11153d84846a72f53",
+  "metadata": {
+    "cloud_proof": false,
+    "fidelity_note": "Each page carries its document unchanged. A wiki whose pages disagree with the files they came from would be worse than no wiki.",
+    "hierarchy_status": "verified",
+    "link_status": "verified",
+    "manifest_path": "<evidence-root>\\workspace\\pos_step3_wiki\\vy_g15_pos_run_03.metawiki-manifest.json",
+    "page_count": 3,
+    "source_count": 3,
+    "wiki_dir": "<evidence-root>\\workspace\\pos_step3_wiki\\autismus_metawiki"
+  },
+  "run_id": "vy_g15_pos_run_03",
+  "status": "executed",
+  "workflow": "wiki_export"
+}

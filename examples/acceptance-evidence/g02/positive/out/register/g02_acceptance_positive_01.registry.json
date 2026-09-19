@@ -1,0 +1,150 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Patient",
+        "Patientin",
+        "Patient name",
+        "Betreff"
+      ],
+      "description": "Patient or report subject",
+      "name": "Name"
+    },
+    {
+      "aliases": [
+        "Speciality",
+        "Specialty",
+        "Abteilung",
+        "Department",
+        "Fachgebiet"
+      ],
+      "description": "Medical speciality",
+      "name": "Fachrichtung"
+    },
+    {
+      "aliases": [
+        "\u00c4rztin",
+        "Arzt/\u00c4rztin",
+        "Physician",
+        "Doctor",
+        "Behandler"
+      ],
+      "description": "Reporting physician",
+      "name": "Arzt"
+    },
+    {
+      "aliases": [
+        "Contact",
+        "Telefon",
+        "Phone",
+        "E-Mail",
+        "Email",
+        "Praxis"
+      ],
+      "description": "Practice contact",
+      "name": "Kontakt"
+    },
+    {
+      "aliases": [
+        "Finding",
+        "Diagnose",
+        "Diagnosis",
+        "Ergebnis"
+      ],
+      "description": "Finding or diagnosis",
+      "name": "Befund"
+    }
+  ],
+  "empty_cells": 0,
+  "filled_cells": 10,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Name",
+          "line": 2,
+          "quote": "Patient: Fallperson 204",
+          "source_id": "src_3566f5f70e6c9854",
+          "value": "Fallperson 204"
+        },
+        {
+          "column": "Fachrichtung",
+          "line": 3,
+          "quote": "Fachrichtung: Endokrinologie",
+          "source_id": "src_3566f5f70e6c9854",
+          "value": "Endokrinologie"
+        },
+        {
+          "column": "Arzt",
+          "line": 4,
+          "quote": "Arzt: Dr. Mira Beispiel",
+          "source_id": "src_3566f5f70e6c9854",
+          "value": "Dr. Mira Beispiel"
+        },
+        {
+          "column": "Kontakt",
+          "line": 5,
+          "quote": "Kontakt: praxis-mira@example.invalid \u00b7 +49 30 000001",
+          "source_id": "src_3566f5f70e6c9854",
+          "value": "praxis-mira@example.invalid \u00b7 +49 30 000001"
+        },
+        {
+          "column": "Befund",
+          "line": 6,
+          "quote": "Befund: Schilddr\u00fcse unauff\u00e4llig.",
+          "source_id": "src_3566f5f70e6c9854",
+          "value": "Schilddr\u00fcse unauff\u00e4llig."
+        }
+      ],
+      "display_name": "01-endokrinologie.pdf",
+      "record_line": null,
+      "source_id": "src_3566f5f70e6c9854"
+    },
+    {
+      "cells": [
+        {
+          "column": "Name",
+          "line": 5,
+          "quote": "Patient: Fallperson 204",
+          "source_id": "src_67e6377d72eacdfd",
+          "value": "Fallperson 204"
+        },
+        {
+          "column": "Fachrichtung",
+          "line": 5,
+          "quote": "Fachrichtung: Endokrinologie",
+          "source_id": "src_67e6377d72eacdfd",
+          "value": "Endokrinologie"
+        },
+        {
+          "column": "Arzt",
+          "line": 5,
+          "quote": "Arzt: Dr. Noa Verlauf",
+          "source_id": "src_67e6377d72eacdfd",
+          "value": "Dr. Noa Verlauf"
+        },
+        {
+          "column": "Kontakt",
+          "line": 5,
+          "quote": "Kontakt: praxis-verlauf@example.invalid \u00b7 +49 30 000002",
+          "source_id": "src_67e6377d72eacdfd",
+          "value": "praxis-verlauf@example.invalid \u00b7 +49 30 000002"
+        },
+        {
+          "column": "Befund",
+          "line": 5,
+          "quote": "Befund: Schilddr\u00fcse vergr\u00f6\u00dfert",
+          "source_id": "src_67e6377d72eacdfd",
+          "value": "Schilddr\u00fcse vergr\u00f6\u00dfert"
+        }
+      ],
+      "display_name": "03-verlauf.sqlite",
+      "record_line": 5,
+      "source_id": "src_67e6377d72eacdfd"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": [
+    "src_22a8c8b3a9564802"
+  ]
+}

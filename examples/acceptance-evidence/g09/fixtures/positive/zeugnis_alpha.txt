@@ -1,0 +1,5 @@
+Arbeitszeugnis
+Arbeitgeber: Alpha Engineering GmbH
+Position: Senior Systems Engineer
+Zeitraum: 2020 - 2023
+Aufgaben: Entwicklung ausfallsicherer Verteilungsdienste und API-Gateways.

@@ -1,0 +1,6 @@
+Vertrag: Rundfunkbeitrag ARD ZDF
+Betrag: 55,08 €
+Turnus: vierteljährlich
+Nächste Fälligkeit: 2026-10-15
+Kategorie: wiederkehrend
+Kontakt: beitragsservice@rundfunk-beispiel.de

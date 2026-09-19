@@ -1,0 +1,17 @@
+{
+  "deleted_source_ids": [],
+  "hashes_by_source_id": {
+    "src_9da86609d477d722": "cf3bd49060f4eeff73d89fa9142b05661b46f971589eb1784200ce81adf1fcb3"
+  },
+  "run_id": "g06_neg_data_01",
+  "schema": "nemofold.inventory.v1",
+  "sources": [
+    {
+      "change_status": "new",
+      "display_name": "01_missing_column.txt",
+      "mime_type": "text/plain",
+      "sha256": "cf3bd49060f4eeff73d89fa9142b05661b46f971589eb1784200ce81adf1fcb3",
+      "source_id": "src_9da86609d477d722"
+    }
+  ]
+}

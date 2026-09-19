@@ -1,0 +1,53 @@
+{
+  "actions": [
+    "searched 1 source(s)",
+    "no_matches_found"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\missing-negative\\out\\query\\inventory\\g01_acceptance_missing_tax_id_01.json",
+      "sha256": "0ae49e3e7528a7b9449f0089131245a4243cf81a6b41e3b943638e0e7c3d206a",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\missing-negative\\out\\query\\g01_acceptance_missing_tax_id_01.needs-user-input.json",
+      "sha256": "262458d0c74b251cce57071b56afbb865c6defbe65aa6fbcf3a67f768d767f1b",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_0fc02924ce41d50e"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "no_matches_found:Steuernummer"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_a99b7085aaad2061db40cedd7b31bfcb05c0bf3b8dbee1d1246ec4f730ded58a",
+  "metadata": {
+    "cloud_proof": false,
+    "match_count": 0,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "source_count": 1,
+    "terms": [
+      "Steuernummer"
+    ]
+  },
+  "run_id": "g01_acceptance_missing_tax_id_01",
+  "status": "blocked",
+  "workflow": "corpus_query"
+}

@@ -1,0 +1,22 @@
+{
+  "format": "contact-book",
+  "path": "<evidence-root>\\work\\pos_out_step2\\contacts\\g12_pos_02.txt",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g12_pos_02",
+  "producer_workflow": "contact_monitor",
+  "recipient_bridge": {
+    "contact_book_sha256": "94bafd4f146bbef04c0e56bffc1753663b8ac36919af3d75dde061a575998a60",
+    "governing_right": "draft_only",
+    "matched_contacts": [
+      "Dr. med. Frank Weber"
+    ],
+    "resolved_recipients": [
+      "weber@nuklearmedizin-praxis.de"
+    ],
+    "schema": "nemofold.recipient-bridge-handoff.v1",
+    "send_permitted": false
+  },
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "94bafd4f146bbef04c0e56bffc1753663b8ac36919af3d75dde061a575998a60",
+  "status": "verified"
+}

@@ -1,0 +1,65 @@
+{
+  "actions": [
+    "action_plan_written",
+    "action_batch_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\unclassifiable\\output\\smart_inbox\\inventory\\g03_acceptance_unclassifiable_01.json",
+      "sha256": "e5a8e1fcf59f995de8f8303da9b7985d9a32f778f39cc26a01f20952b8b62fa5",
+      "status": "written"
+    },
+    {
+      "format": "action-plan",
+      "path": "<evidence-root>\\unclassifiable\\output\\smart_inbox\\g03_acceptance_unclassifiable_01.action-plan.json",
+      "sha256": "a32bbddc1d92772046d9b47a650f4185799e91464e4d7232f48e9481938fc613",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\unclassifiable\\output\\smart_inbox\\g03_acceptance_unclassifiable_01.needs-user-input.json",
+      "sha256": "31452b85e79b740c99aed0c8c9ea475044528c487b5caf31fda6619943144e8b",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_035cb1531a0c7036"
+    ]
+  },
+  "errors": [
+    "unclassifiable_input:01-einkaufszettel.txt"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_83640382ac6d60f2fafba245b7a009ee6f8fd78ac675d7f8c585291ce0de2baf",
+  "metadata": {
+    "applied_actions": 0,
+    "classification_policy": "content_categories",
+    "cloud_proof": false,
+    "confidence_threshold": 0.25,
+    "index_status": {
+      "src_035cb1531a0c7036": "indexed"
+    },
+    "maintain_index": true,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "planned_actions": 1,
+    "pruned_source_ids": [],
+    "question_count": 1,
+    "source_count": 1
+  },
+  "run_id": "g03_acceptance_unclassifiable_01",
+  "status": "blocked",
+  "workflow": "smart_inbox"
+}

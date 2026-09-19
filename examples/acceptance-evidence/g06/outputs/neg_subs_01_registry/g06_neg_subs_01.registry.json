@@ -1,0 +1,108 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Contract",
+        "Vertragsgegenstand",
+        "Subscription",
+        "Abo",
+        "Leistung"
+      ],
+      "description": "Contract or subscription",
+      "name": "Vertrag"
+    },
+    {
+      "aliases": [
+        "Amount",
+        "Kosten",
+        "Cost",
+        "Preis",
+        "Beitrag"
+      ],
+      "description": "Amount per period",
+      "name": "Betrag"
+    },
+    {
+      "aliases": [
+        "Interval",
+        "Zahlungsweise",
+        "Rhythmus",
+        "Frequency",
+        "Zyklus"
+      ],
+      "description": "Billing interval",
+      "name": "Turnus"
+    },
+    {
+      "aliases": [
+        "F\u00e4lligkeit",
+        "Due date",
+        "Next due",
+        "N\u00e4chste Zahlung",
+        "Faelligkeit"
+      ],
+      "description": "Next due date",
+      "name": "N\u00e4chste F\u00e4lligkeit"
+    },
+    {
+      "aliases": [
+        "Contact",
+        "Anbieter",
+        "Provider",
+        "Telefon",
+        "E-Mail",
+        "Email"
+      ],
+      "description": "Provider contact",
+      "name": "Kontakt"
+    }
+  ],
+  "empty_cells": 2,
+  "filled_cells": 3,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Abo: Einzelnes Magazin",
+          "source_id": "src_7921ed32cfb43741",
+          "value": "Einzelnes Magazin"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 5,00 \u20ac",
+          "source_id": "src_7921ed32cfb43741",
+          "value": "5,00 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: monatlich",
+          "source_id": "src_7921ed32cfb43741",
+          "value": "monatlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "01_single_sub.txt",
+      "record_line": null,
+      "source_id": "src_7921ed32cfb43741"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

@@ -1,0 +1,53 @@
+{
+  "actions": [
+    "analyzed 1 source(s)",
+    "coverage_intervals_missing"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\missing-dates-negative\\out\\timeline\\inventory\\g04_acceptance_missing_dates_01.json",
+      "sha256": "112b8e01330f4d473c6c5661b18eb435057a40e172ea2a550f7719ad985147ed",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\missing-dates-negative\\out\\timeline\\g04_acceptance_missing_dates_01.needs-user-input.json",
+      "sha256": "329053ac7506ceeaa2e67c183651ac9422ee1046efd040c8faea426880eabf25",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_d4cc474c8ae5abf1"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "insufficient_coverage_intervals:0<1"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_310f5376cde1a1361fdededcafcb8f4d87b59531642935ef0024ef371c027ee7",
+  "metadata": {
+    "cloud_proof": false,
+    "interval_count": 0,
+    "needs_user_input": true,
+    "notes": [],
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "source_count": 1,
+    "target_interval_count": 1,
+    "undetermined_count": 1
+  },
+  "run_id": "g04_acceptance_missing_dates_01",
+  "status": "blocked",
+  "workflow": "coverage_timeline"
+}

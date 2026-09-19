@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "knowledge_gap_cv_ascii",
+      "kind": "text",
+      "prompt": "Es konnten keine ausreichenden belegten Wissenseinheiten gefunden werden (gefunden: 0, erforderlich: 1). Bitte stellen Sie passende Quelldokumente bereit.",
+      "why": "Unbelegte Generierung ohne Wissensbasis ist vertraglich gesperrt."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "knowledge_composer"
+}

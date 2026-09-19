@@ -1,0 +1,5 @@
+Arbeitszeugnis
+Arbeitgeber: Gamma Software GmbH
+Position: Developer
+Zeitraum: 2022 - 2024
+Aufgaben: Fullstack-Entwicklung mit Python und TypeScript.

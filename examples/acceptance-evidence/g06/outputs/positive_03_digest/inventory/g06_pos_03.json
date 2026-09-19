@@ -1,0 +1,17 @@
+{
+  "deleted_source_ids": [],
+  "hashes_by_source_id": {
+    "src_638956edea2192d7": "bc5f0d97ab4f32c62f1348fcaddeec3bbc6e736024e2b8194dd241d9399c8159"
+  },
+  "run_id": "g06_pos_03",
+  "schema": "nemofold.inventory.v1",
+  "sources": [
+    {
+      "change_status": "new",
+      "display_name": "g06_pos_02_reconciliation_report.md",
+      "mime_type": "application/octet-stream",
+      "sha256": "bc5f0d97ab4f32c62f1348fcaddeec3bbc6e736024e2b8194dd241d9399c8159",
+      "source_id": "src_638956edea2192d7"
+    }
+  ]
+}

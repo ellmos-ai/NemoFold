@@ -1,0 +1,65 @@
+{
+  "actions": [
+    "action_plan_written",
+    "action_batch_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\unreadable\\output\\smart_inbox\\inventory\\g03_acceptance_unreadable_01.json",
+      "sha256": "0d045231b4379eb8d37cf8d434f399a54849b84ee187bd8d3e0c9ae81ce47cff",
+      "status": "written"
+    },
+    {
+      "format": "action-plan",
+      "path": "<evidence-root>\\unreadable\\output\\smart_inbox\\g03_acceptance_unreadable_01.action-plan.json",
+      "sha256": "4d0a91c68b800a589dfdbe14ffab6d3926246cc338e2f18cc130cc93468bba96",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\unreadable\\output\\smart_inbox\\g03_acceptance_unreadable_01.needs-user-input.json",
+      "sha256": "3d058684198b3a52251d45645eb86e6be138727a54b05bfa0e37faf5df20b499",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_c3abf64b11145dba"
+    ]
+  },
+  "errors": [
+    "unreadable_input:01-scan-corrupt.txt"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_304c2f68a3ab31da668302068d8b0364a6fbbe034b2015f715d040868e6be8e2",
+  "metadata": {
+    "applied_actions": 0,
+    "classification_policy": "content_categories",
+    "cloud_proof": false,
+    "confidence_threshold": 0.25,
+    "index_status": {
+      "src_c3abf64b11145dba": "indexed"
+    },
+    "maintain_index": true,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "planned_actions": 1,
+    "pruned_source_ids": [],
+    "question_count": 1,
+    "source_count": 1
+  },
+  "run_id": "g03_acceptance_unreadable_01",
+  "status": "blocked",
+  "workflow": "smart_inbox"
+}

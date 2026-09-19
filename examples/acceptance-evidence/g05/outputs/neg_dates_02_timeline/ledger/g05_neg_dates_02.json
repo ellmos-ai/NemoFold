@@ -1,0 +1,53 @@
+{
+  "actions": [
+    "analyzed 1 source(s)",
+    "cost_due_dates_undetermined"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\neg_dates_02_timeline\\inventory\\g05_neg_dates_02.json",
+      "sha256": "10442fc3d0183d46fe0ce73aa0a520d88ed0a117d88b7a30038ab4bd8c45cb09",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\outputs\\neg_dates_02_timeline\\g05_neg_dates_02.needs-user-input.json",
+      "sha256": "70d630a92e94582570b58435b88833ef885c91b10bca251a5ab0826a27d22132",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_9f79126e070b37f4"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "undetermined_cost_due_dates:1"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_d6c666e41299ec687691a1ab1322c888e147bdd9b189b4cab246a28f2006622c",
+  "metadata": {
+    "cloud_proof": false,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "source_count": 1,
+    "undetermined_contracts": [
+      "Nebenkostenabrechnung Nachzahlung"
+    ],
+    "undetermined_count": 1
+  },
+  "run_id": "g05_neg_dates_02",
+  "status": "blocked",
+  "workflow": "cost_timeline"
+}

@@ -1,0 +1,51 @@
+{
+  "actions": [
+    "wiki_export_planned",
+    "cyclic_wiki_hierarchy_detected"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\workspace\\neg2_cyclic\\out\\inventory\\g15_neg2_cyclic.json",
+      "sha256": "14932059da0fa7585b71f8a1f404d81afa97d51912145ff32f19fdf021f727a7",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 3,
+    "total_sources": 3,
+    "uncited_read_source_ids": [
+      "src_26429067f547f2c8",
+      "src_44225492d294e2ee",
+      "src_69bebd48cfb20143"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "cyclic_wiki_hierarchy_detected"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_5eecb384ea846678807eb4341745f02b4389fa57086cf0895cd540dd95bc6994",
+  "metadata": {
+    "cloud_proof": false,
+    "cycles": [
+      [
+        "diagnostik",
+        "therapie",
+        "foerderung",
+        "diagnostik"
+      ]
+    ],
+    "source_count": 3
+  },
+  "run_id": "g15_neg2_cyclic",
+  "status": "blocked",
+  "workflow": "wiki_export"
+}

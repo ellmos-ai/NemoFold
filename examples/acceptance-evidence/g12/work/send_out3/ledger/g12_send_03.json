@@ -1,0 +1,14 @@
+{
+  "actions": [],
+  "artifacts": [],
+  "coverage": null,
+  "errors": [
+    "recipient_bridge_live_send_forbidden"
+  ],
+  "gate_decision": null,
+  "idempotency_key": "g12_send_03",
+  "metadata": {},
+  "run_id": "g12_send_03",
+  "status": "blocked",
+  "workflow": "controlled_email"
+}

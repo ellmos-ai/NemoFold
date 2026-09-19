@@ -1,0 +1,42 @@
+{
+  "actions": [
+    "knowledge_scan",
+    "target_context_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\missing_context_run\\step1_composer\\inventory\\g09_missing_ctx_01.json",
+      "sha256": "2eee950fca26864cdd60af2d65505b1c3d33a0c339a3380dd974f6aebb4e905a",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_27dc20aa636d54fe"
+    ]
+  },
+  "errors": [
+    "missing_target_context:profile_autism_support_requires_client_context"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_50b8be636dca1099f48c88f5754a1915038e83c06813fd5594ddbac7301679af",
+  "metadata": {
+    "cloud_proof": false,
+    "profile": "autism_support",
+    "source_count": 1
+  },
+  "run_id": "g09_missing_ctx_01",
+  "status": "blocked",
+  "workflow": "knowledge_composer"
+}

@@ -1,0 +1,108 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Contract",
+        "Vertragsgegenstand",
+        "Subscription",
+        "Abo",
+        "Leistung"
+      ],
+      "description": "Contract or subscription",
+      "name": "Vertrag"
+    },
+    {
+      "aliases": [
+        "Amount",
+        "Kosten",
+        "Cost",
+        "Preis",
+        "Beitrag"
+      ],
+      "description": "Amount per period",
+      "name": "Betrag"
+    },
+    {
+      "aliases": [
+        "Interval",
+        "Zahlungsweise",
+        "Rhythmus",
+        "Frequency",
+        "Zyklus"
+      ],
+      "description": "Billing interval",
+      "name": "Turnus"
+    },
+    {
+      "aliases": [
+        "F\u00e4lligkeit",
+        "Due date",
+        "Next due",
+        "N\u00e4chste Zahlung",
+        "Faelligkeit"
+      ],
+      "description": "Next due date",
+      "name": "N\u00e4chste F\u00e4lligkeit"
+    },
+    {
+      "aliases": [
+        "Contact",
+        "Anbieter",
+        "Provider",
+        "Telefon",
+        "E-Mail",
+        "Email"
+      ],
+      "description": "Provider contact",
+      "name": "Kontakt"
+    }
+  ],
+  "empty_cells": 1,
+  "filled_cells": 4,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Vertrag: Mini Abo",
+          "source_id": "src_7f15f2a2e29db7ad",
+          "value": "Mini Abo"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 2,99 \u20ac",
+          "source_id": "src_7f15f2a2e29db7ad",
+          "value": "2,99 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: monatlich",
+          "source_id": "src_7f15f2a2e29db7ad",
+          "value": "monatlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": 4,
+          "quote": "N\u00e4chste F\u00e4lligkeit: 2026-10-01",
+          "source_id": "src_7f15f2a2e29db7ad",
+          "value": "2026-10-01"
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "01_single_item.txt",
+      "record_line": null,
+      "source_id": "src_7f15f2a2e29db7ad"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

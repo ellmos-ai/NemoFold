@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "medication_conflict_l-thyroxin henning",
+      "kind": "text",
+      "prompt": "Widersprüchliche Angaben für 'L-Thyroxin Henning': Widersprüchliche Dosierungsangaben für 'L-Thyroxin Henning': src_5a4b41216883f8e7 (kein Datum): 75 µg; src_a05784818866d22f (kein Datum): 100 µg. Bitte geben Sie die ärztlich verordnete Dosierung und Einnahmezeit an.",
+      "why": "NemoFold besitzt keine medizinische Entscheidungskompetenz (§ 29 MBO-Ä). Widersprüchliche Dosierungen dürfen nicht automatisch entschieden werden."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "medication_reconcile"
+}

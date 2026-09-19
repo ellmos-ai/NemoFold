@@ -1,0 +1,6 @@
+Absender: billing@musik-streaming.de
+Betreff: Ihre Rechnung Musik Streaming
+Datum: 2026-09-12
+Betrag: 9,99 €
+
+Vielen Dank für Ihre Zahlung bei Musik Streaming.

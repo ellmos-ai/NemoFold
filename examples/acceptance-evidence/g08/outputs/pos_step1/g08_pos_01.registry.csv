@@ -1,0 +1,9 @@
+source_id,display_name,record_line,Gegenstand,Gegenstand [source],Lagerort,Lagerort [source],Menge,Menge [source],Kategorie,Kategorie [source],Zustand,Zustand [source]
+src_0e09a5290dd603c8,hauslagerist.db,5,Akkuschrauber,src_0e09a5290dd603c8:5,Werkstatt,src_0e09a5290dd603c8:5,1,src_0e09a5290dd603c8:5,Werkzeug,src_0e09a5290dd603c8:5,gut,src_0e09a5290dd603c8:5
+src_0e09a5290dd603c8,hauslagerist.db,6,Kaffeemaschine,src_0e09a5290dd603c8:6,Küche,src_0e09a5290dd603c8:6,1,src_0e09a5290dd603c8:6,Haushaltsgerät,src_0e09a5290dd603c8:6,neuwertig,src_0e09a5290dd603c8:6
+src_0e09a5290dd603c8,hauslagerist.db,7,Aktenordner,src_0e09a5290dd603c8:7,Büro,src_0e09a5290dd603c8:7,5,src_0e09a5290dd603c8:7,Büromaterial,src_0e09a5290dd603c8:7,gut,src_0e09a5290dd603c8:7
+src_0e09a5290dd603c8,hauslagerist.db,13,Werkstatt,src_0e09a5290dd603c8:13,,,,,,,,
+src_0e09a5290dd603c8,hauslagerist.db,14,Küche,src_0e09a5290dd603c8:14,,,,,,,,
+src_0e09a5290dd603c8,hauslagerist.db,15,Büro,src_0e09a5290dd603c8:15,,,,,,,,
+src_de55bf62469a8c7f,mediplaner.sqlite,5,,,,,,,,,,
+src_de55bf62469a8c7f,mediplaner.sqlite,6,,,,,,,,,,

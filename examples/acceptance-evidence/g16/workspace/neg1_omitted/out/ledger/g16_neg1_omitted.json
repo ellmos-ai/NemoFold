@@ -1,0 +1,61 @@
+{
+  "actions": [
+    "rater_race_planned",
+    "invalid_supplied_coding"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\workspace\\neg1_omitted\\out\\inventory\\g16_neg1_omitted.json",
+      "sha256": "69b4d206faebc5102555777e2344a82c2885a0f611af5baf8254ab347187e5bd",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 20,
+    "total_sources": 20,
+    "uncited_read_source_ids": [
+      "src_093db9d9d5933fa7",
+      "src_099a6ba5f8a4daf2",
+      "src_1ae95cfc550bbf03",
+      "src_3b86c361b6844111",
+      "src_453c4585438b897a",
+      "src_4f17cc8dff90a853",
+      "src_6061c67a876a1011",
+      "src_64f6527c057cdf75",
+      "src_6aebb81e94b74002",
+      "src_6b87dda5f1e93d20",
+      "src_7728f8e96d6444e1",
+      "src_87ab7308d31d8d7f",
+      "src_8a134c7529c5cb80",
+      "src_988a1a9a246cb56f",
+      "src_a5637f89f2fd7005",
+      "src_c23dc9b0f68e609e",
+      "src_c52f8765022103c2",
+      "src_d03c3fb01c08bf9c",
+      "src_d9d3bdb2021f6489",
+      "src_dc8d71d60f76015a"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "invalid_supplied_coding:supplied coding omits 1 readable item(s)"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_94cde3468ea3dc6d596b908de2bb4fa5a93f1d4bbc81a3d7d8801b60dd976578",
+  "metadata": {
+    "cloud_proof": false,
+    "error": "supplied coding omits 1 readable item(s)",
+    "source_count": 20
+  },
+  "run_id": "g16_neg1_omitted",
+  "status": "blocked",
+  "workflow": "rater_race"
+}

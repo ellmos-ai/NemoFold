@@ -1,0 +1,147 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Gegenstand",
+        "Name",
+        "Artikel",
+        "Item",
+        "Bezeichnung"
+      ],
+      "description": "Item or property",
+      "name": "Gegenstand"
+    },
+    {
+      "aliases": [
+        "Lagerort",
+        "Ort",
+        "Raum",
+        "Zimmer",
+        "Location"
+      ],
+      "description": "Location or room",
+      "name": "Lagerort"
+    },
+    {
+      "aliases": [
+        "Menge",
+        "Anzahl",
+        "St\u00fcck",
+        "Quantity",
+        "Count"
+      ],
+      "description": "Quantity or count",
+      "name": "Menge"
+    },
+    {
+      "aliases": [
+        "Kategorie",
+        "Rubrik",
+        "Typ",
+        "Category",
+        "Type"
+      ],
+      "description": "Category or type",
+      "name": "Kategorie"
+    },
+    {
+      "aliases": [
+        "Zustand",
+        "Status",
+        "Condition"
+      ],
+      "description": "Condition or status",
+      "name": "Zustand"
+    }
+  ],
+  "empty_cells": 10,
+  "filled_cells": 0,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "zeugnis_alpha.txt",
+      "record_line": null,
+      "source_id": "src_98dfb98e18c47521"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "zeugnis_beta.txt",
+      "record_line": null,
+      "source_id": "src_7cf1a4798e8a2033"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

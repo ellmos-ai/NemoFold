@@ -1,0 +1,68 @@
+{
+  "actions": [
+    "document_qa_evaluated",
+    "format_verified",
+    "completeness_verified",
+    "hash_anchored",
+    "publication_package_sealed"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\pos_s2\\inventory\\vy_g13_pos_02.json",
+      "sha256": "6eddc8c6443025cff1b925d387d83c6ee08eb60a9a5eca535452c5c67dd9c4a9",
+      "status": "written"
+    },
+    {
+      "format": "document-qa",
+      "path": "<evidence-root>\\runs\\pos_s2\\vy_g13_pos_02.document-qa.json",
+      "sha256": "860001649601fd6a708f91cf5d6dcb5d8a6e2e219949cc8866b59b7ca7e0b341",
+      "status": "written"
+    },
+    {
+      "format": "publication-package",
+      "path": "<evidence-root>\\runs\\pos_s2\\vy_g13_pos_02.publication-package.json",
+      "sha256": "9d1d3996bc55a770e134ed22ec66ec5b555349f5fb3ea3eca7dd0b026736649d",
+      "status": "written"
+    },
+    {
+      "format": "markdown",
+      "path": "<evidence-root>\\runs\\pos_s2\\vy_g13_pos_02.publication-package.md",
+      "sha256": "b7047425ee9865aa3e5945fc4828c3ce4a6032456b770dc8004734fc47535c11",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 5,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_06a1e674f8dd89da",
+      "src_53d03fa278adec52",
+      "src_6c4c818dcbc18047",
+      "src_e1fbb2bde43c396f",
+      "src_e5cf4b24e0d55a2b"
+    ]
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_f16f50a8a23a83d91df0e46573f4aa11d9c00a8048dd29d76a1ec222519ad725",
+  "metadata": {
+    "checks_count": 5,
+    "cloud_proof": false,
+    "document_sha256": "bbcdd3ee50e2231e571f9ebce4a1d37a0cef3e6833892867878b9680a5af662a",
+    "qa_passed": true,
+    "source_count": 5,
+    "version": "1.0"
+  },
+  "run_id": "vy_g13_pos_02",
+  "status": "executed",
+  "workflow": "document_qa"
+}

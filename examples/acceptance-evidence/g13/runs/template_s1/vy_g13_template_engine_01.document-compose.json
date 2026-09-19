@@ -1,0 +1,12 @@
+{
+  "boundary_note": "NemoFold hands a payload and a template to report-forge and reports what came back. It does not fill templates itself, and a document the engine did not confirm is not listed as written.",
+  "documents": [],
+  "engine": "report-forge",
+  "engine_available": false,
+  "engine_note": "the optional 'templates' extra is not installed, so no template can be filled. Install it with: pip install \"nemofold[templates]\" (No module named 'report_forge')",
+  "notes": [],
+  "recipients": [],
+  "requested": 1,
+  "schema": "nemofold.document-compose.v1",
+  "written": 0
+}

@@ -1,0 +1,49 @@
+{
+  "deleted_source_ids": [],
+  "hashes_by_source_id": {
+    "src_0c4d6e42884b77b2": "bcf14817935d6e5399da801881fe43d9aeabd342189fd4da5897d872f064e029",
+    "src_5893508df841750e": "0ec98f061e991941014263de0da90edeb1496cac572329e1122d92739ce5efa4",
+    "src_69b8a98b21a09e8c": "99cdb5e5d71b857d9f4255a1212edd80701e3aefde0275fbab56c40b0854227f",
+    "src_7857b6e48246b753": "389d9aeb6332e8d3c1824cdd92c34b01559256b5224ff727659765c9cdc109c5",
+    "src_8e5be3a123cb25c2": "18b1cac4a1abbc62812bf34940c25a1a5a681cd1ba035ce88f40974b8eeca8ee"
+  },
+  "run_id": "g05_pos_01",
+  "schema": "nemofold.inventory.v1",
+  "sources": [
+    {
+      "change_status": "new",
+      "display_name": "01_fitness.txt",
+      "mime_type": "text/plain",
+      "sha256": "18b1cac4a1abbc62812bf34940c25a1a5a681cd1ba035ce88f40974b8eeca8ee",
+      "source_id": "src_8e5be3a123cb25c2"
+    },
+    {
+      "change_status": "new",
+      "display_name": "02_streaming.txt",
+      "mime_type": "text/plain",
+      "sha256": "0ec98f061e991941014263de0da90edeb1496cac572329e1122d92739ce5efa4",
+      "source_id": "src_5893508df841750e"
+    },
+    {
+      "change_status": "new",
+      "display_name": "03_kfz_steuer.txt",
+      "mime_type": "text/plain",
+      "sha256": "389d9aeb6332e8d3c1824cdd92c34b01559256b5224ff727659765c9cdc109c5",
+      "source_id": "src_7857b6e48246b753"
+    },
+    {
+      "change_status": "new",
+      "display_name": "04_tuev.txt",
+      "mime_type": "text/plain",
+      "sha256": "bcf14817935d6e5399da801881fe43d9aeabd342189fd4da5897d872f064e029",
+      "source_id": "src_0c4d6e42884b77b2"
+    },
+    {
+      "change_status": "new",
+      "display_name": "05_rundfunk.txt",
+      "mime_type": "text/plain",
+      "sha256": "99cdb5e5d71b857d9f4255a1212edd80701e3aefde0275fbab56c40b0854227f",
+      "source_id": "src_69b8a98b21a09e8c"
+    }
+  ]
+}

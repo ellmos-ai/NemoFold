@@ -1,0 +1,20 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 2,
+  "questions": [
+    {
+      "field": "ambiguous_sub_musik streaming",
+      "kind": "text",
+      "prompt": "Uneindeutige Zuordnung für Abo 'Musik Streaming'. Gefundene Belege: billing@musik-streaming.de (Absender: billing@musik-streaming.de · B). Bitte geben Sie das korrekte Konto oder die Kennung an.",
+      "why": "Uneindeutige Zuordnungen bleiben unbestätigt und lösen keine Statusänderung aus. Ohne Klärung kann kein verlässlicher Abgleich erfolgen."
+    },
+    {
+      "field": "ambiguous_sub_musik streaming",
+      "kind": "text",
+      "prompt": "Uneindeutige Zuordnung für Abo 'Musik Streaming'. Gefundene Belege: billing@musik-streaming.de (Absender: billing@musik-streaming.de · B). Bitte geben Sie das korrekte Konto oder die Kennung an.",
+      "why": "Uneindeutige Zuordnungen bleiben unbestätigt und lösen keine Statusänderung aus. Ohne Klärung kann kein verlässlicher Abgleich erfolgen."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "subscription_reconcile"
+}

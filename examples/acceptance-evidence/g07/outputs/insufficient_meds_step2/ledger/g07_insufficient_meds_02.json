@@ -1,0 +1,50 @@
+{
+  "actions": [
+    "analyzed 1 source(s)",
+    "medications_insufficient"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\insufficient_meds_step2\\inventory\\g07_insufficient_meds_02.json",
+      "sha256": "9a23d2aaa708ef39d332134b68578a1118c95dc649eb989e4c749458adc7a8c3",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\outputs\\insufficient_meds_step2\\g07_insufficient_meds_02.needs-user-input.json",
+      "sha256": "353a973593f20f99b1353ecc63db89187e4fc16d9ca0057854a8b030ab277a6f",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_62ec1cef62270982"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "insufficient_medications:1<4"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_ae92c3f4418408287e5b27d10e01f857aefb67adb4a81994e85c979f43f2772c",
+  "metadata": {
+    "cloud_proof": false,
+    "medication_count": 1,
+    "needs_user_input": true,
+    "source_count": 1,
+    "target_min": 4
+  },
+  "run_id": "g07_insufficient_meds_02",
+  "status": "blocked",
+  "workflow": "medication_reconcile"
+}

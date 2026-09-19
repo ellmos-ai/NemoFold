@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\positive_run\\step2_composer\\g09_pos_02.knowledge-composer.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g09_pos_02",
+  "producer_workflow": "knowledge_composer",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "5f65f3e4faf910c739a8a6bd3b4d3491f8363546b310a2888c321e1b82a2981a",
+  "status": "verified"
+}

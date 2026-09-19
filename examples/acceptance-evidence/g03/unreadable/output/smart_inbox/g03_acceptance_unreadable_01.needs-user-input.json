@@ -1,0 +1,19 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "choices": [
+        "retry_ocr",
+        "manual_inspection",
+        "discard"
+      ],
+      "field": "unreadable_01-scan-corrupt.txt",
+      "kind": "choice",
+      "prompt": "Das Dokument '01-scan-corrupt.txt' konnte nicht gelesen werden.",
+      "why": "Unlesbare Eingänge dürfen nicht still einsortiert werden."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "smart_inbox"
+}

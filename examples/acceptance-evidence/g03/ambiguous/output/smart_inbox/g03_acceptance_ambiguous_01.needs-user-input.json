@@ -1,0 +1,18 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "choices": [
+        "patient",
+        "wissen"
+      ],
+      "field": "category_01-mischdokument.txt",
+      "kind": "choice",
+      "prompt": "Welcher Kategorie soll das Dokument '01-mischdokument.txt' zugeordnet werden?",
+      "why": "Das Dokument konnte nicht eindeutig klassifiziert werden."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "smart_inbox"
+}

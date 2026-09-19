@@ -1,0 +1,10 @@
+{
+  "format": "action-plan",
+  "path": "<evidence-root>\\positive\\output\\smart_inbox\\g03_acceptance_positive_01.action-plan.json",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g03_acceptance_positive_01",
+  "producer_workflow": "smart_inbox",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "5201331f486c08a345fa25f04eb994977040ccdb6d68725bc4905844bff4598c",
+  "status": "verified"
+}

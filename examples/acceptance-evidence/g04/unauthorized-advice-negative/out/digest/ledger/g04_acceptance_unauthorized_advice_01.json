@@ -1,0 +1,52 @@
+{
+  "actions": [
+    "insurance_authority_checked",
+    "insurance_authority_denied"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\unauthorized-advice-negative\\out\\digest\\inventory\\g04_acceptance_unauthorized_advice_01.json",
+      "sha256": "c5e02c23f86bf4289844933de67d83fe805330ed8e4e3e9cbf59858f80e3b950",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\unauthorized-advice-negative\\out\\digest\\g04_acceptance_unauthorized_advice_01.needs-user-input.json",
+      "sha256": "93150ef20f58eeabe24f6765c4c718fa5b09c38b7914e023d17b406fb25fac26",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_5885f9524541e5d3"
+    ]
+  },
+  "errors": [
+    "insurance_authority_denied:broker_recommendation"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_2fe0b891fb3c84e1db4cc076d8e2993171300231a88068a703901d459899ebb9",
+  "metadata": {
+    "cloud_proof": false,
+    "insurance_application_domain": "insurance",
+    "insurance_authority": "denied",
+    "insurance_purpose": "broker_recommendation",
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "source_count": 1
+  },
+  "run_id": "g04_acceptance_unauthorized_advice_01",
+  "status": "blocked",
+  "workflow": "folder_digest"
+}

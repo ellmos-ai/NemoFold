@@ -1,0 +1,35 @@
+{
+  "actions": [
+    "database_query_evaluated",
+    "mutation_attempt_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\mutation_step1\\inventory\\g08_mutation_01.json",
+      "sha256": "50a0d68dc27f49a469a802a4315e9ed55ec9839dc1fe34bc4a998569ded36bfb",
+      "status": "written"
+    }
+  ],
+  "coverage": null,
+  "errors": [
+    "database_modification_blocked:non_select_statement:DROP"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_0686ff8d7e158d0ccb8fa9d0dbc414dd7642e4d27e6b40bb877e81d03d1193c3",
+  "metadata": {
+    "cloud_proof": false,
+    "first_word": "DROP",
+    "source_count": 1,
+    "statement": "DROP TABLE gegenstaende"
+  },
+  "run_id": "g08_mutation_01",
+  "status": "blocked",
+  "workflow": "database_reader"
+}

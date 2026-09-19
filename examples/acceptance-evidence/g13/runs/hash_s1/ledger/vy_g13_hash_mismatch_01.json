@@ -1,0 +1,73 @@
+{
+  "actions": [
+    "document_qa_evaluated",
+    "document_qa_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\hash_s1\\inventory\\vy_g13_hash_mismatch_01.json",
+      "sha256": "478e1f74d27307dbe289ca715c0313ee32856e9948fa51aa4cdfce44e0b90fcd",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_c153d5e1e9d56eaf"
+    ]
+  },
+  "errors": [
+    "source_document_hash_mismatch:actual=dde9bd40a83764833b69c8e173fbf5daf211e4b04c0c78101d8cda36d7e4ac99:expected=0000000000000000000000000000000000000000000000000000000000000000"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_ae81fd96549fa687041854e43e2aeb9b20566cc813f9b7e67b3fb9f452c5ae46",
+  "metadata": {
+    "checks": [
+      {
+        "evidence": "Detected format 'markdown' matches target 'markdown'.",
+        "name": "format_integrity",
+        "passed": true
+      },
+      {
+        "evidence": "Hash mismatch: actual dde9bd40a83764833b69c8e173fbf5daf211e4b04c0c78101d8cda36d7e4ac99 does not match expected 0000000000000000000000000000000000000000000000000000000000000000.",
+        "name": "hash_integrity",
+        "passed": false
+      },
+      {
+        "evidence": "Document contains 22 words (minimum required: 10).",
+        "name": "content_completeness",
+        "passed": true
+      },
+      {
+        "evidence": "All 0 required sections/markers are present.",
+        "name": "required_sections_present",
+        "passed": true
+      },
+      {
+        "evidence": "No unreplaced placeholders or unbound template tokens found.",
+        "name": "unbound_fields_checked",
+        "passed": true
+      }
+    ],
+    "cloud_proof": false,
+    "errors": [
+      "source_document_hash_mismatch:actual=dde9bd40a83764833b69c8e173fbf5daf211e4b04c0c78101d8cda36d7e4ac99:expected=0000000000000000000000000000000000000000000000000000000000000000"
+    ],
+    "qa_passed": false,
+    "source_count": 1,
+    "unbound_fields": []
+  },
+  "run_id": "vy_g13_hash_mismatch_01",
+  "status": "blocked",
+  "workflow": "document_qa"
+}

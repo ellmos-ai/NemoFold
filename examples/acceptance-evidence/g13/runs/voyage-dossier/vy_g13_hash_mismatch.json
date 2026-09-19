@@ -1,0 +1,36 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "g13_negative_hash_mismatch",
+  "run_id": "vy_g13_hash_mismatch",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:49:05.672652+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 1,
+      "errors": [
+        "source_document_hash_mismatch:actual=dde9bd40a83764833b69c8e173fbf5daf211e4b04c0c78101d8cda36d7e4ac99:expected=0000000000000000000000000000000000000000000000000000000000000000"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\runs\\hash_s1\\ledger\\vy_g13_hash_mismatch_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\runs\\hash_s1",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "vy_g13_hash_mismatch_01",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "document_qa"
+    }
+  ],
+  "stopped_at_step": 1,
+  "voyage_id": "vy_g13_hash_mismatch"
+}

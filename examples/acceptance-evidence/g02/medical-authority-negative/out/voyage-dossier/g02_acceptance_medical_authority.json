@@ -1,0 +1,109 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "Schilddr\u00fcse \u00b7 Diagnoseanfrage blockiert",
+  "run_id": "g02_acceptance_medical_authority",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:42.311159+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 4,
+      "errors": [],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\medical-authority-negative\\out\\register\\ledger\\g02_acceptance_medical_authority_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\medical-authority-negative\\out\\register",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g02_acceptance_medical_authority_01",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "document_registry"
+    },
+    {
+      "artifact_count": 2,
+      "errors": [
+        "medical_authority_denied:diagnosis"
+      ],
+      "handoff": {
+        "application_domain": "medical_reports",
+        "consumer_source_scope": {
+          "reviewed_pdf_page_count": 0,
+          "source_tables": [
+            "bericht"
+          ],
+          "structured_sources": false
+        },
+        "format": "document-registry",
+        "mode": "selected_sources",
+        "path": "<evidence-root>\\medical-authority-negative\\out\\register\\g02_acceptance_medical_authority_01.registry.json",
+        "privacy_mode": "local_only",
+        "producer_run_id": "g02_acceptance_medical_authority_01",
+        "producer_workflow": "document_registry",
+        "reviewed_page_receipts": {},
+        "schema": "nemofold.artifact-handoff.v1",
+        "selected_source_ids": [
+          "src_3566f5f70e6c9854"
+        ],
+        "selected_source_lines": {},
+        "selected_source_sha256": {
+          "src_3566f5f70e6c9854": "22f55aac4a1224fcd4692c40302d06647f7d5360e3220e0ea3e2c733d395e9e4"
+        },
+        "sha256": "ae20e89a6dd463593f2d1b8904b1b903b004a54b6f95578c8fd4099aac7bc3c2",
+        "source_lineage": [
+          {
+            "consumer_source_id": "src_3566f5f70e6c9854",
+            "path": "<evidence-root>\\medical-authority-negative\\inputs\\fictional-doctor-folder\\01-endokrinologie.pdf",
+            "producer_source_id": "src_3566f5f70e6c9854",
+            "sha256": "22f55aac4a1224fcd4692c40302d06647f7d5360e3220e0ea3e2c733d395e9e4"
+          }
+        ],
+        "source_scope": {
+          "require_complete_pdf_inventory": true,
+          "reviewed_pdf_page_count": 0,
+          "source_tables": [
+            "bericht"
+          ],
+          "structured_sources": false
+        },
+        "status": "verified",
+        "topic_filter": [
+          "Schilddr\u00fcse"
+        ],
+        "verified_pdf_pages": [
+          {
+            "display_name": "01-endokrinologie.pdf",
+            "expected_pages": 1,
+            "extractable_text_pages": 1,
+            "physical_pages": 1,
+            "producer_source_id": "src_3566f5f70e6c9854",
+            "sha256": "22f55aac4a1224fcd4692c40302d06647f7d5360e3220e0ea3e2c733d395e9e4"
+          }
+        ]
+      },
+      "ledger_path": "<evidence-root>\\medical-authority-negative\\out\\synopsis\\ledger\\g02_acceptance_medical_authority_02.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 2,
+      "output_dir": "<evidence-root>\\medical-authority-negative\\out\\synopsis",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g02_acceptance_medical_authority_02",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "synopsis_merge"
+    }
+  ],
+  "stopped_at_step": 2,
+  "voyage_id": "voyage_g02_acceptance_medical_authority"
+}

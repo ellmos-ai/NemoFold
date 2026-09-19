@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\work\\positive_step2\\g10_pos_02.routine-query.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g10_pos_02",
+  "producer_workflow": "routine_query",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "c9cc04f5bd8d4345a2265e09d18137d2e4258d9943f23c7f74339f18ab7908c6",
+  "status": "verified"
+}

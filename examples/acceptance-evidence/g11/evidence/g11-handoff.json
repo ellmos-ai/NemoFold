@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\work\\positive_step2\\g11_pos_02.ocr-pipeline.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g11_pos_02",
+  "producer_workflow": "ocr_pipeline",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "4ac79d2cc33255103f1bb09ef7b618a6ebbae4075f851e0cd0a60b7a5d85eae6",
+  "status": "verified"
+}

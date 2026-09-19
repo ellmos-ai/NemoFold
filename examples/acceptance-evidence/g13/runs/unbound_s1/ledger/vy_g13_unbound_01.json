@@ -1,0 +1,84 @@
+{
+  "actions": [
+    "document_qa_evaluated",
+    "document_qa_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\unbound_s1\\inventory\\vy_g13_unbound_01.json",
+      "sha256": "3b832b2d33387721371502fe3e2d9a0a0842a38902ef2f06d17b3b05ac897027",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\runs\\unbound_s1\\vy_g13_unbound_01.needs-user-input.json",
+      "sha256": "7aae8027d247b98b19e50f9c315e64804d2ae0b1396f19e8d54982e751c55e8d",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_ef3e3982154ee515"
+    ]
+  },
+  "errors": [
+    "unbound_fields_in_document:count=4:tokens={{klient_vorname}},{{klient_nachname}},[PLATZHALTER: Zielsetzung]"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_0918640b42da85327cf937b83595ac906320ddbd02125ab327619088106789b3",
+  "metadata": {
+    "checks": [
+      {
+        "evidence": "Detected format 'markdown' matches target 'markdown'.",
+        "name": "format_integrity",
+        "passed": true
+      },
+      {
+        "evidence": "Cryptographic SHA-256 calculated and anchored: e55e7667c09a6b5791cef892c8d3779c2d2f1ca107431a6cc5b8000a244c3886.",
+        "name": "hash_integrity",
+        "passed": true
+      },
+      {
+        "evidence": "Document contains 12 words (minimum required: 10).",
+        "name": "content_completeness",
+        "passed": true
+      },
+      {
+        "evidence": "All 0 required sections/markers are present.",
+        "name": "required_sections_present",
+        "passed": true
+      },
+      {
+        "evidence": "Found 4 unbound template token(s): {{klient_vorname}}, {{klient_nachname}}, [PLATZHALTER: Zielsetzung], <NOTFALL_TELEFONNUMMER>.",
+        "name": "unbound_fields_checked",
+        "passed": false
+      }
+    ],
+    "cloud_proof": false,
+    "errors": [
+      "unbound_fields_in_document:count=4:tokens={{klient_vorname}},{{klient_nachname}},[PLATZHALTER: Zielsetzung]"
+    ],
+    "qa_passed": false,
+    "source_count": 1,
+    "unbound_fields": [
+      "{{klient_vorname}}",
+      "{{klient_nachname}}",
+      "[PLATZHALTER: Zielsetzung]",
+      "<NOTFALL_TELEFONNUMMER>"
+    ]
+  },
+  "run_id": "vy_g13_unbound_01",
+  "status": "blocked",
+  "workflow": "document_qa"
+}

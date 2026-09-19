@@ -1,0 +1,17 @@
+{
+  "deleted_source_ids": [],
+  "hashes_by_source_id": {
+    "src_7f15f2a2e29db7ad": "cbf20fb0944cc760daebda4c0e38a949f4e8c84201a916f2ac4d695987bbaf76"
+  },
+  "run_id": "g05_neg_items_02",
+  "schema": "nemofold.inventory.v1",
+  "sources": [
+    {
+      "change_status": "new",
+      "display_name": "01_single_item.txt",
+      "mime_type": "text/plain",
+      "sha256": "cbf20fb0944cc760daebda4c0e38a949f4e8c84201a916f2ac4d695987bbaf76",
+      "source_id": "src_7f15f2a2e29db7ad"
+    }
+  ]
+}

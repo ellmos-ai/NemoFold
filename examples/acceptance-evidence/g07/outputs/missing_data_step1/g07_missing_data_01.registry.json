@@ -1,0 +1,108 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Medikament",
+        "Pr\u00e4parat",
+        "Name",
+        "Handelsname",
+        "Arzneimittel"
+      ],
+      "description": "Trade name or medication",
+      "name": "Medikament"
+    },
+    {
+      "aliases": [
+        "Wirkstoff",
+        "Substanz",
+        "Ingredient",
+        "Active ingredient"
+      ],
+      "description": "Active ingredient",
+      "name": "Wirkstoff"
+    },
+    {
+      "aliases": [
+        "Dosierung",
+        "Dosis",
+        "St\u00e4rke",
+        "Menge",
+        "Strength"
+      ],
+      "description": "Dose or strength",
+      "name": "Dosierung"
+    },
+    {
+      "aliases": [
+        "Einnahme",
+        "Einnahmezeit",
+        "Tageszeit",
+        "Schema",
+        "Turnus",
+        "Schedule"
+      ],
+      "description": "Intake schedule or time",
+      "name": "Einnahme"
+    },
+    {
+      "aliases": [
+        "Hinweis",
+        "Grund",
+        "Indikation",
+        "Wirkung",
+        "Anmerkung",
+        "Notes"
+      ],
+      "description": "Application notes or indications",
+      "name": "Hinweis"
+    }
+  ],
+  "empty_cells": 5,
+  "filled_cells": 0,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Medikament",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Wirkstoff",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Dosierung",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Einnahme",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Hinweis",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "01_unvollstaendig.txt",
+      "record_line": null,
+      "source_id": "src_68b3079882d95bdf"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

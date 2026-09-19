@@ -1,0 +1,5 @@
+Abo: Fitnessstudio StudioNord
+Betrag: 39,90 €
+Turnus: monatlich
+Status: aktiv
+Konto: ACC-GYM-12

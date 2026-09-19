@@ -1,0 +1,4 @@
+source_id,display_name,Vertrag,Vertrag [source],Betrag,Betrag [source],Turnus,Turnus [source],Nächste Fälligkeit,Nächste Fälligkeit [source],Kontakt,Kontakt [source]
+src_25dae14c1bb2ea5c,01_music_personal.txt,Musik Streaming,src_25dae14c1bb2ea5c:1,"9,99 €",src_25dae14c1bb2ea5c:2,monatlich,src_25dae14c1bb2ea5c:3,,,,
+src_6ec3382c22532db8,02_music_family.txt,Musik Streaming,src_6ec3382c22532db8:1,"14,99 €",src_6ec3382c22532db8:2,monatlich,src_6ec3382c22532db8:3,,,,
+src_d7ae1cc88a304e7b,msg_ambiguous.txt,,,"9,99 €",src_d7ae1cc88a304e7b:4,,,,,,

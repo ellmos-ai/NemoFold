@@ -1,0 +1,41 @@
+{
+  "actions": [
+    "ocr_pipeline",
+    "retrieval_probe_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\retrieval_fail_step1\\inventory\\g11_retrieval_01.json",
+      "sha256": "af83b71ea60c4958afb3c14fd21aca51dc5ff6990f40991dc3e54afcb29a3000",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_57085e129c4e7206"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "retrieval_probe_no_hits:Schilddr\u00fcse"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_be3cba8c5eae58c74588e51838af200566eff60df1e8adf9f581241568a16d15",
+  "metadata": {
+    "cloud_proof": false,
+    "source_count": 1
+  },
+  "run_id": "g11_retrieval_01",
+  "status": "blocked",
+  "workflow": "ocr_pipeline"
+}

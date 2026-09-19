@@ -1,0 +1,52 @@
+{
+  "actions": [
+    "registry_built",
+    "registry_needs_user_input"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\neg_data_01_registry\\inventory\\g06_neg_data_01.json",
+      "sha256": "c8e8d45e5d5d344d74888923a91ad7f364c6806ad7f956fdc634f6aaf2919035",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\outputs\\neg_data_01_registry\\g06_neg_data_01.needs-user-input.json",
+      "sha256": "40d74e846d455daf4a1da4dfdc0b53519625bbbc75ca3098c570e6f50f507b56",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_9da86609d477d722"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "needs_user_input:columns.Betrag"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_7511b3d773c4a5fd6e59b986e7793144fe19e70e390485d5b39a5d6eb396b155",
+  "metadata": {
+    "cloud_proof": false,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "question_count": 1,
+    "source_count": 1,
+    "topic_selected_lines": {},
+    "unshown_question_count": 0
+  },
+  "run_id": "g06_neg_data_01",
+  "status": "blocked",
+  "workflow": "document_registry"
+}

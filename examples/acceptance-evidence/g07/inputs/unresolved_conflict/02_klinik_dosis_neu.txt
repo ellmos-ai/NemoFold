@@ -1,0 +1,9 @@
+Arzt: Klinikum Mitte
+Datum: 2026-09-02
+
+Medikament: L-Thyroxin Henning
+Wirkstoff: Levothyroxin-Natrium
+Dosierung: 100 µg
+Einnahme: 1-0-0-0 morgens nüchtern
+Indikation: Hypothyreose
+Status: laufend

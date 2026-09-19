@@ -1,0 +1,72 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "",
+  "run_id": "g12_telegram",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:49:03.170501+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 3,
+      "errors": [],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\work\\telegram_out1\\ledger\\g12_telegram_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\work\\telegram_out1",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g12_telegram_01",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "document_registry"
+    },
+    {
+      "artifact_count": 4,
+      "errors": [],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\work\\telegram_out2\\ledger\\g12_telegram_02.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 2,
+      "output_dir": "<evidence-root>\\work\\telegram_out2",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g12_telegram_02",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "contact_monitor"
+    },
+    {
+      "artifact_count": 0,
+      "errors": [
+        "recipient_bridge_telegram_not_implemented"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\work\\telegram_out3\\ledger\\g12_telegram_03.json",
+      "model_level": "default",
+      "model_note": "No model or consumer ran: the artifact handoff failed.",
+      "model_used": "nemofold-local-core",
+      "order": 3,
+      "output_dir": "<evidence-root>\\work\\telegram_out3",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g12_telegram_03",
+      "source_read_notes": {},
+      "status": "handoff_blocked",
+      "workflow": "controlled_email"
+    }
+  ],
+  "stopped_at_step": 3,
+  "voyage_id": "vy_g12_neg_telegram_blocked"
+}

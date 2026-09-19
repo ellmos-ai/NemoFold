@@ -1,0 +1,5 @@
+Musterbank Girokonto
+Kontoauszug Monat Januar 2026
+Kontoinhaber: Alex Beispiel
+IBAN: DE02100100100123456789
+Endsaldo: 1.450,00 Euro.

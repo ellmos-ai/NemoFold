@@ -1,0 +1,216 @@
+{
+  "agreed": 967,
+  "coding_mode": "supplied_codings",
+  "coding_note": "Two separately supplied coding sheets were compared; NemoFold does not verify that their raters worked independently.",
+  "cohens_kappa": 0.9505,
+  "disagreed": 33,
+  "disagreements": [
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0630.txt",
+      "item_id": "src_08f50866996d8499"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0390.txt",
+      "item_id": "src_0ff0e6ffd41b2874"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0690.txt",
+      "item_id": "src_154ca54bd13b1caf"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0930.txt",
+      "item_id": "src_17409d87c31532c4"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0060.txt",
+      "item_id": "src_184d9e8908e9887e"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0150.txt",
+      "item_id": "src_1a047455a7d06c70"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0780.txt",
+      "item_id": "src_1a78fbf265bac322"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0480.txt",
+      "item_id": "src_1da3754fc43dfece"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0840.txt",
+      "item_id": "src_1dcc6f51dcb529e0"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0660.txt",
+      "item_id": "src_2812a55aa4c6bc76"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0750.txt",
+      "item_id": "src_2a796841d7ab0f0e"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0450.txt",
+      "item_id": "src_2b074b82b5a2573a"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0360.txt",
+      "item_id": "src_2d318bed6b50d3e4"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0720.txt",
+      "item_id": "src_2fda8cd77bcc91ac"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0300.txt",
+      "item_id": "src_4be1c4200cdf34d8"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0600.txt",
+      "item_id": "src_64b7bbe492bc3e1f"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0270.txt",
+      "item_id": "src_6af227f00ebc70cd"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0030.txt",
+      "item_id": "src_6b78c200b1f462a7"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0330.txt",
+      "item_id": "src_6bedc0d48421c51f"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0810.txt",
+      "item_id": "src_8c77bd3d11f283f2"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0420.txt",
+      "item_id": "src_97503c819fdf61ee"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0990.txt",
+      "item_id": "src_ac04d61341c8765f"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0120.txt",
+      "item_id": "src_b3e65e85b2bd2306"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0090.txt",
+      "item_id": "src_b3ed218b9748b735"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0240.txt",
+      "item_id": "src_ca2882eac067afea"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0540.txt",
+      "item_id": "src_d71ad1602f0a2d05"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0900.txt",
+      "item_id": "src_e0be0b22b8fb27f2"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0180.txt",
+      "item_id": "src_e8136c0097a40cdc"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0960.txt",
+      "item_id": "src_e8ddea5c09026b47"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0210.txt",
+      "item_id": "src_edd0df91b5475c3c"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0510.txt",
+      "item_id": "src_f2799cbfde665e69"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0870.txt",
+      "item_id": "src_f552f0e31cdece03"
+    },
+    {
+      "code_a": "positiv",
+      "code_b": "neutral",
+      "display_name": "scale_item_0570.txt",
+      "item_id": "src_f9def221331d8e64"
+    }
+  ],
+  "item_count": 1000,
+  "kappa_note": "",
+  "only_in_a": [],
+  "only_in_b": [],
+  "percent_agreement": 96.7,
+  "rater_a": "Dr. Anna Weber",
+  "rater_b": "Dr. Boris Lindemann",
+  "reading_note": "Percent agreement is misleading whenever one code dominates, which is why kappa stands next to it. Where kappa is undefined it says so rather than printing a number that would be read as a result. The disagreements are the output worth reading: they mark where the coding scheme is ambiguous, not where a rater was wrong.",
+  "schema": "nemofold.interrater.v1"
+}

@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\outputs\\pos_step2\\g07_pos_02.medication-reconcile.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g07_pos_02",
+  "producer_workflow": "medication_reconcile",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "e33d241eafbdec5d1845707b5bb7ac958e4441e04190a641bcd06e2eae7eed81",
+  "status": "verified"
+}

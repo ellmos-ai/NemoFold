@@ -1,0 +1,75 @@
+{
+  "actions": [
+    "no search was carried out; every blocking reason is in the report",
+    "briefing generation blocked due to web search restrictions"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\unapproved_s1\\inventory\\vy_g14_unapproved_01.json",
+      "sha256": "898885a35a5f542baec344b840992bc276e3e27ed8647f44193626e59322e118",
+      "status": "written"
+    },
+    {
+      "format": "web-research-blocked",
+      "path": "<evidence-root>\\runs\\unapproved_s1\\vy_g14_unapproved_01.web-research.json",
+      "sha256": "8ecb8cac1b45370c5401f94ba1e9d0d98310d3454c7bd574e3332d76e23c98f9",
+      "status": "written"
+    },
+    {
+      "format": "findings-blocked",
+      "path": "<evidence-root>\\runs\\unapproved_s1\\vy_g14_unapproved_01_Web research.md",
+      "sha256": "29a3f10589e573167b373e2bede2fb1932b2eae0b3a334a62f05cdaf7c49715a",
+      "status": "written"
+    },
+    {
+      "format": "briefing",
+      "path": "<evidence-root>\\runs\\unapproved_s1\\vy_g14_unapproved_01.briefing.json",
+      "sha256": "54a67a46d3b2a0c00ca5695e49eb0c5491b6bc7b7a84492e4514cb713973fd3b",
+      "status": "written"
+    },
+    {
+      "format": "briefing-markdown",
+      "path": "<evidence-root>\\runs\\unapproved_s1\\vy_g14_unapproved_01.briefing.md",
+      "sha256": "1768ba09e0c341df7818d34a2356d6297995417754ef247d6a7b7a745a902a68",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 0,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "web_search_not_approved_for_this_call"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_0f03ca7e4ddd0f5ac74e5872a385318807e4f3966439ae2e02253a25e8a51653",
+  "metadata": {
+    "blocked": true,
+    "blocked_reasons": [
+      "web_search_not_approved_for_this_call"
+    ],
+    "briefing_status": "blocked_briefing",
+    "briefing_subject": "Dr. Almut Schrenk",
+    "cloud_proof": false,
+    "facts_count": 0,
+    "inferences_count": 0,
+    "is_limited": true,
+    "open_points_count": 1,
+    "separation_principle_note": "Das Briefing trennt belegte Fakten strikt von Schlussfolgerungen und offenen Punkten.",
+    "source_count": 1,
+    "sources_evaluated": 0
+  },
+  "run_id": "vy_g14_unapproved_01",
+  "status": "blocked",
+  "workflow": "briefing"
+}

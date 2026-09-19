@@ -1,0 +1,105 @@
+{
+  "documents": [
+    {
+      "display_name": "01-laborbericht.pdf",
+      "mean_confidence": 1.0,
+      "native_pages": 1,
+      "needs_review": false,
+      "ocr_pages": 0,
+      "pages": [
+        {
+          "confidence": 1.0,
+          "method": "native_text",
+          "needs_review": false,
+          "notes": "native_digital_text_layer",
+          "page": 1,
+          "text_length": 160,
+          "text_sha256": "d9663fb96a56291b945d4b9cb67634adb75792498afcd59f5371ba1609536799"
+        }
+      ],
+      "review_reason": "",
+      "sha256": "2b5ae4fc35f68e9329a5438469c5084008cf33694aaf47347559464cc4a092ec",
+      "source_id": "src_3197f7636fd0d66a",
+      "status": "indexed",
+      "total_pages": 1
+    },
+    {
+      "display_name": "02-scan-arztbrief.pdf",
+      "mean_confidence": 0.98,
+      "native_pages": 0,
+      "needs_review": false,
+      "ocr_pages": 1,
+      "pages": [
+        {
+          "confidence": 0.98,
+          "method": "ocr",
+          "needs_review": false,
+          "notes": "reviewed_by_Dr. Weber",
+          "page": 1,
+          "text_length": 112,
+          "text_sha256": "39698a08e0f2023c25cf51ed27bf10e48c6b372183bf24c1e7e3dee961bbeb85"
+        }
+      ],
+      "review_reason": "",
+      "sha256": "e7b21cf7f61953e147747da9bad2de1114ea874e1c4874b511748e2d509aa620",
+      "source_id": "src_bcf63ad91df26f7f",
+      "status": "indexed",
+      "total_pages": 1
+    },
+    {
+      "display_name": "03-wissensleitlinie.txt",
+      "mean_confidence": 1.0,
+      "native_pages": 1,
+      "needs_review": false,
+      "ocr_pages": 0,
+      "pages": [
+        {
+          "confidence": 1.0,
+          "method": "native_text",
+          "needs_review": false,
+          "notes": "native_text_document",
+          "page": 1,
+          "text_length": 155,
+          "text_sha256": "c12d6f5382f809d97db30518c9f2907fb0b48c0ee8345c9c32bb52de4f188179"
+        }
+      ],
+      "review_reason": "",
+      "sha256": "c12d6f5382f809d97db30518c9f2907fb0b48c0ee8345c9c32bb52de4f188179",
+      "source_id": "src_8e77e4264e5b9869",
+      "status": "indexed",
+      "total_pages": 1
+    },
+    {
+      "display_name": "04-laborbericht-duplikat.pdf",
+      "mean_confidence": 1.0,
+      "native_pages": 1,
+      "needs_review": false,
+      "ocr_pages": 0,
+      "pages": [],
+      "review_reason": "Identical content already indexed under source src_3197f7636fd0d66a (01-laborbericht.pdf).",
+      "sha256": "2b5ae4fc35f68e9329a5438469c5084008cf33694aaf47347559464cc4a092ec",
+      "source_id": "src_c2097c6103fe6c6d",
+      "status": "duplicate_skipped",
+      "total_pages": 1
+    }
+  ],
+  "duplicate_documents": 1,
+  "index_file": "index/nemofold.sqlite3",
+  "indexed_documents": 3,
+  "mean_confidence": 0.995,
+  "min_confidence_threshold": 0.7,
+  "ocr_pages": 1,
+  "retrieval_probe": {
+    "hit_chunks": [
+      "src_bcf63ad91df26f7f:000000"
+    ],
+    "hits": 1,
+    "query": "Schilddrüse",
+    "verified": true
+  },
+  "run_id": "g11_pos_02",
+  "schema": "nemofold.ocr-pipeline.v1",
+  "total_documents": 4,
+  "total_pages": 4,
+  "updated_documents": 0
+}

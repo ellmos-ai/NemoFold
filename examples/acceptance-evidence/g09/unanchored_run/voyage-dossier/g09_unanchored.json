@@ -1,0 +1,36 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "",
+  "run_id": "g09_unanchored",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:56.007613+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 1,
+      "errors": [
+        "unanchored_claim_blocked:Quantenphysik-Nobelpreis-2026"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\unanchored_run\\step1_composer\\ledger\\g09_unanchored_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\unanchored_run\\step1_composer",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g09_unanchored_01",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "knowledge_composer"
+    }
+  ],
+  "stopped_at_step": 1,
+  "voyage_id": "vy_g09_acceptance_unanchored"
+}

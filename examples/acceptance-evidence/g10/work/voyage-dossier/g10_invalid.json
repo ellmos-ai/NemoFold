@@ -1,0 +1,36 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "",
+  "run_id": "g10_invalid",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:58.222856+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 1,
+      "errors": [
+        "invalid_routine_cadence:1:widerspruch_letzte_ausfuehrung_nach_faelligkeit"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\work\\invalid_cadence_step1\\ledger\\g10_invalid_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\work\\invalid_cadence_step1",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g10_invalid_01",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "routine_query"
+    }
+  ],
+  "stopped_at_step": 1,
+  "voyage_id": "vy_g10_acceptance_invalid"
+}

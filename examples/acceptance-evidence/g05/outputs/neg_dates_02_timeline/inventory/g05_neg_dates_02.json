@@ -1,0 +1,17 @@
+{
+  "deleted_source_ids": [],
+  "hashes_by_source_id": {
+    "src_9f79126e070b37f4": "73003812676b15c0105620bad7c5dc94b06e9ed3c5cb0ed9def1185a60452ad8"
+  },
+  "run_id": "g05_neg_dates_02",
+  "schema": "nemofold.inventory.v1",
+  "sources": [
+    {
+      "change_status": "new",
+      "display_name": "01_undetermined_date.txt",
+      "mime_type": "text/plain",
+      "sha256": "73003812676b15c0105620bad7c5dc94b06e9ed3c5cb0ed9def1185a60452ad8",
+      "source_id": "src_9f79126e070b37f4"
+    }
+  ]
+}

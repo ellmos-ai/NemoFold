@@ -1,0 +1,10 @@
+Versicherungsschein
+Versicherungsnehmer: Alex Beispiel
+Police: UV-2025-9981
+Tarif: Unfall-Kompakt
+Deckung ab: unbestimmt
+Deckung bis: unklar
+Abdeckung: Invaliditätsleistung bei Vollinvalidität
+Kosten: 60,00 EUR pro Jahr
+Turnus: jährlich
+Kontakt: service@unfall-direkt.de

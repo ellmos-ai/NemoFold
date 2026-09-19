@@ -1,0 +1,6 @@
+Vertrag: Fitnessstudio StudioNord
+Betrag: 39,90 €
+Turnus: monatlich
+Nächste Fälligkeit: 2026-10-01
+Kategorie: wiederkehrend
+Kontakt: service@studionord-beispiel.de

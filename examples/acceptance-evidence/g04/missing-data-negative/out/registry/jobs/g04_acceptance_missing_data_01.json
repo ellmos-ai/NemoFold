@@ -1,0 +1,41 @@
+{
+  "job": {
+    "action_mode": "dry_run",
+    "handoff_context": {},
+    "input_roots": [
+      "<evidence-root>\\missing-data-negative\\inputs\\insurance-policies"
+    ],
+    "model_budget_usd": 0.0,
+    "model_id": null,
+    "output_dir": "<evidence-root>\\missing-data-negative\\out\\registry",
+    "parameters": {
+      "column_template": "insurance_registry",
+      "formats": [
+        "md"
+      ],
+      "required_columns": [
+        "Police",
+        "Tarif",
+        "Abdeckung",
+        "Kosten"
+      ]
+    },
+    "privacy_mode": "local_only",
+    "questions": [],
+    "response_schema": "nemofold.claims.v1",
+    "resume_run_id": null,
+    "sources": [
+      {
+        "display_name": "01-haftpflicht-unvollstaendig.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\missing-data-negative\\inputs\\insurance-policies\\01-haftpflicht-unvollstaendig.txt",
+        "sha256": "a4119cf1fb954874bf68d1e0f9009a5dd3502fdfc792c8dabbbd0bc42931c3c1",
+        "source_id": "src_356173a32a724582"
+      }
+    ],
+    "target_roots": [],
+    "workflow": "document_registry"
+  },
+  "schema": "nemofold.job-snapshot.v1"
+}

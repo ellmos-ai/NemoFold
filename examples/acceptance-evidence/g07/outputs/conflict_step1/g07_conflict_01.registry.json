@@ -1,0 +1,150 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Medikament",
+        "Pr\u00e4parat",
+        "Name",
+        "Handelsname",
+        "Arzneimittel"
+      ],
+      "description": "Trade name or medication",
+      "name": "Medikament"
+    },
+    {
+      "aliases": [
+        "Wirkstoff",
+        "Substanz",
+        "Ingredient",
+        "Active ingredient"
+      ],
+      "description": "Active ingredient",
+      "name": "Wirkstoff"
+    },
+    {
+      "aliases": [
+        "Dosierung",
+        "Dosis",
+        "St\u00e4rke",
+        "Menge",
+        "Strength"
+      ],
+      "description": "Dose or strength",
+      "name": "Dosierung"
+    },
+    {
+      "aliases": [
+        "Einnahme",
+        "Einnahmezeit",
+        "Tageszeit",
+        "Schema",
+        "Turnus",
+        "Schedule"
+      ],
+      "description": "Intake schedule or time",
+      "name": "Einnahme"
+    },
+    {
+      "aliases": [
+        "Hinweis",
+        "Grund",
+        "Indikation",
+        "Wirkung",
+        "Anmerkung",
+        "Notes"
+      ],
+      "description": "Application notes or indications",
+      "name": "Hinweis"
+    }
+  ],
+  "empty_cells": 0,
+  "filled_cells": 10,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Medikament",
+          "line": 4,
+          "quote": "Medikament: L-Thyroxin Henning",
+          "source_id": "src_5a4b41216883f8e7",
+          "value": "L-Thyroxin Henning"
+        },
+        {
+          "column": "Wirkstoff",
+          "line": 5,
+          "quote": "Wirkstoff: Levothyroxin-Natrium",
+          "source_id": "src_5a4b41216883f8e7",
+          "value": "Levothyroxin-Natrium"
+        },
+        {
+          "column": "Dosierung",
+          "line": 6,
+          "quote": "Dosierung: 75 \u00b5g",
+          "source_id": "src_5a4b41216883f8e7",
+          "value": "75 \u00b5g"
+        },
+        {
+          "column": "Einnahme",
+          "line": 7,
+          "quote": "Einnahme: 1-0-0-0 morgens n\u00fcchtern",
+          "source_id": "src_5a4b41216883f8e7",
+          "value": "1-0-0-0 morgens n\u00fcchtern"
+        },
+        {
+          "column": "Hinweis",
+          "line": 8,
+          "quote": "Indikation: Hypothyreose",
+          "source_id": "src_5a4b41216883f8e7",
+          "value": "Hypothyreose"
+        }
+      ],
+      "display_name": "01_hausarzt_dosis_alt.txt",
+      "record_line": null,
+      "source_id": "src_5a4b41216883f8e7"
+    },
+    {
+      "cells": [
+        {
+          "column": "Medikament",
+          "line": 4,
+          "quote": "Medikament: L-Thyroxin Henning",
+          "source_id": "src_a05784818866d22f",
+          "value": "L-Thyroxin Henning"
+        },
+        {
+          "column": "Wirkstoff",
+          "line": 5,
+          "quote": "Wirkstoff: Levothyroxin-Natrium",
+          "source_id": "src_a05784818866d22f",
+          "value": "Levothyroxin-Natrium"
+        },
+        {
+          "column": "Dosierung",
+          "line": 6,
+          "quote": "Dosierung: 100 \u00b5g",
+          "source_id": "src_a05784818866d22f",
+          "value": "100 \u00b5g"
+        },
+        {
+          "column": "Einnahme",
+          "line": 7,
+          "quote": "Einnahme: 1-0-0-0 morgens n\u00fcchtern",
+          "source_id": "src_a05784818866d22f",
+          "value": "1-0-0-0 morgens n\u00fcchtern"
+        },
+        {
+          "column": "Hinweis",
+          "line": 8,
+          "quote": "Indikation: Hypothyreose",
+          "source_id": "src_a05784818866d22f",
+          "value": "Hypothyreose"
+        }
+      ],
+      "display_name": "02_klinik_dosis_neu.txt",
+      "record_line": null,
+      "source_id": "src_a05784818866d22f"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

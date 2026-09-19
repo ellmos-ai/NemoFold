@@ -1,0 +1,46 @@
+{
+  "boundary_note": "NemoFold verifies format, completeness, and hash integrity before sealing the publication package. Original document and version are preserved.",
+  "checks": [
+    {
+      "evidence": "Detected format 'markdown' matches target 'markdown'.",
+      "name": "format_integrity",
+      "passed": true
+    },
+    {
+      "evidence": "Cryptographic SHA-256 calculated and anchored: bbcdd3ee50e2231e571f9ebce4a1d37a0cef3e6833892867878b9680a5af662a.",
+      "name": "hash_integrity",
+      "passed": true
+    },
+    {
+      "evidence": "Document contains 332 words (minimum required: 10).",
+      "name": "content_completeness",
+      "passed": true
+    },
+    {
+      "evidence": "All 2 required sections/markers are present.",
+      "name": "required_sections_present",
+      "passed": true
+    },
+    {
+      "evidence": "No unreplaced placeholders or unbound template tokens found.",
+      "name": "unbound_fields_checked",
+      "passed": true
+    }
+  ],
+  "created_at": "2026-09-19T08:49:05+00:00",
+  "document_path": "<evidence-root>\\runs\\pos_s1\\vy_g13_pos_01.knowledge-composer.md",
+  "document_sha256": "bbcdd3ee50e2231e571f9ebce4a1d37a0cef3e6833892867878b9680a5af662a",
+  "fallback_applied": true,
+  "format": "markdown",
+  "package_id": "pkg_vy_g13_pos_02",
+  "package_title": "Geprueftes Autismus-Foerderblatt Paket",
+  "qa_passed": true,
+  "schema": "nemofold.publication-package.v1",
+  "template_engine_status": {
+    "template_engine": "report-forge",
+    "template_engine_available": false,
+    "template_engine_note": "the optional 'templates' extra is not installed, so no template can be filled. Install it with: pip install \"nemofold[templates]\" (No module named 'report_forge')",
+    "template_engine_version": ""
+  },
+  "version": "1.0"
+}

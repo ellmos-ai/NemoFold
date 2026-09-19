@@ -1,0 +1,72 @@
+{
+  "actions": [
+    "searched 1 query(ies) through tavily and kept 1 result(s), each with its address",
+    "briefing blocked: require_sufficient_sources unsatisfied"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\sparse_blocked_s1\\inventory\\vy_g14_sparse_blocked_01.json",
+      "sha256": "609789312ce51540cfad2ead6d54e5e17979b13cd56d4e391511d5ef1fbe3cbb",
+      "status": "written"
+    },
+    {
+      "format": "web-research",
+      "path": "<evidence-root>\\runs\\sparse_blocked_s1\\vy_g14_sparse_blocked_01.web-research.json",
+      "sha256": "dce593e957dc9087e1e918209c5f42131a5804d893b903dd1cc6f2220c29dda3",
+      "status": "written"
+    },
+    {
+      "format": "web-notes",
+      "path": "<evidence-root>\\runs\\sparse_blocked_s1\\vy_g14_sparse_blocked_01_web-notes.md",
+      "sha256": "002497541c564deb8cc3ce655d9e5d03a6baf601723015aa92f321681297a83e",
+      "status": "written"
+    },
+    {
+      "format": "briefing",
+      "path": "<evidence-root>\\runs\\sparse_blocked_s1\\vy_g14_sparse_blocked_01.briefing.json",
+      "sha256": "039306e6c322ce83ee616c8bd224af3eafc503f7e48167b79d1ac825f7bb2ffe",
+      "status": "written"
+    },
+    {
+      "format": "briefing-markdown",
+      "path": "<evidence-root>\\runs\\sparse_blocked_s1\\vy_g14_sparse_blocked_01.briefing.md",
+      "sha256": "2871d119dd5e1465506e62ca7f4ff8d4c7f6f4df821c528f04e2fb4c7a2a6400",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 0,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "insufficient_sources_for_briefing"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_89fc3d5e2c0f0e5f4c844b73a94ecfeeaeef55830a80286855f1c2c1c42b6787",
+  "metadata": {
+    "briefing_status": "limited_briefing",
+    "briefing_subject": "Spezialfall X",
+    "cloud_proof": false,
+    "facts_count": 1,
+    "inferences_count": 1,
+    "is_limited": true,
+    "needs_user_input": true,
+    "open_points_count": 3,
+    "separation_principle_note": "Das Briefing trennt belegte Fakten strikt von Schlussfolgerungen und offenen Punkten.",
+    "source_count": 1,
+    "sources_evaluated": 1
+  },
+  "run_id": "vy_g14_sparse_blocked_01",
+  "status": "blocked",
+  "workflow": "briefing"
+}

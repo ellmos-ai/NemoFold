@@ -1,0 +1,33 @@
+{
+  "deleted_source_ids": [],
+  "hashes_by_source_id": {
+    "src_25dae14c1bb2ea5c": "1399bde6352303740729386349686e1def1c23c6d4f28b104a3efbb5451a497b",
+    "src_6ec3382c22532db8": "2329e61b4cfeaaf0b3a7aadb73f68b6a40b0ee6de80fa677af983bfa7a285357",
+    "src_d7ae1cc88a304e7b": "35896ff48d9d1b80483f750baf9c8065f9e948986a2c68ab0738f55c508c30f0"
+  },
+  "run_id": "g06_neg_ambiguous_02",
+  "schema": "nemofold.inventory.v1",
+  "sources": [
+    {
+      "change_status": "new",
+      "display_name": "01_music_personal.txt",
+      "mime_type": "text/plain",
+      "sha256": "1399bde6352303740729386349686e1def1c23c6d4f28b104a3efbb5451a497b",
+      "source_id": "src_25dae14c1bb2ea5c"
+    },
+    {
+      "change_status": "new",
+      "display_name": "02_music_family.txt",
+      "mime_type": "text/plain",
+      "sha256": "2329e61b4cfeaaf0b3a7aadb73f68b6a40b0ee6de80fa677af983bfa7a285357",
+      "source_id": "src_6ec3382c22532db8"
+    },
+    {
+      "change_status": "new",
+      "display_name": "msg_ambiguous.txt",
+      "mime_type": "text/plain",
+      "sha256": "35896ff48d9d1b80483f750baf9c8065f9e948986a2c68ab0738f55c508c30f0",
+      "source_id": "src_d7ae1cc88a304e7b"
+    }
+  ]
+}

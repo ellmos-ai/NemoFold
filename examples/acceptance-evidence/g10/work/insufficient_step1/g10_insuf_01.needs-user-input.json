@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "routine_count_gap",
+      "kind": "text",
+      "prompt": "Zu wenige Routine-Datensätze gefunden (0, erforderlich: 1). Bitte stellen Sie eine gültige MasterRoutine-Datenbank bereit.",
+      "why": "Routinen-Auswertung erfordert eine Mindestanzahl an Aufgaben."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "routine_query"
+}

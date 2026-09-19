@@ -1,0 +1,16 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "columns.Betrag",
+      "kind": "text",
+      "prompt": "Welchen Wert hat 'Betrag' für 01_incomplete_data.txt? Die Quellen sagen dazu nichts.",
+      "why": "'Betrag' ist als Pflichtspalte erklärt, und src_079ba5473d0dd176 enthält keine Zeile dazu."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "total_question_count": 1,
+  "unshown_question_count": 0,
+  "workflow": "document_registry"
+}

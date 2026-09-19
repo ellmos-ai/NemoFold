@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "document_choice",
+      "kind": "document_selection",
+      "prompt": "Mehrdeutige Fundstellen (2 Treffer für Steuernummer). Bitte wählen Sie das maßgebliche Dokument.",
+      "why": "Es wurden mehrere unterschiedliche Belege gefunden, die geklärt werden müssen."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "corpus_query"
+}

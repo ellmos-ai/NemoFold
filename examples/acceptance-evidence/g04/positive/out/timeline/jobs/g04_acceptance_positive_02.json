@@ -1,0 +1,56 @@
+{
+  "job": {
+    "action_mode": "dry_run",
+    "handoff_context": {},
+    "input_roots": [
+      "<evidence-root>\\positive\\inputs\\insurance-policies"
+    ],
+    "model_budget_usd": 0.0,
+    "model_id": null,
+    "output_dir": "<evidence-root>\\positive\\out\\timeline",
+    "parameters": {
+      "end_field": "Deckung bis",
+      "formats": [
+        "md"
+      ],
+      "holder_field": "Versicherungsnehmer",
+      "label_field": "Tarif",
+      "min_intervals": 3,
+      "start_field": "Deckung ab",
+      "title": "Versicherungsverlauf & Abdeckungsanalyse"
+    },
+    "privacy_mode": "local_only",
+    "questions": [],
+    "response_schema": "nemofold.claims.v1",
+    "resume_run_id": null,
+    "sources": [
+      {
+        "display_name": "01-privathaftpflicht.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\positive\\inputs\\insurance-policies\\01-privathaftpflicht.txt",
+        "sha256": "7a638ddc174d36decf94ca8d1782c2df85cedcd8f34ce5849dd85734585c5df6",
+        "source_id": "src_5885f9524541e5d3"
+      },
+      {
+        "display_name": "02-hausrat.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\positive\\inputs\\insurance-policies\\02-hausrat.txt",
+        "sha256": "c87b6173dbafa7eedf50beee66c800418fb7dd9df55c047a068b317a91fc973f",
+        "source_id": "src_4ecfd50339b8670a"
+      },
+      {
+        "display_name": "03-auslandskranken.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\positive\\inputs\\insurance-policies\\03-auslandskranken.txt",
+        "sha256": "9d0cec08bd6afa18bb281e2cbce0c7bf1d491e48367f4bc0337d46da68478a3b",
+        "source_id": "src_a62647151291ab08"
+      }
+    ],
+    "target_roots": [],
+    "workflow": "coverage_timeline"
+  },
+  "schema": "nemofold.job-snapshot.v1"
+}

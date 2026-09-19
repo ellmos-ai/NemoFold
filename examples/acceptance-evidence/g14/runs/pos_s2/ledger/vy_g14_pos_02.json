@@ -1,0 +1,64 @@
+{
+  "actions": [
+    "reused verified web research from previous voyage step",
+    "assembled complete briefing on Dr. Almut Schrenk (2 source(s))"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\pos_s2\\inventory\\vy_g14_pos_02.json",
+      "sha256": "e73cbfa09d6f2cb6c38d8fcd864b47f4285a462aed64661c7cfb1ed4e022e7a4",
+      "status": "written"
+    },
+    {
+      "format": "briefing",
+      "path": "<evidence-root>\\runs\\pos_s2\\vy_g14_pos_02.briefing.json",
+      "sha256": "47f3527f7f34399e566a0ab9eb3eebdcdfa7e33122a206f9037f50837c57c185",
+      "status": "written"
+    },
+    {
+      "format": "briefing-markdown",
+      "path": "<evidence-root>\\runs\\pos_s2\\vy_g14_pos_02.briefing.md",
+      "sha256": "2dbb36ea1da04d290d8da58bc937b252f873633e49534435237441b4d52731a7",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 5,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_2e627160f13dec68",
+      "src_58a951528a09c5cd",
+      "src_984e688813c23819",
+      "src_adea4ddb34731e8b",
+      "src_d02a18c61bc0c45c"
+    ]
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_050f0ddfee5b21bbbf1dd6bdc1c65bf1670dd161b115b271a7c68c1d2f5b83ff",
+  "metadata": {
+    "briefing_status": "complete_briefing",
+    "briefing_subject": "Dr. Almut Schrenk",
+    "cloud_proof": false,
+    "facts_count": 2,
+    "inferences_count": 2,
+    "is_limited": false,
+    "open_points_count": 2,
+    "reads_local_sources": false,
+    "separation_principle_note": "Das Briefing trennt belegte Fakten strikt von Schlussfolgerungen und offenen Punkten.",
+    "source_count": 5,
+    "sources_evaluated": 2
+  },
+  "run_id": "vy_g14_pos_02",
+  "status": "executed",
+  "workflow": "briefing"
+}

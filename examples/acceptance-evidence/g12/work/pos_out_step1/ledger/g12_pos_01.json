@@ -1,0 +1,70 @@
+{
+  "actions": [
+    "inventory_scanned",
+    "registry_columns_extracted",
+    "registry_table_written"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\pos_out_step1\\inventory\\g12_pos_01.json",
+      "sha256": "fa8983d67f694e8a0c2e4cbb19ebb44107c07176cbf389e5a584f3571c427eb6",
+      "status": "written"
+    },
+    {
+      "format": "document-registry",
+      "path": "<evidence-root>\\work\\pos_out_step1\\g12_pos_01.registry.json",
+      "sha256": "0320cdd8c27d482e39b4a8c950888bde8a09cbc93a6c7f5c34cc1f3fbd1360c6",
+      "status": "written"
+    },
+    {
+      "format": "csv",
+      "path": "<evidence-root>\\work\\pos_out_step1\\g12_pos_01.registry.csv",
+      "sha256": "19d6ed3574201c254acf1da9489eb47aff367f6f6f2700ed55c9bfa6e4860c9b",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 2,
+    "total_sources": 2,
+    "uncited_read_source_ids": [
+      "src_0148c212f2f8540b",
+      "src_8eb5f71178999ee9"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_21cb2cd3c60271c2d99beffae9d3718f10543ad6008aa19438ff32aae45954c5",
+  "metadata": {
+    "cloud_proof": false,
+    "columns": [
+      "Gegenstand",
+      "Lagerort",
+      "Menge",
+      "Kategorie",
+      "Zustand"
+    ],
+    "due_entries": [],
+    "empty_cells": 10,
+    "extraction": "labelled_lines_only",
+    "filled_cells": 0,
+    "require_complete_pdf_inventory": false,
+    "reviewed_pdf_page_count": 0,
+    "rows": 2,
+    "skipped_source_ids": [],
+    "source_count": 2,
+    "topic_selected_lines": {},
+    "verified_pdf_pages": []
+  },
+  "run_id": "g12_pos_01",
+  "status": "executed",
+  "workflow": "document_registry"
+}

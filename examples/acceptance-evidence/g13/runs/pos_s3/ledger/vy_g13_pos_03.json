@@ -1,0 +1,52 @@
+{
+  "actions": [
+    "print_package_written"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\pos_s3\\inventory\\vy_g13_pos_03.json",
+      "sha256": "c2213a78104688aac1e07639de97757fa50feba9b77d814dcfbce7b5a2527601",
+      "status": "written"
+    },
+    {
+      "format": "print-instructions",
+      "path": "<evidence-root>\\runs\\pos_s3\\vy_g13_pos_03.print-instructions.md",
+      "sha256": "2775ccffc31fcf62fb08a947f856c462b6c737e5d0c590d1660b33d57cd59c03",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 1,
+    "read_sources": 1,
+    "total_sources": 6,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_04805e26529ec2ae",
+      "src_9947b4a7a9e7e9fe",
+      "src_d233b4a7ad376c39",
+      "src_e63e6cff88eb517b",
+      "src_f8c385d0801a99c6"
+    ]
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_c8e8aa8510615baf986d54cac0550774bd9c190c33e1c16837bde049161e7400",
+  "metadata": {
+    "cloud_proof": false,
+    "prepared_at": "2026-09-19T08:49:05+00:00",
+    "print_note": "NemoFold prepares a print-ready file and the exact command. It does not invoke the printer, because that call returns nothing this run could put in a receipt.",
+    "print_ready_path": "<evidence-root>\\runs\\pos_s2\\vy_g13_pos_02.publication-package.md",
+    "printed": false,
+    "source_count": 6
+  },
+  "run_id": "vy_g13_pos_03",
+  "status": "executed",
+  "workflow": "print_action"
+}

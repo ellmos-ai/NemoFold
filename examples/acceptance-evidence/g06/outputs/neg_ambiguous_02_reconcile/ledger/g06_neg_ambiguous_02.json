@@ -1,0 +1,52 @@
+{
+  "actions": [
+    "analyzed 3 source(s)",
+    "ambiguous_matches_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\neg_ambiguous_02_reconcile\\inventory\\g06_neg_ambiguous_02.json",
+      "sha256": "e69ae902846dfda1a27c05e8eabdb05870a5210a6413646cd4eaaa171080bcfc",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\outputs\\neg_ambiguous_02_reconcile\\g06_neg_ambiguous_02.needs-user-input.json",
+      "sha256": "159b1bf9e1cb6f42bcd22126e492605ea0fb9444d0ab2d187300133c72798e36",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 3,
+    "total_sources": 3,
+    "uncited_read_source_ids": [
+      "src_25dae14c1bb2ea5c",
+      "src_6ec3382c22532db8",
+      "src_d7ae1cc88a304e7b"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "ambiguous_subscription_matches:2"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_f67f71be2122dd74d8b20d1327e375cb2aba6d5c302dc4d7aab9ba3eff9f09d4",
+  "metadata": {
+    "ambiguous_count": 2,
+    "cloud_proof": false,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "source_count": 3
+  },
+  "run_id": "g06_neg_ambiguous_02",
+  "status": "blocked",
+  "workflow": "subscription_reconcile"
+}

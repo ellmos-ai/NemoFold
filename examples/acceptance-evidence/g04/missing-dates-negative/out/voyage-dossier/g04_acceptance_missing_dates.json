@@ -1,0 +1,36 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "Versicherungsverlauf \u00b7 fehlende Deckungsdaten",
+  "run_id": "g04_acceptance_missing_dates",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:44.922593+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 2,
+      "errors": [
+        "insufficient_coverage_intervals:0<1"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\missing-dates-negative\\out\\timeline\\ledger\\g04_acceptance_missing_dates_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\missing-dates-negative\\out\\timeline",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g04_acceptance_missing_dates_01",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "coverage_timeline"
+    }
+  ],
+  "stopped_at_step": 1,
+  "voyage_id": "voyage_g04_missing_dates"
+}

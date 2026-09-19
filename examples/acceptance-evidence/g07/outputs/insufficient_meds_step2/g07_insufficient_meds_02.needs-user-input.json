@@ -1,0 +1,14 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "field": "medications",
+      "kind": "text",
+      "prompt": "Zu wenige Medikamenteneinträge gefunden (1 < 4). Bitte stellen Sie Dokumente mit Medikationsangaben bereit.",
+      "why": "Die Medikations-Konsolidierung verlangt mindestens die deklarierte Anzahl an Medikamenten."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "medication_reconcile"
+}

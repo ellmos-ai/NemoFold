@@ -1,0 +1,80 @@
+{
+  "forecast_month": "2026-10",
+  "honesty_note": "Unbekannte Fälligkeiten werden nicht als exakte Prognosen dargestellt. Wiederkehrende Kosten und erwartbare Sondereffekte werden getrennt mit Zeitraum und Quelle ausgewiesen.",
+  "item_count": 5,
+  "items": [
+    {
+      "amount": 39.9,
+      "amount_raw": "39,90 €",
+      "cadence": "monthly",
+      "cadence_raw": "monatlich",
+      "category": "recurring",
+      "contract": "Fitnessstudio StudioNord",
+      "determined": true,
+      "due_date": "2026-10-01",
+      "line": 1,
+      "quote": "Vertrag: Fitnessstudio StudioNord · Betrag: 39,90 € · Turnus: monatlich · Nächste Fälligkeit: 2026-10-01",
+      "source_id": "src_8e5be3a123cb25c2"
+    },
+    {
+      "amount": 17.99,
+      "amount_raw": "17,99 €",
+      "cadence": "monthly",
+      "cadence_raw": "monatlich",
+      "category": "recurring",
+      "contract": "Streaming Plus",
+      "determined": true,
+      "due_date": "2026-10-05",
+      "line": 1,
+      "quote": "Vertrag: Streaming Plus · Betrag: 17,99 € · Turnus: monatlich · Nächste Fälligkeit: 2026-10-05",
+      "source_id": "src_5893508df841750e"
+    },
+    {
+      "amount": 148.0,
+      "amount_raw": "148,00 €",
+      "cadence": "annual",
+      "cadence_raw": "jährlich",
+      "category": "special_effect",
+      "contract": "KFZ-Steuer Hauptzollamt",
+      "determined": true,
+      "due_date": "2026-10-20",
+      "line": 1,
+      "quote": "Vertrag: KFZ-Steuer Hauptzollamt · Betrag: 148,00 € · Turnus: jährlich · Nächste Fälligkeit: 2026-10-20",
+      "source_id": "src_7857b6e48246b753"
+    },
+    {
+      "amount": 140.0,
+      "amount_raw": "140,00 €",
+      "cadence": "annual",
+      "cadence_raw": "zweijährlich",
+      "category": "special_effect",
+      "contract": "TÜV Hauptuntersuchung",
+      "determined": true,
+      "due_date": "2026-11-15",
+      "line": 1,
+      "quote": "Vertrag: TÜV Hauptuntersuchung · Betrag: 140,00 € · Turnus: zweijährlich · Nächste Fälligkeit: 2026-11-15",
+      "source_id": "src_0c4d6e42884b77b2"
+    },
+    {
+      "amount": 55.08,
+      "amount_raw": "55,08 €",
+      "cadence": "quarterly",
+      "cadence_raw": "vierteljährlich",
+      "category": "recurring",
+      "contract": "Rundfunkbeitrag ARD ZDF",
+      "determined": true,
+      "due_date": "2026-10-15",
+      "line": 1,
+      "quote": "Vertrag: Rundfunkbeitrag ARD ZDF · Betrag: 55,08 € · Turnus: vierteljährlich · Nächste Fälligkeit: 2026-10-15",
+      "source_id": "src_69b8a98b21a09e8c"
+    }
+  ],
+  "notes": [],
+  "projected_recurring_total": 112.97,
+  "projected_special_effects_total": 148.0,
+  "projected_total": 260.97,
+  "schema": "nemofold.cost-timeline.v1",
+  "title": "Kosten- und Fälligkeitsplanung Oktober 2026",
+  "undetermined_count": 0,
+  "undetermined_items": []
+}

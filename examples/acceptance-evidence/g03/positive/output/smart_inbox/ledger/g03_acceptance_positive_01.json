@@ -1,0 +1,66 @@
+{
+  "actions": [
+    "action_plan_written",
+    "dry_run_completed"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\positive\\output\\smart_inbox\\inventory\\g03_acceptance_positive_01.json",
+      "sha256": "6c783ed784f804ad7362e9cbc9902edbd2d9199d2b3fe6448ff4ed3ddb5810a0",
+      "status": "written"
+    },
+    {
+      "format": "action-plan",
+      "path": "<evidence-root>\\positive\\output\\smart_inbox\\g03_acceptance_positive_01.action-plan.json",
+      "sha256": "5201331f486c08a345fa25f04eb994977040ccdb6d68725bc4905844bff4598c",
+      "status": "written"
+    },
+    {
+      "format": "index-manifest",
+      "path": "<evidence-root>\\positive\\output\\smart_inbox\\g03_acceptance_positive_01.index-manifest.json",
+      "sha256": "1f6790e26ddbb34a90ab58e4ac1cdb560741dfa767e35ac2602587746849691b",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 3,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_8bb65dd6773d0957",
+      "src_95eefd2b7d09388b",
+      "src_ff751d647690bdf4"
+    ]
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_6c05513dea849898b040dcdc67e50c1b4dc8e7cbec8da6325b2b505a776e48b7",
+  "metadata": {
+    "applied_actions": 0,
+    "classification_policy": "content_categories",
+    "cloud_proof": false,
+    "confidence_threshold": 0.25,
+    "index_status": {
+      "src_8bb65dd6773d0957": "indexed",
+      "src_95eefd2b7d09388b": "updated",
+      "src_ff751d647690bdf4": "indexed"
+    },
+    "maintain_index": true,
+    "planned_actions": 3,
+    "pruned_source_ids": [
+      "src_obsolete_draft"
+    ],
+    "source_count": 3
+  },
+  "run_id": "g03_acceptance_positive_01",
+  "status": "executed",
+  "workflow": "smart_inbox"
+}

@@ -1,0 +1,65 @@
+{
+  "actions": [
+    "action_plan_written",
+    "action_batch_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\ambiguous\\output\\smart_inbox\\inventory\\g03_acceptance_ambiguous_01.json",
+      "sha256": "637d6a948df5a65b76f574cf15973ef663212f5fbe4fe269cf10f7eabb315991",
+      "status": "written"
+    },
+    {
+      "format": "action-plan",
+      "path": "<evidence-root>\\ambiguous\\output\\smart_inbox\\g03_acceptance_ambiguous_01.action-plan.json",
+      "sha256": "b59e7fffea7ad78432391c0c986dc98885c06f196d627f109ee1fe4ddb140f97",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\ambiguous\\output\\smart_inbox\\g03_acceptance_ambiguous_01.needs-user-input.json",
+      "sha256": "2b589becda754b95e6e62bab4f62b50ea8b5763f90d908686bd8ff4878cfde0a",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_95df7da6dbc0ddca"
+    ]
+  },
+  "errors": [
+    "ambiguous_classification:01-mischdokument.txt"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_430d9a89f6e97a522f0259896ec11819162248156039f7c67dfc1341c056e41b",
+  "metadata": {
+    "applied_actions": 0,
+    "classification_policy": "content_categories",
+    "cloud_proof": false,
+    "confidence_threshold": 0.25,
+    "index_status": {
+      "src_95df7da6dbc0ddca": "indexed"
+    },
+    "maintain_index": true,
+    "needs_user_input": true,
+    "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+    "planned_actions": 1,
+    "pruned_source_ids": [],
+    "question_count": 1,
+    "source_count": 1
+  },
+  "run_id": "g03_acceptance_ambiguous_01",
+  "status": "blocked",
+  "workflow": "smart_inbox"
+}

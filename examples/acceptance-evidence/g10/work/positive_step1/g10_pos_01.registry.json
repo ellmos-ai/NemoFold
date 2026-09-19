@@ -1,0 +1,273 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Gegenstand",
+        "Name",
+        "Artikel",
+        "Item",
+        "Bezeichnung"
+      ],
+      "description": "Item or property",
+      "name": "Gegenstand"
+    },
+    {
+      "aliases": [
+        "Lagerort",
+        "Ort",
+        "Raum",
+        "Zimmer",
+        "Location"
+      ],
+      "description": "Location or room",
+      "name": "Lagerort"
+    },
+    {
+      "aliases": [
+        "Menge",
+        "Anzahl",
+        "St\u00fcck",
+        "Quantity",
+        "Count"
+      ],
+      "description": "Quantity or count",
+      "name": "Menge"
+    },
+    {
+      "aliases": [
+        "Kategorie",
+        "Rubrik",
+        "Typ",
+        "Category",
+        "Type"
+      ],
+      "description": "Category or type",
+      "name": "Kategorie"
+    },
+    {
+      "aliases": [
+        "Zustand",
+        "Status",
+        "Condition"
+      ],
+      "description": "Condition or status",
+      "name": "Zustand"
+    }
+  ],
+  "empty_cells": 20,
+  "filled_cells": 5,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Zustand",
+          "line": 5,
+          "quote": "status: offen",
+          "source_id": "src_8148b26460b770e5",
+          "value": "offen"
+        }
+      ],
+      "display_name": "routine_master.db",
+      "record_line": 5,
+      "source_id": "src_8148b26460b770e5"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": 11,
+          "quote": "kategorie: haushalt",
+          "source_id": "src_8148b26460b770e5",
+          "value": "haushalt"
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "routine_master.db",
+      "record_line": 11,
+      "source_id": "src_8148b26460b770e5"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": 12,
+          "quote": "kategorie: it",
+          "source_id": "src_8148b26460b770e5",
+          "value": "it"
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "routine_master.db",
+      "record_line": 12,
+      "source_id": "src_8148b26460b770e5"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": 13,
+          "quote": "kategorie: gesundheit",
+          "source_id": "src_8148b26460b770e5",
+          "value": "gesundheit"
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "routine_master.db",
+      "record_line": 13,
+      "source_id": "src_8148b26460b770e5"
+    },
+    {
+      "cells": [
+        {
+          "column": "Gegenstand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Lagerort",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Menge",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kategorie",
+          "line": 14,
+          "quote": "kategorie: finanzen",
+          "source_id": "src_8148b26460b770e5",
+          "value": "finanzen"
+        },
+        {
+          "column": "Zustand",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "routine_master.db",
+      "record_line": 14,
+      "source_id": "src_8148b26460b770e5"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

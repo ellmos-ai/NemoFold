@@ -1,0 +1,6 @@
+Arzt: Dr. med. Weber
+Datum: 2026-08-15
+
+Medikament: Ibuprofen
+Dosierung: 400 mg
+Einnahme: bei Schmerzen

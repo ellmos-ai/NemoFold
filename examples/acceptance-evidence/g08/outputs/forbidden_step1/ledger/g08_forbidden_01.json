@@ -1,0 +1,40 @@
+{
+  "actions": [
+    "schema_validation",
+    "forbidden_table_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\forbidden_step1\\inventory\\g08_forbidden_01.json",
+      "sha256": "cab97e915eb7e116b96177320dc8c25bcb92d19e7011e312ffe058e26fc6685d",
+      "status": "written"
+    }
+  ],
+  "coverage": null,
+  "errors": [
+    "table_not_allowed:passwoerter"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_3c2de13865076fc78b58551a64d879219c4f89b5eb07d9bf872de466cbb54875",
+  "metadata": {
+    "allowed_tables": [
+      "gegenstaende",
+      "inventar",
+      "lagerorte",
+      "kategorien"
+    ],
+    "cloud_proof": false,
+    "source_count": 1,
+    "table": "passwoerter"
+  },
+  "run_id": "g08_forbidden_01",
+  "status": "blocked",
+  "workflow": "database_reader"
+}

@@ -1,0 +1,35 @@
+{
+  "checks": [
+    {
+      "evidence": "Detected format 'markdown' matches target 'markdown'.",
+      "name": "format_integrity",
+      "passed": true
+    },
+    {
+      "evidence": "Cryptographic SHA-256 calculated and anchored: bbcdd3ee50e2231e571f9ebce4a1d37a0cef3e6833892867878b9680a5af662a.",
+      "name": "hash_integrity",
+      "passed": true
+    },
+    {
+      "evidence": "Document contains 332 words (minimum required: 10).",
+      "name": "content_completeness",
+      "passed": true
+    },
+    {
+      "evidence": "All 2 required sections/markers are present.",
+      "name": "required_sections_present",
+      "passed": true
+    },
+    {
+      "evidence": "No unreplaced placeholders or unbound template tokens found.",
+      "name": "unbound_fields_checked",
+      "passed": true
+    }
+  ],
+  "document_path": "<evidence-root>\\runs\\pos_s1\\vy_g13_pos_01.knowledge-composer.md",
+  "document_sha256": "bbcdd3ee50e2231e571f9ebce4a1d37a0cef3e6833892867878b9680a5af662a",
+  "format": "markdown",
+  "qa_passed": true,
+  "schema": "nemofold.document-qa.v1",
+  "version": "1.0"
+}

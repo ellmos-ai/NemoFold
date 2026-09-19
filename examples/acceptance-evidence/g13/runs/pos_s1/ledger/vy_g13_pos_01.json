@@ -1,0 +1,62 @@
+{
+  "actions": [
+    "knowledge_scanned",
+    "target_context_mapped",
+    "claims_grounded",
+    "document_composed"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\pos_s1\\inventory\\vy_g13_pos_01.json",
+      "sha256": "5cfa29852c72500faf515790a4c7016b4f141192d54ad41d50c873b11df04fc4",
+      "status": "written"
+    },
+    {
+      "format": "knowledge-composer",
+      "path": "<evidence-root>\\runs\\pos_s1\\vy_g13_pos_01.knowledge-composer.json",
+      "sha256": "d988cc28b33303b907dd3cb6039128e29b3dcb19c00a6efa0f85e5cd18e82a2f",
+      "status": "written"
+    },
+    {
+      "format": "markdown",
+      "path": "<evidence-root>\\runs\\pos_s1\\vy_g13_pos_01.knowledge-composer.md",
+      "sha256": "bbcdd3ee50e2231e571f9ebce4a1d37a0cef3e6833892867878b9680a5af662a",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 1,
+    "read_sources": 5,
+    "total_sources": 5,
+    "uncited_read_source_ids": [
+      "src_238053dbc3b97295",
+      "src_408c740eba2c3d6c",
+      "src_986237304cf39d27",
+      "src_c3d3afa91d2a9ee6"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_6e75c328573e79b0c5a812d372ed19efe68ab6c57a3a94b72bfb49118a1bcee8",
+  "metadata": {
+    "cited_source_ids": [
+      "src_afef2cb85933423c"
+    ],
+    "cloud_proof": false,
+    "profile": "autism_support",
+    "source_count": 5,
+    "source_grounding_verified": true,
+    "total_knowledge_items": 3
+  },
+  "run_id": "vy_g13_pos_01",
+  "status": "executed",
+  "workflow": "knowledge_composer"
+}

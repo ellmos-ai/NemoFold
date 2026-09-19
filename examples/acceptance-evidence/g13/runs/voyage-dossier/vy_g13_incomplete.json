@@ -1,0 +1,36 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "g13_negative_incomplete_sections",
+  "run_id": "vy_g13_incomplete",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:49:05.607621+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 1,
+      "errors": [
+        "document_incomplete:missing_required_sections:Sicherheitsleitfaden_DIN_ISO"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\runs\\incomplete_s1\\ledger\\vy_g13_incomplete_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\runs\\incomplete_s1",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "vy_g13_incomplete_01",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "document_qa"
+    }
+  ],
+  "stopped_at_step": 1,
+  "voyage_id": "vy_g13_incomplete"
+}

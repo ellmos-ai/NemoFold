@@ -1,0 +1,6 @@
+Vertrag: Nebenkostenabrechnung Nachzahlung
+Betrag: 250,00 €
+Turnus: unregelmäßig
+Nächste Fälligkeit: unbestimmt
+Kategorie: Sondereffekt
+Kontakt: verwaltung@beispiel.de

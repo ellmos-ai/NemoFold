@@ -1,0 +1,83 @@
+{
+  "allowed": true,
+  "blocked_reasons": [],
+  "facts": [
+    {
+      "evidence_excerpt": "Schwerpunkt Endokrinologie und Schilddrüsensonographie. Diagnostikknoten und laborchemische Feindiagnostik für Dr. Almut Schrenk Spezialisierung.",
+      "evidence_url": "https://praxis-schrenk.invalid/aerzte/1",
+      "fact_id": "F01",
+      "source_rank": 1,
+      "statement": "Aus Quelle 'Fachärztliche Profilseite: Dr. Almut Schrenk Spezialisierung': Schwerpunkt Endokrinologie und Schilddrüsensonographie. Diagnostikknoten und laborchemische Feindiagnostik für Dr. Almut Schrenk Spezialisierung."
+    },
+    {
+      "evidence_excerpt": "Schwerpunkt Endokrinologie und Schilddrüsensonographie. Diagnostikknoten und laborchemische Feindiagnostik für Praxis Schrenk Diagnostik.",
+      "evidence_url": "https://praxis-schrenk.invalid/aerzte/2",
+      "fact_id": "F02",
+      "source_rank": 2,
+      "statement": "Aus Quelle 'Fachärztliche Profilseite: Praxis Schrenk Diagnostik': Schwerpunkt Endokrinologie und Schilddrüsensonographie. Diagnostikknoten und laborchemische Feindiagnostik für Praxis Schrenk Diagnostik."
+    }
+  ],
+  "inferences": [
+    {
+      "confidence": "high",
+      "grounded_in_facts": [
+        "F01",
+        "F02"
+      ],
+      "inference_id": "I01",
+      "inference_note": "Schlussfolgerung, getrennt von belegten Fakten.",
+      "statement": "Auf Basis von 2 belegten Quellen liegt eine Informationsgrundlage für 'Dr. Almut Schrenk' vor."
+    },
+    {
+      "confidence": "high",
+      "grounded_in_facts": [
+        "F01"
+      ],
+      "inference_id": "I02",
+      "inference_note": "Kontextuelle Schlussfolgerung für den Termin.",
+      "statement": "Relevanz für Termin 'Fachgespräch Schilddrüsendiagnostik': Belegte Aspekte ermöglichen eine gezielte Vorbereitung, erfordern aber Nachfragen zu Lücken."
+    }
+  ],
+  "is_limited": false,
+  "limitation_reasons": [],
+  "meeting_context": "Fachgespräch Schilddrüsendiagnostik",
+  "question": "Welche Schwerpunkte und diagnostischen Verfahren bietet die Praxis?",
+  "schema": "nemofold.briefing.v1",
+  "separation_principle_note": "Das Briefing trennt belegte Fakten strikt von Schlussfolgerungen und offenen Punkten.",
+  "source_sufficiency_note": "Bei unzureichender Quellenlage wird ein begrenztes Briefing erstellt statt falscher Vollständigkeit.",
+  "sources": [
+    {
+      "anchor": "https://praxis-schrenk.invalid/aerzte/1 · rank 1",
+      "excerpt": "Schwerpunkt Endokrinologie und Schilddrüsensonographie. Diagnostikknoten und laborchemische Feindiagnostik für Dr. Almut Schrenk Spezialisierung.",
+      "query": "Dr. Almut Schrenk Spezialisierung",
+      "rank": 1,
+      "title": "Fachärztliche Profilseite: Dr. Almut Schrenk Spezialisierung",
+      "url": "https://praxis-schrenk.invalid/aerzte/1"
+    },
+    {
+      "anchor": "https://praxis-schrenk.invalid/aerzte/2 · rank 2",
+      "excerpt": "Schwerpunkt Endokrinologie und Schilddrüsensonographie. Diagnostikknoten und laborchemische Feindiagnostik für Praxis Schrenk Diagnostik.",
+      "query": "Praxis Schrenk Diagnostik",
+      "rank": 2,
+      "title": "Fachärztliche Profilseite: Praxis Schrenk Diagnostik",
+      "url": "https://praxis-schrenk.invalid/aerzte/2"
+    }
+  ],
+  "sources_evaluated": 2,
+  "status": "complete_briefing",
+  "subject": "Dr. Almut Schrenk",
+  "uncertainties_and_open_points": [
+    {
+      "issue": "Aktualität öffentlich zugänglicher Webdaten",
+      "point_id": "O01",
+      "reason": "Öffentliche Online-Quellen können zeitverzögert sein und kurzfristige Änderungen unberücksichtigt lassen.",
+      "recommended_action": "Kernaussagen im direkten Termin rückbestätigen."
+    },
+    {
+      "issue": "Vertrauliche und interne Kontextfaktoren",
+      "point_id": "O02",
+      "reason": "Nicht-öffentliche Vereinbarungen sind im Web nicht nachweisbar.",
+      "recommended_action": "Spezifische Klärungsfragen auf die Agenda setzen."
+    }
+  ]
+}

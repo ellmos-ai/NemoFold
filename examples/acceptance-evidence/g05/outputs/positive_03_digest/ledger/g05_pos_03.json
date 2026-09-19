@@ -1,0 +1,54 @@
+{
+  "actions": [
+    "inventory_scanned",
+    "folder_digest_built",
+    "coverage_recorded"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\outputs\\positive_03_digest\\inventory\\g05_pos_03.json",
+      "sha256": "4ebc476c5a54a836c5d235849a52e2f2e40acfd7d570545a336095d006dfd2f3",
+      "status": "written"
+    },
+    {
+      "format": "folder-digest",
+      "path": "<evidence-root>\\outputs\\positive_03_digest\\g05_pos_03.digest.md",
+      "sha256": "5e8e6a66d8f6831c80dd9b5d1f852b38804e9c9c07b4566cfe5991db66d0e325",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_ba7a4c92fef8e634"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_63012721c51103de506933652154b966a93f4a9436657aa6509b11caaa8d38d8",
+  "metadata": {
+    "changed_source_ids": [],
+    "cloud_proof": false,
+    "deleted_source_ids": [],
+    "digest_depth": "full",
+    "gap_source_ids": [],
+    "new_source_ids": [
+      "src_ba7a4c92fef8e634"
+    ],
+    "source_count": 1,
+    "unchanged_source_ids": []
+  },
+  "run_id": "g05_pos_03",
+  "status": "executed",
+  "workflow": "folder_digest"
+}

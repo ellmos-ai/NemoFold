@@ -1,0 +1,35 @@
+{
+  "job": {
+    "action_mode": "dry_run",
+    "handoff_context": {},
+    "input_roots": [
+      "<evidence-root>\\positive\\out\\timeline\\g04_acceptance_positive_02_coverage.md"
+    ],
+    "model_budget_usd": 0.0,
+    "model_id": null,
+    "output_dir": "<evidence-root>\\positive\\out\\digest",
+    "parameters": {
+      "application_domain": "insurance",
+      "digest_depth": "full",
+      "insurance_purpose": "coverage_analysis",
+      "summary_length": 3
+    },
+    "privacy_mode": "local_only",
+    "questions": [],
+    "response_schema": "nemofold.claims.v1",
+    "resume_run_id": null,
+    "sources": [
+      {
+        "display_name": "g04_acceptance_positive_02_coverage.md",
+        "extraction_status": "new",
+        "mime_type": "application/octet-stream",
+        "path": "<evidence-root>\\positive\\out\\timeline\\g04_acceptance_positive_02_coverage.md",
+        "sha256": "543488fbe9dcac474ea1822d478ab46d96ca1995fc3f0825b0088e5f29587548",
+        "source_id": "src_7caddb20e16835b9"
+      }
+    ],
+    "target_roots": [],
+    "workflow": "folder_digest"
+  },
+  "schema": "nemofold.job-snapshot.v1"
+}

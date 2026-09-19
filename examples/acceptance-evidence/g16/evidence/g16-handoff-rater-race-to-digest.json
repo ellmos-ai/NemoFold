@@ -1,0 +1,6 @@
+{
+  "consumer": "folder_digest",
+  "producer": "rater_race",
+  "status": "verified",
+  "topic": "interrater_auswertung"
+}

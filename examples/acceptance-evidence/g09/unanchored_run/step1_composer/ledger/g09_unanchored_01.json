@@ -1,0 +1,43 @@
+{
+  "actions": [
+    "knowledge_scan",
+    "claim_verification_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\unanchored_run\\step1_composer\\inventory\\g09_unanchored_01.json",
+      "sha256": "3a87355e02996ba7a3f6b2446306f6991acc105e821939d68e831788fbc17684",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_fa314f0d0161672d"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "unanchored_claim_blocked:Quantenphysik-Nobelpreis-2026"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_9f66794e4f135466762ac2442f8977a90c9966bc22dcc09e10128e9b10b4496c",
+  "metadata": {
+    "cloud_proof": false,
+    "profile": "cv_ascii",
+    "rejected_claim": "Quantenphysik-Nobelpreis-2026",
+    "source_count": 1
+  },
+  "run_id": "g09_unanchored_01",
+  "status": "blocked",
+  "workflow": "knowledge_composer"
+}

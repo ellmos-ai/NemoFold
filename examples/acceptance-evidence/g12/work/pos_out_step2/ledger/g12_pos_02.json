@@ -1,0 +1,67 @@
+{
+  "actions": [
+    "contact_sources_read",
+    "contact_candidates_extracted",
+    "contact_changes_compared"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\pos_out_step2\\inventory\\g12_pos_02.json",
+      "sha256": "278c10bc4fab8722e98e4a6857e8de0a5f32851a29409ed04c78211db95c24cc",
+      "status": "written"
+    },
+    {
+      "format": "contact-snapshot",
+      "path": "<evidence-root>\\work\\pos_out_step2\\contacts\\g12_pos_02.json",
+      "sha256": "9fc4b512bac5fc7662dd25d8660f7a8d7ff8864f88492a2faefd8f03c7822ab3",
+      "status": "written"
+    },
+    {
+      "format": "contact-report",
+      "path": "<evidence-root>\\work\\pos_out_step2\\contacts\\g12_pos_02.md",
+      "sha256": "f3bdb694713d45e30725ea248d3dd51d69f9b524962e568d53cc801acc60c4ed",
+      "status": "written"
+    },
+    {
+      "format": "contact-book",
+      "path": "<evidence-root>\\work\\pos_out_step2\\contacts\\g12_pos_02.txt",
+      "sha256": "94bafd4f146bbef04c0e56bffc1753663b8ac36919af3d75dde061a575998a60",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 2,
+    "read_sources": 2,
+    "total_sources": 2,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": []
+  },
+  "errors": [],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_96d2446365dcab15bcf912c21df6e91ade5ec7745275a8a8313f7b93c2e2ff21",
+  "metadata": {
+    "automatic_deletion": false,
+    "candidate_count": 2,
+    "changed_contact_count": 0,
+    "cited_source_ids": [
+      "src_0148c212f2f8540b",
+      "src_8eb5f71178999ee9"
+    ],
+    "cloud_proof": false,
+    "doctor_count": 2,
+    "missing_contact_count": 0,
+    "new_contact_count": 2,
+    "source_count": 2,
+    "with_phone_count": 2
+  },
+  "run_id": "g12_pos_02",
+  "status": "executed",
+  "workflow": "contact_monitor"
+}

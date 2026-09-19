@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\positive\\out\\query\\g01_acceptance_positive_01_query.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g01_acceptance_positive_01",
+  "producer_workflow": "corpus_query",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "aaa77833b10441775d2713470272bec17878ca14617f46e11300f4d49c8a0ddb",
+  "status": "verified"
+}

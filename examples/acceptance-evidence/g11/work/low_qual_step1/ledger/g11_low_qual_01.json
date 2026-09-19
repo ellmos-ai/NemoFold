@@ -1,0 +1,52 @@
+{
+  "actions": [
+    "ocr_pipeline",
+    "ocr_quality_check_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\low_qual_step1\\inventory\\g11_low_qual_01.json",
+      "sha256": "1ef01470fcd2b4aafb9ad89f2bae672fb38356ac288f49ee6867bf47386eb78c",
+      "status": "written"
+    },
+    {
+      "format": "needs-user-input",
+      "path": "<evidence-root>\\work\\low_qual_step1\\g11_low_qual_01.needs-user-input.json",
+      "sha256": "4a86a9bfb16daf77d7cefd12933ea666dd71d211d603bf30c7258b4e61de729e",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_83d683ac08bce8a2"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "low_ocr_quality_review_required:1_documents",
+    "scan-degraded.pdf:page_1_conf_0.40_synthetic_ocr_extraction_low_quality"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_753c2574fe316267c23664ec8e6e6f353d2dd194dd9cebf86ffbff8994b1b6f7",
+  "metadata": {
+    "cloud_proof": false,
+    "documents_requiring_review": 1,
+    "review_reasons": [
+      "page_1_conf_0.40_synthetic_ocr_extraction_low_quality"
+    ],
+    "source_count": 1
+  },
+  "run_id": "g11_low_qual_01",
+  "status": "blocked",
+  "workflow": "ocr_pipeline"
+}

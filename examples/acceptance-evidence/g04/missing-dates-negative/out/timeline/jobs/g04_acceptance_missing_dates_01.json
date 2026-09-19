@@ -1,0 +1,40 @@
+{
+  "job": {
+    "action_mode": "dry_run",
+    "handoff_context": {},
+    "input_roots": [
+      "<evidence-root>\\missing-dates-negative\\inputs\\insurance-policies"
+    ],
+    "model_budget_usd": 0.0,
+    "model_id": null,
+    "output_dir": "<evidence-root>\\missing-dates-negative\\out\\timeline",
+    "parameters": {
+      "end_field": "Deckung bis",
+      "formats": [
+        "md"
+      ],
+      "holder_field": "Versicherungsnehmer",
+      "label_field": "Tarif",
+      "min_intervals": 1,
+      "start_field": "Deckung ab",
+      "title": "Versicherungsverlauf"
+    },
+    "privacy_mode": "local_only",
+    "questions": [],
+    "response_schema": "nemofold.claims.v1",
+    "resume_run_id": null,
+    "sources": [
+      {
+        "display_name": "01-unfall-ohne-deckung.txt",
+        "extraction_status": "new",
+        "mime_type": "text/plain",
+        "path": "<evidence-root>\\missing-dates-negative\\inputs\\insurance-policies\\01-unfall-ohne-deckung.txt",
+        "sha256": "d77d6ccc761c2e99f6de7348434d9a236d6d6c353ff1da0e0540b8b8a9cd0caa",
+        "source_id": "src_d4cc474c8ae5abf1"
+      }
+    ],
+    "target_roots": [],
+    "workflow": "coverage_timeline"
+  },
+  "schema": "nemofold.job-snapshot.v1"
+}

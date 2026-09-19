@@ -1,0 +1,189 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Policy",
+        "Policennummer",
+        "Versicherungsschein",
+        "Vertragsnummer"
+      ],
+      "description": "Policy number",
+      "name": "Police"
+    },
+    {
+      "aliases": [
+        "Tariff",
+        "Plan",
+        "Produkt",
+        "Product"
+      ],
+      "description": "Tariff or plan",
+      "name": "Tarif"
+    },
+    {
+      "aliases": [
+        "Coverage",
+        "Deckung",
+        "Leistung",
+        "Umfang"
+      ],
+      "description": "What the policy covers",
+      "name": "Abdeckung"
+    },
+    {
+      "aliases": [
+        "Cost",
+        "Beitrag",
+        "Pr\u00e4mie",
+        "Premium",
+        "Preis"
+      ],
+      "description": "Premium or cost",
+      "name": "Kosten"
+    },
+    {
+      "aliases": [
+        "Contact",
+        "Telefon",
+        "Phone",
+        "E-Mail",
+        "Email",
+        "Berater"
+      ],
+      "description": "Insurer contact",
+      "name": "Kontakt"
+    }
+  ],
+  "empty_cells": 0,
+  "filled_cells": 15,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Police",
+          "line": 3,
+          "quote": "Police: HP-2024-8819",
+          "source_id": "src_5885f9524541e5d3",
+          "value": "HP-2024-8819"
+        },
+        {
+          "column": "Tarif",
+          "line": 4,
+          "quote": "Tarif: Privat-Haftpflicht Basis",
+          "source_id": "src_5885f9524541e5d3",
+          "value": "Privat-Haftpflicht Basis"
+        },
+        {
+          "column": "Abdeckung",
+          "line": 7,
+          "quote": "Abdeckung: Personen- und Sachsch\u00e4den bis 10 Mio EUR",
+          "source_id": "src_5885f9524541e5d3",
+          "value": "Personen- und Sachsch\u00e4den bis 10 Mio EUR"
+        },
+        {
+          "column": "Kosten",
+          "line": 8,
+          "quote": "Kosten: 72,00 EUR pro Jahr",
+          "source_id": "src_5885f9524541e5d3",
+          "value": "72,00 EUR pro Jahr"
+        },
+        {
+          "column": "Kontakt",
+          "line": 10,
+          "quote": "Kontakt: service@haftpflicht-direkt.de",
+          "source_id": "src_5885f9524541e5d3",
+          "value": "service@haftpflicht-direkt.de"
+        }
+      ],
+      "display_name": "01-privathaftpflicht.txt",
+      "record_line": null,
+      "source_id": "src_5885f9524541e5d3"
+    },
+    {
+      "cells": [
+        {
+          "column": "Police",
+          "line": 3,
+          "quote": "Police: HR-2023-4102",
+          "source_id": "src_4ecfd50339b8670a",
+          "value": "HR-2023-4102"
+        },
+        {
+          "column": "Tarif",
+          "line": 4,
+          "quote": "Tarif: Hausrat Premium",
+          "source_id": "src_4ecfd50339b8670a",
+          "value": "Hausrat Premium"
+        },
+        {
+          "column": "Abdeckung",
+          "line": 7,
+          "quote": "Abdeckung: Feuer, Leitungswasser, Sturm, Hagel, Einbruchdiebstahl",
+          "source_id": "src_4ecfd50339b8670a",
+          "value": "Feuer, Leitungswasser, Sturm, Hagel, Einbruchdiebstahl"
+        },
+        {
+          "column": "Kosten",
+          "line": 8,
+          "quote": "Kosten: 144,00 EUR pro Jahr",
+          "source_id": "src_4ecfd50339b8670a",
+          "value": "144,00 EUR pro Jahr"
+        },
+        {
+          "column": "Kontakt",
+          "line": 10,
+          "quote": "Kontakt: info@hausrat-schadenservice.de",
+          "source_id": "src_4ecfd50339b8670a",
+          "value": "info@hausrat-schadenservice.de"
+        }
+      ],
+      "display_name": "02-hausrat.txt",
+      "record_line": null,
+      "source_id": "src_4ecfd50339b8670a"
+    },
+    {
+      "cells": [
+        {
+          "column": "Police",
+          "line": 3,
+          "quote": "Police: AKV-2025-0091",
+          "source_id": "src_a62647151291ab08",
+          "value": "AKV-2025-0091"
+        },
+        {
+          "column": "Tarif",
+          "line": 4,
+          "quote": "Tarif: Auslandskranken Schutz",
+          "source_id": "src_a62647151291ab08",
+          "value": "Auslandskranken Schutz"
+        },
+        {
+          "column": "Abdeckung",
+          "line": 7,
+          "quote": "Abdeckung: Notfall-Heilbehandlung im Ausland weltweit",
+          "source_id": "src_a62647151291ab08",
+          "value": "Notfall-Heilbehandlung im Ausland weltweit"
+        },
+        {
+          "column": "Kosten",
+          "line": 8,
+          "quote": "Kosten: 36,00 EUR pro Jahr",
+          "source_id": "src_a62647151291ab08",
+          "value": "36,00 EUR pro Jahr"
+        },
+        {
+          "column": "Kontakt",
+          "line": 10,
+          "quote": "Kontakt: hilfe@weltweit-notfall.de",
+          "source_id": "src_a62647151291ab08",
+          "value": "hilfe@weltweit-notfall.de"
+        }
+      ],
+      "display_name": "03-auslandskranken.txt",
+      "record_line": null,
+      "source_id": "src_a62647151291ab08"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

@@ -1,0 +1,10 @@
+{
+  "format": "markdown",
+  "path": "<evidence-root>\\outputs\\pos_step2\\g08_pos_02.database-reader.md",
+  "privacy_mode": "local_only",
+  "producer_run_id": "g08_pos_02",
+  "producer_workflow": "database_reader",
+  "schema": "nemofold.artifact-handoff.v1",
+  "sha256": "51e203a253502103fd5c731057a87512ad2efec91510034c0855046d2be9d515",
+  "status": "verified"
+}

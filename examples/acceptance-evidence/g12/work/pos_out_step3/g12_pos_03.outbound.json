@@ -1,0 +1,20 @@
+{
+  "allowed": false,
+  "blocked_reasons": [
+    "no_send_was_requested",
+    "right_is_draft_only",
+    "send_requires_apply_mode",
+    "send_not_allowed_on_this_server",
+    "smtp_not_configured:host,sender,port"
+  ],
+  "class_break": false,
+  "governing_rule": "every recipient is doctor: draft_only",
+  "receipt": null,
+  "recipient_classes": [
+    "doctor"
+  ],
+  "right": "draft_only",
+  "schema": "nemofold.outbound.v1",
+  "strictness_note": "A message addressed across two classes is governed by the strictest of them, and a recipient nobody classified counts as the strictest case. This is the one place where not knowing must not mean going ahead.",
+  "unclassified_recipients": []
+}

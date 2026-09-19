@@ -1,0 +1,29 @@
+{
+  "adapter": "tavily",
+  "allowed": true,
+  "blocked_reasons": [],
+  "citation_note": "Every line here came back from a search with the address it came from. Nothing was summarised into a claim without one.",
+  "key_note": "The API key is read from TAVILY_API_KEY at call time and is never stored in a job, a draft, the library or this report.",
+  "queries": [
+    "Dr. Almut Schrenk Spezialisierung",
+    "Praxis Schrenk Diagnostik"
+  ],
+  "result_count": 2,
+  "results": [
+    {
+      "excerpt": "Schwerpunkt Endokrinologie und Schilddrüsensonographie. Diagnostikknoten und laborchemische Feindiagnostik für Dr. Almut Schrenk Spezialisierung.",
+      "query": "Dr. Almut Schrenk Spezialisierung",
+      "rank": 1,
+      "title": "Fachärztliche Profilseite: Dr. Almut Schrenk Spezialisierung",
+      "url": "https://praxis-schrenk.invalid/aerzte/1"
+    },
+    {
+      "excerpt": "Schwerpunkt Endokrinologie und Schilddrüsensonographie. Diagnostikknoten und laborchemische Feindiagnostik für Praxis Schrenk Diagnostik.",
+      "query": "Praxis Schrenk Diagnostik",
+      "rank": 2,
+      "title": "Fachärztliche Profilseite: Praxis Schrenk Diagnostik",
+      "url": "https://praxis-schrenk.invalid/aerzte/2"
+    }
+  ],
+  "schema": "nemofold.web-research.v1"
+}

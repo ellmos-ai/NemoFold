@@ -1,0 +1,360 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Contract",
+        "Vertragsgegenstand",
+        "Subscription",
+        "Abo",
+        "Leistung"
+      ],
+      "description": "Contract or subscription",
+      "name": "Vertrag"
+    },
+    {
+      "aliases": [
+        "Amount",
+        "Kosten",
+        "Cost",
+        "Preis",
+        "Beitrag"
+      ],
+      "description": "Amount per period",
+      "name": "Betrag"
+    },
+    {
+      "aliases": [
+        "Interval",
+        "Zahlungsweise",
+        "Rhythmus",
+        "Frequency",
+        "Zyklus"
+      ],
+      "description": "Billing interval",
+      "name": "Turnus"
+    },
+    {
+      "aliases": [
+        "F\u00e4lligkeit",
+        "Due date",
+        "Next due",
+        "N\u00e4chste Zahlung",
+        "Faelligkeit"
+      ],
+      "description": "Next due date",
+      "name": "N\u00e4chste F\u00e4lligkeit"
+    },
+    {
+      "aliases": [
+        "Contact",
+        "Anbieter",
+        "Provider",
+        "Telefon",
+        "E-Mail",
+        "Email"
+      ],
+      "description": "Provider contact",
+      "name": "Kontakt"
+    }
+  ],
+  "empty_cells": 21,
+  "filled_cells": 14,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Abo: Streaming Plus",
+          "source_id": "src_067cdcf16c2b605e",
+          "value": "Streaming Plus"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 14,99 \u20ac",
+          "source_id": "src_067cdcf16c2b605e",
+          "value": "14,99 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: monatlich",
+          "source_id": "src_067cdcf16c2b605e",
+          "value": "monatlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "01_streaming.txt",
+      "record_line": null,
+      "source_id": "src_067cdcf16c2b605e"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Abo: Cloud Speicher Pro",
+          "source_id": "src_e5f66e03b06f79d5",
+          "value": "Cloud Speicher Pro"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 9,99 \u20ac",
+          "source_id": "src_e5f66e03b06f79d5",
+          "value": "9,99 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: monatlich",
+          "source_id": "src_e5f66e03b06f79d5",
+          "value": "monatlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "02_cloud.txt",
+      "record_line": null,
+      "source_id": "src_e5f66e03b06f79d5"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Abo: Fitnessstudio StudioNord",
+          "source_id": "src_d4408422630e5f66",
+          "value": "Fitnessstudio StudioNord"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 39,90 \u20ac",
+          "source_id": "src_d4408422630e5f66",
+          "value": "39,90 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: monatlich",
+          "source_id": "src_d4408422630e5f66",
+          "value": "monatlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "03_gym.txt",
+      "record_line": null,
+      "source_id": "src_d4408422630e5f66"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Abo: Tageszeitung Digital",
+          "source_id": "src_9663a3ffb272580c",
+          "value": "Tageszeitung Digital"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 19,90 \u20ac",
+          "source_id": "src_9663a3ffb272580c",
+          "value": "19,90 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: monatlich",
+          "source_id": "src_9663a3ffb272580c",
+          "value": "monatlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "04_newspaper.txt",
+      "record_line": null,
+      "source_id": "src_9663a3ffb272580c"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Betrag",
+          "line": 4,
+          "quote": "Betrag: 14,99 \u20ac",
+          "source_id": "src_51b18fe9a0ef6f66",
+          "value": "14,99 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "msg_01_streaming_rechnung.txt",
+      "record_line": null,
+      "source_id": "src_51b18fe9a0ef6f66"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Betrag",
+          "line": 4,
+          "quote": "Betrag: 12,99 \u20ac",
+          "source_id": "src_ae1cc426668da37a",
+          "value": "12,99 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "msg_02_cloud_preiserhoehung.txt",
+      "record_line": null,
+      "source_id": "src_ae1cc426668da37a"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Betrag",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Turnus",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        },
+        {
+          "column": "Kontakt",
+          "line": null,
+          "quote": null,
+          "source_id": null,
+          "value": null
+        }
+      ],
+      "display_name": "msg_03_gym_kuendigung.txt",
+      "record_line": null,
+      "source_id": "src_b57ede70650d147c"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

@@ -1,0 +1,6 @@
+source_id,display_name,Vertrag,Vertrag [source],Betrag,Betrag [source],Turnus,Turnus [source],Nächste Fälligkeit,Nächste Fälligkeit [source],Kontakt,Kontakt [source]
+src_8e5be3a123cb25c2,01_fitness.txt,Fitnessstudio StudioNord,src_8e5be3a123cb25c2:1,"39,90 €",src_8e5be3a123cb25c2:2,monatlich,src_8e5be3a123cb25c2:3,2026-10-01,src_8e5be3a123cb25c2:4,service@studionord-beispiel.de,src_8e5be3a123cb25c2:6
+src_5893508df841750e,02_streaming.txt,Streaming Plus,src_5893508df841750e:1,"17,99 €",src_5893508df841750e:2,monatlich,src_5893508df841750e:3,2026-10-05,src_5893508df841750e:4,support@streamplus-beispiel.de,src_5893508df841750e:6
+src_7857b6e48246b753,03_kfz_steuer.txt,KFZ-Steuer Hauptzollamt,src_7857b6e48246b753:1,"148,00 €",src_7857b6e48246b753:2,jährlich,src_7857b6e48246b753:3,2026-10-20,src_7857b6e48246b753:4,kfz@zoll-beispiel.de,src_7857b6e48246b753:6
+src_0c4d6e42884b77b2,04_tuev.txt,TÜV Hauptuntersuchung,src_0c4d6e42884b77b2:1,"140,00 €",src_0c4d6e42884b77b2:2,zweijährlich,src_0c4d6e42884b77b2:3,2026-11-15,src_0c4d6e42884b77b2:4,pruefstelle@tuev-beispiel.de,src_0c4d6e42884b77b2:6
+src_69b8a98b21a09e8c,05_rundfunk.txt,Rundfunkbeitrag ARD ZDF,src_69b8a98b21a09e8c:1,"55,08 €",src_69b8a98b21a09e8c:2,vierteljährlich,src_69b8a98b21a09e8c:3,2026-10-15,src_69b8a98b21a09e8c:4,beitragsservice@rundfunk-beispiel.de,src_69b8a98b21a09e8c:6

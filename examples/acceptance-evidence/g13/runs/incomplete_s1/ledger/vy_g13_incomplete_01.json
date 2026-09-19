@@ -1,0 +1,73 @@
+{
+  "actions": [
+    "document_qa_evaluated",
+    "document_qa_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\incomplete_s1\\inventory\\vy_g13_incomplete_01.json",
+      "sha256": "3bf964c77b30d42d7a12ca69d0e72ce14549e6d9af320c7681e4d5f12b51f636",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 0,
+    "total_sources": 1,
+    "uncited_read_source_ids": [],
+    "unread_source_ids": [
+      "src_867a1286e9bba6f2"
+    ]
+  },
+  "errors": [
+    "document_incomplete:missing_required_sections:Sicherheitsleitfaden_DIN_ISO"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_11bebe9859e338d5e541eb97e6af33ed84a934b2b7ffb7f6d92d0ab98d49b5a7",
+  "metadata": {
+    "checks": [
+      {
+        "evidence": "Detected format 'markdown' matches target 'markdown'.",
+        "name": "format_integrity",
+        "passed": true
+      },
+      {
+        "evidence": "Cryptographic SHA-256 calculated and anchored: 10c3bd72f89abbce1ec6079aabe90e21e1f187becf77a73898d4164934637c75.",
+        "name": "hash_integrity",
+        "passed": true
+      },
+      {
+        "evidence": "Document contains 17 words (minimum required: 10).",
+        "name": "content_completeness",
+        "passed": true
+      },
+      {
+        "evidence": "Missing required sections/markers: Sicherheitsleitfaden_DIN_ISO.",
+        "name": "required_sections_present",
+        "passed": false
+      },
+      {
+        "evidence": "No unreplaced placeholders or unbound template tokens found.",
+        "name": "unbound_fields_checked",
+        "passed": true
+      }
+    ],
+    "cloud_proof": false,
+    "errors": [
+      "document_incomplete:missing_required_sections:Sicherheitsleitfaden_DIN_ISO"
+    ],
+    "qa_passed": false,
+    "source_count": 1,
+    "unbound_fields": []
+  },
+  "run_id": "vy_g13_incomplete_01",
+  "status": "blocked",
+  "workflow": "document_qa"
+}

@@ -1,0 +1,276 @@
+{
+  "columns": [
+    {
+      "aliases": [
+        "Contract",
+        "Vertragsgegenstand",
+        "Subscription",
+        "Abo",
+        "Leistung"
+      ],
+      "description": "Contract or subscription",
+      "name": "Vertrag"
+    },
+    {
+      "aliases": [
+        "Amount",
+        "Kosten",
+        "Cost",
+        "Preis",
+        "Beitrag"
+      ],
+      "description": "Amount per period",
+      "name": "Betrag"
+    },
+    {
+      "aliases": [
+        "Interval",
+        "Zahlungsweise",
+        "Rhythmus",
+        "Frequency",
+        "Zyklus"
+      ],
+      "description": "Billing interval",
+      "name": "Turnus"
+    },
+    {
+      "aliases": [
+        "F\u00e4lligkeit",
+        "Due date",
+        "Next due",
+        "N\u00e4chste Zahlung",
+        "Faelligkeit"
+      ],
+      "description": "Next due date",
+      "name": "N\u00e4chste F\u00e4lligkeit"
+    },
+    {
+      "aliases": [
+        "Contact",
+        "Anbieter",
+        "Provider",
+        "Telefon",
+        "E-Mail",
+        "Email"
+      ],
+      "description": "Provider contact",
+      "name": "Kontakt"
+    }
+  ],
+  "empty_cells": 0,
+  "filled_cells": 25,
+  "rows": [
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Vertrag: Fitnessstudio StudioNord",
+          "source_id": "src_8e5be3a123cb25c2",
+          "value": "Fitnessstudio StudioNord"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 39,90 \u20ac",
+          "source_id": "src_8e5be3a123cb25c2",
+          "value": "39,90 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: monatlich",
+          "source_id": "src_8e5be3a123cb25c2",
+          "value": "monatlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": 4,
+          "quote": "N\u00e4chste F\u00e4lligkeit: 2026-10-01",
+          "source_id": "src_8e5be3a123cb25c2",
+          "value": "2026-10-01"
+        },
+        {
+          "column": "Kontakt",
+          "line": 6,
+          "quote": "Kontakt: service@studionord-beispiel.de",
+          "source_id": "src_8e5be3a123cb25c2",
+          "value": "service@studionord-beispiel.de"
+        }
+      ],
+      "display_name": "01_fitness.txt",
+      "record_line": null,
+      "source_id": "src_8e5be3a123cb25c2"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Vertrag: Streaming Plus",
+          "source_id": "src_5893508df841750e",
+          "value": "Streaming Plus"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 17,99 \u20ac",
+          "source_id": "src_5893508df841750e",
+          "value": "17,99 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: monatlich",
+          "source_id": "src_5893508df841750e",
+          "value": "monatlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": 4,
+          "quote": "N\u00e4chste F\u00e4lligkeit: 2026-10-05",
+          "source_id": "src_5893508df841750e",
+          "value": "2026-10-05"
+        },
+        {
+          "column": "Kontakt",
+          "line": 6,
+          "quote": "Kontakt: support@streamplus-beispiel.de",
+          "source_id": "src_5893508df841750e",
+          "value": "support@streamplus-beispiel.de"
+        }
+      ],
+      "display_name": "02_streaming.txt",
+      "record_line": null,
+      "source_id": "src_5893508df841750e"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Vertrag: KFZ-Steuer Hauptzollamt",
+          "source_id": "src_7857b6e48246b753",
+          "value": "KFZ-Steuer Hauptzollamt"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 148,00 \u20ac",
+          "source_id": "src_7857b6e48246b753",
+          "value": "148,00 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: j\u00e4hrlich",
+          "source_id": "src_7857b6e48246b753",
+          "value": "j\u00e4hrlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": 4,
+          "quote": "N\u00e4chste F\u00e4lligkeit: 2026-10-20",
+          "source_id": "src_7857b6e48246b753",
+          "value": "2026-10-20"
+        },
+        {
+          "column": "Kontakt",
+          "line": 6,
+          "quote": "Kontakt: kfz@zoll-beispiel.de",
+          "source_id": "src_7857b6e48246b753",
+          "value": "kfz@zoll-beispiel.de"
+        }
+      ],
+      "display_name": "03_kfz_steuer.txt",
+      "record_line": null,
+      "source_id": "src_7857b6e48246b753"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Vertrag: T\u00dcV Hauptuntersuchung",
+          "source_id": "src_0c4d6e42884b77b2",
+          "value": "T\u00dcV Hauptuntersuchung"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 140,00 \u20ac",
+          "source_id": "src_0c4d6e42884b77b2",
+          "value": "140,00 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: zweij\u00e4hrlich",
+          "source_id": "src_0c4d6e42884b77b2",
+          "value": "zweij\u00e4hrlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": 4,
+          "quote": "N\u00e4chste F\u00e4lligkeit: 2026-11-15",
+          "source_id": "src_0c4d6e42884b77b2",
+          "value": "2026-11-15"
+        },
+        {
+          "column": "Kontakt",
+          "line": 6,
+          "quote": "Kontakt: pruefstelle@tuev-beispiel.de",
+          "source_id": "src_0c4d6e42884b77b2",
+          "value": "pruefstelle@tuev-beispiel.de"
+        }
+      ],
+      "display_name": "04_tuev.txt",
+      "record_line": null,
+      "source_id": "src_0c4d6e42884b77b2"
+    },
+    {
+      "cells": [
+        {
+          "column": "Vertrag",
+          "line": 1,
+          "quote": "Vertrag: Rundfunkbeitrag ARD ZDF",
+          "source_id": "src_69b8a98b21a09e8c",
+          "value": "Rundfunkbeitrag ARD ZDF"
+        },
+        {
+          "column": "Betrag",
+          "line": 2,
+          "quote": "Betrag: 55,08 \u20ac",
+          "source_id": "src_69b8a98b21a09e8c",
+          "value": "55,08 \u20ac"
+        },
+        {
+          "column": "Turnus",
+          "line": 3,
+          "quote": "Turnus: viertelj\u00e4hrlich",
+          "source_id": "src_69b8a98b21a09e8c",
+          "value": "viertelj\u00e4hrlich"
+        },
+        {
+          "column": "N\u00e4chste F\u00e4lligkeit",
+          "line": 4,
+          "quote": "N\u00e4chste F\u00e4lligkeit: 2026-10-15",
+          "source_id": "src_69b8a98b21a09e8c",
+          "value": "2026-10-15"
+        },
+        {
+          "column": "Kontakt",
+          "line": 6,
+          "quote": "Kontakt: beitragsservice@rundfunk-beispiel.de",
+          "source_id": "src_69b8a98b21a09e8c",
+          "value": "beitragsservice@rundfunk-beispiel.de"
+        }
+      ],
+      "display_name": "05_rundfunk.txt",
+      "record_line": null,
+      "source_id": "src_69b8a98b21a09e8c"
+    }
+  ],
+  "schema": "nemofold.document-registry.v1",
+  "skipped_source_ids": []
+}

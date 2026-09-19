@@ -1,0 +1,5 @@
+{
+  "consumer": "document_qa",
+  "producer": "briefing",
+  "status": "verified"
+}

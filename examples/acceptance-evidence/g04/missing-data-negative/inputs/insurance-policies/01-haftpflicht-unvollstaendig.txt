@@ -1,0 +1,7 @@
+Versicherungsschein
+Versicherungsnehmer: Alex Beispiel
+Tarif: Privat-Haftpflicht Basis
+Deckung ab: 01.01.2024
+Deckung bis: 31.12.2026
+Kosten: 72,00 EUR pro Jahr
+Kontakt: service@haftpflicht-direkt.de

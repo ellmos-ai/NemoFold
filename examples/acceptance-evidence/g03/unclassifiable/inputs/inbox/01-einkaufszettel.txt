@@ -1,0 +1,3 @@
+Einkaufsliste fuer den Haushalt:
+Milch, Eier, Butter, Kaffee, Brot, Kaese, Mineralwasser.
+Bitte am Samstag im Supermarkt besorgen.

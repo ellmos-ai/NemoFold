@@ -1,0 +1,30 @@
+{
+  "actions": [],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\runs\\missing_subj_s1\\inventory\\vy_g14_missing_subj_01.json",
+      "sha256": "ea0dfe3f2c686559a9626df1751aa67507bb7a7103d4d3e65dd33024bdbef8c8",
+      "status": "written"
+    }
+  ],
+  "coverage": null,
+  "errors": [
+    "workflow_error:ValueError: a briefing needs a declared subject"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_a42e513ac648a020d310731175510257a4972fd952dcbbc26d3d2764e8b68bea",
+  "metadata": {
+    "cloud_proof": false,
+    "source_count": 1
+  },
+  "run_id": "vy_g14_missing_subj_01",
+  "status": "failed",
+  "workflow": "briefing"
+}

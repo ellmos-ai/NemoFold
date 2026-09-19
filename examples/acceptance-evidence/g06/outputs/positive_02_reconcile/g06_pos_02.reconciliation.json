@@ -1,0 +1,135 @@
+{
+  "matches": [
+    {
+      "confidence": 16.0,
+      "discrepancies": [],
+      "matched_message": {
+        "amount": 14.99,
+        "amount_raw": "14,99 €",
+        "anchor": {
+          "line": 1,
+          "source_id": "src_51b18fe9a0ef6f66"
+        },
+        "date": "2026-09-01",
+        "sender": "service@streaming-plus.de",
+        "subject": "Ihre Monatsrechnung Streaming Plus"
+      },
+      "status": "reconciled",
+      "subscription": {
+        "account_id": "ACC-STREAM-01",
+        "amount": 14.99,
+        "amount_raw": "14,99 €",
+        "anchor": {
+          "line": 1,
+          "source_id": "src_067cdcf16c2b605e"
+        },
+        "cadence": "monatlich",
+        "name": "Streaming Plus",
+        "status": "aktiv"
+      }
+    },
+    {
+      "confidence": 15.0,
+      "discrepancies": [
+        {
+          "declared_value": "9.99 €",
+          "description": "Preisabweichung bei 'Cloud Speicher Pro': Hinterlegt 9.99 €, Beleg weist 12.99 € aus.",
+          "evidence_value": "12.99 €",
+          "kind": "price_change"
+        }
+      ],
+      "matched_message": {
+        "amount": 12.99,
+        "amount_raw": "12,99 €",
+        "anchor": {
+          "line": 1,
+          "source_id": "src_ae1cc426668da37a"
+        },
+        "date": "2026-09-05",
+        "sender": "billing@cloud-speicher.de",
+        "subject": "Tarifanpassung Cloud Speicher Pro"
+      },
+      "status": "discrepancy",
+      "subscription": {
+        "account_id": "ACC-CLOUD-99",
+        "amount": 9.99,
+        "amount_raw": "9,99 €",
+        "anchor": {
+          "line": 1,
+          "source_id": "src_e5f66e03b06f79d5"
+        },
+        "cadence": "monatlich",
+        "name": "Cloud Speicher Pro",
+        "status": "aktiv"
+      }
+    },
+    {
+      "confidence": 11.5,
+      "discrepancies": [
+        {
+          "declared_value": "aktiv",
+          "description": "Status-Diskrepanz bei 'Fitnessstudio StudioNord': Hinterlegt als aktiv, aber Nachricht belegt Kündigung/Vertragsende.",
+          "evidence_value": "Kündigung / Beendigung",
+          "kind": "status_mismatch"
+        }
+      ],
+      "matched_message": {
+        "amount": null,
+        "amount_raw": null,
+        "anchor": {
+          "line": 1,
+          "source_id": "src_b57ede70650d147c"
+        },
+        "date": "2026-09-10",
+        "sender": "info@studionord.de",
+        "subject": "Kündigungsbestätigung StudioNord"
+      },
+      "status": "discrepancy",
+      "subscription": {
+        "account_id": "ACC-GYM-12",
+        "amount": 39.9,
+        "amount_raw": "39,90 €",
+        "anchor": {
+          "line": 1,
+          "source_id": "src_d4408422630e5f66"
+        },
+        "cadence": "monatlich",
+        "name": "Fitnessstudio StudioNord",
+        "status": "aktiv"
+      }
+    },
+    {
+      "confidence": 0.0,
+      "discrepancies": [
+        {
+          "declared_value": "Tageszeitung Digital",
+          "description": "Kein Nachrichtenbeleg für Abo 'Tageszeitung Digital' gefunden.",
+          "evidence_value": "fehlt",
+          "kind": "no_evidence"
+        }
+      ],
+      "matched_message": null,
+      "status": "unconfirmed",
+      "subscription": {
+        "account_id": "ACC-NEWS-05",
+        "amount": 19.9,
+        "amount_raw": "19,90 €",
+        "anchor": {
+          "line": 1,
+          "source_id": "src_9663a3ffb272580c"
+        },
+        "cadence": "monatlich",
+        "name": "Tageszeitung Digital",
+        "status": "aktiv"
+      }
+    }
+  ],
+  "no_status_change_on_ambiguity_rule": "Uneindeutige Zuordnungen bleiben unbestätigt und lösen keine Statusänderung aus.",
+  "schema": "nemofold.subscription-reconciliation.v1",
+  "title": "Abo-Abgleich mit Nachrichten",
+  "total_ambiguous": 0,
+  "total_declared": 4,
+  "total_discrepancies": 2,
+  "total_reconciled": 1,
+  "total_unconfirmed": 1
+}

@@ -1,0 +1,44 @@
+{
+  "actions": [
+    "routine_query",
+    "cadence_validation_blocked"
+  ],
+  "artifacts": [
+    {
+      "format": "inventory-snapshot",
+      "path": "<evidence-root>\\work\\invalid_cadence_step1\\inventory\\g10_invalid_01.json",
+      "sha256": "348cda44a352ea8a4f13b0c8dea7fcb182aa8a5a075b5e4c25465674877c3ceb",
+      "status": "written"
+    }
+  ],
+  "coverage": {
+    "cited_sources": 0,
+    "read_sources": 1,
+    "total_sources": 1,
+    "uncited_read_source_ids": [
+      "src_7f8a3a03ee178d58"
+    ],
+    "unread_source_ids": []
+  },
+  "errors": [
+    "invalid_routine_cadence:1:widerspruch_letzte_ausfuehrung_nach_faelligkeit"
+  ],
+  "gate_decision": {
+    "allowed": true,
+    "allowed_fields": [],
+    "max_cost_usd": 0.0,
+    "reasons": [],
+    "recipient": null
+  },
+  "idempotency_key": "job_149568af459a1308e14846f8b6bcc83ba5dd7afa074cb9b0ad8622a2f0928d3e",
+  "metadata": {
+    "cadence": "taeglich",
+    "cloud_proof": false,
+    "error": "widerspruch_letzte_ausfuehrung_nach_faelligkeit",
+    "routine_id": 1,
+    "source_count": 1
+  },
+  "run_id": "g10_invalid_01",
+  "status": "blocked",
+  "workflow": "routine_query"
+}

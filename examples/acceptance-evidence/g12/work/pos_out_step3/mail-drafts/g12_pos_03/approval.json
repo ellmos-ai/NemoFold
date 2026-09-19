@@ -1,0 +1,10 @@
+{
+  "approval_digest": "5cc33eecf223b3344b59f806bdb61c95a53243975c4d50e664d43379e381e52f",
+  "attachment_source_ids": [],
+  "confirmation_required": true,
+  "draft_sha256": "af815b2290da2bcc8d08ff70ed79c2f2435074d16d2a6be86494325739c27ab2",
+  "recipient_count": 1,
+  "run_id": "g12_pos_03",
+  "schema": "nemofold.mail-approval.v1",
+  "send_performed": false
+}

@@ -1,0 +1,17 @@
+{
+  "outcome_note": "This run stopped because it would otherwise have guessed. Nothing was written beyond this request, and answering these fields is enough to continue.",
+  "question_count": 1,
+  "questions": [
+    {
+      "choices": [
+        "coverage_analysis"
+      ],
+      "field": "insurance_purpose",
+      "kind": "choice",
+      "prompt": "Soll NemoFold die vorliegenden Versicherungspolicen ausschließlich ordnen, zitieren und auf Abdeckungslücken prüfen?",
+      "why": "NemoFold besitzt keine gewerberechtliche Vermittler- oder Versicherungsberatungsautorität (§ 34d/e GewO)."
+    }
+  ],
+  "schema": "nemofold.needs-user-input.v1",
+  "workflow": "folder_digest"
+}

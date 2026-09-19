@@ -1,0 +1,54 @@
+{
+  "authority_reason": "",
+  "cloud_proof": false,
+  "completed": false,
+  "model_authority": "links_win",
+  "name": "",
+  "run_id": "g07_insufficient_meds",
+  "run_level_override": null,
+  "schema": "nemofold.voyage-run.v1",
+  "started_at": "2026-09-19T08:48:51.971497+00:00",
+  "status": "stopped",
+  "steps": [
+    {
+      "artifact_count": 4,
+      "errors": [],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\outputs\\insufficient_meds_step1\\ledger\\g07_insufficient_meds_01.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 1,
+      "output_dir": "<evidence-root>\\outputs\\insufficient_meds_step1",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g07_insufficient_meds_01",
+      "source_read_notes": {},
+      "status": "executed",
+      "workflow": "document_registry"
+    },
+    {
+      "artifact_count": 2,
+      "errors": [
+        "insufficient_medications:1<4"
+      ],
+      "handoff": null,
+      "ledger_path": "<evidence-root>\\outputs\\insufficient_meds_step2\\ledger\\g07_insufficient_meds_02.json",
+      "model_level": "default",
+      "model_note": "No preference was set at any level; the local engine is the default.",
+      "model_used": "nemofold-local-core",
+      "order": 2,
+      "output_dir": "<evidence-root>\\outputs\\insufficient_meds_step2",
+      "policy_note": "",
+      "rights": "draft_only",
+      "rights_level": "default",
+      "run_id": "g07_insufficient_meds_02",
+      "source_read_notes": {},
+      "status": "blocked",
+      "workflow": "medication_reconcile"
+    }
+  ],
+  "stopped_at_step": 2,
+  "voyage_id": "vy_g07_insufficient_meds"
+}
