@@ -2908,7 +2908,11 @@ function renderLibrary(entries) {
   list.textContent = "";
   renderLibraryFilter(entries);
   if (!entries.length) {
-    libraryNote(list, "Nothing saved yet. Copy a specialist to start your own library.");
+    libraryNote(
+      list,
+      "Nothing here yet. A use case starts as a copied specialist, and none are "
+      + "aboard right now - ask the captain above to plan one instead."
+    );
     return;
   }
   if (activeTag) {

@@ -1737,7 +1737,7 @@ def test_the_workflows_tab_leads_with_what_the_product_is_for(tmp_path) -> None:
     # library sits under it.
     assert "Documents become data. NemoFold makes knowledge usable." in html
     assert "NemoFold adapts to your use cases — a growing library, not fine-tuning." in html
-    assert html.index("Documents become data") < html.index("The work you kept.")
+    assert html.index("Documents become data") < html.index("My use cases.")
     # The boundary claim did not disappear; it stopped being the headline.
     assert "<h2 id=\"boundaryTitle\">Reasoning may travel. Authority does not.</h2>" not in html
     assert "Reasoning may travel. Authority does not: a worker receives selected" in html
