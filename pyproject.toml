@@ -9,7 +9,30 @@ description = "Private, evidence-first document agent with reversible actions"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]
 authors = [{ name = "Lukas Geiger" }]
+keywords = [
+  "ai-agents",
+  "developer-tools",
+  "document-analysis",
+  "ellmos-ai",
+  "evidence-first",
+  "hackathon",
+  "local-first",
+  "mcp",
+  "mcp-server",
+  "nebius",
+  "nemotron",
+  "nvidia",
+  "offline-first",
+  "open-bricks",
+  "personal-ai",
+  "persistent-memory",
+  "privacy",
+  "python",
+  "reversible-actions",
+  "zero-egress",
+]
 classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
@@ -36,13 +59,15 @@ dependencies = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/ellmos-ai/NemoFold"
+Homepage = "https://github.com/ellmos-ai/NemoFold#readme"
 Documentation = "https://github.com/ellmos-ai/NemoFold#readme"
 Repository = "https://github.com/ellmos-ai/NemoFold"
 Issues = "https://github.com/ellmos-ai/NemoFold/issues"
 Changelog = "https://github.com/ellmos-ai/NemoFold/blob/main/CHANGELOG.md"
 Security = "https://github.com/ellmos-ai/NemoFold/blob/main/SECURITY.md"
+Notice = "https://github.com/ellmos-ai/NemoFold/blob/main/NOTICE"
 "Third-Party Licenses" = "https://github.com/ellmos-ai/NemoFold/blob/main/THIRD_PARTY_LICENSES.md"
+"Marketing Log" = "https://github.com/ellmos-ai/NemoFold/blob/main/MARKETING-LOG.txt"
 "Parent Organization" = "https://github.com/ellmos-ai"
 "Umbrella Ecosystem" = "https://github.com/open-bricks"
 "LLM Ready" = "https://github.com/ellmos-ai/NemoFold/blob/main/llms.txt"
@@ -79,12 +104,14 @@ packages = ["src/nemofold"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-addopts = "-ra -v"
+addopts = "-ra -v --basetemp=.pytest_temp"
 testpaths = ["tests"]
 pythonpath = ["src"]
 norecursedirs = [
   ".git",
   ".pytest_cache",
+  ".pytest_temp",
+  ".hypothesis",
   "__pycache__",
   "build",
   "dist",

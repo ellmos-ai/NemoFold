@@ -2,6 +2,22 @@
 
 All notable changes to NemoFold are documented here.
 
+## [Unreleased]
+
+- Pfad B Discoverability, Visual Architecture & Level 1 SBOM Audit (2026-09-26):
+  - Canonical Root Attribution: Created `NOTICE` in the repository root formalizing copyright ownership for Lukas Geiger, `ellmos-ai`, and the `open-bricks` umbrella under MIT License.
+  - Saturated GitHub Topics (20/20): Saturated remote repository topics on GitHub via `gh repo edit` and synchronized 20 keywords in `pyproject.toml` (`ai-agents`, `developer-tools`, `document-analysis`, `ellmos-ai`, `evidence-first`, `hackathon`, `local-first`, `mcp`, `mcp-server`, `nebius`, `nemotron`, `nvidia`, `offline-first`, `open-bricks`, `personal-ai`, `persistent-memory`, `privacy`, `python`, `reversible-actions`, `zero-egress`).
+  - Canonical Homepage URL: Established `https://github.com/ellmos-ai/NemoFold#readme` on GitHub remote and in `pyproject.toml`.
+  - Reciprocal Dual HTML Anchors: Integrated `<a id="sec-01"></a>` through `<a id="sec-18"></a>` across all 18 numbered sections in both `README.md` and `README_de.md` for seamless bilateral deep-linking and contract validation.
+  - Level 1 SBOM Audit: Re-audited `THIRD_PARTY_LICENSES.md` Stand 2026-09-26 certifying zero copyleft runtime dependencies (100% permissive MIT, BSD-3-Clause, PSFL-2.0), unprivileged `RunAsInvoker` non-elevation certification (INV-RUNAS-08), Level 1 SBOM compliance, and formal cross-reference to `NOTICE`.
+  - Statutory Legal Disclaimers: Added § 521 BGB German statutory notice (Gefälligkeitsrecht) and 48-hour Security Response SLA in Section 18 of `README.md` and `README_de.md`.
+  - Local Marketing Register: Created canonical `MARKETING-LOG.txt` documenting repository audit baseline, 4 target personas, high-intent search queries, 10-dimension 5-way comparative matrix vs. alternatives, and governance invariants.
+  - Manifest & Packaging Hardening: Added `license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]` and expanded `[project.urls]` (Notice, Marketing Log) in `pyproject.toml`.
+  - Pytest Hardening: Added `--basetemp=.pytest_temp` and `.pytest_temp` / `.hypothesis` to `norecursedirs` in `pyproject.toml`; added `.pytest_temp/` to `.gitignore`.
+  - Context Index: Updated `llms.txt` (Last-checked: 2026-09-26, test baseline, NOTICE entrypoint, § 521 BGB disclaimer, Level 1 SBOM notes).
+  - Shields.io Badges: Synchronized badges across `README.md` and `README_de.md` (Attribution-NOTICE, Verified-2026--09--26, Last-Checked-2026--09--26, Tests 1085 passed | 1 skipped, Level 1 SBOM).
+  - Version Freeze Discipline: Strictly enforced policy `T-20260920-167562623` preserving version `0.2.1` unchanged.
+
 ## 0.2.1 - 2026-09-19
 
 - Pfad A Technical Hygiene & Lifecycle Hardening:

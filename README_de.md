@@ -6,16 +6,19 @@
 
 **Demovideo (2:16):** https://youtu.be/wOToLqDBvvE · gebaut für den Nebius x NVIDIA Global AI Hackathon
 
+[![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-1085%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20(CI)%20%7C%20macos%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
-[![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20zero--egress-success.svg)](SECURITY.md)
+[![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20zero--egress-success.svg)](#sec-05)
 [![Security](https://img.shields.io/badge/security-RunAsInvoker-green.svg)](SECURITY.md)
 [![Security SLA](https://img.shields.io/badge/security%20SLA-48h%20%7C%205d-blue.svg)](SECURITY.md)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Audited](https://img.shields.io/badge/dependencies-permissive%20audited-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
+[![Audited](https://img.shields.io/badge/dependencies-Level%201%20SBOM%20audited-brightgreen.svg)](THIRD_PARTY_LICENSES.md)
+[![Verified](https://img.shields.io/badge/Verified-2026--09--26-blue.svg)](MARKETING-LOG.txt)
+[![Last-Checked](https://img.shields.io/badge/Last--Checked-2026--09--26-success.svg)](llms.txt)
 [![Ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-orange.svg)](https://github.com/ellmos-ai)
 [![Umbrella](https://img.shields.io/badge/umbrella-open--bricks-blueviolet.svg)](https://github.com/open-bricks)
 [![LLM Ready](https://img.shields.io/badge/llms.txt-verified-brightgreen.svg)](llms.txt)
@@ -25,7 +28,7 @@
 
 ---
 
-<a id="1-overview--core-mission"></a><a id="1-uebersicht--kernmission"></a>
+<a id="sec-01"></a><a id="1-overview--core-mission"></a><a id="1-uebersicht--kernmission"></a>
 <a id="overview--core-mission"></a><a id="uebersicht--kernmission"></a>
 ## 1. Übersicht & Kernmission
 
@@ -82,7 +85,7 @@ großen Korpus richtet. Der Evidenzvertrag ändert sich dabei nicht — nur der 
 
 ---
 
-<a id="2-visual-architecture--dual-diagrams"></a><a id="2-visuelle-architektur--duale-diagramme"></a>
+<a id="sec-02"></a><a id="2-visual-architecture--dual-diagrams"></a><a id="2-visuelle-architektur--duale-diagramme"></a>
 <a id="visual-architecture--dual-diagrams"></a><a id="visuelle-architektur--duale-diagramme"></a>
 ## 2. Visuelle Architektur & Duale Diagramme
 
@@ -176,7 +179,7 @@ sequenceDiagram
 
 ---
 
-<a id="3-target-personas--discoverability"></a><a id="3-zielgruppen--auffindbarkeit"></a>
+<a id="sec-03"></a><a id="3-target-personas--discoverability"></a><a id="3-zielgruppen--auffindbarkeit"></a>
 <a id="target-personas--discoverability"></a><a id="zielgruppen--auffindbarkeit"></a>
 ## 3. Zielgruppen & Auffindbarkeit
 
@@ -206,7 +209,7 @@ NemoFold löst konkrete Herausforderungen von vier Hauptzielgruppen:
 
 ---
 
-<a id="4-comparative-matrix-vs-alternatives"></a><a id="4-vergleichsmatrix-gegenueber-alternativen"></a>
+<a id="sec-04"></a><a id="4-comparative-matrix-vs-alternatives"></a><a id="4-vergleichsmatrix-gegenueber-alternativen"></a>
 <a id="comparative-matrix-vs-alternatives"></a><a id="vergleichsmatrix-gegenueber-alternativen"></a>
 ## 4. Vergleichsmatrix gegenüber Alternativen
 
@@ -225,7 +228,7 @@ NemoFold löst konkrete Herausforderungen von vier Hauptzielgruppen:
 
 ---
 
-<a id="5-governance--runtime-invariants"></a><a id="5-governance--laufzeit-invarianten"></a>
+<a id="sec-05"></a><a id="5-governance--runtime-invariants"></a><a id="5-governance--laufzeit-invarianten"></a>
 <a id="governance--runtime-invariants"></a><a id="governance--laufzeit-invarianten"></a>
 ## 5. Governance & Laufzeit-Invarianten
 
@@ -244,7 +247,7 @@ Das Design von NemoFold basiert auf zehn unverletzlichen System-Invarianten:
 
 ---
 
-<a id="6-implemented-document-workflows"></a><a id="6-implementierte-dokument-workflows"></a>
+<a id="sec-06"></a><a id="6-implemented-document-workflows"></a><a id="6-implementierte-dokument-workflows"></a>
 <a id="implemented-document-workflows"></a><a id="implementierte-dokument-workflows"></a>
 <a id="was-implementiert-ist"></a>
 ## 6. Implementierte Dokument-Workflows
@@ -314,7 +317,7 @@ Devpost bleiben getrennte menschliche Freigabegates.
 
 ![NemoFold-Konsole, Processes & Workflows: die Use-Case-Bibliothek mit gespeicherten Voyages und den mitgelieferten Spezialisten](docs/media/nemofold-console.png)
 
-<a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
+<a id="sec-07"></a><a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
 <a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
 <a id="install"></a>
 ## 7. Installation & Schnellstart
@@ -330,7 +333,7 @@ Jeder Nicht-Demo-Befehl verwendet denselben strikten JSON-Vertrag
 [`schemas/nemofold-job-v1.schema.json`](schemas/nemofold-job-v1.schema.json) und
 das Verzeichnis [`examples/jobs`](examples/jobs).
 
-<a id="8-offline-proof--verification"></a><a id="8-offline-nachweis--verifikation"></a>
+<a id="sec-08"></a><a id="8-offline-proof--verification"></a><a id="8-offline-nachweis--verifikation"></a>
 <a id="offline-proof--verification"></a><a id="offline-nachweis--verifikation"></a>
 <a id="offline-proof"></a>
 ## 8. Offline-Nachweis & Verifikation
@@ -381,7 +384,7 @@ Hashes über die exportierten Bytes neu berechnet), und schreibt das Register ne
 Gate, dessen Bundle keinen prüfbaren Receipt mehr liefert, verliert `done` statt einen
 veralteten Anspruch zu behalten.
 
-<a id="9-executing-real-local-jobs"></a><a id="9-ausfuehrung-realer-lokaler-auftraege"></a>
+<a id="sec-09"></a><a id="9-executing-real-local-jobs"></a><a id="9-ausfuehrung-realer-lokaler-auftraege"></a>
 <a id="executing-real-local-jobs"></a><a id="ausfuehrung-realer-lokaler-auftraege"></a>
 <a id="run-a-real-local-job"></a>
 ## 9. Ausführung realer lokaler Aufträge
@@ -406,7 +409,7 @@ lokales NemoClaw-Verzeichnis und validiert es sofort. Es führt weiterhin keinen
 aus und protokolliert `transfer_performed: false`; siehe
 [NemoClaw-Integration](docs/nemoclaw-integration.md).
 
-<a id="10-provider-adapters-mcp--api"></a><a id="10-provider-adapter-mcp--api"></a>
+<a id="sec-10"></a><a id="10-provider-adapters-mcp--api"></a><a id="10-provider-adapter-mcp--api"></a>
 <a id="provider-adapters-mcp--api"></a><a id="provider-adapter-mcp--api"></a>
 <a id="use-any-supported-model-through-one-evidence-core"></a>
 ## 10. Provider-Adapter, MCP & API
@@ -438,7 +441,7 @@ werden nur aus Umgebungsvariablen gelesen. Generische Providerbelege werden niem
 zum Nebius-Wettbewerbsnachweis; dafür bleibt ausschließlich der nächste Abschnitt
 zuständig. Siehe [Provideradapter, lokale API und MCP](docs/providers-and-mcp.md).
 
-<a id="11-approved-nebius-token-factory-run"></a><a id="11-belegter-nebius-token-factory-lauf"></a>
+<a id="sec-11"></a><a id="11-approved-nebius-token-factory-run"></a><a id="11-belegter-nebius-token-factory-lauf"></a>
 <a id="approved-nebius-token-factory-run"></a><a id="belegter-nebius-token-factory-lauf"></a>
 ## 11. Belegter Nebius Token Factory Lauf
 
@@ -566,7 +569,7 @@ Aktionslauf kann mit `nemofold undo <run-id> --output <dir> --allow-root <root>
 lassen sich mit `nemofold resume` unter Beibehaltung der ursprünglichen Auftragsidentität
 und des Journals fortsetzen.
 
-<a id="12-voyage-library--captains-desk"></a><a id="12-fahrtbibliothek--captains-desk"></a>
+<a id="sec-12"></a><a id="12-voyage-library--captains-desk"></a><a id="12-fahrtbibliothek--captains-desk"></a>
 <a id="voyage-library--captains-desk"></a><a id="fahrtbibliothek--captains-desk"></a>
 <a id="my-use-cases-the-voyages-library"></a><a id="meine-usecases-die-fahrten-bibliothek"></a>
 ## 12. Fahrtbibliothek & Captain's Desk
@@ -661,7 +664,7 @@ Entwurf im Maschinenraum, ergänzt das Offene und führt ihn aus. Das Desk ist e
 Loopback-Fläche: in der öffentlichen Demo nicht vorhanden, auf einem netzexponierten
 Server abgelehnt.
 
-<a id="13-case-chronicle-deep-analysis"></a><a id="13-fallchronik-tiefenanalyse"></a>
+<a id="sec-13"></a><a id="13-case-chronicle-deep-analysis"></a><a id="13-fallchronik-tiefenanalyse"></a>
 <a id="case-chronicle-deep-analysis"></a><a id="fallchronik-tiefenanalyse"></a>
 <a id="case-chronicle"></a><a id="fall-chronik"></a>
 ## 13. Fallchronik-Tiefenanalyse
@@ -704,7 +707,7 @@ fraglichen Wochenende, einem fremdbestätigten Alibi, einer Person, die niemand
 bestätigt, und zwei Widersprüchen. Jeder Fall-Chronik-Test läuft darauf, und die Demo
 auch.
 
-<a id="14-structured-sources--controlled-output"></a><a id="14-strukturierte-quellen--kontrollierte-ausgabe"></a>
+<a id="sec-14"></a><a id="14-structured-sources--controlled-output"></a><a id="14-strukturierte-quellen--kontrollierte-ausgabe"></a>
 <a id="structured-sources--controlled-output"></a><a id="strukturierte-quellen--kontrollierte-ausgabe"></a>
 <a id="sources-outward-reach-and-delivery"></a><a id="quellen-aussenwelt-und-versand"></a>
 ## 14. Strukturierte Quellen & Kontrollierte Ausgabe
@@ -758,7 +761,7 @@ zurück, was ein Lauf in eine Quittung schreiben könnte. NemoFold schreibt die
 druckfertige Datei plus den genauen Befehl und sagt, dass das Drucken Ihr Schritt
 ist.
 
-<a id="15-checking-comparing--composing"></a><a id="15-pruefen-vergleichen--komponieren"></a>
+<a id="sec-15"></a><a id="15-checking-comparing--composing"></a><a id="15-pruefen-vergleichen--komponieren"></a>
 <a id="checking-comparing--composing"></a><a id="pruefen-vergleichen-verfassen"></a>
 ## 15. Prüfen, Vergleichen & Komponieren
 
@@ -805,7 +808,7 @@ genauen Installationsbefehl statt mit einem Importfehler. **Mail Merge** ist
 dieselbe Stufe je Empfänger aus Ihrem Kontaktbestand, jedes Dokument benannt
 nach der Person, für die es ist.
 
-<a id="16-local-web-console--routes"></a><a id="16-lokale-webkonsole--routen"></a>
+<a id="sec-16"></a><a id="16-local-web-console--routes"></a><a id="16-lokale-webkonsole--routen"></a>
 <a id="local-web-console--routes"></a><a id="lokale-webkonsole--routen"></a>
 <a id="open-the-local-web-console"></a><a id="lokale-webkonsole-oeffnen"></a>
 ## 16. Lokale Webkonsole & Routen
@@ -911,7 +914,7 @@ und `--expose-network` angegeben sind. Dies ist eine fähigkeitsminimale Hosting
 Oberfläche, kein Nachweis für einen Nebius-, Nemotron- oder NemoClaw-Lauf;
 `cloud_proof` bleibt false.
 
-<a id="17-sibling-ecosystem--integration"></a><a id="17-geschwister-oekosystem--integration"></a>
+<a id="sec-17"></a><a id="17-sibling-ecosystem--integration"></a><a id="17-geschwister-oekosystem--integration"></a>
 <a id="sibling-ecosystem--integration"></a><a id="geschwister-oekosystem--integration"></a>
 ## 17. Geschwister-Ökosystem & Integration
 
@@ -938,7 +941,7 @@ NemoFold ist eine zentrale Dokumenten-Intelligenzkomponente des `ellmos-ai`-Öko
 
 ---
 
-<a id="18-transparency-licenses--security-policy"></a><a id="18-transparenz-lizenzen--sicherheitsrichtlinie"></a>
+<a id="sec-18"></a><a id="18-transparency-licenses--security-policy"></a><a id="18-transparenz-lizenzen--sicherheitsrichtlinie"></a>
 <a id="transparency-licenses--security-policy"></a><a id="transparenz-lizenzen--sicherheitsrichtlinie"></a>
 <a id="trust-boundary"></a><a id="vertrauensgrenze"></a>
 <a id="design-and-integration"></a><a id="design-und-integration"></a>

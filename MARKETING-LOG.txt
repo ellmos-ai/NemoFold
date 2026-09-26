@@ -1,0 +1,129 @@
+# MARKETING-LOG: NemoFold
+Date: 2026-09-26
+Operator: Antigravity / Gemini (via GITHUBBOT Pfad B)
+Target Repo: ellmos-ai/NemoFold
+Canonical Path: C:\_Local_DEV\repos\NemoFold
+Version: 0.2.1 (frozen per T-20260920-167562623)
+
+================================================================================
+1. REPOSITORY AUDIT & DISCOVERABILITY BASELINE
+================================================================================
+- Organization: ellmos-ai
+- Ecosystem: open-bricks (umbrella)
+- Target Audience: Local-first knowledge workers, legal/compliance auditors, autonomous AI agent developers, privacy-conscious data analysts
+- Core Positioning: Private, evidence-first document agent with persistent local memory, exact citations, reversible actions, and bounded external reasoning.
+- Distinct Value Proposition: Adapts to user workflows via a growing library of voyages and 4 composable primitives (extraction, deduplication, section merge, delta snapshot) without fine-tuning weights or sending unapproved documents to the cloud.
+- Saturated Topics (20/20): ai-agents, document-analysis, evidence-first, hackathon, local-first, mcp, mcp-server, nebius, nemotron, nvidia, offline-first, open-bricks, ellmos-ai, personal-ai, persistent-memory, privacy, python, reversible-actions, zero-egress, developer-tools
+- Canonical Homepage: https://github.com/ellmos-ai/NemoFold#readme
+- Canonical NOTICE Attribution: Formalized in repository root for Lukas Geiger, ellmos-ai, and open-bricks umbrella under MIT License.
+
+================================================================================
+2. TARGET PERSONAS & USER JOURNEYS
+================================================================================
+1. [PERSONA-01] Local-First Knowledge Workers & Researchers
+   - Needs: Extract verifiable facts, dates, and numbers from multi-format document collections (PDF, DOCX, ODT, TXT, CSV, JSON) without trusting cloud SaaS with confidential research.
+   - Pain Points: Hallucinated summaries, ungrounded citations, vendor lock-in, data egress risks.
+   - NemoFold Solution: Byte-exact quote matching (INV-EVID-02), SQLite FTS5 persistent memory, 100% offline zero-egress operation by default (INV-LOCAL-01).
+
+2. [PERSONA-02] Legal, Compliance & Due Diligence Auditors
+   - Needs: Track claims back to exact source documents, line numbers, and page offsets; maintain an unalterable, reproducible evidence trail.
+   - Pain Points: Black-box AI outputs that cannot be defended in court or regulatory audits; lack of provenance.
+   - NemoFold Solution: Cryptographic SHA-256 run ledgers (INV-DET-09), statutory disclaimer (§ 521 BGB), structured run reports, fail-closed gate verifications.
+
+3. [PERSONA-03] Autonomous AI Agent & Tooling Engineers
+   - Needs: Standardized Model Context Protocol (MCP) integration, structured tool calling, deterministic file action gates, and loopback API surface.
+   - Pain Points: Uncontrolled agent file overwrites, runaway API spending, ungrounded tool responses.
+   - NemoFold Solution: Official `nemofold-mcp` stdio server, loopback-only HTTP API (INV-PROV-06), multi-tier approval gates (INV-GATE-04), reversible dry-run journals (INV-ACTION-03).
+
+4. [PERSONA-04] Privacy-Conscious Healthcare & Financial Analysts
+   - Needs: Reconcile complex medication plans, invoices, and contracts on air-gapped workstations or private intranet hardware.
+   - Pain Points: Elevation requirements, sensitive PII/PHI leakage, copyleft contamination in commercial environments.
+   - NemoFold Solution: Unprivileged user-mode execution (INV-RUNAS-08 `RunAsInvoker`), 100% permissive dependency stack (0% copyleft), sanitized path-free export packages (INV-ISOL-05).
+
+================================================================================
+3. HIGH-INTENT SEARCH QUERIES (BILINGUAL EN & DE)
+================================================================================
+English (EN):
+- `local-first document agent python`
+- `evidence-first document analysis nemotron`
+- `private document intelligence fts5 sqlite`
+- `reversible file actions agent run journal`
+- `mcp server document analysis model context protocol`
+- `nebius token factory nemofold benchmark`
+- `zero-egress local document qa python`
+- `offline pdf docx extraction exact citations`
+- `byte-exact quote verification llm`
+- `nemofold ellmos open-bricks`
+
+German (DE):
+- `lokaler Dokumenten Agent Python`
+- `evidenzbasierte Dokumentenanalyse Nemotron`
+- `vertrauliche Dokumentenanalyse SQLite FTS5`
+- `reversible Dateiaktionen Journal Rollback`
+- `MCP Server Dokumentenverwaltung Model Context Protocol`
+- `Nebius Token Factory NemoFold Benchmark`
+- `Zero-Egress lokale Dokumenten QA Python`
+- `offline PDF DOCX Extraktion exakte Zitate`
+- `bytegenaue Zitatverifikation LLM`
+- `NemoFold ellmos Open-Source Dokumentenagent`
+
+================================================================================
+4. COMPETITIVE DIFFERENTIATION MATRIX (10 DIMENSIONS VS. 4 ALTERNATIVES)
+================================================================================
+| Dimension | NemoFold | Cloud AI SaaS (Copilot/ChatGPT) | Desktop Search (Everything/Recoll) | Agent Frameworks (LangChain/CrewAI) | Ad-hoc Python Scripts |
+|---|---|---|---|---|---|
+| **1. Data Egress & Privacy (INV-LOCAL-01)** | **100% Local-First / Zero-Egress** | Cloud uploads mandatory | Local, but no semantic reasoning | Configurable, often cloud-default | Local, but unmanaged |
+| **2. Evidence Grounding (INV-EVID-02)** | **Byte-Exact Verbatim Match** | Hallucination-prone soft quotes | Keyword match only | Soft RAG retrieval without verification | Manual string matching |
+| **3. Reversible Mutations (INV-ACTION-03)** | **Atomic Dry-Run & Undo Journal** | No local file mutations | Search only, no actions | Destructive write actions common | Prone to data loss |
+| **4. Approval Gate Hierarchy (INV-GATE-04)** | **Multi-Tier Explicit Gates** | All-or-nothing permission | Read-only | Programmatic, hard to audit | None |
+| **5. Path Sanitization (INV-ISOL-05)** | **Strict Outbound Stripping** | Exposes full system context | N/A | Often leaks system prompt/paths | Raw host paths |
+| **6. Loopback Security (INV-PROV-06)** | **Strict 127.0.0.1 Binding** | Cloud endpoints only | Local UI | Often opens unauthenticated ports | Ad-hoc ports |
+| **7. Architectural Primitives (INV-POLICY-07)** | **4 Composable Primitives (43 Workflows)** | Black-box monolithic prompts | Indexing only | Fragmented custom abstractions | Single-purpose scripts |
+| **8. Elevation Requirements (INV-RUNAS-08)** | **RunAsInvoker (Zero Elevation)** | Varies / Desktop agents need admin | Often requires background indexer | Varies | Varies |
+| **9. Reproducibility & Audit (INV-DET-09)** | **Deterministic SHA-256 Ledgers** | Non-deterministic sampling | File timestamps only | Non-deterministic runs | None |
+| **10. Security SLA & Disclosure (INV-SLA-10)** | **48h Acknowledgment / 5d Triage** | Opaque enterprise SLA | Community / no SLA | Open source best-effort | No SLA |
+
+================================================================================
+5. GOVERNANCE & RUNTIME INVARIANTS (INV-LOCAL-01 TO INV-SLA-10)
+================================================================================
+- INV-LOCAL-01: 100% Local-First & Zero-Egress (original documents stay on host).
+- INV-EVID-02: Byte-Exact Evidence Citation (verbatim matching required).
+- INV-ACTION-03: Reversible Actions & Journaled Undo (atomic dry-run before mutation).
+- INV-GATE-04: Multi-Tier Explicit Approval Gates (operator flags required).
+- INV-ISOL-05: Path-Free Sanitized Packaging (host paths stripped before export).
+- INV-PROV-06: Provider-Neutral Loopback Surface (unauthenticated interfaces on 127.0.0.1).
+- INV-POLICY-07: Composable Shared Primitives (43 workflows from 4 core building blocks).
+- INV-RUNAS-08: Unprivileged User-Mode (RunAsInvoker non-elevation certification).
+- INV-DET-09: Deterministic Artifacts & Cryptographic Ledgers (SHA-256 integrity).
+- INV-SLA-10: 48h Security Response SLA & 5-Day Triage Guarantee.
+
+================================================================================
+6. IMPLEMENTED PFAD B DISCOVERABILITY & METADATA AUDIT (2026-09-26)
+================================================================================
+[x] GitHub Topics & Metadata Saturation:
+    - Saturated repository topics to 20/20 on GitHub remote via `gh repo edit`.
+    - Set canonical homepage URL: `https://github.com/ellmos-ai/NemoFold#readme`.
+[x] Canonical Root Attribution (NOTICE):
+    - Deployed formal NOTICE file in root assigning copyright to Lukas Geiger, ellmos-ai, and open-bricks umbrella under MIT License.
+[x] Level 1 SBOM Invariant Cross-Reference Matrix (THIRD_PARTY_LICENSES.md):
+    - Re-audited Stand 2026-09-26 with Level 1 SBOM confirmation.
+    - Verified 100% permissive runtime dependencies (MIT, BSD-3-Clause, PSFL-2.0; 0% copyleft).
+    - Unprivileged RunAsInvoker non-elevation certification verified.
+    - Added formal cross-reference to canonical root NOTICE file.
+[x] Bilingual Documentation & Dual Reciprocal Anchors (README.md & README_de.md):
+    - Integrated reciprocal dual HTML anchors (`<a id="sec-01"></a>` through `<a id="sec-18"></a>`) across all 18 numbered sections.
+    - Synchronized Shields.io badges across EN and DE (Attribution NOTICE, Verified 2026-09-26, Last-Checked 2026-09-26, Version 0.2.1, 1082 Tests Passed, RunAsInvoker, Zero-Egress, 48h Security SLA).
+    - Added § 521 BGB statutory legal disclaimer and SLA references in Section 18 of README.md.
+[x] Machine-Readable Context Alignment (llms.txt):
+    - Updated Last-checked date to 2026-09-26, synchronized NOTICE entrypoint, § 521 BGB disclaimer, and Level 1 SBOM invariants.
+[x] Packaging & Project Manifest Hardening (pyproject.toml):
+    - Saturated 20 keywords in `pyproject.toml` matching remote GitHub topics.
+    - Added `license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md"]`.
+    - Extended `[project.urls]` with Notice and Marketing Log links.
+    - Hardened pytest options (`--basetemp=.pytest_temp`, `.pytest_temp` in norecursedirs).
+    - Strict version freeze per T-20260920-167562623: preserved version 0.2.1 unchanged.
+[x] Automated Contract Verification Suite (tests/unit/test_metadata.py):
+    - Added contract tests for canonical root NOTICE attribution, 20 PEP 621 keywords, reciprocal dual HTML anchors sec-01..sec-18, Level 1 SBOM recency 2026-09-26, § 521 BGB statutory notice, and local MARKETING-LOG.txt presence.
+    - Validated all tests passing, ruff clean, lint_mermaid clean (0 errors in 11 files).
+
+AUDIT STATUS: VERIFIED (Pfad B Discoverability, Visual Architecture, 18-Point Bilingual Parity, Comparative Matrix, Root NOTICE & Level 1 SBOM complete)

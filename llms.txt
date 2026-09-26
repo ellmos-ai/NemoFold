@@ -6,7 +6,7 @@
 Version: 0.2.1
 Organization: ellmos-ai
 Umbrella: open-bricks
-Last-checked: 2026-09-19
+Last-checked: 2026-09-26
 Tests: 1085 passed, 1 skipped
 Workflows: 43 registered document workflows
 Acceptance gates: 16 of 18 done, re-verifiable offline (`nemofold acceptance-gates --evidence-root .`)
@@ -14,6 +14,8 @@ Acceptance gates: 16 of 18 done, re-verifiable offline (`nemofold acceptance-gat
 Primary documentation:
 - README.md (Bilingual 18-point Quick Navigation & Dual Mermaid Diagrams)
 - README_de.md (Deutsche Dokumentation mit synchroner Navigations-Parität)
+- NOTICE (Canonical Open-Source root attribution and copyright notice)
+- MARKETING-LOG.txt (Local marketing, discoverability and audit register)
 - docs/architecture.md
 - docs/nemoclaw-integration.md
 - docs/design-direction.md
@@ -21,7 +23,7 @@ Primary documentation:
 - docs/product-story.md
 - skills/nemofold/SKILL.md
 - schemas/nemofold-job-v1.schema.json
-- THIRD_PARTY_LICENSES.md (Permissive dependency audit & INV-LOCAL-01..INV-SLA-10)
+- THIRD_PARTY_LICENSES.md (Level 1 SBOM, Permissive dependency audit & INV-LOCAL-01..INV-SLA-10)
 - SECURITY.md (48h security acknowledgment / 5-day triage SLA)
 
 Current local implementation boundary:
@@ -68,3 +70,5 @@ Core Invariants & Trust Rules:
 - INV-RUNAS-08: Unprivileged user-mode execution (RunAsInvoker); non-elevated.
 - INV-DET-09: Deterministic artifacts and cryptographic SHA-256 ledgers.
 - INV-SLA-10: Transparent disclosure and 48h SLA / 5-day triage response.
+- Statutory Notice (§ 521 BGB Gefälligkeitsrecht): Open-source prototype provided free of charge; maintainer liability limited to intent and gross negligence.
+- Level 1 SBOM: 100% permissive runtime dependencies (MIT, BSD-3-Clause, PSFL-2.0), 0% copyleft, unprivileged RunAsInvoker non-elevation certification.

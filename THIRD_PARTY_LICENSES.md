@@ -1,16 +1,17 @@
-# Third-Party Licenses & Dependency Inventory
+# Third-Party Licenses & Dependency Inventory (Level 1 SBOM)
 
 > **Project:** `ellmos-ai/NemoFold`<br>
-> **Version:** `0.2.1`<br>
-> **Audited:** 2026-09-19<br>
+> **Version:** `0.2.1` (frozen per `T-20260920-167562623`)<br>
+> **Audited:** 2026-09-26 (Pfad B Re-Audit)<br>
 > **Repository License:** [MIT License](LICENSE)<br>
+> **Attribution NOTICE:** [NOTICE](NOTICE)<br>
 > **Architecture & Privacy:** 100% Local-First, Zero-Egress by default, Unprivileged User-Mode (`RunAsInvoker`)
 
 ---
 
 ## 1. Executive Summary & Compliance Assurance
 
-NemoFold is a private, evidence-first document agent engineered with reversible actions, persistent local memory, exact citations, and bounded external reasoning.
+NemoFold is a private, evidence-first document agent engineered with reversible actions, persistent local memory, exact citations, and bounded external reasoning. Formal copyright notices and organizational attributions are declared in the root [NOTICE](NOTICE) file.
 
 The core runtime strictly enforces a **Zero-Copyleft Guarantee**:
 - All direct and indirect runtime dependencies are distributed under strictly **permissive open-source licenses** (MIT, BSD-3-Clause, PSFL-2.0).

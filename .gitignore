@@ -40,6 +40,8 @@ LOCK.permissions.json
 !uv.lock
 
 # Local caches & test runs
+.pytest_temp/
+.pytest_tmp*/
 .hypothesis/
 .turbo/
 .nyc_output/
@@ -68,4 +70,3 @@ TERRA-*.md
 LUNA-*.md
 _reports/
 docs/audits/
-MARKETING-LOG.txt

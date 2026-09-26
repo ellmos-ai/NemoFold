@@ -6,21 +6,24 @@ English | [Deutsch](README_de.md)
 
 **Demo video (2:16):** https://youtu.be/wOToLqDBvvE · built for the Nebius x NVIDIA Global AI Hackathon
 
+[![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
 [![Tests](https://img.shields.io/badge/tests-1085%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
-[![Privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-success.svg)](#5-governance--runtime-invariants)
+[![Privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-success.svg)](#sec-05)
 [![Security](https://img.shields.io/badge/security-RunAsInvoker%20%7C%20Non--Elevated-blue.svg)](THIRD_PARTY_LICENSES.md)
 [![Security SLA](https://img.shields.io/badge/security%20SLA-48h%20%2F%205d%20triage-blue.svg)](SECURITY.md)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Third-Party Licenses](https://img.shields.io/badge/licenses-Audited%20%7C%20100%25%20Permissive-success.svg)](THIRD_PARTY_LICENSES.md)
+[![Third-Party Licenses](https://img.shields.io/badge/licenses-Audited%20%7C%20Level%201%20SBOM-success.svg)](THIRD_PARTY_LICENSES.md)
+[![Verified](https://img.shields.io/badge/Verified-2026--09--26-blue.svg)](MARKETING-LOG.txt)
+[![Last-Checked](https://img.shields.io/badge/Last--Checked-2026--09--26-success.svg)](llms.txt)
 [![Ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-informational.svg)](https://github.com/ellmos-ai)
 [![Umbrella](https://img.shields.io/badge/umbrella-open--bricks-informational.svg)](https://github.com/open-bricks)
 [![LLM Ready](https://img.shields.io/badge/LLM--Ready-llms.txt-blueviolet.svg)](llms.txt)
 
-<a id="1-overview--core-mission"></a><a id="1-uebersicht--kernmission"></a>
+<a id="sec-01"></a><a id="1-overview--core-mission"></a><a id="1-uebersicht--kernmission"></a>
 <a id="overview--core-mission"></a><a id="uebersicht--kernmission"></a>
 ## 1. Overview & Core Mission
 
@@ -82,7 +85,7 @@ corpus. The evidence contract does not change between them - only the worker doe
 
 ---
 
-<a id="2-visual-architecture--dual-diagrams"></a><a id="2-visuelle-architektur--duale-diagramme"></a>
+<a id="sec-02"></a><a id="2-visual-architecture--dual-diagrams"></a><a id="2-visuelle-architektur--duale-diagramme"></a>
 <a id="visual-architecture--dual-diagrams"></a><a id="visuelle-architektur--duale-diagramme"></a>
 ## 2. Visual Architecture & Dual Diagrams
 
@@ -165,7 +168,7 @@ sequenceDiagram
 
 ---
 
-<a id="3-target-personas--discoverability"></a><a id="3-zielgruppen--auffindbarkeit"></a>
+<a id="sec-03"></a><a id="3-target-personas--discoverability"></a><a id="3-zielgruppen--auffindbarkeit"></a>
 <a id="target-personas--discoverability"></a><a id="zielgruppen--auffindbarkeit"></a>
 ## 3. Target Personas & Discoverability
 
@@ -203,7 +206,7 @@ sequenceDiagram
 
 ---
 
-<a id="4-comparative-matrix-vs-alternatives"></a><a id="4-vergleichsmatrix-gegenueber-alternativen"></a>
+<a id="sec-04"></a><a id="4-comparative-matrix-vs-alternatives"></a><a id="4-vergleichsmatrix-gegenueber-alternativen"></a>
 <a id="comparative-matrix-vs-alternatives"></a><a id="vergleichsmatrix-gegenueber-alternativen"></a>
 ## 4. Comparative Matrix vs. Alternatives
 
@@ -222,7 +225,7 @@ sequenceDiagram
 
 ---
 
-<a id="5-governance--runtime-invariants"></a><a id="5-governance--laufzeit-invarianten"></a>
+<a id="sec-05"></a><a id="5-governance--runtime-invariants"></a><a id="5-governance--laufzeit-invarianten"></a>
 <a id="governance--runtime-invariants"></a><a id="governance--laufzeit-invarianten"></a>
 ## 5. Governance & Runtime Invariants
 
@@ -243,7 +246,7 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 
 ---
 
-<a id="6-implemented-document-workflows"></a><a id="6-implementierte-dokument-workflows"></a>
+<a id="sec-06"></a><a id="6-implemented-document-workflows"></a><a id="6-implementierte-dokument-workflows"></a>
 <a id="implemented-document-workflows"></a><a id="implementierte-dokument-workflows"></a>
 <a id="what-is-implemented"></a>
 ## 6. Implemented Document Workflows
@@ -311,7 +314,7 @@ remain separate human approval gates.
 
 ![NemoFold console, Processes & Workflows: the use-case library with saved voyages and the shipped specialists](docs/media/nemofold-console.png)
 
-<a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
+<a id="sec-07"></a><a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
 <a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
 <a id="install"></a>
 ## 7. Installation & Quick Start
@@ -326,7 +329,7 @@ Every non-demo command consumes the same strict `nemofold.job.v1` JSON contract.
 [`schemas/nemofold-job-v1.schema.json`](schemas/nemofold-job-v1.schema.json) and the
 [`examples/jobs`](examples/jobs) directory.
 
-<a id="8-offline-proof--verification"></a><a id="8-offline-nachweis--verifikation"></a>
+<a id="sec-08"></a><a id="8-offline-proof--verification"></a><a id="8-offline-nachweis--verifikation"></a>
 <a id="offline-proof--verification"></a><a id="offline-nachweis--verifikation"></a>
 <a id="offline-proof"></a>
 ## 8. Offline Proof & Verification
@@ -374,7 +377,7 @@ paths replaced with an `<evidence-root>` token, hashes recomputed over the expor
 bytes) and rewrites the register; a gate whose bundle stops producing a verifiable
 receipt loses `done` instead of keeping a stale claim.
 
-<a id="9-executing-real-local-jobs"></a><a id="9-ausfuehrung-realer-lokaler-auftraege"></a>
+<a id="sec-09"></a><a id="9-executing-real-local-jobs"></a><a id="9-ausfuehrung-realer-lokaler-auftraege"></a>
 <a id="executing-real-local-jobs"></a><a id="ausfuehrung-realer-lokaler-auftraege"></a>
 <a id="run-a-real-local-job"></a>
 ## 9. Executing Real Local Jobs
@@ -397,7 +400,7 @@ real external runtime adapter and the explicit privacy/model/cost gates are pres
 directory and validates it immediately. It still performs no upload and records
 `transfer_performed: false`; see [NemoClaw integration](docs/nemoclaw-integration.md).
 
-<a id="10-provider-adapters-mcp--api"></a><a id="10-provider-adapter-mcp--api"></a>
+<a id="sec-10"></a><a id="10-provider-adapters-mcp--api"></a><a id="10-provider-adapter-mcp--api"></a>
 <a id="provider-adapters-mcp--api"></a><a id="provider-adapter-mcp--api"></a>
 <a id="use-any-supported-model-through-one-evidence-core"></a>
 ## 10. Provider Adapters, MCP & API
@@ -429,7 +432,7 @@ environment variables. Generic provider receipts never become Nebius competition
 proof; the next section remains the only such route. See
 [Provider adapters, local API, and MCP](docs/providers-and-mcp.md).
 
-<a id="11-approved-nebius-token-factory-run"></a><a id="11-belegter-nebius-token-factory-lauf"></a>
+<a id="sec-11"></a><a id="11-approved-nebius-token-factory-run"></a><a id="11-belegter-nebius-token-factory-lauf"></a>
 <a id="approved-nebius-token-factory-run"></a><a id="belegter-nebius-token-factory-lauf"></a>
 ## 11. Approved Nebius Token Factory Run
 
@@ -549,7 +552,7 @@ reversed with `nemofold undo <run-id> --output <dir> --allow-root <root>
 --approve-actions`. Failed or blocked jobs can be retried with `nemofold resume` while
 preserving the original job identity and journal.
 
-<a id="12-voyage-library--captains-desk"></a><a id="12-fahrtbibliothek--captains-desk"></a>
+<a id="sec-12"></a><a id="12-voyage-library--captains-desk"></a><a id="12-fahrtbibliothek--captains-desk"></a>
 <a id="voyage-library--captains-desk"></a><a id="fahrtbibliothek--captains-desk"></a>
 <a id="my-use-cases-the-voyage-library"></a>
 ## 12. Voyage Library & Captain's Desk
@@ -635,7 +638,7 @@ to, marked `source: wizard`. A person still opens each draft in the engine room,
 completes what is open and runs it. The desk is a loopback-only surface: it is absent
 in the public demo and refused on a network-exposed server.
 
-<a id="13-case-chronicle-deep-analysis"></a><a id="13-fallchronik-tiefenanalyse"></a>
+<a id="sec-13"></a><a id="13-case-chronicle-deep-analysis"></a><a id="13-fallchronik-tiefenanalyse"></a>
 <a id="case-chronicle-deep-analysis"></a><a id="fallchronik-tiefenanalyse"></a>
 <a id="case-chronicle"></a>
 ## 13. Case Chronicle Deep Analysis
@@ -675,7 +678,7 @@ invented in its first line - with a blue VW Golf, a questionable weekend, one
 corroborated alibi, one person nothing outside confirms, and two contradictions. Every
 Case Chronicle test runs on it, and so does the demo.
 
-<a id="14-structured-sources--controlled-output"></a><a id="14-strukturierte-quellen--kontrollierte-ausgabe"></a>
+<a id="sec-14"></a><a id="14-structured-sources--controlled-output"></a><a id="14-strukturierte-quellen--kontrollierte-ausgabe"></a>
 <a id="structured-sources--controlled-output"></a><a id="strukturierte-quellen--kontrollierte-ausgabe"></a>
 <a id="sources-the-outside-world-and-sending"></a>
 ## 14. Structured Sources & Controlled Output
@@ -724,7 +727,7 @@ program is registered for its type returns nothing a run could put in a receipt,
 so NemoFold writes the print-ready file plus the exact command and says the
 printing is your step.
 
-<a id="15-checking-comparing--composing"></a><a id="15-pruefen-vergleichen--komponieren"></a>
+<a id="sec-15"></a><a id="15-checking-comparing--composing"></a><a id="15-pruefen-vergleichen--komponieren"></a>
 <a id="checking-comparing--composing"></a><a id="pruefen-vergleichen--komponieren"></a>
 ## 15. Checking, Comparing & Composing
 
@@ -778,7 +781,7 @@ is called. Without the extra a run ends blocked with the exact install command
 rather than an import error. **Mail Merge** is the same stage once per recipient
 from your contact book, each document named after the person it is for.
 
-<a id="16-local-web-console--routes"></a><a id="16-lokale-webkonsole--routen"></a>
+<a id="sec-16"></a><a id="16-local-web-console--routes"></a><a id="16-lokale-webkonsole--routen"></a>
 <a id="local-web-console--routes"></a><a id="lokale-webkonsole--routen"></a>
 <a id="open-the-local-web-console"></a>
 ## 16. Local Web Console & Routes
@@ -877,7 +880,7 @@ file-action nor external-model flags and still binds to loopback unless both a n
 host and `--expose-network` are supplied. It is a capability-minimal hosting surface,
 not proof of a Nebius, Nemotron or NemoClaw runtime call; `cloud_proof` remains false.
 
-<a id="17-sibling-ecosystem--integration"></a><a id="17-geschwister-oekosystem--integration"></a>
+<a id="sec-17"></a><a id="17-sibling-ecosystem--integration"></a><a id="17-geschwister-oekosystem--integration"></a>
 <a id="sibling-ecosystem--integration"></a><a id="geschwister-oekosystem--integration"></a>
 ## 17. Sibling Ecosystem & Integration
 
@@ -904,7 +907,7 @@ NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem 
 
 ---
 
-<a id="18-transparency-licenses--security-policy"></a><a id="18-transparenz-lizenzen--sicherheitsrichtlinie"></a>
+<a id="sec-18"></a><a id="18-transparency-licenses--security-policy"></a><a id="18-transparenz-lizenzen--sicherheitsrichtlinie"></a>
 <a id="transparency-licenses--security-policy"></a><a id="transparenz-lizenzen--sicherheitsrichtlinie"></a>
 <a id="trust-boundary"></a><a id="vertrauensgrenze"></a>
 <a id="design-and-integration"></a><a id="design-und-integration"></a>
@@ -939,3 +942,9 @@ NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem 
 - [Security Policy & 48h Vulnerability SLA](SECURITY.md)
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Release Gate Checklist](RELEASE_GATE.md)
+
+---
+
+### German Statutory Notice (§ 521 BGB Gefälligkeitsrecht)
+
+> **Statutory Disclaimer (§ 521 BGB Gefälligkeitsrecht):** This open-source prototype is provided free of charge for scientific research and developer evaluation. Maintainer liability is limited to intent and gross negligence pursuant to § 521 BGB. The software does not provide legal, financial, or medical advice and does not replace qualified professional evaluation.

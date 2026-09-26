@@ -39,7 +39,9 @@ def test_pyproject_project_urls():
         "Issues",
         "Changelog",
         "Security",
+        "Notice",
         "Third-Party Licenses",
+        "Marketing Log",
         "Parent Organization",
         "Umbrella Ecosystem",
         "LLM Ready",
@@ -103,6 +105,11 @@ def test_bilingual_readme_structural_parity():
         assert f'id="{anchor}"' in readme_en, f"README.md missing reciprocal anchor: {anchor}"
         assert f'id="{anchor}"' in readme_de, f"README_de.md missing reciprocal anchor: {anchor}"
 
+    for num in range(1, 19):
+        sec_anchor = f'id="sec-{num:02d}"'
+        assert sec_anchor in readme_en, f"README.md missing {sec_anchor}"
+        assert sec_anchor in readme_de, f"README_de.md missing {sec_anchor}"
+
 
 def test_german_legal_notice():
     """Verify that README_de.md includes the statutory German disclaimer (§ 521 BGB)."""
@@ -120,6 +127,8 @@ def test_third_party_licenses_audit():
     assert "INV-SLA-10" in lic_text
     assert "MIT" in lic_text
     assert "Apache-2.0" in lic_text
+    assert "Level 1 SBOM" in lic_text
+    assert "2026-09-26" in lic_text
 
 
 def test_ci_workflow_guardrails():
@@ -159,6 +168,7 @@ def test_gitignore_multihost_and_locks():
     assert "LOCK" in gi_text
     assert "LOCK.*" in gi_text
     assert "!uv.lock" in gi_text
+    assert ".pytest_temp/" in gi_text
 
 
 def test_pyproject_pytest_hardening():
@@ -170,5 +180,72 @@ def test_pyproject_pytest_hardening():
     pytest_opts = data.get("tool", {}).get("pytest", {}).get("ini_options", {})
     assert pytest_opts.get("minversion") == "7.0"
     norecursedirs = pytest_opts.get("norecursedirs", [])
-    for expected_dir in [".git", ".pytest_cache", "__pycache__", "build", "dist", ".venv"]:
+    expected_dirs = [
+        ".git",
+        ".pytest_cache",
+        ".pytest_temp",
+        "__pycache__",
+        "build",
+        "dist",
+        ".venv",
+    ]
+    for expected_dir in expected_dirs:
         assert expected_dir in norecursedirs, f"Missing {expected_dir} in pytest norecursedirs"
+
+
+def test_canonical_root_notice():
+    """Verify canonical root NOTICE attribution file exists with valid copyright and license."""
+    notice_path = REPO_ROOT / "NOTICE"
+    assert notice_path.is_file(), "Missing canonical root NOTICE file"
+    notice_text = notice_path.read_text(encoding="utf-8")
+    assert "NemoFold" in notice_text
+    assert "Lukas Geiger" in notice_text
+    assert "ellmos-ai" in notice_text
+    assert "open-bricks" in notice_text
+    assert "MIT License" in notice_text
+
+
+def test_pyproject_keywords_and_license_files():
+    """Verify pyproject.toml contains 20 saturated keywords and license-files declaration."""
+    pyproject_path = REPO_ROOT / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        data = tomllib.load(f)
+
+    project_data = data.get("project", {})
+    keywords = project_data.get("keywords", [])
+    assert len(keywords) == 20, f"Expected exactly 20 keywords, got {len(keywords)}: {keywords}"
+    expected_sample = [
+        "ai-agents",
+        "evidence-first",
+        "reversible-actions",
+        "zero-egress",
+        "local-first",
+    ]
+    for expected_kw in expected_sample:
+        assert expected_kw in keywords, f"Missing keyword: {expected_kw}"
+
+    license_files = project_data.get("license-files", [])
+    assert "LICENSE" in license_files
+    assert "NOTICE" in license_files
+    assert "THIRD_PARTY_LICENSES.md" in license_files
+
+
+def test_marketing_log_and_audit():
+    """Verify local MARKETING-LOG.txt is present and documents Pfad B audit."""
+    marketing_path = REPO_ROOT / "MARKETING-LOG.txt"
+    assert marketing_path.is_file(), "Missing local MARKETING-LOG.txt"
+    marketing_text = marketing_path.read_text(encoding="utf-8")
+    assert "ellmos-ai/NemoFold" in marketing_text
+    assert "2026-09-26" in marketing_text
+    assert "INV-LOCAL-01" in marketing_text
+    assert "INV-SLA-10" in marketing_text
+    assert "[PERSONA-01]" in marketing_text
+
+
+def test_changelog_unreleased_entry():
+    """Verify CHANGELOG.md carries an [Unreleased] section for Pfad B 2026-09-26."""
+    changelog_text = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert "## [Unreleased]" in changelog_text
+    assert "2026-09-26" in changelog_text
+    assert "NOTICE" in changelog_text
+    assert "Level 1 SBOM" in changelog_text
