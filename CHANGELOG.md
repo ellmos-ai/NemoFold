@@ -4,6 +4,17 @@ All notable changes to NemoFold are documented here.
 
 ## [Unreleased]
 
+- Pfad A Technical Hygiene, CI Lifecycle Workflows & Level 1 SBOM Hardening (2026-09-28):
+  - CI Lifecycle Automation: Provisioned `.github/workflows/auto-assign.yml` (actions/github-script@v7, timeout-minutes: 5, least-privilege `pull-requests: write`, concurrency cancellation) and `.github/workflows/label-sync.yml` (EndBug/label-sync@v2, timeout-minutes: 5, least-privilege `issues: write`).
+  - Label Governance: Established canonical `.github/labels.yml` with 11 standard labels according to GOVERNANCE.md §4.2.
+  - Multi-Host & Cloud-Sync Defense: Hardened `.gitignore` with host tokens (`*-IDEAPAD*`, `*_WORKSTATION*`, `*_WORKSTATION-LG*`, `*-WORKSTATION.*`, `*-WORKSTATION-LG.*`), canonical locks (`LOCK*.txt`, `.automation-lock`), and OS/editor artifacts (`Desktop.ini`, `Thumbs.db`, `ehthumbs.db`, `*.swo`, `*.swp`) while preserving `!package-lock.json` and `!uv.lock`.
+  - PEP 621 Standardisation: Added `THIRD_PARTY_LICENSES.txt` to `license-files` in `pyproject.toml`, registered `"Third-Party Licenses (Text)"` in `[project.urls]`, and hardened `[tool.pytest.ini_options]` `norecursedirs` with `.pytest_tmp*` and `.tox`.
+  - Level 1 SBOM Text Companion: Created `THIRD_PARTY_LICENSES.txt` companion file certifying zero copyleft dependencies, unprivileged user-mode execution (INV-RUNAS-08 `RunAsInvoker`), Zero-Egress isolation, and full compliance with INV-LOCAL-01 through INV-SLA-10.
+  - Attribution & Notices: Updated root `NOTICE` with explicit cross-reference to `THIRD_PARTY_LICENSES.txt`; re-audited `THIRD_PARTY_LICENSES.md` as of 2026-09-28.
+  - Context & Verification Badges: Synchronized `README.md`, `README_de.md`, and `llms.txt` with verified date `2026-09-28` and Level 1 SBOM Plain Text badge.
+  - Version Freeze Discipline: Preserved version `0.2.1` strictly unchanged per `T-20260920-167562623`.
+  - Contract Tests: Expanded `tests/unit/test_metadata.py` with automated contract verification for all new lifecycle workflows, labels, plain-text SBOM companion, gitignore multi-host tokens, and PEP 621 declarations.
+
 - Pfad B Discoverability, Visual Architecture & Level 1 SBOM Audit (2026-09-26):
   - Canonical Root Attribution: Created `NOTICE` in the repository root formalizing copyright ownership for Lukas Geiger, `ellmos-ai`, and the `open-bricks` umbrella under MIT License.
   - Saturated GitHub Topics (20/20): Saturated remote repository topics on GitHub via `gh repo edit` and synchronized 20 keywords in `pyproject.toml` (`ai-agents`, `developer-tools`, `document-analysis`, `ellmos-ai`, `evidence-first`, `hackathon`, `local-first`, `mcp`, `mcp-server`, `nebius`, `nemotron`, `nvidia`, `offline-first`, `open-bricks`, `personal-ai`, `persistent-memory`, `privacy`, `python`, `reversible-actions`, `zero-egress`).

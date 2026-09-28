@@ -1,0 +1,153 @@
+THIRD-PARTY LICENSES & LEVEL 1 SBOM NOTICE
+Project: ellmos-ai/NemoFold (NemoFold)
+Audited: 2026-09-28 (Prior audits: 2026-09-26, 2026-09-19, 2026-09-18)
+Repository Version: 0.2.1 (Version Freeze per T-20260920-167562623)
+Repository License: MIT License (see LICENSE)
+Repository Attribution Notice: NOTICE (see NOTICE)
+Architecture & Privacy: 100% Local-First, Zero-Egress by default, Unprivileged User-Mode (RunAsInvoker), Fail-Closed
+
+================================================================================
+1. EXECUTIVE SUMMARY & COMPLIANCE ASSURANCE
+================================================================================
+
+NemoFold is engineered under strict architectural and governance invariants:
+100% Local-First, Zero-Egress by default, unprivileged user-mode execution
+(RunAsInvoker), and fail-closed safety gate interception. The core agent loop
+turns explicitly approved local directories into a persistent working memory,
+keeps claims traceable to source locations, and makes file actions reversible.
+
+All direct, optional, and development dependencies utilized across NemoFold
+are distributed under strictly permissive and free open-source licenses (MIT,
+BSD-3-Clause, PSFL-2.0). There are zero copyleft, GPL, or AGPL-style viral
+dependencies, guaranteeing complete operational safety for enterprise
+integration, autonomous agent fleets, and security-critical deployments.
+Canonical copyright and ecosystem attributions are formally preserved in the
+root NOTICE file.
+
+================================================================================
+2. LEVEL 1 SBOM & INVARIANT CROSS-REFERENCE MATRIX
+================================================================================
+
+Invariant ID  | Operational Scope & Guarantee       | Technical Enforcement                  | License Scope
+--------------+-------------------------------------+----------------------------------------+-------------------
+INV-LOCAL-01  | 100% Local-First & Zero-Egress      | nemofold.storage, nemofold.policy      | PSFL-2.0 / MIT
+INV-EVID-02   | Byte-Exact Evidence Citation        | nemofold.evidence, nemofold.indexer    | PSFL-2.0 / MIT
+INV-ACTION-03 | Reversible Actions & Journaled Undo | nemofold.journal, nemofold.actions     | PSFL-2.0 / MIT
+INV-GATE-04   | Explicit Approval Gate Controls     | nemofold.policy, nemofold.cli          | PSFL-2.0 / MIT
+INV-ISOL-05   | Path-Free Sanitized Packaging       | nemofold.artifacts, nemofold.export    | PSFL-2.0 / MIT
+INV-PROV-06   | Loopback-Restricted API Surface     | nemofold.web, nemofold.mcp_server      | MIT / BSD-3-Clause
+INV-POLICY-07 | Composable Primitives & Voyages     | nemofold.primitives, nemofold.voyages  | PSFL-2.0 / MIT
+INV-RUNAS-08  | Unprivileged User-Mode (RunAsInvoker)| nemofold.cli, nemofold.mcp_server     | PSFL-2.0 / MIT
+INV-DET-09   | Deterministic Artifacts & Ledgers   | nemofold.ledger, nemofold.reports      | PSFL-2.0 / MIT
+INV-SLA-10    | 48h Security & 5d Triage SLA        | SECURITY.md (security@open-bricks.org) | MIT
+
+================================================================================
+3. ZERO-COPYLEFT ISOLATION GUARANTEE & RUNASINVOKER CERTIFICATION
+================================================================================
+
+1. Zero-Copyleft Isolation Guarantee:
+   All core runtime dependencies operate strictly under permissive open-source
+   licenses (MIT, BSD-3-Clause, PSFL-2.0). The codebase, build definitions,
+   and runtime interfaces are completely free of GPL, AGPL, LGPL, SSPL, or
+   reciprocal copyleft obligations.
+
+2. Unprivileged Execution (RunAsInvoker):
+   NemoFold enforces unprivileged user-mode execution under INV-RUNAS-08.
+   All document parsing, SQLite FTS indexing, and local action journals operate
+   strictly within non-elevated user context without requiring administrative
+   elevation, root privileges, or daemon background services.
+
+3. Fail-Closed Security & Reversible Action Defense:
+   Under INV-GATE-04 and INV-ACTION-03, any ambiguous request or unmatched path
+   fails closed into a structured error or operator confirmation modal.
+   All file actions are pre-flight validated, logged to a transactional journal,
+   and provide complete rollback and resume capabilities.
+
+================================================================================
+4. RUNTIME DEPENDENCY INVENTORY
+================================================================================
+
+Package                  | Version Range  | SPDX License   | Purpose / Functional Scope
+-------------------------+----------------+----------------+---------------------------------------------------
+mcp                      | >=1.27, <2     | MIT            | Model Context Protocol SDK for stdio server
+pypdf                    | >=6, <7        | BSD-3-Clause   | Offline PDF text and layout extraction
+Python Standard Library  | >=3.11         | PSFL-2.0       | Core runtime (sqlite3, json, hashlib, pathlib)
+
+================================================================================
+5. OPTIONAL EXTRAS & DEVELOPMENT DEPENDENCIES
+================================================================================
+
+Package                  | Category       | SPDX License   | Purpose / Functional Scope
+-------------------------+----------------+----------------+---------------------------------------------------
+report-forge             | Extra:templates| MIT            | DOCX template filling (pinned commit reference)
+pytest                   | Dev / QA       | MIT            | Automated test framework and contract tests
+ruff                     | Dev / QA       | MIT / Apache-2 | Fast AST linter and code formatter
+mypy                     | Dev / QA       | MIT            | Static type analysis and contract boundaries
+hatchling                | Dev / Build    | MIT            | PEP 517 / PEP 621 compliant build backend
+openpyxl                 | Dev / QA       | MIT            | XLSX spreadsheet export test validation
+build                    | Dev / Build    | PyPA / MIT     | PEP 517 distribution package builder
+
+================================================================================
+6. LICENSE TEXTS
+================================================================================
+
+--- MIT License (MIT) ---
+Applies to: mcp, report-forge, pytest, hatchling, openpyxl, build, NemoFold
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+--- BSD 3-Clause License ---
+Applies to: pypdf
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+3. Neither the name of the copyright holder nor the names of its
+   contributors may be used to endorse or promote products derived from
+   this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+--- Python Software Foundation License Version 2 (PSFL-2.0) ---
+Applies to: Python Standard Library
+
+1. This LICENSE AGREEMENT is between the Python Software Foundation ("PSF"), and
+   the Individual or Organization ("Licensee") accessing and otherwise using this
+   software ("Python") in source or binary form and its associated documentation.
+2. Subject to the terms and conditions of this License Agreement, PSF hereby
+   grants Licensee a nonexclusive, royalty-free, world-wide license to reproduce,
+   analyze, test, perform and/or display publicly, prepare derivative works,
+   distribute, and otherwise use Python alone or in any derivative version,
+   provided, however, that PSF's License Agreement and PSF's notice of copyright,
+   i.e., "Copyright (c) 2001-2026 Python Software Foundation; All Rights Reserved"
+   are retained in Python alone or in any derivative version prepared by Licensee.

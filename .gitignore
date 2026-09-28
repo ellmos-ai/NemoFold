@@ -19,25 +19,43 @@ videos/
 *conflicted copy*
 * (Kopie)*
 * (Copy)*
+*-IDEAPAD*
 *-LAPTOP*
 *-Mac Studio*
 *-MacBook*
 *-ASUS*
 *-ASUS-GEI*
 *-WORKSTATION*
+*-WORKSTATION.*
+*_WORKSTATION*
 *-WORKSTATION-LG*
+*-WORKSTATION-LG.*
+*_WORKSTATION-LG*
+*.sync-conflict-*
+*.conflict
 *.orig
 *.rej
 
 # Canonical Lock-System Defense (Fail-Closed)
 LOCK
 LOCK.*
+LOCK*.txt
 LOCK.user.*
 LOCK.until.*
 LOCK.condition.*
 LOCK.permissions.json
+.automation-lock
 !package-lock.json
 !uv.lock
+
+# OS / Editor artifacts
+Desktop.ini
+desktop.ini
+Thumbs.db
+ehthumbs.db
+.DS_Store
+*.swp
+*.swo
 
 # Local caches & test runs
 .pytest_temp/

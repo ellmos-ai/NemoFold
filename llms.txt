@@ -6,7 +6,7 @@
 Version: 0.2.1
 Organization: ellmos-ai
 Umbrella: open-bricks
-Last-checked: 2026-09-26
+Last-checked: 2026-09-28
 Tests: 1085 passed, 1 skipped
 Workflows: 43 registered document workflows
 Acceptance gates: 16 of 18 done, re-verifiable offline (`nemofold acceptance-gates --evidence-root .`)
@@ -24,6 +24,7 @@ Primary documentation:
 - skills/nemofold/SKILL.md
 - schemas/nemofold-job-v1.schema.json
 - THIRD_PARTY_LICENSES.md (Level 1 SBOM, Permissive dependency audit & INV-LOCAL-01..INV-SLA-10)
+- THIRD_PARTY_LICENSES.txt (Level 1 SBOM plain-text companion & RunAsInvoker certification)
 - SECURITY.md (48h security acknowledgment / 5-day triage SLA)
 
 Current local implementation boundary:

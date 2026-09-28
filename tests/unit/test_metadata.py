@@ -41,6 +41,7 @@ def test_pyproject_project_urls():
         "Security",
         "Notice",
         "Third-Party Licenses",
+        "Third-Party Licenses (Text)",
         "Marketing Log",
         "Parent Organization",
         "Umbrella Ecosystem",
@@ -228,6 +229,7 @@ def test_pyproject_keywords_and_license_files():
     assert "LICENSE" in license_files
     assert "NOTICE" in license_files
     assert "THIRD_PARTY_LICENSES.md" in license_files
+    assert "THIRD_PARTY_LICENSES.txt" in license_files
 
 
 def test_marketing_log_and_audit():
@@ -249,3 +251,91 @@ def test_changelog_unreleased_entry():
     assert "2026-09-26" in changelog_text
     assert "NOTICE" in changelog_text
     assert "Level 1 SBOM" in changelog_text
+
+
+def test_auto_assign_and_label_sync_workflows():
+    """Verify canonical auto-assign.yml, label-sync.yml, and labels.yml exist with guardrails."""
+    workflows_dir = REPO_ROOT / ".github" / "workflows"
+    auto_assign_file = workflows_dir / "auto-assign.yml"
+    label_sync_file = workflows_dir / "label-sync.yml"
+    labels_file = REPO_ROOT / ".github" / "labels.yml"
+
+    assert auto_assign_file.is_file(), "Missing .github/workflows/auto-assign.yml"
+    assert label_sync_file.is_file(), "Missing .github/workflows/label-sync.yml"
+    assert labels_file.is_file(), "Missing .github/labels.yml"
+
+    aa_text = auto_assign_file.read_text(encoding="utf-8")
+    assert "actions/github-script@v7" in aa_text
+    assert "timeout-minutes: 5" in aa_text
+    assert "cancel-in-progress: true" in aa_text
+    assert "pull-requests: write" in aa_text
+
+    ls_text = label_sync_file.read_text(encoding="utf-8")
+    assert "EndBug/label-sync@v2" in ls_text
+    assert "timeout-minutes: 5" in ls_text
+    assert "cancel-in-progress: true" in ls_text
+    assert "config-file: .github/labels.yml" in ls_text
+    assert "issues: write" in ls_text
+
+    labels_text = labels_file.read_text(encoding="utf-8")
+    for standard_label in [
+        "bug",
+        "enhancement",
+        "good first issue",
+        "help wanted",
+        "documentation",
+        "duplicate",
+        "wontfix",
+        "priority: high",
+        "priority: low",
+        "needs-triage",
+        "stale",
+    ]:
+        has_label = (
+            f"name: {standard_label}" in labels_text or f"name: '{standard_label}'" in labels_text
+        )
+        assert has_label, f"Missing label {standard_label} in labels.yml"
+
+
+def test_third_party_licenses_plain_text():
+    """Verify plain-text companion THIRD_PARTY_LICENSES.txt exists with Level 1 SBOM invariants."""
+    txt_file = REPO_ROOT / "THIRD_PARTY_LICENSES.txt"
+    assert txt_file.is_file(), "Missing THIRD_PARTY_LICENSES.txt"
+    txt_content = txt_file.read_text(encoding="utf-8")
+
+    assert "LEVEL 1 SBOM" in txt_content or "Level 1 SBOM" in txt_content
+    assert "INV-LOCAL-01" in txt_content
+    assert "INV-SLA-10" in txt_content
+    assert "RunAsInvoker" in txt_content
+    assert "Zero-Copyleft" in txt_content
+    assert "2026-09-28" in txt_content
+
+    # Verify cross-reference in NOTICE
+    notice_text = (REPO_ROOT / "NOTICE").read_text(encoding="utf-8")
+    assert "THIRD_PARTY_LICENSES.txt" in notice_text
+
+
+def test_gitignore_multihost_and_lock_defense():
+    """Verify .gitignore contains multi-host tokens, canonical locks, and OS/editor patterns."""
+    gi_text = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "*-IDEAPAD*" in gi_text
+    assert "*_WORKSTATION*" in gi_text
+    assert "*_WORKSTATION-LG*" in gi_text
+    assert "*-WORKSTATION.*" in gi_text
+    assert "*-WORKSTATION-LG.*" in gi_text
+    assert "LOCK*.txt" in gi_text
+    assert ".automation-lock" in gi_text
+    assert "Desktop.ini" in gi_text
+    assert ".pytest_tmp*/" in gi_text
+
+
+def test_pyproject_pytest_norecursedirs_hardened():
+    """Verify pytest norecursedirs includes .pytest_tmp* and .tox."""
+    pyproject_path = REPO_ROOT / "pyproject.toml"
+    with open(pyproject_path, "rb") as f:
+        data = tomllib.load(f)
+
+    ini_options = data.get("tool", {}).get("pytest", {}).get("ini_options", {})
+    norecursedirs = ini_options.get("norecursedirs", [])
+    assert ".pytest_tmp*" in norecursedirs
+    assert ".tox" in norecursedirs

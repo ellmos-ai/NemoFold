@@ -127,3 +127,34 @@ German (DE):
     - Validated all tests passing, ruff clean, lint_mermaid clean (0 errors in 11 files).
 
 AUDIT STATUS: VERIFIED (Pfad B Discoverability, Visual Architecture, 18-Point Bilingual Parity, Comparative Matrix, Root NOTICE & Level 1 SBOM complete)
+
+================================================================================
+7. IMPLEMENTED PFAD A TECHNICAL HYGIENE & CI LIFECYCLE AUDIT (2026-09-28)
+================================================================================
+[x] CI/CD Lifecycle Automation & Hardening:
+    - Added `.github/workflows/auto-assign.yml` (actions/github-script@v7, timeout-minutes: 5, least-privilege `pull-requests: write`, concurrency cancellation).
+    - Added `.github/workflows/label-sync.yml` (EndBug/label-sync@v2, timeout-minutes: 5, least-privilege `issues: write`).
+    - Provisioned canonical `.github/labels.yml` with 11 standard labels per GOVERNANCE.md §4.2.
+[x] Multi-Host & Cloud-Sync Defense (.gitignore):
+    - Added host tokens (`*-IDEAPAD*`, `*_WORKSTATION*`, `*_WORKSTATION-LG*`, `*-WORKSTATION.*`, `*-WORKSTATION-LG.*`, `*.sync-conflict-*`, `*.conflict`).
+    - Added canonical locks (`LOCK*.txt`, `.automation-lock`).
+    - Added OS/editor artifacts (`Desktop.ini`, `desktop.ini`, `Thumbs.db`, `ehthumbs.db`, `.DS_Store`, `*.swp`, `*.swo`).
+    - Maintained `!package-lock.json` and `!uv.lock`.
+[x] PEP 621 Standardisation (pyproject.toml):
+    - Standardized `license-files = ["LICENSE", "NOTICE", "THIRD_PARTY_LICENSES.md", "THIRD_PARTY_LICENSES.txt"]`.
+    - Registered `"Third-Party Licenses (Text)"` in `[project.urls]`.
+    - Hardened pytest `norecursedirs` with `.pytest_tmp*` and `.tox`.
+    - Enforced strict version freeze per T-20260920-167562623 (version 0.2.1 unchanged).
+[x] Level 1 SBOM Plain-Text Companion (THIRD_PARTY_LICENSES.txt):
+    - Created `THIRD_PARTY_LICENSES.txt` companion file Stand 2026-09-28.
+    - Verified zero copyleft dependencies, unprivileged user-mode execution (INV-RUNAS-08 `RunAsInvoker`), Zero-Egress isolation guarantee, and full compliance with INV-LOCAL-01 through INV-SLA-10.
+    - Updated `NOTICE` with cross-reference to `THIRD_PARTY_LICENSES.txt`.
+    - Re-audited `THIRD_PARTY_LICENSES.md` Stand 2026-09-28.
+[x] Context & Documentation Parity:
+    - Synchronized `README.md` and `README_de.md` badges to Verified-2026--09--28, Last-Checked-2026--09--28, and Level 1 SBOM Plain Text.
+    - Updated `llms.txt` Stand 2026-09-28.
+    - Documented changes in `CHANGELOG.md` under `## [Unreleased]`.
+[x] Automated Contract Verification:
+    - Expanded `tests/unit/test_metadata.py` with 4 new contract tests validating lifecycle workflows, label configuration, plain-text SBOM companion, and gitignore defense.
+
+AUDIT STATUS: VERIFIED (Pfad A Technical Hygiene, CI Lifecycle Workflows, Multi-Host Lock Defense, Level 1 SBOM Text Companion & Contract Tests complete)
