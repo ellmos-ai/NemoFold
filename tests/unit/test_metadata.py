@@ -339,3 +339,58 @@ def test_pyproject_pytest_norecursedirs_hardened():
     norecursedirs = ini_options.get("norecursedirs", [])
     assert ".pytest_tmp*" in norecursedirs
     assert ".tox" in norecursedirs
+
+
+def test_bilingual_contributing_parity_and_invariants():
+    """Verify CONTRIBUTING.md contains bilingual sections, 10 invariants, RunAsInvoker,
+    and Plan D."""
+    contrib_path = REPO_ROOT / "CONTRIBUTING.md"
+    assert contrib_path.is_file(), "Missing CONTRIBUTING.md"
+    content = contrib_path.read_text(encoding="utf-8")
+
+    assert "## English" in content
+    assert "## Deutsch" in content
+    assert "RunAsInvoker" in content
+    assert "T-20260920-167562623" in content
+    assert "0.2.1" in content
+    assert "Plan D" in content
+    assert "MIT License" in content
+
+    for inv in [
+        "INV-LOCAL-01",
+        "INV-EVID-02",
+        "INV-ACTION-03",
+        "INV-GATE-04",
+        "INV-ISOL-05",
+        "INV-PROV-06",
+        "INV-POLICY-07",
+        "INV-RUNAS-08",
+        "INV-DET-09",
+        "INV-SLA-10",
+    ]:
+        assert inv in content, f"Missing invariant {inv} in CONTRIBUTING.md"
+
+
+def test_gitignore_extended_lock_defense():
+    """Verify .gitignore includes extended lock patterns and host tokens."""
+    gi_text = (REPO_ROOT / ".gitignore").read_text(encoding="utf-8")
+    assert "LOCK.dev.*" in gi_text
+    assert "LOCK.antigravity.*" in gi_text
+    assert "LOCK.bugsearch.*" in gi_text
+    assert "TASKPLAN_*.md" in gi_text
+    assert "*-IDEAPAD-GEI*" in gi_text
+
+
+def test_level1_sbom_currency_20261001():
+    """Verify THIRD_PARTY_LICENSES.md and THIRD_PARTY_LICENSES.txt document the 2026-10-01 audit."""
+    md_text = (REPO_ROOT / "THIRD_PARTY_LICENSES.md").read_text(encoding="utf-8")
+    txt_text = (REPO_ROOT / "THIRD_PARTY_LICENSES.txt").read_text(encoding="utf-8")
+
+    assert "2026-10-01" in md_text
+    assert "2026-10-01" in txt_text
+    assert "RunAsInvoker" in md_text
+    assert "RunAsInvoker" in txt_text
+
+    for inv in ["INV-LOCAL-01", "INV-RUNAS-08", "INV-SLA-10"]:
+        assert inv in md_text
+        assert inv in txt_text

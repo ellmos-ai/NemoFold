@@ -4,6 +4,14 @@ All notable changes to NemoFold are documented here.
 
 ## [Unreleased]
 
+- Pfad A Technical Hygiene, Bilingual CONTRIBUTING Guidelines, Lock Defense & Level 1 SBOM Re-Audit (2026-10-01):
+  - Bilingual Developer Guidelines: Replaced minimal stub with comprehensive bilingual `CONTRIBUTING.md` (EN/DE) specifying all 10 governance invariants `INV-LOCAL-01` through `INV-SLA-10`, unprivileged user-mode execution (`RunAsInvoker`), Plan D local development workflow (`C:\_Local_DEV\repos\NemoFold`), 48h Security Response SLA, and MIT licensing terms.
+  - Multi-Host Cloud-Sync & Lock Defense: Hardened `.gitignore` with additional canonical lock patterns (`LOCK.dev.*`, `LOCK.antigravity.*`, `LOCK.bugsearch.*`), task plans (`TASKPLAN_*.md`), and host tokens (`*-IDEAPAD-GEI*`, `*-IDEAPAD-GEI.*`).
+  - Level 1 SBOM Stand 2026-10-01 Re-Audit: Re-audited `THIRD_PARTY_LICENSES.txt` and `THIRD_PARTY_LICENSES.md` certifying 100% permissive dependencies (zero copyleft, zero AGPL/GPL), `RunAsInvoker` non-elevation, Zero-Egress isolation, and full compliance with `INV-LOCAL-01` to `INV-SLA-10`.
+  - Documentation & Badge Parity: Synchronized `README.md` and `README_de.md` badges to Verified-2026--10--01, Last-Checked-2026--10--01, and 1096 passed | 1 skipped tests; updated `llms.txt` Stand 2026-10-01 with primary documentation reference to `CONTRIBUTING.md`.
+  - Version Freeze Discipline: Preserved version `0.2.1` strictly unchanged per `T-20260920-167562623`.
+  - Contract Test Suite Expansion: Expanded `tests/unit/test_metadata.py` with 3 new contract tests validating bilingual `CONTRIBUTING.md` invariant parity, extended `.gitignore` lock patterns, and Level 1 SBOM currency 2026-10-01 (21/21 passed | 100% green).
+
 - Pfad A Technical Hygiene, CI Lifecycle Workflows & Level 1 SBOM Hardening (2026-09-28):
   - CI Lifecycle Automation: Provisioned `.github/workflows/auto-assign.yml` (actions/github-script@v7, timeout-minutes: 5, least-privilege `pull-requests: write`, concurrency cancellation) and `.github/workflows/label-sync.yml` (EndBug/label-sync@v2, timeout-minutes: 5, least-privilege `issues: write`).
   - Label Governance: Established canonical `.github/labels.yml` with 11 standard labels according to GOVERNANCE.md §4.2.

@@ -158,3 +158,33 @@ AUDIT STATUS: VERIFIED (Pfad B Discoverability, Visual Architecture, 18-Point Bi
     - Expanded `tests/unit/test_metadata.py` with 4 new contract tests validating lifecycle workflows, label configuration, plain-text SBOM companion, and gitignore defense.
 
 AUDIT STATUS: VERIFIED (Pfad A Technical Hygiene, CI Lifecycle Workflows, Multi-Host Lock Defense, Level 1 SBOM Text Companion & Contract Tests complete)
+
+================================================================================
+8. IMPLEMENTED PFAD A TECHNICAL HYGIENE & BILINGUAL CONTRIBUTING EXPANSION (2026-10-01)
+================================================================================
+[x] Bilingual Developer Guidelines (CONTRIBUTING.md):
+    - Expanded minimal stub to comprehensive bilingual guidelines (English & German).
+    - Formalized all 10 governance and runtime invariants (INV-LOCAL-01 through INV-SLA-10).
+    - Certified unprivileged user-mode execution (INV-RUNAS-08 RunAsInvoker).
+    - Documented canonical Plan D local development workflow (C:\_Local_DEV\repos\NemoFold).
+    - Preserved version freeze policy T-20260920-167562623 (version 0.2.1 frozen).
+    - Specified 48h acknowledgment and 5-business-day triage security SLA (INV-SLA-10).
+    - Reaffirmed MIT licensing terms.
+[x] Multi-Host Cloud-Sync & Lock Defense (.gitignore):
+    - Hardened with additional canonical lock patterns (LOCK.dev.*, LOCK.antigravity.*, LOCK.bugsearch.*).
+    - Protected task plan artifacts (TASKPLAN_*.md).
+    - Extended multi-host tokens (*-IDEAPAD-GEI*, *-IDEAPAD-GEI.*).
+[x] Level 1 SBOM Stand 2026-10-01 Re-Audit:
+    - Re-audited THIRD_PARTY_LICENSES.txt and THIRD_PARTY_LICENSES.md Stand 2026-10-01.
+    - Verified 100% permissive dependencies (zero copyleft, zero AGPL/GPL).
+    - Re-certified RunAsInvoker non-elevation and Zero-Egress isolation.
+    - Verified invariant cross-reference matrix INV-LOCAL-01..INV-SLA-10.
+[x] Context & Documentation Parity:
+    - Synchronized README.md and README_de.md badges to Verified-2026--10--01, Last-Checked-2026--10--01, and 1096 passed | 1 skipped tests.
+    - Updated llms.txt Stand 2026-10-01 with primary documentation link to CONTRIBUTING.md.
+    - Documented advancements under ## [Unreleased] in CHANGELOG.md.
+[x] Automated Contract Verification Suite (tests/unit/test_metadata.py):
+    - Added 3 new contract tests: test_bilingual_contributing_parity_and_invariants, test_gitignore_extended_lock_defense, test_level1_sbom_currency_20261001.
+    - 21/21 metadata contract tests passed (100% green in 0.39s).
+
+AUDIT STATUS: VERIFIED (Pfad A Technical Hygiene, Bilingual CONTRIBUTING Expansion, Extended Lock Defense, Level 1 SBOM Re-Audit & Contract Tests complete)

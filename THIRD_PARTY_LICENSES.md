@@ -2,7 +2,7 @@
 
 > **Project:** `ellmos-ai/NemoFold`<br>
 > **Version:** `0.2.1` (frozen per `T-20260920-167562623`)<br>
-> **Audited:** 2026-09-28 (Pfad A Re-Audit; Prior audits: 2026-09-26, 2026-09-19, 2026-09-18)<br>
+> **Audited:** 2026-10-01 (Pfad A Re-Audit; Prior audits: 2026-09-28, 2026-09-26, 2026-09-19, 2026-09-18)<br>
 > **Repository License:** [MIT License](LICENSE)<br>
 > **Attribution NOTICE:** [NOTICE](NOTICE)<br>
 > **Plain-Text Companion:** [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)<br>
