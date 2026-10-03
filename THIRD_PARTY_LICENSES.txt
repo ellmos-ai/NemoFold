@@ -1,6 +1,6 @@
 THIRD-PARTY LICENSES & LEVEL 1 SBOM NOTICE
 Project: ellmos-ai/NemoFold (NemoFold)
-Audited: 2026-10-01 (Pfad A Re-Audit; Prior audits: 2026-09-28, 2026-09-26, 2026-09-19, 2026-09-18)
+Audited: 2026-10-03 (Pfad B Re-Audit; Prior audits: 2026-10-01, 2026-09-28, 2026-09-26, 2026-09-19, 2026-09-18)
 Repository Version: 0.2.1 (Version Freeze per T-20260920-167562623)
 Repository License: MIT License (see LICENSE)
 Repository Attribution Notice: NOTICE (see NOTICE)

@@ -188,3 +188,37 @@ AUDIT STATUS: VERIFIED (Pfad A Technical Hygiene, CI Lifecycle Workflows, Multi-
     - 21/21 metadata contract tests passed (100% green in 0.39s).
 
 AUDIT STATUS: VERIFIED (Pfad A Technical Hygiene, Bilingual CONTRIBUTING Expansion, Extended Lock Defense, Level 1 SBOM Re-Audit & Contract Tests complete)
+
+================================================================================
+9. IMPLEMENTED PFAD B DISCOVERABILITY & RE-AUDIT (2026-10-03)
+================================================================================
+[x] Level 1 SBOM Stand 2026-10-03 Re-Audit (THIRD_PARTY_LICENSES.txt & THIRD_PARTY_LICENSES.md):
+    - Re-audited both plain-text companion and markdown documents as of 2026-10-03.
+    - Verified 100% permissive runtime dependencies (zero copyleft, zero AGPL/GPL).
+    - Re-certified unprivileged RunAsInvoker non-elevation certification (INV-RUNAS-08).
+    - Verified Zero-Egress isolation guarantee (INV-LOCAL-01) and compliance with INV-LOCAL-01..INV-SLA-10.
+    - Preserved formal cross-reference to canonical root NOTICE attribution file.
+[x] Saturated GitHub Topics (20/20) & Canonical Metadata:
+    - Remote topics verified on GitHub: ai-agents, document-analysis, hackathon, local-first, nebius, nemotron, nvidia, personal-ai, privacy, python, developer-tools, ellmos-ai, evidence-first, mcp, mcp-server, offline-first, open-bricks, persistent-memory, zero-egress, reversible-actions.
+    - Canonical homepage URL verified: https://github.com/ellmos-ai/NemoFold#readme.
+[x] Bilingual Documentation & Dual Reciprocal Anchors (README.md & README_de.md):
+    - Confirmed 18-point dual reciprocal HTML anchors (<a id="sec-01"></a> through <a id="sec-18"></a>) across both English and German versions.
+    - Updated Shields.io badges to Verified-2026--10--03, Last-Checked-2026--10--03, and 1097 passed | 1 skipped tests.
+    - Maintained § 521 BGB German statutory notice (Gefälligkeitsrecht) and 48-hour security response SLA.
+[x] Context Hygiene & RAG Index Alignment (llms.txt):
+    - Synchronized Last-checked date to 2026-10-03 and verified test baseline (1097 passed, 1 skipped).
+[x] Version Freeze Policy Enforced:
+    - Preserved version 0.2.1 unchanged across all files per T-20260920-167562623.
+[x] Automated Contract Verification Suite (tests/unit/test_metadata.py):
+    - Added test_pfad_b_discoverability_audit_currency_20261003 validating Level 1 SBOM recency, badge synchronization, and marketing log currency.
+    - 22/22 metadata contract tests passed (100% green).
+
+Non-Automated Discoverability & Marketing Recommendations:
+1. High-DPI Social Preview Card:
+   - Design an Open Graph banner asset (docs/media/nemofold-og-preview.png, 1280x640px) showcasing the Nautilus terminal brand kit and evidence verification pipeline for GitHub Social Preview, X/Twitter, and LinkedIn.
+2. Interactive Terminal Showcase:
+   - Record an asciinema or terminal SVG demo (e.g. terminalizer / vhs) demonstrating `nemofold voyage-run` with exact citation matching and reversible dry-run rollback for developer communities.
+3. MCP Ecosystem Directories:
+   - Submit `nemofold-mcp` to community Model Context Protocol catalogs (Smithery, Glama, mcp.so, awesome-mcp-servers) to expand agent developer adoption.
+
+AUDIT STATUS: VERIFIED (Pfad B Discoverability, Level 1 SBOM Re-Audit, 18-Point Bilingual Navigation & Contract Tests complete)

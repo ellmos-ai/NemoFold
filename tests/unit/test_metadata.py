@@ -394,3 +394,26 @@ def test_level1_sbom_currency_20261001():
     for inv in ["INV-LOCAL-01", "INV-RUNAS-08", "INV-SLA-10"]:
         assert inv in md_text
         assert inv in txt_text
+
+
+def test_pfad_b_discoverability_audit_currency_20261003():
+    """Verify Level 1 SBOM, badges, llms.txt, and MARKETING-LOG.txt document 2026-10-03 audit."""
+    md_text = (REPO_ROOT / "THIRD_PARTY_LICENSES.md").read_text(encoding="utf-8")
+    txt_text = (REPO_ROOT / "THIRD_PARTY_LICENSES.txt").read_text(encoding="utf-8")
+    readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    readme_de = (REPO_ROOT / "README_de.md").read_text(encoding="utf-8")
+    llms_text = (REPO_ROOT / "llms.txt").read_text(encoding="utf-8")
+    marketing_text = (REPO_ROOT / "MARKETING-LOG.txt").read_text(encoding="utf-8")
+    changelog_text = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+
+    assert "2026-10-03" in md_text, "THIRD_PARTY_LICENSES.md missing 2026-10-03 audit date"
+    assert "2026-10-03" in txt_text, "THIRD_PARTY_LICENSES.txt missing 2026-10-03 audit date"
+    assert "Verified-2026--10--03" in readme_en
+    assert "Last--Checked-2026--10--03" in readme_en
+    assert "Verified-2026--10--03" in readme_de
+    assert "Last--Checked-2026--10--03" in readme_de
+    assert "Last-checked: 2026-10-03" in llms_text
+    assert "9. IMPLEMENTED PFAD B DISCOVERABILITY & RE-AUDIT (2026-10-03)" in marketing_text
+    assert "Pfad B Discoverability, Level 1 SBOM Re-Audit & Marketing Registry (2026-10-03)" in (
+        changelog_text
+    )

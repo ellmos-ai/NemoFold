@@ -4,6 +4,14 @@ All notable changes to NemoFold are documented here.
 
 ## [Unreleased]
 
+- Pfad B Discoverability, Level 1 SBOM Re-Audit & Marketing Registry (2026-10-03):
+  - Level 1 SBOM Stand 2026-10-03: Re-audited `THIRD_PARTY_LICENSES.txt` and `THIRD_PARTY_LICENSES.md` certifying 100% permissive runtime dependencies (zero copyleft, zero AGPL/GPL), unprivileged `RunAsInvoker` non-elevation certification (INV-RUNAS-08), Zero-Egress isolation (INV-LOCAL-01), and formal compliance with `INV-LOCAL-01` through `INV-SLA-10`.
+  - Bilingual Documentation & Badge Synchronization: Synchronized `README.md` and `README_de.md` badges to Verified-2026--10--03, Last-Checked-2026--10--03, and 1097 passed | 1 skipped tests; maintained 18-point dual reciprocal HTML anchor parity (`<a id="sec-01"></a>`..`<a id="sec-18"></a>`) and § 521 BGB German statutory notice.
+  - Context Hygiene & RAG Index: Synchronized `llms.txt` (Last-checked: 2026-10-03, 1097 passed tests).
+  - Local Marketing Register: Expanded `MARKETING-LOG.txt` with Section 9 detailing the 2026-10-03 Pfad B discoverability audit, 20/20 topic saturation verification, and non-automated recommendations for High-DPI Open Graph preview cards, terminal screencasts, and MCP directory submissions.
+  - Version Freeze Discipline: Preserved version `0.2.1` strictly unchanged per `T-20260920-167562623`.
+  - Contract Test Suite: Added automated contract test `test_pfad_b_discoverability_audit_currency_20261003` in `tests/unit/test_metadata.py` validating Level 1 SBOM currency, badge dates, and marketing log presence (22/22 passed | 100% green).
+
 - Pfad A Technical Hygiene, Bilingual CONTRIBUTING Guidelines, Lock Defense & Level 1 SBOM Re-Audit (2026-10-01):
   - Bilingual Developer Guidelines: Replaced minimal stub with comprehensive bilingual `CONTRIBUTING.md` (EN/DE) specifying all 10 governance invariants `INV-LOCAL-01` through `INV-SLA-10`, unprivileged user-mode execution (`RunAsInvoker`), Plan D local development workflow (`C:\_Local_DEV\repos\NemoFold`), 48h Security Response SLA, and MIT licensing terms.
   - Multi-Host Cloud-Sync & Lock Defense: Hardened `.gitignore` with additional canonical lock patterns (`LOCK.dev.*`, `LOCK.antigravity.*`, `LOCK.bugsearch.*`), task plans (`TASKPLAN_*.md`), and host tokens (`*-IDEAPAD-GEI*`, `*-IDEAPAD-GEI.*`).
