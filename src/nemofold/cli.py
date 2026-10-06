@@ -1529,7 +1529,7 @@ def _resume_job_command(args: argparse.Namespace) -> int:
             ),
             run_id=args.run_id,
         )
-    except (JobFileError, OSError, ValueError) as exc:
+    except (JobFileError, OSError, ValueError, RuntimeError) as exc:
         print(json.dumps({"status": "blocked", "errors": [str(exc)]}, indent=2))
         return 2
     _print_job_result(result)

@@ -6,7 +6,7 @@ import math
 import os
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Protocol
@@ -32,7 +32,9 @@ MAX_RESPONSE_BYTES = 2 * 1024 * 1024
 
 @dataclass(frozen=True, slots=True)
 class TokenFactoryConfig:
-    api_key: str
+    # Kept out of repr, like ProviderConfig's key: a logged config must not
+    # carry the credential with it.
+    api_key: str = field(repr=False)
     input_price_usd_per_million: float
     output_price_usd_per_million: float
     max_completion_tokens: int = 1200

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from datetime import date as calendar_date
 
 from .primitives import Anchor, anchored_sentences
 
@@ -43,7 +44,7 @@ UNCERTAIN_TERMS = (
 )
 
 _DATE = re.compile(r"\b(?P<day>[0-3]?\d)\.(?P<month>[01]?\d)\.(?P<year>\d{4})\b")
-_CLOCK = re.compile(r"\b(?P<hour>[0-2]?\d):(?P<minute>[0-5]\d)\b")
+_CLOCK = re.compile(r"\b(?P<hour>[01]?\d|2[0-3]):(?P<minute>[0-5]\d)\b")
 _ISO_DATE = re.compile(r"\b(?P<year>\d{4})-(?P<month>[01]\d)-(?P<day>[0-3]\d)\b")
 
 
@@ -102,26 +103,51 @@ def parse_times(text: str) -> tuple[TimePoint, ...]:
     A bare "21:30" without a date says the hour, not the day, and inventing the
     day from a neighbouring sentence is exactly the guess this module refuses.
     """
+    # Both spellings are gathered first and read in written order, so "vom
+    # 2026-03-01 bis 05.03.2026" keeps its start before its end.
+    dates = sorted(
+        [(match, True) for match in _DATE.finditer(text)]
+        + [(match, False) for match in _ISO_DATE.finditer(text)],
+        key=lambda item: item[0].start(),
+    )
     points: list[TimePoint] = []
-    for match in _DATE.finditer(text):
-        tail = text[match.end():match.end() + 24]
-        clock = _CLOCK.search(tail)
-        head = text[max(0, match.start() - 24):match.start()]
-        if clock is None:
-            clock = _CLOCK.search(head)
+    claimed: set[int] = set()
+    for position, (match, takes_clock) in enumerate(dates):
+        day, month, year = match.group("day"), match.group("month"), match.group("year")
+        try:
+            calendar_date(int(year), int(month), int(day))
+        except ValueError:
+            # 31.02. is not a day; reporting it would put an impossible point on
+            # the timeline.
+            continue
+        clock = None
+        if takes_clock:
+            # A clock time belongs to this date only if no other date stands
+            # between them and no earlier date already took it.
+            following = dates[position + 1][0].start() if position + 1 < len(dates) else None
+            limit = match.end() + 24
+            if following is not None:
+                limit = min(limit, following)
+            clock = _CLOCK.search(text, match.end(), limit)
+            if clock is not None and clock.start() in claimed:
+                clock = None
+            if clock is None:
+                preceding = dates[position - 1][0].end() if position else 0
+                for candidate in _CLOCK.finditer(
+                    text, max(preceding, match.start() - 24), match.start()
+                ):
+                    if candidate.start() not in claimed:
+                        clock = candidate
+        if clock is not None:
+            claimed.add(clock.start())
         value, precision = _iso(
-            match.group("day"),
-            match.group("month"),
-            match.group("year"),
+            day,
+            month,
+            year,
             (clock.group("hour"), clock.group("minute")) if clock else None,
         )
         raw = match.group(0) if clock is None else f"{match.group(0)} {clock.group(0)}"
         points.append(TimePoint(value=value, precision=precision, raw=raw))
-    for match in _ISO_DATE.finditer(text):
-        value, precision = _iso(
-            match.group("day"), match.group("month"), match.group("year"), None
-        )
-        points.append(TimePoint(value=value, precision=precision, raw=match.group(0)))
     if points:
         return tuple(points)
     folded = text.casefold()

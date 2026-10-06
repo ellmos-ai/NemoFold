@@ -282,6 +282,11 @@ const workflowDefaults = {
     parameters: {wiki_dir: ""},
     hint: "Wiki Export writes the corpus as a walkable wiki: one page per document plus an index. Nothing is summarised, because a page that disagrees with the file it came from is worse than no page."
   },
+  chunk_export: {
+    questions: [],
+    parameters: {chunk_chars: 1200, overlap_chars: 200},
+    hint: "Chunk Export cuts every readable document into overlapping retrieval units for your own RAG index. Each chunk keeps its source, character offsets, lines and a SHA-256 of its text; a corpus larger than the declared bound is refused whole rather than exported in part."
+  },
   pattern_mining: {
     questions: [],
     parameters: {formats: ["md"], min_support: 3, focus_terms: []},
@@ -773,6 +778,10 @@ const workflowCards = {
     title: "Wiki Export",
     benefit: "Turn a folder into a walkable wiki whose pages stay equal to their files."
   },
+  chunk_export: {
+    title: "Chunk Export",
+    benefit: "Hand your own RAG index chunks that each still say where they came from."
+  },
   pattern_mining: {
     title: "Pattern Mining",
     benefit: "See which lines recur across a big pile of logs, how often, and from where."
@@ -1072,7 +1081,7 @@ const registryGroups = [
   {title: "Intake and filing", workflows: ["smart_inbox", "cleanup_rules", "storage_policy"]},
   {title: "Mail", workflows: ["mail_to_case", "controlled_email"]},
   {title: "Reading a corpus", workflows: ["evidence_analyst", "bundle_export", "fact_distill",
-    "synopsis_merge", "document_registry", "corpus_query", "pattern_mining", "ocr_pipeline"]},
+    "synopsis_merge", "document_registry", "corpus_query", "pattern_mining", "chunk_export", "ocr_pipeline"]},
   {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
     "coverage_timeline", "cost_timeline", "subscription_reconcile", "medication_reconcile", "database_reader", "alibi_weave", "contradiction_synopsis"]},
   {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "routine_query", "version_resolver",

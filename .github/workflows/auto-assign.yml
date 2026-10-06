@@ -4,8 +4,10 @@ on:
   pull_request_target:
     types: [opened]
 
+# Grouped per pull request: under pull_request_target github.ref is the base
+# branch, so a ref-wide group let one PR's run cancel another's assignment.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
@@ -23,13 +25,18 @@ jobs:
             const repo = context.repo.repo;
             const pr_number = context.payload.pull_request.number;
 
-            // Get repo owner (first admin)
+            // A personal repository is assigned to its owner. An organization
+            // cannot be an assignee (GitHub silently drops it), so an
+            // organization repository assigns the PR's author instead; GitHub
+            // likewise drops an author who cannot be assigned here.
             const { data: repoData } = await github.rest.repos.get({ owner, repo });
-            const repoOwner = repoData.owner.login;
+            const assignee = repoData.owner.type === 'Organization'
+              ? context.payload.pull_request.user.login
+              : repoData.owner.login;
 
             await github.rest.issues.addAssignees({
               owner,
               repo,
               issue_number: pr_number,
-              assignees: [repoOwner]
+              assignees: [assignee]
             });

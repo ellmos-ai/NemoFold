@@ -69,7 +69,8 @@ def verify_run_report(
     )
     try:
         payload = json.loads(report_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
+    except (OSError, ValueError, RecursionError):
+        # ValueError covers both malformed JSON and bytes that are not UTF-8.
         return ReportVerification(False, None, ("report_json_invalid",), 0)
     if not isinstance(payload, dict):
         return ReportVerification(False, None, ("report_contract_invalid",), 0)

@@ -9,7 +9,7 @@ English | [Deutsch](README_de.md)
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1097%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1154%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-success.svg)](#sec-05)
@@ -70,7 +70,7 @@ corpus. The evidence contract does not change between them - only the worker doe
 | 3 | [Target Personas & Discoverability](#3-target-personas--discoverability) | 4 user personas ([PERSONA-01] to [PERSONA-04]) & high-intent search queries |
 | 4 | [Comparative Matrix vs. Alternatives](#4-comparative-matrix-vs-alternatives) | 10-dimension architectural matrix against 4 industry alternatives |
 | 5 | [Governance & Runtime Invariants](#5-governance--runtime-invariants) | Core security guarantees: INV-LOCAL-01 through INV-SLA-10 |
-| 6 | [Implemented Document Workflows](#6-implemented-document-workflows) | 43 production-ready workflows built from 4 shared primitives |
+| 6 | [Implemented Document Workflows](#6-implemented-document-workflows) | 44 production-ready workflows built from 4 shared primitives |
 | 7 | [Installation & Quick Start](#7-installation--quick-start) | Environment setup, editable install, and CLI verification |
 | 8 | [Offline Proof & Verification](#8-offline-proof--verification) | Local synthetic corpus verification, zero cloud proof, fail-closed path |
 | 9 | [Executing Real Local Jobs](#9-executing-real-local-jobs) | Single-command workflow execution with preview and rollback |
@@ -193,7 +193,7 @@ sequenceDiagram
 - **[PERSONA-04] Investigative Journalists, Researchers & Evidence Curators**
   - *Context:* Investigating massive document leaks, public records, and conflicting historical testimonies.
   - *Pain Point:* Manual cross-referencing is slow; conventional summarizers suppress dissenting voices and silently discard duplicate evidence.
-  - *Solution:* 43 specialized workflows including Fact Distill (deduplicates while archiving struck occurrences in a dedicated appendix) and Synopsis Merge (highlights conflicting narratives as explicit conflict blocks).
+  - *Solution:* 44 specialized workflows including Fact Distill (deduplicates while archiving struck occurrences in a dedicated appendix) and Synopsis Merge (highlights conflicting narratives as explicit conflict blocks).
 
 ### High-Intent Search Queries
 
@@ -219,7 +219,7 @@ sequenceDiagram
 | **4. Approval Gates** | **Multi-Tier (Local / Remote / Spend)** | Implicit Cloud Upload | N/A (No Automation) | Often Ungated Auto-Execution | `INV-GATE-04` |
 | **5. Package Sanitization** | **Path-Free / Hash-Verified Packages** | Raw File Transmission | N/A | Variable / Host Leaks Common | `INV-ISOL-05` |
 | **6. Attack Surface** | **Loopback-Only (127.0.0.1)** | Public Multi-Tenant SaaS | Local GUI Only | Often Exposed HTTP Endpoints | `INV-PROV-06` |
-| **7. Workflow Architecture** | **4 Primitives / 43 Workflows** | Monolithic Chat Interface | Keyword Search Index | Complex Dynamic Graphs | `INV-POLICY-07` |
+| **7. Workflow Architecture** | **4 Primitives / 44 Workflows** | Monolithic Chat Interface | Keyword Search Index | Complex Dynamic Graphs | `INV-POLICY-07` |
 | **8. Privilege Boundary** | **Unprivileged `RunAsInvoker`** | Browser Sandbox | Standard User Space | Often Demands Root/Sudo | `INV-RUNAS-08` |
 | **9. Auditability** | **Cryptographic SHA-256 Ledgers** | Proprietary Session Log | Minimal Plaintext Log | Transient Memory Dumps | `INV-DET-09` |
 | **10. Vulnerability SLA** | **48h Ack / 5d Triage Public SLA** | Enterprise Support Contract | Volunteer / Inactive | Best-Effort GitHub Issues | `INV-SLA-10` |
@@ -240,7 +240,7 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 | **INV-GATE-04** | Multi-Tier Explicit Approval Gates | File actions, external model transfers, cloud spend ceilings, and network exposure require explicit operator flags. | Verified in `tests/unit/test_gates.py` |
 | **INV-ISOL-05** | Path-Free Sanitized Packaging | Outbound packages strip host paths, secrets, symlinks, and unapproved files; preflight validates package before network transit. | Verified in `tests/unit/test_package_validator.py` |
 | **INV-PROV-06** | Provider-Neutral Loopback Surface | Pluggable local and remote backends; unauthenticated interfaces and Captain's Desk restricted strictly to loopback (127.0.0.1). | Verified in `tests/e2e/test_webapp.py` |
-| **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 43 document workflows; reusable voyage drafts adapt without model fine-tuning. | Verified in `tests/unit/test_primitives.py` |
+| **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 44 document workflows; reusable voyage drafts adapt without model fine-tuning. | Verified in `tests/unit/test_primitives.py` |
 | **INV-RUNAS-08** | Unprivileged User-Mode (`RunAsInvoker`) | Operates entirely under standard user privileges (`RunAsInvoker`); zero system daemon or administrative elevation required. | Verified in `THIRD_PARTY_LICENSES.md` |
 | **INV-DET-09** | Deterministic Artifacts & Ledgers | Deterministic SVG figures, structured reports, and cryptographic SHA-256 run ledgers guarantee reproducible audit trails. | Verified in `tests/unit/test_report_studio.py` |
 | **INV-SLA-10** | 48h Security & Triage SLA | Security vulnerability disclosures acknowledged within 48h; triage and remediation assessment completed within 5 business days. | Verified in `SECURITY.md` |
@@ -252,11 +252,11 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 <a id="what-is-implemented"></a>
 ## 6. Implemented Document Workflows
 
-`SUPPORTED_WORKFLOWS` registers 43 job contracts. The founding sixteen are below;
+`SUPPORTED_WORKFLOWS` registers 44 job contracts. The founding sixteen are below;
 Case Chronicle deep analysis adds seven more ([Section 13](#13-case-chronicle-deep-analysis)),
 the checking/comparing/composing set adds seven ([Section 15](#15-checking-comparing--composing)),
-and thirteen further gate-verified structured-source, web and specialist workflows
-are listed in the second table further down (16 + 7 + 7 + 13 = 43).
+and fourteen further gate-verified structured-source, web, export and specialist workflows
+are listed in the second table further down (16 + 7 + 7 + 14 = 44).
 
 | Workflow | Local result |
 |---|---|
@@ -299,6 +299,7 @@ table row before this pass.
 | Web Research (`web_research`) | Gated web search behind server approval, per-call approval, adapter readiness and a pseudonymization preflight; keeps only results that carry a source address |
 | Bundle Completeness Check (`bundle_completeness_check`) | Reports from coverage alone whether every approved source was read and every required part produced, without judging content |
 | Print Action (`print_action`) | Hands one named file to the OS-registered print handler and records that printing, not the run, is the user's own step |
+| Chunk Export (`chunk_export`) | Deterministic, overlapping retrieval chunks for your own RAG index, each with source, character offsets, lines and SHA-256, plus a hashed manifest; unread or empty sources stay listed, and a corpus over the declared bound is refused whole instead of exported in part |
 
 The Registry tab under Processes & Workflows also holds the local **Research Notebook**
 workspace. It keeps an investigation goal, approved roots, reusable questions/prompts,
@@ -814,7 +815,7 @@ What stands in front changed, not the rooms. Use-case tiles are the primary obje
 filtered by topic tags, and a routine is simply a use case that carries a schedule and
 the derived `scheduled` tag — choosing that filter is what turns the porthole into the
 echo sounder and surfaces the last routine ledgers. The single instruments, meaning the
-43 job contracts on their own, live in one non-thematic registry with the engine
+44 job contracts on their own, live in one non-thematic registry with the engine
 room as their editor. Folders is the home of your folders: which ones are watched, what
 is actually on board, and the use cases bound to them. The overview itself stays
 deliberately bare — one headline, one sentence and the area cards — and folds the

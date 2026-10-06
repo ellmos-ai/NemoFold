@@ -26,6 +26,16 @@ from .case_chronicle import (
     execute_person_timeline,
     execute_relation_model,
 )
+from .chunk_export import (
+    DEFAULT_CHUNK_CHARS,
+    DEFAULT_MAX_CHUNKS,
+    DEFAULT_OVERLAP_CHARS,
+    ChunkLimitExceeded,
+    chunk_manifest,
+    chunk_record,
+    chunk_summary_markdown,
+    chunk_texts,
+)
 from .cleanup_rules import suggest_cleanup_rules
 from .completeness import (
     Question,
@@ -2709,8 +2719,6 @@ def _dispatch_workflow(
         return _execute_cleanup_rules(job, inventory, run_id=run_id)
     if job.workflow == "mail_to_case":
         return _execute_mail_to_case(job, inventory, run_id=run_id)
-    if job.workflow == "controlled_email":
-        return _execute_controlled_email(job, inventory, run_id=run_id)
     if job.workflow == "contact_monitor":
         return _execute_contact_monitor(job, inventory, run_id=run_id)
     if job.workflow == "database_reader":
@@ -2741,6 +2749,8 @@ def _dispatch_workflow(
         return _execute_wiki_export(job, inventory, run_id=run_id)
     if job.workflow == "pattern_mining":
         return _execute_pattern_mining(job, inventory, run_id=run_id)
+    if job.workflow == "chunk_export":
+        return _execute_chunk_export(job, inventory, run_id=run_id)
     if job.workflow in {"document_compose", "mail_merge_compose"}:
         return _execute_document_compose(job, inventory, run_id=run_id)
     raise NotImplementedError(f"workflow_not_implemented:{job.workflow}")
@@ -3093,6 +3103,101 @@ def _execute_pattern_mining(
             "min_support": report.min_support,
             "notes": list(report.notes),
             "reading_note": payload["reading_note"],
+        },
+    )
+
+
+def _execute_chunk_export(
+    job: JobEnvelope,
+    inventory: InventoryResult,
+    *,
+    run_id: str,
+) -> tuple[tuple[str, ...], tuple[ArtifactRecord, ...], Coverage, dict[str, object]]:
+    """Cut the approved corpus into anchored retrieval units for an outside index."""
+    texts = _read_text_sources(inventory, job)
+    source_ids = tuple(record.source_id for record in inventory.records)
+    try:
+        report = chunk_texts(
+            source_ids,
+            texts,
+            chunk_chars=job.parameters.get("chunk_chars", DEFAULT_CHUNK_CHARS),
+            overlap_chars=job.parameters.get("overlap_chars", DEFAULT_OVERLAP_CHARS),
+            max_chunks=job.parameters.get("max_chunks", DEFAULT_MAX_CHUNKS),
+        )
+    except ChunkLimitExceeded as exc:
+        # Refused whole: an index missing the documents past the bound would
+        # answer as if they did not exist.
+        raise WorkflowBlocked(
+            ("chunk_limit_exceeded",),
+            actions=("chunk_export_planned", "chunk_limit_exceeded"),
+            coverage=compute_coverage(
+                all_source_ids=source_ids, read_source_ids=texts, cited_source_ids=set()
+            ),
+            metadata={
+                "reason": "chunk_limit_exceeded",
+                "chunks_needed": exc.needed,
+                "max_chunks": exc.limit,
+                "remedy": "raise max_chunks or chunk_chars, or approve a smaller folder",
+            },
+        ) from exc
+    names = _display_names(inventory)
+    output = Path(job.output_dir)
+    jsonl = "".join(
+        json.dumps(chunk_record(chunk, names), ensure_ascii=False, sort_keys=True) + "\n"
+        for chunk in report.chunks
+    )
+    chunks_artifact = write_text_artifact(
+        output / f"{run_id}.chunks.jsonl", jsonl, "chunk-export"
+    )
+    manifest = chunk_manifest(
+        report,
+        labels=names,
+        source_hashes={record.source_id: record.sha256 for record in inventory.records},
+        chunks_file=Path(chunks_artifact.path).name,
+        chunks_sha256=hashlib.sha256(jsonl.encode("utf-8")).hexdigest(),
+    )
+    artifacts = (
+        chunks_artifact,
+        write_text_artifact(
+            output / f"{run_id}.chunk-manifest.json",
+            json.dumps(manifest, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            "chunk-manifest",
+        ),
+        write_text_artifact(
+            output / f"{run_id}_chunks.md",
+            chunk_summary_markdown(
+                report, title=str(job.parameters.get("title") or "Chunk-Export"), labels=names
+            ),
+            "md",
+        ),
+    )
+    coverage = compute_coverage(
+        all_source_ids=source_ids,
+        read_source_ids=texts,
+        cited_source_ids=set(report.chunked_source_ids),
+    )
+    return (
+        (
+            f"cut {len(texts)} read source(s) into {len(report.chunks)} chunk(s) of at "
+            f"most {report.chunk_chars} characters with {report.overlap_chars} overlap",
+        ),
+        artifacts,
+        coverage,
+        {
+            "chunk_count": len(report.chunks),
+            "chunk_chars": report.chunk_chars,
+            "overlap_chars": report.overlap_chars,
+            "token_estimate_total": manifest["token_estimate_total"],
+            "sources_not_read": [
+                names.get(item.source_id, item.source_id)
+                for item in report.sources
+                if item.status == "not_read"
+            ],
+            "sources_empty": [
+                names.get(item.source_id, item.source_id)
+                for item in report.sources
+                if item.status == "empty"
+            ],
         },
     )
 
@@ -3939,8 +4044,14 @@ def undo_run(
         gate_decision=GateDecision(allowed=True),
         metadata={"cloud_proof": False, "original_run_id": run_id},
     )
-    ledger.save(initial)
-    running = ledger.transition(undo_run_id, RunStatus.RUNNING)
+    if existing is None:
+        ledger.save(initial)
+        running = ledger.transition(undo_run_id, RunStatus.RUNNING)
+    else:
+        # A failed or interrupted undo is retried under its own ledger entry.
+        # Saving a fresh PLANNED report would collide with that entry, leaving
+        # the rollback stuck after a single blocked attempt.
+        running = ledger.update(replace(existing, status=RunStatus.RUNNING, errors=()))
     try:
         receipts = journal.undo()
         artifact = write_text_artifact(

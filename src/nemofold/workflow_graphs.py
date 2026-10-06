@@ -159,6 +159,10 @@ WORKFLOW_DESCRIPTIONS: dict[str, str] = {
         "Report which lines recur across a large set, with how often and from where, "
         "through the staged aggregation that keeps the anchors."
     ),
+    "chunk_export": (
+        "Cut the approved corpus into deterministic, overlapping retrieval units, each "
+        "carrying its source, offsets, lines and hash, and refuse a partial export."
+    ),
     "document_compose": (
         "Fill a declared .docx template through the optional report-forge engine, "
         "reporting the exact install command when the extra is absent rather than "
@@ -391,6 +395,11 @@ WORKFLOW_STEPS: dict[str, tuple[tuple[str, str, str], ...]] = {
         ("operation", "Lift", "quotable statements"),
         ("operation", "Aggregate", "staged, anchors kept"),
         ("gate", "Support", "below the threshold is not a pattern"),
+    ),
+    "chunk_export": (
+        ("operation", "Read", "every approved source"),
+        ("operation", "Cut", "overlapping windows, anchored"),
+        ("gate", "Complete", "over the bound is refused whole"),
     ),
     "rater_race": (
         ("operation", "Declare", "the coding scheme"),
