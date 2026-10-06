@@ -417,3 +417,17 @@ def test_pfad_b_discoverability_audit_currency_20261003():
     assert "Pfad B Discoverability, Level 1 SBOM Re-Audit & Marketing Registry (2026-10-03)" in (
         changelog_text
     )
+
+
+def test_event_workflows_group_concurrency_per_issue_or_pull_request():
+    """A ref-wide group lets one newcomer's run cancel another's on the default branch."""
+    workflows_dir = REPO_ROOT / ".github" / "workflows"
+    auto_assign = (workflows_dir / "auto-assign.yml").read_text(encoding="utf-8")
+    welcome = (workflows_dir / "welcome.yml").read_text(encoding="utf-8")
+
+    assert "group: ${{ github.workflow }}-${{ github.event.pull_request.number }}" in auto_assign
+    assert "github.event.issue.number || github.event.pull_request.number" in welcome
+    for text in (auto_assign, welcome):
+        assert "group: ${{ github.workflow }}-${{ github.ref }}" not in text
+    # An organization cannot be an assignee; the author is assigned instead.
+    assert "repoData.owner.type === 'Organization'" in auto_assign

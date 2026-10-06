@@ -6,8 +6,10 @@ on:
   pull_request_target:
     types: [opened]
 
+# Grouped per issue or pull request: both events run against the default
+# branch, so a ref-wide group let one newcomer's run cancel another's welcome.
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.issue.number || github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
