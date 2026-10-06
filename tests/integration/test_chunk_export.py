@@ -121,9 +121,12 @@ def test_bad_settings_stop_the_job_before_any_document_is_read(tmp_path) -> None
 def test_the_run_writes_anchored_chunks_and_a_verifiable_manifest(tmp_path) -> None:
     documents = tmp_path / "docs"
     (documents / "akte").mkdir(parents=True)
-    (documents / "akte" / "brief.txt").write_text(
-        "".join(f"Absatz {index}: Die Frist endet am 30.04.2026.\n" for index in range(40)),
-        encoding="utf-8",
+    # Written as bytes with CRLF on every platform: offsets index the text as
+    # extracted, line endings included, so a Windows file must line up as well.
+    (documents / "akte" / "brief.txt").write_bytes(
+        "".join(
+            f"Absatz {index}: Die Frist endet am 30.04.2026.\r\n" for index in range(40)
+        ).encode("utf-8")
     )
     (documents / "leer.txt").write_text("\n\n", encoding="utf-8")
 
@@ -139,7 +142,7 @@ def test_the_run_writes_anchored_chunks_and_a_verifiable_manifest(tmp_path) -> N
     assert manifest["chunk_count"] == len(lines) > 1
     statuses = {item["source_name"]: item["status"] for item in manifest["sources"]}
     assert statuses == {"akte/brief.txt": "chunked", "leer.txt": "empty"}
-    source = (documents / "akte" / "brief.txt").read_text(encoding="utf-8")
+    source = (documents / "akte" / "brief.txt").read_bytes().decode("utf-8")
     for line in lines:
         assert line["source_name"] == "akte/brief.txt"
         assert source[line["char_start"]:line["char_end"]] == line["text"]
