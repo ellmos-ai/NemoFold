@@ -4,6 +4,44 @@ All notable changes to NemoFold are documented here.
 
 ## [Unreleased]
 
+- Code review fixes and Chunk Export (2026-10-06):
+  - New workflow `chunk_export` (roadmap DS06): cuts every readable approved source into
+    deterministic, overlapping retrieval chunks for an external RAG index. Each chunk
+    carries its source id, relative source name, character offsets, lines, a token
+    estimate and the SHA-256 of its exact text; a manifest records the settings, every
+    source with its status (`chunked`, `empty`, `not_read`) and the hash of the chunk
+    file. A corpus that needs more chunks than `max_chunks` blocks the run whole instead
+    of being exported in part. Wired into the CLI/API/MCP job contract, the Captain's
+    Desk, the workflow graph gallery and the console registry.
+  - Security: the local console now rejects GET requests with a non-local Host header
+    (DNS rebinding could read approved roots, ledgers and artifact contents before).
+    Malformed Host/Origin headers and deeply nested JSON bodies are refused with 403/400
+    instead of crashing the handler; the public demo refuses non-string `workflow` and
+    `model_id` values.
+  - Privacy: the pseudonymous Relation Model report no longer quotes the sentence that
+    names the people; it cites the line instead, like the pseudonymous JSON. The Token
+    Factory API key is kept out of `repr`.
+  - Rollback: a failed undo can be retried; previously the second attempt collided with
+    its own failed ledger entry and the files could never be restored.
+  - Ingestion: DOCX/ODT extraction skips tracked deletions, field codes and change logs,
+    and keeps line breaks and tabs; malformed XML parts count as unreadable sources
+    instead of aborting the run; HTML extraction drops `script`, `style` and `template`.
+  - Time: dates are read in written order, impossible dates and hours are dropped, a
+    clock time is no longer lent to a neighbouring date, and closeness checks use real
+    calendar arithmetic (no more 31-day months at the end of February).
+  - Primitives: normalized deduplication keeps numbers with their sign and separators
+    apart (`-500` vs `500`, `5,000` vs `5.000`); a dash only separates a label when
+    spaced, so `Name-Zusatz:` is no longer read as `Name`; anchor totals survive the
+    second aggregation stage; symbol-only statements are kept instead of vanishing.
+  - Job files: BOM-prefixed UTF-8 loads; non-UTF-8 files, overflowing, NaN or infinite
+    budgets and malformed `pattern_mining` bounds are reported as job file errors at
+    preview instead of tracebacks; an undecodable ledger no longer blocks artifact views.
+  - Console listings: `truncated` is only reported when the cap actually cut entries.
+  - CI: `auto-assign.yml` and `welcome.yml` group concurrency per pull request/issue, so
+    two newcomers no longer cancel each other's run; organization repositories assign
+    the PR author instead of the (unassignable) organization.
+  - Tests: 1154 passed, 1 skipped (57 new regression, chunk-export and contract tests).
+
 - Pfad B Discoverability, Level 1 SBOM Re-Audit & Marketing Registry (2026-10-03):
   - Level 1 SBOM Stand 2026-10-03: Re-audited `THIRD_PARTY_LICENSES.txt` and `THIRD_PARTY_LICENSES.md` certifying 100% permissive runtime dependencies (zero copyleft, zero AGPL/GPL), unprivileged `RunAsInvoker` non-elevation certification (INV-RUNAS-08), Zero-Egress isolation (INV-LOCAL-01), and formal compliance with `INV-LOCAL-01` through `INV-SLA-10`.
   - Bilingual Documentation & Badge Synchronization: Synchronized `README.md` and `README_de.md` badges to Verified-2026--10--03, Last-Checked-2026--10--03, and 1097 passed | 1 skipped tests; maintained 18-point dual reciprocal HTML anchor parity (`<a id="sec-01"></a>`..`<a id="sec-18"></a>`) and § 521 BGB German statutory notice.

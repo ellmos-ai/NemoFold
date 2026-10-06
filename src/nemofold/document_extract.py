@@ -51,22 +51,95 @@ class SourceHashMismatch(RuntimeError):
 
 
 class _VisibleHTML(HTMLParser):
+    # Script, style and template bodies are markup, not text a reader sees;
+    # quoting them as evidence would cite code nobody wrote as a statement.
+    _HIDDEN = frozenset({"script", "style", "template"})
+
     def __init__(self) -> None:
         super().__init__(convert_charrefs=True)
         self.parts: list[str] = []
+        self._hidden_depth = 0
+
+    def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+        if tag in self._HIDDEN:
+            self._hidden_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in self._HIDDEN and self._hidden_depth:
+            self._hidden_depth -= 1
 
     def handle_data(self, data: str) -> None:
-        if data.strip():
+        if not self._hidden_depth and data.strip():
             self.parts.append(data.strip())
 
 
-def _xml_paragraphs(data: bytes, *, paragraph_names: frozenset[str]) -> str:
-    root = ElementTree.fromstring(data)
-    paragraphs: list[str] = []
-    for element in root.iter():
-        if element.tag.rsplit("}", 1)[-1] not in paragraph_names:
+# Subtrees whose text is not the document's current wording: tracked deletions
+# and moved-away runs (DOCX), the change log of tracked edits (ODT), field codes,
+# and paragraph or run properties, which hold tab-stop definitions, not tabs.
+_XML_SKIPPED = frozenset(
+    {"del", "delText", "moveFrom", "instrText", "pPr", "rPr", "tracked-changes"}
+)
+_XML_LINE_BREAKS = frozenset({"br", "cr", "line-break"})
+
+
+def _local_name(element: ElementTree.Element) -> str:
+    tag = element.tag
+    return tag.rsplit("}", 1)[-1] if isinstance(tag, str) else ""
+
+
+def _xml_text(element: ElementTree.Element, parts: list[str]) -> None:
+    name = _local_name(element)
+    if name in _XML_LINE_BREAKS:
+        parts.append("\n")
+    elif name == "tab":
+        parts.append("\t")
+    elif name == "s":
+        # ODF collapses runs of spaces into <text:s text:c="n"/>.
+        count = next(
+            (value for key, value in element.attrib.items() if key.rsplit("}", 1)[-1] == "c"),
+            "1",
+        )
+        parts.append(" " * (int(count) if count.isdigit() and int(count) < 1000 else 1))
+    if element.text:
+        parts.append(element.text)
+    for child in element:
+        if _local_name(child) not in _XML_SKIPPED:
+            _xml_text(child, parts)
+        if child.tail:
+            parts.append(child.tail)
+
+
+def _xml_paragraph_elements(
+    element: ElementTree.Element, paragraph_names: frozenset[str]
+) -> list[ElementTree.Element]:
+    found: list[ElementTree.Element] = []
+    stack = [element]
+    while stack:
+        current = stack.pop()
+        name = _local_name(current)
+        if name in _XML_SKIPPED:
             continue
-        text = "".join(element.itertext()).strip()
+        if name in paragraph_names:
+            found.append(current)
+        stack.extend(reversed(list(current)))
+    return found
+
+
+def _xml_paragraphs(data: bytes, *, paragraph_names: frozenset[str]) -> str:
+    try:
+        root = ElementTree.fromstring(data)
+    except ElementTree.ParseError as exc:
+        # ParseError is a SyntaxError, which the readers do not expect; a broken
+        # part is an unreadable source, reported like any other.
+        raise ValueError(f"document XML is malformed: {exc}") from exc
+    paragraphs: list[str] = []
+    for element in _xml_paragraph_elements(root, paragraph_names):
+        parts: list[str] = []
+        try:
+            _xml_text(element, parts)
+        except RecursionError as exc:
+            raise ValueError("document XML is nested too deeply") from exc
+        text = "".join(parts).strip()
         if text:
             paragraphs.append(text)
     return "\n".join(paragraphs)

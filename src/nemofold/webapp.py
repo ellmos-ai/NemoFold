@@ -279,7 +279,11 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         origin = self.headers.get("Origin")
         if not origin:
             return True
-        parsed = urlparse(origin)
+        try:
+            parsed = urlparse(origin)
+        except ValueError:
+            # A malformed Origin (an unclosed IPv6 bracket) is not this origin.
+            return False
         return parsed.scheme in {"http", "https"} and parsed.netloc == self.headers.get("Host")
 
     def _discard_bounded_request_body(self) -> None:
@@ -322,9 +326,20 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         length = int(raw_length)
         if not 0 < length <= MAX_REQUEST_BYTES:
             raise ValueError("request body size is invalid")
-        return json.loads(self.rfile.read(length))
+        try:
+            return json.loads(self.rfile.read(length))
+        except RecursionError as exc:
+            # Raised as a RuntimeError, which most handlers do not expect; a
+            # nesting bomb is simply a body this console refuses to read.
+            raise ValueError("request body is nested too deeply") from exc
 
     def do_GET(self) -> None:  # noqa: N802 - stdlib handler API
+        # Reads are as private as writes: approved roots, ledgers and artifact
+        # contents all leave through GET, so a rebinding page must not get them.
+        if not self._host_is_trusted():
+            self.close_connection = True
+            self._error(HTTPStatus.FORBIDDEN, "host_rejected", "non-local Host header")
+            return
         parsed_path = urlparse(self.path)
         path = parsed_path.path
         page_path = path.rstrip("/") or "/"
@@ -468,7 +483,10 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         if self.server.app_config.exposed_to_network:
             return True
         host = self.headers.get("Host", "")
-        hostname = urlparse(f"//{host}").hostname or ""
+        try:
+            hostname = urlparse(f"//{host}").hostname or ""
+        except ValueError:
+            return False
         return hostname in {"127.0.0.1", "localhost", "::1"}
 
     def do_POST(self) -> None:  # noqa: N802 - stdlib handler API
@@ -1495,7 +1513,14 @@ def _corpus_glance(
             if item.is_symlink():
                 continue
             if item.is_dir():
-                pending.append(item)
+                # A Windows junction is not a symlink but can still lead out of
+                # the approved root; only folders that resolve inside it count.
+                try:
+                    inside = item.resolve().is_relative_to(root)
+                except OSError:
+                    inside = False
+                if inside:
+                    pending.append(item)
                 continue
             if not item.is_file():
                 continue
@@ -1584,6 +1609,9 @@ def _folder_listing(
         raise ValueError("folder must be an existing directory")
     directories: list[dict[str, str]] = []
     skipped = 0
+    # Counted apart from skipped: a symlink or an unreadable entry is not a
+    # folder the cap left out, so it must not make a complete listing look cut.
+    over_cap = 0
     for item in sorted(candidate.iterdir(), key=lambda path: path.name.casefold()):
         if item.is_symlink():
             skipped += 1
@@ -1597,6 +1625,7 @@ def _folder_listing(
             continue
         if len(directories) == MAX_FOLDER_CHOICES:
             skipped += 1
+            over_cap += 1
             continue
         directories.append({"name": item.name, "path": str(resolved)})
     parent = None
@@ -1610,7 +1639,7 @@ def _folder_listing(
         "parent": parent,
         "directories": directories,
         "skipped_count": skipped,
-        "truncated": len(directories) == MAX_FOLDER_CHOICES and skipped > 0,
+        "truncated": over_cap > 0,
     }
 
 
@@ -1625,6 +1654,11 @@ def _allowed_output_root(config: WebAppConfig, value: str) -> Path:
 
 
 def _ledger_paths(output: Path) -> tuple[Path, ...]:
+    return _ledger_candidates(output)[:MAX_ARTIFACT_LEDGERS]
+
+
+def _ledger_candidates(output: Path) -> tuple[Path, ...]:
+    """Every ledger in ``output``, newest first and without the display cap."""
     ledger_root = output / "ledger"
     if not ledger_root.is_dir() or ledger_root.is_symlink():
         return ()
@@ -1636,7 +1670,7 @@ def _ledger_paths(output: Path) -> tuple[Path, ...]:
         except OSError:
             continue
     candidates.sort(key=lambda item: (item[0], item[1].name.casefold()), reverse=True)
-    return tuple(path for _, path in candidates[:MAX_ARTIFACT_LEDGERS])
+    return tuple(path for _, path in candidates)
 
 
 def _load_ledger(path: Path) -> dict[str, Any] | None:
@@ -1644,7 +1678,7 @@ def _load_ledger(path: Path) -> dict[str, Any] | None:
         if path.stat().st_size > MAX_LEDGER_BYTES:
             return None
         value = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+    except (OSError, ValueError, RecursionError):
         return None
     return value if isinstance(value, dict) else None
 
@@ -1713,7 +1747,7 @@ def _artifact_catalog(config: WebAppConfig, output_dir: str) -> dict[str, object
     return {
         "output_dir": str(output),
         "runs": runs,
-        "truncated": len(_ledger_paths(output)) == MAX_ARTIFACT_LEDGERS,
+        "truncated": len(_ledger_candidates(output)) > MAX_ARTIFACT_LEDGERS,
         "verification_note": (
             "green means the ledger contract and every recorded artifact hash passed"
         ),
@@ -1754,7 +1788,9 @@ def _normalize_public_demo_job(
     if value.get("schema") != "nemofold.job.v1":
         raise JobFileError("unsupported job schema")
     workflow = value.get("workflow")
-    if workflow not in PUBLIC_DEMO_WORKFLOWS:
+    # A list or object here is unhashable; checked first so it is refused
+    # rather than crashing the request on the membership test.
+    if not isinstance(workflow, str) or workflow not in PUBLIC_DEMO_WORKFLOWS:
         raise JobFileError("workflow is unavailable in the public demo")
     if value.get("input_roots") != [PUBLIC_DEMO_INPUT]:
         raise JobFileError("public demo input_roots are server-controlled")
@@ -1766,7 +1802,7 @@ def _normalize_public_demo_job(
         raise JobFileError("public demo privacy_mode must be local_only")
     if value.get("action_mode", "dry_run") != "dry_run":
         raise JobFileError("public demo action_mode must be dry_run")
-    if value.get("model_id") not in {None, ""}:
+    if value.get("model_id", "") not in (None, ""):
         raise JobFileError("public demo does not accept a model_id")
     budget = value.get("model_budget_usd", 0)
     if isinstance(budget, bool) or budget != 0:

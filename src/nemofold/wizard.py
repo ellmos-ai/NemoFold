@@ -33,6 +33,7 @@ WORKFLOW_ORDER = {
     "reference_check": 94,
     "rater_race": 95,
     "pattern_mining": 96,
+    "chunk_export": 101,
     "guide_compose": 97,
     "wiki_export": 98,
     "document_compose": 99,
@@ -79,6 +80,7 @@ WORKFLOW_TITLES = {
     "guide_compose": "Guide Compose",
     "wiki_export": "Wiki Export",
     "pattern_mining": "Pattern Mining",
+    "chunk_export": "Chunk Export",
     "document_compose": "Document Compose",
     "mail_merge_compose": "Mail Merge",
     "web_research": "Web Research",
@@ -139,6 +141,10 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "pattern_mining": (
         "muster", "wiederkehrend", "was passiert immer", "häufige", "haeufige",
         "protokolle auswerten", "abläufe erkennen",
+    ),
+    "chunk_export": (
+        "chunk", "rag-", "rag ", "für rag", "fürs rag", "ein rag", "vektordatenbank",
+        "vektor-datenbank", "embedding", "retrieval",
     ),
     "document_compose": (
         "vorlage füllen", "vorlage ausfüllen", "docx erzeugen", "aus der vorlage",
@@ -616,6 +622,10 @@ def _why(workflow: str) -> str:
             "Reports which lines recur across a large set, how often and from where. "
             "Recurring is a fact about the corpus, not a rule."
         ),
+        "chunk_export": (
+            "Cuts every readable document into overlapping chunks with source, offsets, "
+            "lines and a hash, ready for your own retrieval index. Nothing is truncated."
+        ),
         "document_compose": (
             "Fills your own .docx template through the optional template engine, and "
             "names the missing extra rather than failing on an import."
@@ -772,6 +782,8 @@ def parameters_for(workflow: str, text: str) -> dict[str, Any]:
         return {"wiki_dir": ""}
     if workflow == "pattern_mining":
         return {"formats": ["md"], "min_support": 3, "focus_terms": []}
+    if workflow == "chunk_export":
+        return {"chunk_chars": 1200, "overlap_chars": 200}
     if workflow in {"document_compose", "mail_merge_compose"}:
         return {"template_path": "", "fields": {}, "basename": "dokument"}
     if workflow == "web_research":

@@ -354,7 +354,7 @@ class VoyageStore:
             return default
 
         status = kept("status", STATUS_RUNNABLE)
-        if status not in VOYAGE_STATUSES:
+        if not isinstance(status, str) or status not in VOYAGE_STATUSES:
             raise ValueError("status must be runnable or pending_capability")
         # The reservation reason only exists while the reservation does, so it is
         # inherited only while the status stays pending. Freeing a voyage by

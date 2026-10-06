@@ -1,6 +1,7 @@
 # Document Services roadmap
 
-NemoFold's twelve active workflow contracts remain the tested product baseline. The
+NemoFold's registered workflow contracts (README Section 6) remain the tested product
+baseline. The
 services below are planned extensions of the same document theme. Existing skills and
 BACH modules are reuse candidates, not proof that a service is already integrated.
 Each item needs its own strict job parameters, provenance-preserving artifacts, safety
@@ -53,6 +54,13 @@ Export deterministic overlapping chunks with source IDs, offsets, token estimate
 hashes, and a manifest for external RAG systems or local knowledge bases. Chunk limits
 must describe retrieval units rather than silently truncating the approved corpus.
 Candidate foundation: `document-chunker` and NemoFold's local evidence index.
+
+**Status: active as `chunk_export`.** Implemented natively in
+`src/nemofold/chunk_export.py` without imported code or new dependencies. Chunks end at
+line breaks where possible, every character of a read source lands in at least one
+chunk, unread and empty sources stay in the manifest, and a corpus that needs more
+chunks than `max_chunks` blocks the run instead of exporting part of it. The token
+figure is an estimate at four characters per token and is labelled as one.
 
 ### DS07 — Dossier, Briefing, and Structured Report Workflows
 

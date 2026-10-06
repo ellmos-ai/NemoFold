@@ -7,8 +7,8 @@ Version: 0.2.1
 Organization: ellmos-ai
 Umbrella: open-bricks
 Last-checked: 2026-10-03
-Tests: 1097 passed, 1 skipped
-Workflows: 43 registered document workflows
+Tests: 1154 passed, 1 skipped
+Workflows: 44 registered document workflows
 Acceptance gates: 16 of 18 done, re-verifiable offline (`nemofold acceptance-gates --evidence-root .`)
 
 Primary documentation:
@@ -68,7 +68,7 @@ Core Invariants & Trust Rules:
 - INV-GATE-04: Multi-tier explicit approval gates (local/remote/spend).
 - INV-ISOL-05: Path-free sanitized packaging; host paths stripped before transfer.
 - INV-PROV-06: Provider-neutral loopback surface; unauthenticated APIs restricted to 127.0.0.1.
-- INV-POLICY-07: Composable shared primitives; 43 workflows from 4 shared building blocks.
+- INV-POLICY-07: Composable shared primitives; 44 workflows from 4 shared building blocks.
 - INV-RUNAS-08: Unprivileged user-mode execution (RunAsInvoker); non-elevated.
 - INV-DET-09: Deterministic artifacts and cryptographic SHA-256 ledgers.
 - INV-SLA-10: Transparent disclosure and 48h SLA / 5-day triage response.

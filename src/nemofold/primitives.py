@@ -50,6 +50,11 @@ _SENTENCE_SPLIT = re.compile(r"(?<=[.!?])\s+")
 # merely follow any non-digit. Known limit: "z. B." still splits.
 _ORDINAL_TAIL = re.compile(r"(?:^|\s)\d{1,2}\.$")
 _PUNCTUATION = re.compile(r"[^\w\s]", re.UNICODE)
+# A number keeps its sign and separators through normalisation: "-500" is not
+# "500", and "5,000 mg" is not "5.000 mg". A dash counts as a sign only where it
+# does not join two words or digits, so "3-5" stays a range.
+_NUMBER = re.compile(r"(?:(?<!\w)[-−])?\d(?:[\d.,]*\d)?")
+_NUMBER_MARKS = str.maketrans({"-": "m", "−": "m", ".": "p", ",": "c"})
 _WHITESPACE = re.compile(r"\s+")
 _LABELLED_LINE = re.compile(r"^\s*(?P<label>[^:#]{2,60}?)\s*:\s*(?P<value>\S.*?)\s*$")
 _STRUCTURED_ROW = re.compile(r"^Zeile \d+ · ")
@@ -90,6 +95,7 @@ def fingerprint(statement: str, scope: str) -> str:
         return collapsed
     folded = unicodedata.normalize("NFKD", collapsed.casefold())
     folded = "".join(ch for ch in folded if not unicodedata.combining(ch))
+    folded = _NUMBER.sub(lambda match: f" n{match.group(0).translate(_NUMBER_MARKS)} ", folded)
     return _WHITESPACE.sub(" ", _PUNCTUATION.sub(" ", folded)).strip()
 
 
@@ -230,7 +236,9 @@ def label_pattern(spec: FieldSpec) -> re.Pattern[str]:
     )
     alternatives = "|".join(re.escape(label) for label in labels)
     return re.compile(
-        rf"^\s*(?:{alternatives})\s*[{re.escape(LABEL_SEPARATORS)}]\s*(?P<value>\S.*?)\s*$",
+        # A colon may hug the label; a dash only separates with space on both
+        # sides, or "Name-Zusatz: c/o Meier" would read as the field "Name".
+        rf"^\s*(?:{alternatives})(?:\s*[:：]\s*|\s+[–—-]\s+)(?P<value>\S.*?)\s*$",
         re.IGNORECASE,
     )
 
@@ -373,6 +381,9 @@ def deduplicate(
     for statement in statements:
         key = fingerprint(statement.text, scope)
         if not key:
+            # Punctuation or symbols only: there is nothing to compare it by, so
+            # it is kept as itself rather than vanishing from both lists.
+            kept.append(statement)
             continue
         original = first_seen.get(key)
         if original is None:
@@ -711,30 +722,37 @@ def partition_statements(
 
 
 def _fold(
-    items: tuple[tuple[str, tuple[Anchor, ...], int, tuple[int, ...]], ...],
+    items: tuple[tuple[str, tuple[Anchor, ...], int, tuple[int, ...], int], ...],
     scope: str,
     limit: int,
 ) -> tuple[list[AggregatedStatement], int]:
-    """Fold equal statements, unioning their anchors and their partitions."""
+    """Fold equal statements, unioning their anchors and their partitions.
+
+    Each item carries its own anchor total, because a partial result from the
+    first stage may already hold more anchors than it lists; counting only the
+    listed ones would under-report the occurrences a second stage folds in.
+    """
     order: list[str] = []
     seen: dict[str, tuple[str, list[Anchor], int, list[int], int]] = {}
-    for text, anchors, support, partitions in items:
+    for text, anchors, support, partitions, anchor_total in items:
         key = fingerprint(text, scope)
         if not key:
             continue
         found = seen.get(key)
         if found is None:
             order.append(key)
-            seen[key] = (text, list(anchors), support, list(partitions), len(anchors))
+            seen[key] = (text, list(anchors), support, list(partitions), anchor_total)
             continue
         kept_text, kept_anchors, kept_support, kept_partitions, total = found
         known = {(anchor.source_id, anchor.line) for anchor in kept_anchors}
+        repeated = 0
         for anchor in anchors:
             if (anchor.source_id, anchor.line) in known:
+                repeated += 1
                 continue
             known.add((anchor.source_id, anchor.line))
             kept_anchors.append(anchor)
-            total += 1
+        total += max(0, anchor_total - repeated)
         for partition in partitions:
             if partition not in kept_partitions:
                 kept_partitions.append(partition)
@@ -790,17 +808,18 @@ def aggregate_mapreduce(
             "partitions."
         )
 
-    partial: list[tuple[str, tuple[Anchor, ...], int, tuple[int, ...]]] = []
+    partial: list[tuple[str, tuple[Anchor, ...], int, tuple[int, ...], int]] = []
     per_partition_dropped = 0
     for index, part in enumerate(partitions):
         folded, dropped = _fold(
-            tuple((item.text, (item.anchor,), 1, (index,)) for item in part),
+            tuple((item.text, (item.anchor,), 1, (index,), 1) for item in part),
             scope,
             ceiling.max_per_partition,
         )
         per_partition_dropped += dropped
         partial.extend(
-            (item.text, item.anchors, item.support, item.partitions) for item in folded
+            (item.text, item.anchors, item.support, item.partitions, item.anchor_total)
+            for item in folded
         )
     if per_partition_dropped:
         notes.append(

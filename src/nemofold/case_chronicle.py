@@ -240,7 +240,14 @@ def execute_relation_model(
             evidence=(
                 EvidenceLocator(
                     source_id=item.anchor.source_id,
-                    quote=item.quote,
+                    # The pseudonymous report follows the pseudonymous JSON: the
+                    # sentence names the people, so it is withheld and only its
+                    # place is cited. Re-identification stays local.
+                    quote=(
+                        f"[quote withheld in pseudonymous mode, line {item.anchor.line}]"
+                        if pseudonymous
+                        else item.quote
+                    ),
                     section=f"line {item.anchor.line}",
                 ),
             ),

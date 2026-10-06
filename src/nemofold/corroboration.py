@@ -21,6 +21,7 @@ out would hide the most interesting thing on the page.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import UTC, datetime
 
 from .primitives import Anchor, anchored_sentences
 from .timeline import PRECISION_UNKNOWN, TimePoint, parse_times, speakers_of
@@ -102,23 +103,24 @@ class Weave:
         return sum(1 for item in self.supported if item.level == SUPPORT_CORROBORATED)
 
 
+_EPOCH = datetime(1970, 1, 1)
+
+
 def _minutes(value: str | None) -> int | None:
-    """Minutes since epoch-ish, for a same-scale comparison of two stated times."""
+    """Minutes since the epoch, for a same-scale comparison of two stated times.
+
+    Real calendar arithmetic: a 31-day month for every month would put 28.02.
+    23:30 and 01.03. 00:30 three days apart instead of one hour.
+    """
     if not value:
         return None
-    date, _, clock = value.partition("T")
     try:
-        year, month, day = (int(part) for part in date.split("-"))
+        moment = datetime.fromisoformat(value)
     except ValueError:
         return None
-    total = ((year * 12 + month) * 31 + day) * 24 * 60
-    if clock:
-        hour, _, minute = clock.partition(":")
-        try:
-            total += int(hour) * 60 + int(minute)
-        except ValueError:
-            return None
-    return total
+    if moment.tzinfo is not None:
+        moment = moment.astimezone(UTC).replace(tzinfo=None)
+    return int((moment - _EPOCH).total_seconds() // 60)
 
 
 def within(first: TimePoint, second: TimePoint, tolerance_minutes: int) -> bool:

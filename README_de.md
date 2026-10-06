@@ -9,7 +9,7 @@
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1097%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1154%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20(CI)%20%7C%20macos%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20zero--egress-success.svg)](#sec-05)
@@ -25,7 +25,7 @@
 [![LLM Ready](https://img.shields.io/badge/llms.txt-verified-brightgreen.svg)](llms.txt)
 
 > **Aus Dokumenten werden Daten. NemoFold macht Wissen nutzbar.**
-> *Private, evidenzorientierte Dokumenten-Intelligenz — 43 Workflows, Fail-Closed Security, lokale Invarianten & Zero-Egress.*
+> *Private, evidenzorientierte Dokumenten-Intelligenz — 44 Workflows, Fail-Closed Security, lokale Invarianten & Zero-Egress.*
 
 ---
 
@@ -70,7 +70,7 @@ großen Korpus richtet. Der Evidenzvertrag ändert sich dabei nicht — nur der 
 | 3 | [Zielgruppen & Auffindbarkeit](#3-zielgruppen--auffindbarkeit) | Anwenderprofile [PERSONA-01] bis [PERSONA-04] |
 | 4 | [Vergleichsmatrix gegenüber Alternativen](#4-vergleichsmatrix-gegenueber-alternativen) | 10 Dimensionen im Branchenvergleich |
 | 5 | [Governance & Laufzeit-Invarianten](#5-governance--laufzeit-invarianten) | `INV-LOCAL-01` bis `INV-SLA-10` |
-| 6 | [Implementierte Dokument-Workflows](#6-implementierte-dokument-workflows) | 43 verifizierte Workflows & Analyse-Kerne |
+| 6 | [Implementierte Dokument-Workflows](#6-implementierte-dokument-workflows) | 44 verifizierte Workflows & Analyse-Kerne |
 | 7 | [Installation & Schnellstart](#7-installation--schnellstart) | Setup, Virtual Environment & CLI |
 | 8 | [Offline-Nachweis & Verifikation](#8-offline-nachweis--verifikation) | Lokale Demo & Fail-Closed Validierung |
 | 9 | [Ausführung realer lokaler Aufträge](#9-ausfuehrung-realer-lokaler-auftraege) | Preview, Run, Ledger & Reversibilität |
@@ -108,7 +108,7 @@ flowchart TB
         DRAFT["Draft & Approval Inbox<br/>(Loopback-only)"]
     end
 
-    subgraph WORKFLOWS ["43 Dokumenten- & Analyse-Workflows"]
+    subgraph WORKFLOWS ["44 Dokumenten- & Analyse-Workflows"]
         INBOX["Smart Inbox & Retention"]
         EVIDENCE["Evidence Analyst & Case Chronicle"]
         STRUCTURED["Strukturierte Quellen<br/>(SQLite, XLSX, CSV)"]
@@ -224,7 +224,7 @@ NemoFold löst konkrete Herausforderungen von vier Hauptzielgruppen:
 | **Transparente Belege (`INV-PROOF-06`)** | Black Box | Keine Audit-Ledgers | Rohvektoren | **Kryptografische SHA-256 Run Ledgers** |
 | **Keine Privilegienerhöhung (`INV-PRIV-07`)** | Root/Service-Accounts | Benutzerabhängig | Server-Dienst | **Striktes `RunAsInvoker`, keine Elevation** |
 | **Offene Lizenzen (`INV-LIC-08`)** | Proprietär | Unterschiedlich | Teilweise Open Core | **100 % MIT / BSD Permissiv (`INV-LIC-08`)** |
-| **Workflows & Werkzeuge** | 1–3 generische Chats | 1 Chat-Interface | Keine Workflows | **43 integrierte Dokument-Workflows** |
+| **Workflows & Werkzeuge** | 1–3 generische Chats | 1 Chat-Interface | Keine Workflows | **44 integrierte Dokument-Workflows** |
 | **Sicherheits-SLA (`INV-SLA-10`)** | Undokumentiert | Community-best-effort | Kommerziell gestaffelt | **48h Antwort / 5 Tage Triage (`INV-SLA-10`)** |
 
 ---
@@ -253,12 +253,12 @@ Das Design von NemoFold basiert auf zehn unverletzlichen System-Invarianten:
 <a id="was-implementiert-ist"></a>
 ## 6. Implementierte Dokument-Workflows
 
-`SUPPORTED_WORKFLOWS` registriert 43 Jobverträge. Die gründenden sechzehn stehen
+`SUPPORTED_WORKFLOWS` registriert 44 Jobverträge. Die gründenden sechzehn stehen
 unten; die Fallchronik-Tiefenanalyse ergänzt sieben weitere
 ([Abschnitt 13](#13-fallchronik-tiefenanalyse)), das Prüf-/Vergleichs-/Komponier-Set
-sieben ([Abschnitt 15](#15-pruefen-vergleichen--komponieren)), und dreizehn weitere
-gate-geprüfte Struktur-, Web- und Spezial-Workflows stehen in der zweiten Tabelle
-weiter unten (16 + 7 + 7 + 13 = 43).
+sieben ([Abschnitt 15](#15-pruefen-vergleichen--komponieren)), und vierzehn weitere
+gate-geprüfte Struktur-, Web-, Export- und Spezial-Workflows stehen in der zweiten Tabelle
+weiter unten (16 + 7 + 7 + 14 = 44).
 
 | Workflow | Lokales Ergebnis |
 |---|---|
@@ -301,6 +301,7 @@ keiner davon hatte vor diesem Durchgang eine Tabellenzeile.
 | Web Research (`web_research`) | Gate-geprüfte Websuche hinter Serverfreigabe, Einzelfreigabe, Adapter-Bereitschaft und Pseudonymisierungs-Preflight; behält nur Ergebnisse mit Quelladresse |
 | Bundle Completeness Check (`bundle_completeness_check`) | Meldet allein aus der Abdeckung, ob jede freigegebene Quelle gelesen und jeder Pflichtteil erzeugt wurde, ohne den Inhalt zu bewerten |
 | Print Action (`print_action`) | Übergibt eine benannte Datei an das betriebssystemseitig registrierte Druckprogramm und hält fest, dass das Drucken selbst Ihr Schritt ist, nicht der Lauf |
+| Chunk Export (`chunk_export`) | Deterministische, überlappende Retrieval-Chunks für Ihren eigenen RAG-Index, jeder mit Quelle, Zeichen-Offsets, Zeilen und SHA-256, dazu ein gehashtes Manifest; ungelesene oder leere Quellen bleiben aufgeführt, und ein Korpus über der erklärten Grenze wird als Ganzes abgelehnt statt teilweise exportiert |
 
 Der Reiter Registry unter Processes & Workflows enthält außerdem den lokalen
 **Research-Notebook**-Arbeitsbereich. Er hält Untersuchungsziel, freigegebene Wurzeln,
@@ -841,7 +842,7 @@ Verändert hat sich, was vorn steht, nicht die Räume. Usecase-Kacheln sind das
 Primärobjekt, thematisch über Tags filterbar, und eine Routine ist schlicht ein Usecase
 mit Zeitplan und dem abgeleiteten Tag `scheduled` — dieser Filter macht aus dem Bullauge
 das Echolot und holt die letzten Routineläufe nach vorn. Die Einzelinstrumente, also die
-43 Jobverträge für sich, leben in einem nicht-thematischen Register, dessen Editor
+44 Jobverträge für sich, leben in einem nicht-thematischen Register, dessen Editor
 der Maschinenraum ist. Folders ist das Zuhause der Ordner: welche überwacht werden, was
 tatsächlich an Bord ist, und welche Usecases daran hängen. Die Übersicht selbst bleibt
 bewusst karg — eine Überschrift, ein Satz und die Bereichskarten — und faltet

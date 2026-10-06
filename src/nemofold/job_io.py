@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 import json
+import math
 import re
 from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Any
 
+from .chunk_export import (
+    DEFAULT_CHUNK_CHARS,
+    DEFAULT_MAX_CHUNKS,
+    DEFAULT_OVERLAP_CHARS,
+    validate_chunk_settings,
+)
 from .contracts import ActionMode, JobEnvelope, PrivacyMode, SourceRecord, to_primitive
 from .document_registry import columns_from_parameters
 from .pdf_page_expectations import parse_pdf_page_reviews, parse_source_page_reviews
@@ -52,6 +59,7 @@ SUPPORTED_WORKFLOWS = frozenset(
         "guide_compose",
         "wiki_export",
         "pattern_mining",
+        "chunk_export",
         "document_compose",
         "mail_merge_compose",
         "knowledge_composer",
@@ -342,6 +350,7 @@ WORKFLOW_PARAMETER_FIELDS = {
         {"focus_terms", "formats", "max_patterns", "min_support", "partition_size",
          "title"}
     ),
+    "chunk_export": frozenset({"chunk_chars", "max_chunks", "overlap_chars", "title"}),
     "document_compose": frozenset(
         {"basename", "fields", "formats", "template_path", "title"}
     ),
@@ -576,6 +585,30 @@ def validate_workflow_parameters(job: JobEnvelope) -> None:
                     raise ValueError("supplied codings need both named raters")
             if job.parameters["rater_a"].strip() == job.parameters["rater_b"].strip():
                 raise ValueError("supplied codings need distinct rater names")
+    elif job.workflow == "pattern_mining":
+        # Checked here rather than where the numbers are used: a malformed bound
+        # should stop the job at preview, before any document is read, and a
+        # negative ceiling must never reach a slice that would quietly misread it.
+        for name, default, floor in (
+            ("min_support", 3, 2),
+            ("partition_size", 40, 1),
+            ("max_patterns", 50, 1),
+        ):
+            value = job.parameters.get(name, default)
+            if isinstance(value, bool) or not isinstance(value, int) or value < floor:
+                raise ValueError(f"{name} must be an integer of at least {floor}")
+        focus_terms = job.parameters.get("focus_terms", [])
+        if focus_terms is not None and (
+            not isinstance(focus_terms, list)
+            or any(not isinstance(item, str) or not item.strip() for item in focus_terms)
+        ):
+            raise ValueError("focus_terms must be a list of non-empty strings")
+    elif job.workflow == "chunk_export":
+        validate_chunk_settings(
+            job.parameters.get("chunk_chars", DEFAULT_CHUNK_CHARS),
+            job.parameters.get("overlap_chars", DEFAULT_OVERLAP_CHARS),
+            job.parameters.get("max_chunks", DEFAULT_MAX_CHUNKS),
+        )
     elif job.workflow == "cleanup_rules":
         minimum = job.parameters.get("min_support", 2)
         if isinstance(minimum, bool) or not isinstance(minimum, int) or minimum < 1:
@@ -1000,7 +1033,14 @@ def parse_job_payload(payload: Any, *, base_dir: str | Path) -> JobEnvelope:
     if model_id is not None and (not isinstance(model_id, str) or not model_id.strip()):
         raise JobFileError("model_id must be null or a non-empty string")
     budget = payload.get("model_budget_usd", 0.0)
-    if isinstance(budget, bool) or not isinstance(budget, (int, float)) or budget < 0:
+    if isinstance(budget, bool) or not isinstance(budget, (int, float)):
+        raise JobFileError("model_budget_usd must be a non-negative number")
+    try:
+        budget_value = float(budget)
+    except OverflowError as exc:
+        raise JobFileError("model_budget_usd is too large") from exc
+    # NaN slips past "< 0", and an infinite budget is no budget at all.
+    if not math.isfinite(budget_value) or budget_value < 0:
         raise JobFileError("model_budget_usd must be a non-negative number")
     resume_run_id = payload.get("resume_run_id")
     if resume_run_id is not None and (
@@ -1021,7 +1061,7 @@ def parse_job_payload(payload: Any, *, base_dir: str | Path) -> JobEnvelope:
         privacy_mode=privacy_mode,
         action_mode=action_mode,
         model_id=model_id.strip() if isinstance(model_id, str) else None,
-        model_budget_usd=float(budget),
+        model_budget_usd=budget_value,
         resume_run_id=resume_run_id,
         parameters=parameters,
     )
@@ -1035,11 +1075,16 @@ def parse_job_payload(payload: Any, *, base_dir: str | Path) -> JobEnvelope:
 def load_job_file(path: str | Path) -> LoadedJob:
     source_path = Path(path).resolve()
     try:
-        payload = json.loads(source_path.read_text(encoding="utf-8"))
+        # utf-8-sig: Windows editors such as Notepad prepend a byte order mark.
+        payload = json.loads(source_path.read_text(encoding="utf-8-sig"))
     except OSError as exc:
         raise JobFileError(f"job file cannot be read: {exc}") from exc
     except json.JSONDecodeError as exc:
         raise JobFileError(f"job file is not valid JSON: {exc}") from exc
+    except UnicodeDecodeError as exc:
+        raise JobFileError("job file is not UTF-8 text") from exc
+    except RecursionError as exc:
+        raise JobFileError("job file is nested too deeply") from exc
     return LoadedJob(
         job=parse_job_payload(payload, base_dir=source_path.parent),
         source_path=source_path,
@@ -1054,7 +1099,7 @@ def load_job_snapshot(path: str | Path) -> JobEnvelope:
     snapshot_path = Path(path).resolve()
     try:
         payload = json.loads(snapshot_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
+    except (OSError, ValueError) as exc:
         raise JobFileError(f"job snapshot cannot be read: {exc}") from exc
     if not isinstance(payload, dict) or payload.get("schema") != JOB_SNAPSHOT_SCHEMA:
         raise JobFileError("job snapshot schema is invalid")
