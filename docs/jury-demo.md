@@ -1,5 +1,34 @@
 # Three-minute jury demo
 
+## Current references 2026-10-08
+
+- Public video reference: [NemoFold demo (2:16)](https://youtu.be/wOToLqDBvvE).
+  The published v6 reference is recorded in the historical 2026-09-19
+  [readiness snapshot](submission-readiness.md). This page is not a new media
+  or personal GUI-acceptance receipt.
+- Real platform evidence: the committed [2026-09-02 Token Factory package](../examples/proven-run/)
+  was re-verified offline on 2026-10-08, with `valid=true`, `status=executed`
+  and no errors. Its `cloud_proof=true` describes that historical run; no new
+  cloud call is asserted.
+- Implementation baseline: [f43d669](https://github.com/ellmos-ai/NemoFold/commit/f43d66975c241384d55afd11f25bcf929fef47c1),
+  44 registered workflows, a complete passing hosted regression matrix and
+  a newly built/installed wheel with a verified offline CLI demo. See the
+  [release gate](../RELEASE_GATE.md) for platform counts and remaining boundaries.
+- Account-free local evaluation: [source test build and commands](submission-readiness.md#account-free-test-build).
+  This does not claim a deployed public demo. Personal GUI acceptance remains open.
+
+## Historical pre-run recording plan
+
+The original pre-run draft, present in repository history from 2026-09-02,
+is preserved below. Its twelve-workflow narrative, `OPEN` capture states and
+`{LIVE_*}` placeholders belong to that earlier storyboard. They are not the
+current state of the published video or the preserved cloud proof.
+Any new recording must use measured values from a verified package rather than
+copying unresolved draft placeholders.
+
+<details>
+<summary>Historical storyboard and its original evidence guard</summary>
+
 This is a **recording-ready plan, not evidence that a public video or live cloud run
 already exists**. The final render is blocked while any `{LIVE_*}` marker remains.
 Replace those markers only from a successful `verify-result` readback.
@@ -158,3 +187,5 @@ makes the Nebius/Nemotron role understandable before the feature sequence begins
 The media package is **fast, not complete** while the live segment, final render,
 duration/audio readback, public YouTube URL, and user selection between variants
 are open. No screenshot, mock response, or simulated transport can close those items.
+
+</details>

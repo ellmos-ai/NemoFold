@@ -1,5 +1,56 @@
 # Submission readiness
 
+## Technical assessment 2026-10-08
+
+The implementation assessment below is pinned to
+[`f43d669`](https://github.com/ellmos-ai/NemoFold/commit/f43d66975c241384d55afd11f25bcf929fef47c1).
+It separates technical evidence from personal GUI and live submission acceptance.
+
+| Deliverable | Current evidence and boundary |
+|---|---|
+| Working Nebius/NVIDIA implementation | A real paid Token Factory call to `nvidia/nemotron-3-super-120b-a12b` completed on 2026-09-02. Its committed receipt chain was re-verified offline on 2026-10-08: `valid=true`, `status=executed`, no errors. This is a historical cloud proof, not a new paid call. |
+| Public source, license and setup | [MIT repository](https://github.com/ellmos-ai/NemoFold) with source, assets and [installation instructions](../README.md#7-installation--quick-start). |
+| Complete technical regression | [Hosted CI for f43d669](https://github.com/ellmos-ai/NemoFold/actions/runs/37426667693): Windows/Python 3.12 passed 1155 tests; both Ubuntu/Python versions passed 1154 with one skip. The run completed 2026-10-06 and was read back 2026-10-08. |
+| Fresh local package/system check | Source and wheel built on 2026-10-08; a separately installed wheel passed isolated import, CLI help, offline demo and verification of ten artifacts. Static checks and the 476-file evidence verification also passed. The resource-stopped local full-suite attempt is not claimed as passed. |
+| Public demo or test-build access | [Free pinned source test build](https://github.com/ellmos-ai/NemoFold/archive/f43d66975c241384d55afd11f25bcf929fef47c1.zip), with setup and offline-demo commands below. No cloud account is required. A hosted public demo and a container runtime were not accepted in this check. |
+| Public YouTube demo | [NemoFold demo](https://youtu.be/wOToLqDBvvE), the published v6 reference already recorded in the 2026-09-19 snapshot below. Today's technical check makes no new duration/audio or user media-acceptance claim. |
+| Acceptance gates and user testing | G01–G16 are backed by committed synthetic evidence. G17/G18 are declared unsupported; the register reports `complete=false`. Personal GUI acceptance remains pending with the user. |
+| Live Devpost content and answers | Final text, video embedding and custom answers require a separate current Devpost readback. The technical assessment alone does not establish that those fields were updated. |
+
+### Account-free test build
+
+Download the pinned source ZIP linked above, extract it, and open a terminal in
+the extracted project folder. Use Python 3.11 or newer:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install ".[dev]"
+.venv\Scripts\python -m nemofold --help
+.venv\Scripts\python -m nemofold demo --input examples\synthetic-home --output run-reports\demo
+.venv\Scripts\python -m nemofold verify run-reports\demo\ledger\demo_offline.json
+.venv\Scripts\python -m nemofold verify-result examples\proven-run
+```
+
+On Linux/macOS substitute `.venv/bin/python`. The demo intentionally reports
+`cloud_proof=false`; `verify-result` checks the separate historical cloud receipt.
+The source archive was publicly reachable without authentication on 2026-10-08.
+The [release gate](../RELEASE_GATE.md) records the complete technical scope.
+
+G17's writing subscription adapter and G18's A3 FormBuilder/export adapter are
+not implemented. Neither synthetic gate evidence nor CI replaces a personal
+GUI test on an explicitly approved real folder. New live model calls, accounts,
+hosting and agreement choices remain separate actions, with no invented survey
+ratings or consent.
+
+## Historical readiness snapshot 2026-09-19
+
+The earlier assessment is preserved below. Its pending-hosted-CI, placeholder-video
+and deployment wording belongs to that dated snapshot and is superseded by the
+technical evidence above where explicitly stated.
+
+<details>
+<summary>Historical readiness snapshot, including the 2026-08-30 submission readback</summary>
+
 Last reconciled with the live Devpost project and judging page on 2026-08-30; the
 technical evidence below was re-measured on 2026-09-19. Project 1407423 is published
 and submitted; this file distinguishes that submission fact from the still-open
@@ -75,3 +126,5 @@ that approval and are complete; new actions still use the same boundary:
 
 No agreement checkbox may be set, and no experience score may be invented, merely to
 make the readiness table green.
+
+</details>
