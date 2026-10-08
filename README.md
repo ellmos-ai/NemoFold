@@ -321,11 +321,21 @@ remain separate human approval gates.
 <a id="install"></a>
 ## 7. Installation & Quick Start
 
+Use Python 3.11 or newer. The free, account-free
+[source test build at the accepted implementation commit](https://github.com/ellmos-ai/NemoFold/archive/f43d66975c241384d55afd11f25bcf929fef47c1.zip)
+contains the code and synthetic examples. Extract it and open a terminal in the
+extracted project folder, or clone this repository, then run:
+
 ```powershell
 python -m venv .venv
 .venv\Scripts\python -m pip install -e ".[dev]"
 .venv\Scripts\python -m nemofold --help
 ```
+
+On Linux/macOS use `.venv/bin/python` instead of `.venv\Scripts\python`.
+For the later bare `python`/`nemofold` examples, activate this environment first
+or keep using its explicit Python executable. No cloud account, API key or paid
+model call is needed for the offline demo below.
 
 Every non-demo command consumes the same strict `nemofold.job.v1` JSON contract. See
 [`schemas/nemofold-job-v1.schema.json`](schemas/nemofold-job-v1.schema.json) and the
@@ -337,20 +347,41 @@ Every non-demo command consumes the same strict `nemofold.job.v1` JSON contract.
 ## 8. Offline Proof & Verification
 
 ```powershell
-$env:PYTHONPATH = "$PWD\src"
-python -m nemofold demo --input examples\synthetic-home --output run-reports\demo
+.venv\Scripts\python -m nemofold demo --input examples\synthetic-home --output run-reports\demo
+.venv\Scripts\python -m nemofold verify run-reports\demo\ledger\demo_offline.json
 ```
 
 The report deliberately says `cloud_proof: false`. To exercise the fail-closed path:
 
 ```powershell
-python -m nemofold demo --input examples\synthetic-home --output run-reports\blocked `
+.venv\Scripts\python -m nemofold demo --input examples\synthetic-home --output run-reports\blocked `
   --scenario blocked-external
 ```
 
 The normal demo creates a text/manifest/ZIP bundle, folder digest, context receipts,
 SQLite FTS index, Markdown/TXT/PDF/DOCX/ODT reports, and one run ledger. It moves and
 undoes a synthetic inbox file to prove reversibility.
+
+### Technical acceptance readback (2026-10-08)
+
+The accepted implementation is
+[`f43d669`](https://github.com/ellmos-ai/NemoFold/commit/f43d66975c241384d55afd11f25bcf929fef47c1).
+Its [hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/37426667693)
+completed on 2026-10-06 and was read back on 2026-10-08: Windows/Python 3.12
+passed all 1155 tests; Ubuntu/Python 3.11 and 3.12 each passed 1154 with one skip.
+These numbers belong to that commit, not to an unmeasured later revision.
+
+The 2026-10-08 local check passed Ruff, Mypy for Windows/Linux/macOS (94 source
+files each), compileall, JavaScript syntax and the 476-file acceptance-evidence
+verification. Source and wheel distributions built successfully. A fresh wheel
+installation, tested without `src` or `PYTHONPATH`, ran the CLI and offline demo;
+the verifier accepted all ten recorded artifacts. A separate local full-suite
+attempt was stopped under confirmed host CPU saturation and is not a local
+full-suite pass. Personal GUI acceptance remains pending.
+
+See the [release gate](RELEASE_GATE.md) for the exact checks and product boundaries.
+The real cloud proof remains the historical 2026-09-02 run; today's verification
+does not claim a new cloud call or a hosted public demo.
 
 ### Acceptance gate register
 
@@ -924,8 +955,9 @@ NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem 
 - The package validator rejects host paths, secrets, undeclared files, changed hashes,
   symlinks, or residual sensitive patterns—even if a manifest was re-hashed.
 - `cloud_proof: true` is invalid without a successful, schema-valid provider response
-  bound to runtime evidence. The repository contains the adapter and simulated tests,
-  but deliberately contains no claim that the pending real competition call succeeded.
+  bound to runtime evidence. The repository contains the adapter, simulated tests,
+  and the [verified historical 2026-09-02 competition run](examples/proven-run/).
+  Re-verifying that receipt does not imply a new cloud call.
 
 ### Design, Documentation & Governance Links
 

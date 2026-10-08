@@ -1,5 +1,75 @@
 # Public release gate
 
+## Technical readback 2026-10-08
+
+Implementation under review:
+[`f43d66975c241384d55afd11f25bcf929fef47c1`](https://github.com/ellmos-ai/NemoFold/commit/f43d66975c241384d55afd11f25bcf929fef47c1).
+The following evidence belongs to that unchanged implementation. A later
+documentation-only revision still needs its own hosted CI readback.
+
+### Complete hosted regression
+
+[CI run 37426667693](https://github.com/ellmos-ai/NemoFold/actions/runs/37426667693)
+completed on 2026-10-06; its SHA, jobs, steps and literal test summaries were read
+back on 2026-10-08.
+
+| Runner | Result |
+|---|---|
+| Windows / Python 3.12 | 1155 passed, 84.02 seconds |
+| Ubuntu / Python 3.11 | 1154 passed, 1 skipped, 53.89 seconds |
+| Ubuntu / Python 3.12 | 1154 passed, 1 skipped, 68.38 seconds |
+
+All three jobs also passed Ruff, host/Linux/macOS type checking, compileall,
+acceptance-evidence verification, JavaScript syntax, source/wheel build,
+built-wheel installation and installed CLI help.
+
+### Local checks on 2026-10-08
+
+- `python -m ruff check src tests`: exit 0.
+- `python -m mypy src`, also with `--platform linux` and `--platform darwin`:
+  exit 0, no issues in 94 source files each.
+- `python -m compileall -q src tests`: exit 0.
+- `node --check src/nemofold/web/app.js` and `git diff --check`: exit 0.
+- `python -m nemofold acceptance-gates --evidence-root .`: exit 0,
+  476 referenced files checked; G01–G16 `done`, G17/G18 `not_supported`.
+- `python -m nemofold verify-result examples/proven-run`: exit 0,
+  `valid=true`, `status=executed`, no errors. This verifies the real
+  **2026-09-02** Token Factory run offline; no new paid request was made.
+- `python -m nemofold demo --input examples/synthetic-home --output
+  run-reports/demo`: exit 0, `executed`, no errors, `cloud_proof=false`.
+- Source and wheel build: exit 0. The first `--no-isolation` attempt lacked
+  the local `hatchling` backend; installing that build dependency and repeating
+  the build resolved the environment issue without a source change.
+- A fresh separate wheel installation passed isolated `python -I` import,
+  CLI help, offline demo and result verification, all exit 0. The import came
+  from the installed wheel, version 0.2.1, without `src`/`PYTHONPATH`; the
+  verifier checked ten artifacts and reported `valid=true`, no errors.
+- The local full-suite attempt collected 1155 tests but was deliberately
+  stopped at 11 percent under confirmed host CPU saturation, exit -1.
+  It is **incomplete**, not a local full-suite pass or a discovered product
+  failure. The complete regression evidence is the same-SHA hosted matrix above.
+
+### Boundaries and remaining acceptance
+
+- G17 lacks an approved writing subscription adapter; G18 lacks the A3
+  FormBuilder adapter and export verification. Both are declared unsupported
+  product boundaries. The register honestly reports `complete=false`.
+- Personal GUI acceptance is pending and is reserved for the user.
+- The [pinned public source test build](https://github.com/ellmos-ai/NemoFold/archive/f43d66975c241384d55afd11f25bcf929fef47c1.zip)
+  and [installation/offline-demo instructions](README.md#7-installation--quick-start)
+  provide account-free local testing. No hosted public demo, container runtime
+  acceptance or new live provider/NemoClaw session is asserted by this check.
+- The public [NemoFold video](https://youtu.be/wOToLqDBvvE) is separate media
+  evidence. Final Devpost text and embedding require their own live readback.
+
+## Historical gates
+
+The following dated records are preserved as history. Their counts and open-gate
+wording describe those earlier checks, not the 2026-10-08 readback above.
+
+<details>
+<summary>Historical gates: 2026-09-19 and 2026-09-01</summary>
+
 ## Gate 2026-09-19
 
 - `python -m ruff check src tests`: pass.
@@ -137,3 +207,5 @@ index would first require the optional templates dependency to be released there
   `c1d086a53a44f0e4403a6ad5621a32f43c1877c4`
 - Secret Scanning and Push Protection were re-enabled after the organization transfer;
   Dependabot Security Updates and private vulnerability reporting remain enabled.
+
+</details>
