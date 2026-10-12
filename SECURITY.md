@@ -15,19 +15,19 @@
 | `0.1.x` | :white_check_mark: | Initial release branch |
 | `< 0.1.0` | :x: | Historical competition snapshots |
 
-### Local-First & Zero-Egress Architecture
+### Local-First Architecture (cloud opt-in)
 
 NemoFold is designed with a strict **local-first**, **least-privilege**, and **verifiable evidence** model:
-- **Local Execution & Unprivileged User Mode**: Original files, persistent SQLite FTS5 indices, policy configurations, and action journals run entirely in unprivileged user space (`RunAsInvoker`). Zero administrator or root elevation required.
-- **Zero-Egress Data Sovereignty**: Documents, extracted text, and personal data never leave the host system unless an operator explicitly approves a specific outbound transfer.
+- **Local Execution & Unprivileged User Mode**: Original files, persistent SQLite FTS5 indices, policy configurations, and action journals run entirely in unprivileged user space. NemoFold runs as a regular user and requests no administrator rights.
+- **Local-First Data Sovereignty**: Documents, extracted text, and personal data never leave the host system unless an operator explicitly approves a specific outbound transfer.
 - **Fail-Closed Budgeting**: Model budgets and server-side cost limits must be finite, non-negative values; `NaN`, infinity, booleans, and negative values fail before provider execution.
 - **Reversible File Actions**: Mutating operations require pre-flight dry-run review and are logged to an append-only journal with instant resume and undo capabilities.
 
-### Vulnerability Response & SLA
+### Vulnerability Response Target
 
-We take security disclosures seriously and commit to:
-- **Initial Response SLA**: Within **48 hours** of receiving a valid disclosure.
-- **Triage & Status Update**: Within **5 business days** with an assessment and remediation roadmap.
+We take security disclosures seriously and aim for the following targets (best effort, not a contractual guarantee):
+- **Initial Response (target)**: Within **48 hours** of receiving a valid disclosure.
+- **Triage & Status Update (target)**: Within **5 business days** with an assessment and remediation roadmap.
 - **Fix & Advisory Release**: Coordinated release of security patch alongside a public GitHub Security Advisory.
 
 ### Reporting a Vulnerability
@@ -74,19 +74,19 @@ Please include in your report:
 | `0.1.x` | :white_check_mark: | Ursprünglicher Release-Zweig |
 | `< 0.1.0` | :x: | Historische Wettbewerbs-Snapshots |
 
-### Local-First- & Zero-Egress-Architektur
+### Local-First-Architektur (Cloud nur per Opt-in)
 
 NemoFold folgt einem konsequenten **Local-First**-, **Least-Privilege**- und **Evidenz**-Sicherheitskonzept:
-- **Lokale Ausführung & Unprivilegierter User-Mode**: Originaldokumente, persistente SQLite-FTS5-Indizes, Richtlinien und Aktionsjournale laufen vollständig im unprivilegierten Benutzerkontext (`RunAsInvoker`) ohne Root- oder Administratorrechte.
-- **Datenschutz & Zero-Egress**: Lokale Dateien, extrahierte Texte und persönliche Daten verlassen den Rechner niemals ohne explizite Freigabe für genau diesen Transfer.
+- **Lokale Ausführung & Unprivilegierter User-Mode**: Originaldokumente, persistente SQLite-FTS5-Indizes, Richtlinien und Aktionsjournale laufen vollständig im unprivilegierten Benutzerkontext. NemoFold läuft als normaler Benutzer und verlangt keine Administratorrechte.
+- **Datenschutz & Local-First**: Lokale Dateien, extrahierte Texte und persönliche Daten verlassen den Rechner niemals ohne explizite Freigabe für genau diesen Transfer.
 - **Fail-Closed Budget-Schutz**: Modell-Budgets und Server-Kostenlimits müssen endliche, nicht-negative Zahlen sein; ungültige Werte stoppen den Aufruf vor der Ausführung.
 - **Reversible Dateiaktionen**: Mutierende Operationen erfordern eine Vorab-Prüfung (Dry-Run) und werden in einem append-only Journal mit sofortiger Undo-/Resume-Möglichkeit protokolliert.
 
-### Reaktionszeiten & SLA
+### Reaktionsziele
 
-Wir nehmen Sicherheitsmeldungen sehr ernst und garantieren:
-- **Erste Rückmeldung (SLA)**: Innerhalb von **48 Stunden** nach Eingang einer validen Meldung.
-- **Triage & Statusupdate**: Innerhalb von **5 Werktagen** mit technischer Bewertung und Behebungsfahrplan.
+Wir nehmen Sicherheitsmeldungen sehr ernst und streben folgende Ziele an (nach bestem Bemühen, keine vertragliche Zusicherung):
+- **Erste Rückmeldung (Ziel)**: Innerhalb von **48 Stunden** nach Eingang einer validen Meldung.
+- **Triage & Statusupdate (Ziel)**: Innerhalb von **5 Werktagen** mit technischer Bewertung und Behebungsfahrplan.
 - **Fix & Advisory-Release**: Koordinierte Veröffentlichung des Patches zusammen mit einem GitHub Security Advisory.
 
 ### Schwachstelle melden

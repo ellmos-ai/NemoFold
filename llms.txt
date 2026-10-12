@@ -6,7 +6,6 @@
 Version: 0.2.1
 Organization: ellmos-ai
 Umbrella: open-bricks
-Last-checked: 2026-10-03
 Tests: 1154 passed, 1 skipped
 Workflows: 44 registered document workflows
 Acceptance gates: 16 of 18 done, re-verifiable offline (`nemofold acceptance-gates --evidence-root .`)
@@ -15,7 +14,6 @@ Primary documentation:
 - README.md (Bilingual 18-point Quick Navigation & Dual Mermaid Diagrams)
 - README_de.md (Deutsche Dokumentation mit synchroner Navigations-Parität)
 - NOTICE (Canonical Open-Source root attribution and copyright notice)
-- MARKETING-LOG.txt (Local marketing, discoverability and audit register)
 - CONTRIBUTING.md (Bilingual developer guidelines, 10 invariants & Plan D local workflow)
 - docs/architecture.md
 - docs/nemoclaw-integration.md
@@ -24,12 +22,12 @@ Primary documentation:
 - docs/product-story.md
 - skills/nemofold/SKILL.md
 - schemas/nemofold-job-v1.schema.json
-- THIRD_PARTY_LICENSES.md (Level 1 SBOM, Permissive dependency audit & INV-LOCAL-01..INV-SLA-10)
-- THIRD_PARTY_LICENSES.txt (Level 1 SBOM plain-text companion & RunAsInvoker certification)
-- SECURITY.md (48h security acknowledgment / 5-day triage SLA)
+- THIRD_PARTY_LICENSES.md (third-party license list, permissive dependency audit & INV-LOCAL-01..INV-SLA-10)
+- THIRD_PARTY_LICENSES.txt (third-party license list, plain-text companion)
+- SECURITY.md (security response target: 48h acknowledgment / 5-day triage)
 
 Current local implementation boundary:
-- Forty-three workflow contracts share the strict job service.
+- Forty-four workflow contracts share the strict job service.
 - Saved voyages can be run through loopback HTTP, `nemofold voyage-run`, and
   `nemofold_run_voyage` MCP with the same root, policy, action, and model gates.
 - Runnable saved voyages require a `nemofold.voyage-receipt.v1` SHA-256 bound
@@ -62,15 +60,15 @@ Core Invariants & Trust Rules:
 - Preview before file actions or external transfer.
 - Never infer live Nebius, Nemotron, or NemoClaw proof from simulated tests.
 - Never treat a saved voyage or model preference as stored transfer/action approval.
-- INV-LOCAL-01: 100% Local-First & Zero-Egress default; original files stay local.
+- INV-LOCAL-01: Local-First by default; original files stay local; cloud transfer only on explicit approval.
 - INV-EVID-02: Strict evidence citations; byte-exact quote verification required.
 - INV-ACTION-03: Reversible file actions; journaled preview, resume, and undo.
 - INV-GATE-04: Multi-tier explicit approval gates (local/remote/spend).
 - INV-ISOL-05: Path-free sanitized packaging; host paths stripped before transfer.
 - INV-PROV-06: Provider-neutral loopback surface; unauthenticated APIs restricted to 127.0.0.1.
 - INV-POLICY-07: Composable shared primitives; 44 workflows from 4 shared building blocks.
-- INV-RUNAS-08: Unprivileged user-mode execution (RunAsInvoker); non-elevated.
+- INV-RUNAS-08: Runs as a regular user; requests no administrator rights.
 - INV-DET-09: Deterministic artifacts and cryptographic SHA-256 ledgers.
-- INV-SLA-10: Transparent disclosure and 48h SLA / 5-day triage response.
+- INV-SLA-10: Transparent disclosure; target 48h acknowledgment / 5-day triage.
 - Statutory Notice (§ 521 BGB Gefälligkeitsrecht): Open-source prototype provided free of charge; maintainer liability limited to intent and gross negligence.
-- Level 1 SBOM: 100% permissive runtime dependencies (MIT, BSD-3-Clause, PSFL-2.0), 0% copyleft, unprivileged RunAsInvoker non-elevation certification.
+- Third-party license list: permissive runtime dependencies (MIT, BSD-3-Clause, PSFL-2.0), no copyleft; runs as a regular user and requests no administrator rights.
