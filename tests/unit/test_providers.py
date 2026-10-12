@@ -74,6 +74,7 @@ def test_capability_registry_keeps_generic_providers_out_of_competition_proof() 
         "claude-code",
         "openai",
         "anthropic",
+        "nebius",
     }
     assert all(item["competition_proof"] is False for item in capabilities)
     assert (
@@ -114,9 +115,54 @@ def test_provider_mapping_reads_api_keys_only_from_environment() -> None:
         )
 
 
-def test_nebius_is_reserved_for_the_dedicated_competition_path() -> None:
-    with pytest.raises(ValueError, match="dedicated token-factory-run"):
-        provider_config_from_mapping({"provider_id": "nebius", "model": "nemotron"})
+def test_nebius_needs_its_key_and_never_claims_the_competition_proof() -> None:
+    # D-040: Nemotron is selectable in the console; the committed proof stays
+    # the token-factory-run path, so a console call is never labelled as it.
+    with pytest.raises(ValueError, match="NEBIUS_API_KEY is missing"):
+        provider_config_from_mapping({"provider_id": "nebius", "model": "nemotron"}, environ={})
+    config = provider_config_from_mapping(
+        {"provider_id": "nebius", "model": "nvidia/nemotron-3-super-120b-a12b"},
+        environ={"NEBIUS_API_KEY": "secret"},
+    )
+    assert config.public_summary()["competition_proof"] is False
+    assert "secret" not in repr(config)
+    with pytest.raises(ValueError, match="cannot be overridden"):
+        ProviderConfig(
+            provider_id="nebius",
+            model="nemotron",
+            base_url="https://example.com/v1",
+            api_key="secret",
+        )
+
+
+def test_nebius_adapter_speaks_the_proven_token_factory_dialect() -> None:
+    transport = FakeHTTPTransport(
+        {
+            "id": "chatcmpl_1",
+            "model": "nvidia/nemotron-3-super-120b-a12b",
+            "choices": [{"message": {"content": '{"answers": []}'}}],
+            "usage": {"prompt_tokens": 11, "completion_tokens": 5},
+        }
+    )
+    adapter = create_provider(
+        ProviderConfig(
+            provider_id="nebius",
+            model="nvidia/nemotron-3-super-120b-a12b",
+            api_key="secret",
+        ),
+        http_transport=transport,
+    )
+
+    response = adapter.generate(request())
+
+    call = transport.calls[0]
+    assert call["url"] == "https://api.tokenfactory.nebius.com/v1/chat/completions"
+    assert call["headers"]["Authorization"] == "Bearer secret"
+    assert call["body"]["max_tokens"] == 1200
+    assert "max_completion_tokens" not in call["body"]
+    assert call["body"]["response_format"] == {"type": "json_object"}
+    assert response.usage == {"input_tokens": 11, "output_tokens": 5}
+    assert response.request_id == "chatcmpl_1"
 
 
 @pytest.mark.parametrize(

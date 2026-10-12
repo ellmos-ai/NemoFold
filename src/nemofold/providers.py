@@ -77,6 +77,17 @@ PROVIDER_DESCRIPTORS: dict[str, ProviderDescriptor] = {
         default_base_url="https://api.anthropic.com/v1",
         api_key_env="ANTHROPIC_API_KEY",
     ),
+    # D-040: Nemotron on Nebius in the console. A console run is an ordinary
+    # approved provider call; the committed competition proof stays the
+    # separate token-factory-run path, so competition_proof remains False.
+    "nebius": ProviderDescriptor(
+        provider_id="nebius",
+        label="Nebius Token Factory (Nemotron)",
+        transport=ProviderTransport.PROVIDER_API,
+        external_transfer=True,
+        default_base_url="https://api.tokenfactory.nebius.com/v1",
+        api_key_env="NEBIUS_API_KEY",
+    ),
 }
 
 
@@ -178,8 +189,6 @@ def provider_config_from_mapping(
         raise ValueError("provider model must be a non-empty string")
     descriptor = PROVIDER_DESCRIPTORS.get(provider_id)
     if descriptor is None:
-        if provider_id == "nebius" or provider_id.startswith("nemotron"):
-            raise ValueError("Nebius/Nemotron uses the dedicated token-factory-run proof path")
         raise ValueError(f"unsupported provider: {provider_id}")
     env = os.environ if environ is None else environ
     api_key = env.get(descriptor.api_key_env, "") if descriptor.api_key_env else None
@@ -684,6 +693,67 @@ class SubscriptionCLIAdapter:
         )
 
 
+class NebiusTokenFactoryAdapter:
+    """Chat completions in the dialect the 2026-09-02 proof run established."""
+
+    def __init__(self, config: ProviderConfig, transport: HTTPTransport) -> None:
+        self.config = config
+        self.transport = transport
+
+    def generate(self, request: ProviderRequest) -> ProviderResponse:
+        from .nebius_token_factory import token_factory_endpoint
+
+        endpoint, _ = token_factory_endpoint(self.config.resolved_base_url or "")
+        body = json.dumps(
+            {
+                "model": self.config.model,
+                "messages": [
+                    {"role": "system", "content": request.system_prompt},
+                    {
+                        "role": "user",
+                        "content": "Return only one JSON object matching this schema:\n"
+                        f"{json.dumps(request.response_schema, sort_keys=True)}\n\n"
+                        f"Input:\n{request.user_prompt}",
+                    },
+                ],
+                # max_tokens, not max_completion_tokens: Token Factory rejects the
+                # latter as extra_forbidden (proven live 2026-09-02). The schema
+                # travels in the prompt and is validated locally; json_object is
+                # the response format its reference guarantees.
+                "max_tokens": self.config.max_output_tokens,
+                "temperature": 0,
+                "n": 1,
+                "stream": False,
+                "response_format": {"type": "json_object"},
+            }
+        ).encode()
+        exchange = self.transport.post(
+            endpoint,
+            headers={
+                "Authorization": f"Bearer {self.config.api_key}",
+                "Content-Type": "application/json",
+            },
+            body=body,
+            timeout_seconds=self.config.timeout_seconds,
+        )
+        payload = _json_body(exchange)
+        try:
+            text = payload["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError) as exc:
+            raise RuntimeError("Token Factory response has no message content") from exc
+        if not isinstance(text, str) or not text.strip():
+            raise RuntimeError("Token Factory response text is empty")
+        return ProviderResponse(
+            text=text,
+            provider_id=self.config.provider_id,
+            model=str(payload.get("model") or self.config.model),
+            usage=_usage(
+                payload.get("usage"), input_key="prompt_tokens", output_key="completion_tokens"
+            ),
+            request_id=str(payload["id"]) if isinstance(payload.get("id"), str) else None,
+        )
+
+
 def create_provider(
     config: ProviderConfig,
     *,
@@ -697,4 +767,6 @@ def create_provider(
         return OpenAIResponsesAdapter(config, http_transport or UrllibHTTPTransport())
     if config.provider_id == "anthropic":
         return AnthropicMessagesAdapter(config, http_transport or UrllibHTTPTransport())
+    if config.provider_id == "nebius":
+        return NebiusTokenFactoryAdapter(config, http_transport or UrllibHTTPTransport())
     return SubscriptionCLIAdapter(config, process_runner or SubprocessRunner())
