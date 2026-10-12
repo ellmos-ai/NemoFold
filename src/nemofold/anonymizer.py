@@ -50,7 +50,7 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
         # length. A capped pattern split long runs and could leave a remainder
         # under seven digits readable; _not_a_phone_number applies the minimum
         # of seven digits and the date exemption to the whole run instead.
-        re.compile(r"(?<!\w)\+?\d(?:[ .()/\-]*\d)*"),
+        re.compile(r"(?<!\w)\+?\d(?:[ .()/\-]*\d)*(?!\w)"),
     ),
 )
 
@@ -59,13 +59,15 @@ _DATE_CANDIDATE = re.compile(
     r"|(?P<iso_year>\d{4})-(?P<iso_month>\d{2})-(?P<iso_day>\d{2}))"
     r"(?:[ ](?P<hour>\d{1,2}))?"
 )
-# After the hour: valid minutes, or minutes already masked together with a
-# following number, so the exemption still holds in the produced text.
-_MINUTES = re.compile(r":(?:(\d{2})(?!\d)|<PHONE_\d+>)")
+# After the hour: valid minutes. In the residual check of text this module
+# produced, also a placeholder that already holds the minutes together with a
+# following number; a placeholder in the input text proves nothing.
+_MINUTES = re.compile(r":(\d{2})(?!\d)")
+_MINUTES_IN_OUTPUT = re.compile(r":(?:(\d{2})(?!\d)|<PHONE_\d+>)")
 _MIN_PHONE_DIGITS = 7
 
 
-def _is_date(match: re.Match[str]) -> bool:
+def _is_date(match: re.Match[str], *, residual: bool = False) -> bool:
     """A PHONE candidate that is exactly one calendar date stays readable.
 
     A date has eight digits and used to be masked as a phone number, which left
@@ -79,7 +81,9 @@ def _is_date(match: re.Match[str]) -> bool:
     if found is None:
         return False
     if found["hour"] is not None:
-        minutes = _MINUTES.match(match.string, match.end())
+        minutes = (_MINUTES_IN_OUTPUT if residual else _MINUTES).match(
+            match.string, match.end()
+        )
         if (
             int(found["hour"]) > 23
             or minutes is None
@@ -101,17 +105,20 @@ def _is_date(match: re.Match[str]) -> bool:
     return True
 
 
-def _not_a_phone_number(match: re.Match[str]) -> bool:
+def _not_a_phone_number(match: re.Match[str], *, residual: bool = False) -> bool:
     digits = sum(character.isdigit() for character in match.group(0))
-    return digits < _MIN_PHONE_DIGITS or _is_date(match)
+    return digits < _MIN_PHONE_DIGITS or _is_date(match, residual=residual)
 
 
-_EXEMPT: dict[str, Callable[[re.Match[str]], bool]] = {"PHONE": _not_a_phone_number}
+_EXEMPT: dict[str, Callable[..., bool]] = {"PHONE": _not_a_phone_number}
 
 
 def _sensitive_matches(category: str, pattern: re.Pattern[str], text: str) -> bool:
+    # Only ever called on outbound text this module produced: the residual check.
     exempt = _EXEMPT.get(category)
-    return any(exempt is None or not exempt(match) for match in pattern.finditer(text))
+    return any(
+        exempt is None or not exempt(match, residual=True) for match in pattern.finditer(text)
+    )
 
 
 def detect_sensitive_categories(text: str) -> tuple[str, ...]:

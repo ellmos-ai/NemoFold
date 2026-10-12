@@ -144,6 +144,16 @@ def test_minutes_never_stay_readable_by_themselves() -> None:
         assert detect_sensitive_categories(masked) == (), masked
 
 
+def test_a_placeholder_in_the_input_proves_nothing_and_masking_adds_no_residue() -> None:
+    # Review R8 (Codex): "<PHONE_n>" written into a document made a date with
+    # an hour count as followed by masked minutes; and masking a run directly
+    # before letters created a word boundary that turned "AB12..." into an IBAN.
+    assert pseudonymize_text("13.03.2026 17:<PHONE_001>").text == "<PHONE_001>:<PHONE_001>"
+    for text in ("1234567AB1234567890123", "1234567C:\\notes\\a.txt"):
+        result = pseudonymize_text(text)
+        assert detect_sensitive_categories(result.text) == (), result.text
+
+
 def test_every_digit_the_original_pattern_masked_is_still_masked() -> None:
     # Property from review rounds R4-R7: apart from exact dates (with an hour
     # before minutes), nothing the pre-2026-10-12 pattern masked may become
