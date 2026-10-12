@@ -46,7 +46,9 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ),
     (
         "PHONE",
-        re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)"),
+        # Up to 64 digits form one candidate: with the former cap of 15 a longer
+        # run was split and a remainder under seven digits stayed readable.
+        re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,64}(?!\w)"),
     ),
 )
 
@@ -55,6 +57,7 @@ _DATE_CANDIDATE = re.compile(
     r"|(?P<iso_year>\d{4})-(?P<iso_month>\d{2})-(?P<iso_day>\d{2}))"
     r"(?:[ ](?P<hour>\d{1,2}))?"
 )
+_MINUTES = re.compile(r":[0-5]\d(?!\d)")
 
 
 def _is_date(match: re.Match[str]) -> bool:
@@ -63,17 +66,22 @@ def _is_date(match: re.Match[str]) -> bool:
     A date has eight digits and used to be masked as a phone number, which left
     an outbound timeline without a single date. The PHONE pattern itself is
     unchanged; only a candidate that is nothing but a valid date between 1900
-    and 2100, at most followed by the hour of a time ("13.03.2026 17" before
-    ":00") or by sentence punctuation, is exempt. Anything else in the same
-    digit run (a following number, a longer identifier) keeps the whole run
-    masked.
+    and 2100, at most followed by the hour of a time with valid minutes
+    ("13.03.2026 17" before ":00") or by separators without digits, is exempt.
+    Anything else in the same digit run (a following number, a longer
+    identifier) keeps the whole run masked.
     """
-    candidate = match.group(0).rstrip(" .")
-    found = _DATE_CANDIDATE.fullmatch(candidate)
+    candidate = match.group(0)
+    # Trailing separators hold no digits ("14.03.2026." at a sentence end, or
+    # "14.03.2026-" before an already masked number).
+    core = candidate.rstrip(" .()/-")
+    found = _DATE_CANDIDATE.fullmatch(core)
     if found is None:
         return False
     if found["hour"] is not None and (
-        match.string[match.end() : match.end() + 1] != ":" or int(found["hour"]) > 23
+        core != candidate
+        or int(found["hour"]) > 23
+        or not _MINUTES.match(match.string, match.end())
     ):
         return False
     if found["iso_year"] is not None:

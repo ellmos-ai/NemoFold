@@ -77,6 +77,28 @@ def test_a_date_never_frees_the_digits_around_it() -> None:
     for text in leaks:
         assert "PHONE" in detect_sensitive_categories(text), text
         assert pseudonymize_text(text).replacement_counts.get("PHONE") == 1, text
-    for text in ("Am 14.03.2026.", "Leap day 29.02.2024 ok", "um 13.03.2026 17:00 Uhr"):
+    for text in ("Am 14.03.2026.", "Leap day 29.02.2024 ok", "um 13.03.2026 17:00 Uhr",
+                 "(14.03.2026)"):
         assert detect_sensitive_categories(text) == (), text
         assert pseudonymize_text(text).text == text, text
+
+
+def test_masked_text_passes_the_residual_check_and_times_need_real_minutes() -> None:
+    # Review R5 (Codex): after masking, "14.03.2026-<PHONE_001>" was flagged
+    # again and blocked the context; and "17:abc" counted as a time.
+    for text in ("14.03.2026-01711234567", "2026-03-14/01711234567", "Am 14.03.2026. 0761 1234567"):
+        masked = pseudonymize_text(text).text
+        assert "<PHONE_001>" in masked, text
+        assert detect_sensitive_categories(masked) == (), masked
+    for text in ("14.03.2026 17:abc", "14.03.2026 17:99", "14.03.2026 17.:00", "14.03.2026 17"):
+        assert "PHONE" in detect_sensitive_categories(text), text
+
+
+def test_a_long_digit_run_is_masked_as_a_whole() -> None:
+    # Review R5-B01 (pre-existing): a cap of 15 digits split long runs and a
+    # remainder under seven digits stayed readable.
+    result = pseudonymize_text("am 01.03.2026 0761/987654 und 1234 5678 9012 3456 7890 12")
+
+    assert "987654" not in result.text
+    assert "7890 12" not in result.text
+    assert detect_sensitive_categories(result.text) == ()
