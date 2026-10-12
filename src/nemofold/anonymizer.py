@@ -59,18 +59,10 @@ _DATE_CANDIDATE = re.compile(
     r"|(?P<iso_year>\d{4})-(?P<iso_month>\d{2})-(?P<iso_day>\d{2}))"
     r"(?:[ ](?P<hour>\d{1,2}))?"
 )
-_MINUTES = re.compile(r":(\d{2})(?!\d)")
-_LEADING_MINUTES = re.compile(r"(\d{2})[ .()/\-]+")
+# After the hour: valid minutes, or minutes already masked together with a
+# following number, so the exemption still holds in the produced text.
+_MINUTES = re.compile(r":(?:(\d{2})(?!\d)|<PHONE_\d+>)")
 _MIN_PHONE_DIGITS = 7
-
-
-def _minutes_prefix(match: re.Match[str]) -> int:
-    """Length of the minutes that open a run right after "17:" ("00 " in "00 14.03.2026")."""
-    start = match.start()
-    if start < 2 or match.string[start - 1] != ":" or not match.string[start - 2].isdigit():
-        return 0
-    minutes = _LEADING_MINUTES.match(match.group(0))
-    return minutes.end() if minutes is not None and int(minutes[1]) <= 59 else 0
 
 
 def _is_date(match: re.Match[str]) -> bool:
@@ -83,12 +75,16 @@ def _is_date(match: re.Match[str]) -> bool:
     ("13.03.2026 17" before ":00"), is exempt. Anything else in the same digit
     run (a following number, a longer identifier) keeps the whole run masked.
     """
-    found = _DATE_CANDIDATE.fullmatch(match.group(0)[_minutes_prefix(match) :])
+    found = _DATE_CANDIDATE.fullmatch(match.group(0))
     if found is None:
         return False
     if found["hour"] is not None:
         minutes = _MINUTES.match(match.string, match.end())
-        if int(found["hour"]) > 23 or minutes is None or int(minutes[1]) > 59:
+        if (
+            int(found["hour"]) > 23
+            or minutes is None
+            or (minutes[1] is not None and int(minutes[1]) > 59)
+        ):
             return False
     if found["iso_year"] is not None:
         year, month, day = (int(found[key]) for key in ("iso_year", "iso_month", "iso_day"))
@@ -111,9 +107,6 @@ def _not_a_phone_number(match: re.Match[str]) -> bool:
 
 
 _EXEMPT: dict[str, Callable[[re.Match[str]], bool]] = {"PHONE": _not_a_phone_number}
-# Characters at the start of a masked run that stay readable: the minutes of
-# a preceding clock time, so "17:00" keeps its minutes and the time stays whole.
-_KEEP_PREFIX: dict[str, Callable[[re.Match[str]], int]] = {"PHONE": _minutes_prefix}
 
 
 def _sensitive_matches(category: str, pattern: re.Pattern[str], text: str) -> bool:
@@ -143,17 +136,14 @@ class Pseudonymizer:
     def _replace(self, text: str, category: str, pattern: re.Pattern[str]) -> str:
         replacements = self._maps.setdefault(category, {})
         exempt = _EXEMPT.get(category)
-        keep_prefix = _KEEP_PREFIX.get(category)
 
         def replace_match(match: re.Match[str]) -> str:
             if exempt is not None and exempt(match):
                 return match.group(0)
-            kept = keep_prefix(match) if keep_prefix is not None else 0
-            value = match.group(0)
-            key = value[kept:].casefold()
+            key = match.group(0).casefold()
             if key not in replacements:
                 replacements[key] = f"<{category}_{len(replacements) + 1:03d}>"
-            return value[:kept] + replacements[key]
+            return replacements[key]
 
         return pattern.sub(replace_match, text)
 

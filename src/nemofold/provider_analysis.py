@@ -360,7 +360,9 @@ def _prepare_context(
         "receipts": receipt_values,
         "response_schema": PROVIDER_ANALYSIS_SCHEMA,
     }
-    outbound = json.dumps(context, indent=2, sort_keys=True)
+    # Checked on the real characters: escaped as \uXXXX, a number written in
+    # non-ASCII digits would not look like digits to the residual check.
+    outbound = json.dumps(context, indent=2, sort_keys=True, ensure_ascii=False)
     categories = detect_sensitive_categories(outbound)
     if categories:
         raise ValueError(f"sanitized context still contains: {', '.join(categories)}")

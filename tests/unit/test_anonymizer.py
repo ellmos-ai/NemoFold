@@ -7,7 +7,6 @@ from nemofold.anonymizer import (
     _EXEMPT,
     PATTERNS,
     _is_date,
-    _minutes_prefix,
     detect_sensitive_categories,
     pseudonymize_text,
 )
@@ -131,20 +130,24 @@ def test_a_long_digit_run_is_masked_as_a_whole() -> None:
     assert detect_sensitive_categories(result.text) == ()
 
 
-def test_time_minutes_stay_and_the_number_after_them_is_masked() -> None:
-    text = "13.03.2026 17:00 0761 1234567"
-    masked = pseudonymize_text(text).text
-
-    assert masked == "13.03.2026 17:00 <PHONE_001>"
-    assert detect_sensitive_categories(masked) == ()
-    # minutes are never a way around the mask (a rejected guard leaked these)
-    assert "154191" not in pseudonymize_text("9263428960:34.154191").text
+def test_minutes_never_stay_readable_by_themselves() -> None:
+    # Review R7 (Codex): keeping the minutes of "any digit:" exposed "12" in
+    # "99:12 3456789", and an exemption that relied on text masked in the same
+    # pass blocked the residual check.
+    for text, masked in (
+        ("13.03.2026 17:00 0761 1234567", "13.03.2026 17:<PHONE_001>"),
+        ("99:12 3456789", "99:<PHONE_001>"),
+        ("9263428960:34.154191", "<PHONE_001>:<PHONE_002>"),
+        ("0761 1234567 17:00 14.03.2026", "<PHONE_001>:<PHONE_002>"),
+    ):
+        assert pseudonymize_text(text).text == masked, text
+        assert detect_sensitive_categories(masked) == (), masked
 
 
 def test_every_digit_the_original_pattern_masked_is_still_masked() -> None:
-    # Property from review rounds R4-R6: apart from exact dates and the two
-    # minute digits of a clock time, nothing the pre-2026-10-12 pattern masked
-    # may become readable, and masked text never trips the residual check.
+    # Property from review rounds R4-R7: apart from exact dates (with an hour
+    # before minutes), nothing the pre-2026-10-12 pattern masked may become
+    # readable, and masked text never trips the residual check.
     original = re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)")
     phone = dict(PATTERNS)["PHONE"]
     for sep, width, count, tail in itertools.product(
@@ -163,8 +166,6 @@ def test_every_digit_the_original_pattern_masked_is_still_masked() -> None:
             if _is_date(match):
                 allowed |= digits
             elif not _EXEMPT["PHONE"](match):
-                kept = match.start() + _minutes_prefix(match)
-                allowed |= {i for i in digits if i < kept}
-                masked |= {i for i in digits if i >= kept}
+                masked |= digits
         assert before <= masked | allowed, text
         assert detect_sensitive_categories(pseudonymize_text(text).text) == (), text
