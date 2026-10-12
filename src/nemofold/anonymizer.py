@@ -46,9 +46,11 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ),
     (
         "PHONE",
-        # Up to 64 digits form one candidate: with the former cap of 15 a longer
-        # run was split and a remainder under seven digits stayed readable.
-        re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,64}(?!\w)"),
+        # One candidate per whole run of digits joined by separators, of any
+        # length. A capped pattern split long runs and could leave a remainder
+        # under seven digits readable; _not_a_phone_number applies the minimum
+        # of seven digits and the date exemption to the whole run instead.
+        re.compile(r"(?<!\w)\+?\d(?:[ .()/\-]*\d)*"),
     ),
 )
 
@@ -57,7 +59,18 @@ _DATE_CANDIDATE = re.compile(
     r"|(?P<iso_year>\d{4})-(?P<iso_month>\d{2})-(?P<iso_day>\d{2}))"
     r"(?:[ ](?P<hour>\d{1,2}))?"
 )
-_MINUTES = re.compile(r":[0-5]\d(?!\d)")
+_MINUTES = re.compile(r":(\d{2})(?!\d)")
+_LEADING_MINUTES = re.compile(r"(\d{2})[ .()/\-]+")
+_MIN_PHONE_DIGITS = 7
+
+
+def _minutes_prefix(match: re.Match[str]) -> int:
+    """Length of the minutes that open a run right after "17:" ("00 " in "00 14.03.2026")."""
+    start = match.start()
+    if start < 2 or match.string[start - 1] != ":" or not match.string[start - 2].isdigit():
+        return 0
+    minutes = _LEADING_MINUTES.match(match.group(0))
+    return minutes.end() if minutes is not None and int(minutes[1]) <= 59 else 0
 
 
 def _is_date(match: re.Match[str]) -> bool:
@@ -67,23 +80,16 @@ def _is_date(match: re.Match[str]) -> bool:
     an outbound timeline without a single date. The PHONE pattern itself is
     unchanged; only a candidate that is nothing but a valid date between 1900
     and 2100, at most followed by the hour of a time with valid minutes
-    ("13.03.2026 17" before ":00") or by separators without digits, is exempt.
-    Anything else in the same digit run (a following number, a longer
-    identifier) keeps the whole run masked.
+    ("13.03.2026 17" before ":00"), is exempt. Anything else in the same digit
+    run (a following number, a longer identifier) keeps the whole run masked.
     """
-    candidate = match.group(0)
-    # Trailing separators hold no digits ("14.03.2026." at a sentence end, or
-    # "14.03.2026-" before an already masked number).
-    core = candidate.rstrip(" .()/-")
-    found = _DATE_CANDIDATE.fullmatch(core)
+    found = _DATE_CANDIDATE.fullmatch(match.group(0)[_minutes_prefix(match) :])
     if found is None:
         return False
-    if found["hour"] is not None and (
-        core != candidate
-        or int(found["hour"]) > 23
-        or not _MINUTES.match(match.string, match.end())
-    ):
-        return False
+    if found["hour"] is not None:
+        minutes = _MINUTES.match(match.string, match.end())
+        if int(found["hour"]) > 23 or minutes is None or int(minutes[1]) > 59:
+            return False
     if found["iso_year"] is not None:
         year, month, day = (int(found[key]) for key in ("iso_year", "iso_month", "iso_day"))
     else:
@@ -99,7 +105,15 @@ def _is_date(match: re.Match[str]) -> bool:
     return True
 
 
-_EXEMPT: dict[str, Callable[[re.Match[str]], bool]] = {"PHONE": _is_date}
+def _not_a_phone_number(match: re.Match[str]) -> bool:
+    digits = sum(character.isdigit() for character in match.group(0))
+    return digits < _MIN_PHONE_DIGITS or _is_date(match)
+
+
+_EXEMPT: dict[str, Callable[[re.Match[str]], bool]] = {"PHONE": _not_a_phone_number}
+# Characters at the start of a masked run that stay readable: the minutes of
+# a preceding clock time, so "17:00" keeps its minutes and the time stays whole.
+_KEEP_PREFIX: dict[str, Callable[[re.Match[str]], int]] = {"PHONE": _minutes_prefix}
 
 
 def _sensitive_matches(category: str, pattern: re.Pattern[str], text: str) -> bool:
@@ -129,14 +143,17 @@ class Pseudonymizer:
     def _replace(self, text: str, category: str, pattern: re.Pattern[str]) -> str:
         replacements = self._maps.setdefault(category, {})
         exempt = _EXEMPT.get(category)
+        keep_prefix = _KEEP_PREFIX.get(category)
 
         def replace_match(match: re.Match[str]) -> str:
             if exempt is not None and exempt(match):
                 return match.group(0)
-            key = match.group(0).casefold()
+            kept = keep_prefix(match) if keep_prefix is not None else 0
+            value = match.group(0)
+            key = value[kept:].casefold()
             if key not in replacements:
                 replacements[key] = f"<{category}_{len(replacements) + 1:03d}>"
-            return replacements[key]
+            return value[:kept] + replacements[key]
 
         return pattern.sub(replace_match, text)
 
