@@ -12,14 +12,11 @@ English | [Deutsch](README_de.md)
 [![Tests](https://img.shields.io/badge/tests-1154%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
-[![Privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-success.svg)](#sec-05)
-[![Security](https://img.shields.io/badge/security-RunAsInvoker%20%7C%20Non--Elevated-blue.svg)](THIRD_PARTY_LICENSES.md)
-[![Security SLA](https://img.shields.io/badge/security%20SLA-48h%20%2F%205d%20triage-blue.svg)](SECURITY.md)
+[![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20cloud%20opt--in-success.svg)](#sec-05)
+[![Security SLA](https://img.shields.io/badge/security%20response%20target-48h%20%2F%205d-blue.svg)](SECURITY.md)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Third-Party Licenses](https://img.shields.io/badge/licenses-Audited%20%7C%20Level%201%20SBOM-success.svg)](THIRD_PARTY_LICENSES.md)
-[![SBOM Plain Text](https://img.shields.io/badge/Level%201%20SBOM-Plain%20Text-blue.svg)](THIRD_PARTY_LICENSES.txt)
-[![Verified](https://img.shields.io/badge/Verified-2026--10--03-blue.svg)](MARKETING-LOG.txt)
-[![Last-Checked](https://img.shields.io/badge/Last--Checked-2026--10--03-success.svg)](llms.txt)
+[![Third-Party Licenses](https://img.shields.io/badge/licenses-third--party%20license%20list-success.svg)](THIRD_PARTY_LICENSES.md)
+[![Licenses Plain Text](https://img.shields.io/badge/licenses-plain%20text-blue.svg)](THIRD_PARTY_LICENSES.txt)
 [![Ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-informational.svg)](https://github.com/ellmos-ai)
 [![Umbrella](https://img.shields.io/badge/umbrella-open--bricks-informational.svg)](https://github.com/open-bricks)
 [![LLM Ready](https://img.shields.io/badge/LLM--Ready-llms.txt-blueviolet.svg)](llms.txt)
@@ -81,8 +78,8 @@ corpus. The evidence contract does not change between them - only the worker doe
 | 14 | [Structured Sources & Controlled Output](#14-structured-sources--controlled-output) | CSV/JSON ingestion, sanitized web boundary, Controlled Email drafting |
 | 15 | [Checking, Comparing & Composing](#15-checking-comparing--composing) | Reference check, Rater Race, Guide Compose, Wiki Export, Pattern Mining |
 | 16 | [Local Web Console & Routes](#16-local-web-console--routes) | Area routing (`/folders`, `/processes`, `/governance`, `/connections`) |
-| 17 | [Sibling Ecosystem & Integration](#17-sibling-ecosystem--integration) | Cross-reference table for 16 sister repositories across open-bricks |
-| 18 | [Transparency, Licenses & Security Policy](#18-transparency-licenses--security-policy) | Dependency audit, zero-copyleft guarantee, 48h vulnerability SLA |
+| 17 | [Sibling Ecosystem & Integration](#17-sibling-ecosystem--integration) | Cross-reference table for 10 public sister repositories in ellmos-ai, dev-bricks and doc-bricks |
+| 18 | [Transparency, Licenses & Security Policy](#18-transparency-licenses--security-policy) | Dependency audit, zero-copyleft guarantee, 48h response target |
 
 ---
 
@@ -109,7 +106,7 @@ flowchart TB
     subgraph Governance["3. Trust Boundary & Governance Gates"]
         ROOTS["Approved Roots Policy<br/>(Fail-Closed Directory Boundaries)"]
         GATES["Execution Gates<br/>(File Actions, External Models, Budget Ceiling)"]
-        RUNAS["User Space Boundary<br/>(Unprivileged RunAsInvoker, Non-Elevated)"]
+        RUNAS["User Space Boundary<br/>(runs as a regular user, no administrator rights)"]
     end
 
     subgraph CoreEngine["4. Core Engine & Shared Primitives"]
@@ -213,16 +210,16 @@ sequenceDiagram
 
 | Evaluation Dimension | NemoFold (v0.2.1) | Cloud AI Assistants (Copilot / NotebookLM) | Desktop Search Tools (DocFetcher / Copernic) | Agent Frameworks (LangChain / LlamaIndex) | Invariant Mapping |
 |:---|:---:|:---:|:---:|:---:|:---:|
-| **1. Execution Boundary** | **100% Local-First / Zero-Egress** | Cloud Ingestion Mandatory | 100% Local | Mixed / Cloud Default | `INV-LOCAL-01` |
+| **1. Execution Boundary** | **Local-First by default / cloud opt-in** | Cloud Ingestion Mandatory | 100% Local | Mixed / Cloud Default | `INV-LOCAL-01` |
 | **2. Citation Rigor** | **Verbatim Byte-Exact Quote Verification** | Probabilistic Synthesis | Raw Text Snippets Only | Prompt-Dependent Hallucinations | `INV-EVID-02` |
 | **3. File Action Safety** | **Reversible Journal / Undo / Resume** | Read-Only (No File Actions) | Manual File Operations | Unchecked Shell Tool Calls | `INV-ACTION-03` |
 | **4. Approval Gates** | **Multi-Tier (Local / Remote / Spend)** | Implicit Cloud Upload | N/A (No Automation) | Often Ungated Auto-Execution | `INV-GATE-04` |
 | **5. Package Sanitization** | **Path-Free / Hash-Verified Packages** | Raw File Transmission | N/A | Variable / Host Leaks Common | `INV-ISOL-05` |
 | **6. Attack Surface** | **Loopback-Only (127.0.0.1)** | Public Multi-Tenant SaaS | Local GUI Only | Often Exposed HTTP Endpoints | `INV-PROV-06` |
 | **7. Workflow Architecture** | **4 Primitives / 44 Workflows** | Monolithic Chat Interface | Keyword Search Index | Complex Dynamic Graphs | `INV-POLICY-07` |
-| **8. Privilege Boundary** | **Unprivileged `RunAsInvoker`** | Browser Sandbox | Standard User Space | Often Demands Root/Sudo | `INV-RUNAS-08` |
+| **8. Privilege Boundary** | **Regular user, no admin rights** | Browser Sandbox | Standard User Space | Often Demands Root/Sudo | `INV-RUNAS-08` |
 | **9. Auditability** | **Cryptographic SHA-256 Ledgers** | Proprietary Session Log | Minimal Plaintext Log | Transient Memory Dumps | `INV-DET-09` |
-| **10. Vulnerability SLA** | **48h Ack / 5d Triage Public SLA** | Enterprise Support Contract | Volunteer / Inactive | Best-Effort GitHub Issues | `INV-SLA-10` |
+| **10. Vulnerability SLA** | **48h Ack / 5d Triage (target)** | Enterprise Support Contract | Volunteer / Inactive | Best-Effort GitHub Issues | `INV-SLA-10` |
 
 ---
 
@@ -234,16 +231,16 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 
 | Invariant ID | Name | Architectural Guarantee | Compliance Verification |
 |:---:|:---|:---|:---:|
-| **INV-LOCAL-01** | 100% Local-First & Zero-Egress | Original documents, absolute paths, FTS index, policies, and ledger remain strictly local on host; zero automatic telemetry. | Verified in `tests/` |
+| **INV-LOCAL-01** | Local-First by default; cloud transfer only on explicit approval | Original documents, absolute paths, FTS index, policies, and ledger remain strictly local on host; zero automatic telemetry. | Verified in `tests/` |
 | **INV-EVID-02** | Byte-Exact Evidence Citation | Claims accepted only when verbatim quotes match source text byte-for-byte; line and page locators preserved. | Verified in `tests/unit/test_evidence_analyst.py` |
 | **INV-ACTION-03** | Reversible Actions & Journaled Undo | File mutations require pre-flight dry-run, atomic commit, and provide full reversible undo and resume via run journal. | Verified in `tests/unit/test_journal.py` |
 | **INV-GATE-04** | Multi-Tier Explicit Approval Gates | File actions, external model transfers, cloud spend ceilings, and network exposure require explicit operator flags. | Verified in `tests/unit/test_gates.py` |
 | **INV-ISOL-05** | Path-Free Sanitized Packaging | Outbound packages strip host paths, secrets, symlinks, and unapproved files; preflight validates package before network transit. | Verified in `tests/unit/test_package_validator.py` |
 | **INV-PROV-06** | Provider-Neutral Loopback Surface | Pluggable local and remote backends; unauthenticated interfaces and Captain's Desk restricted strictly to loopback (127.0.0.1). | Verified in `tests/e2e/test_webapp.py` |
 | **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 44 document workflows; reusable voyage drafts adapt without model fine-tuning. | Verified in `tests/unit/test_primitives.py` |
-| **INV-RUNAS-08** | Unprivileged User-Mode (`RunAsInvoker`) | Operates entirely under standard user privileges (`RunAsInvoker`); zero system daemon or administrative elevation required. | Verified in `THIRD_PARTY_LICENSES.md` |
+| **INV-RUNAS-08** | Unprivileged User Mode | Runs as a regular user; requests no administrator rights; no system daemon required. | Documented in `SECURITY.md` |
 | **INV-DET-09** | Deterministic Artifacts & Ledgers | Deterministic SVG figures, structured reports, and cryptographic SHA-256 run ledgers guarantee reproducible audit trails. | Verified in `tests/unit/test_report_studio.py` |
-| **INV-SLA-10** | 48h Security & Triage SLA | Security vulnerability disclosures acknowledged within 48h; triage and remediation assessment completed within 5 business days. | Verified in `SECURITY.md` |
+| **INV-SLA-10** | 48h Security & Triage SLA | Target: security vulnerability disclosures acknowledged within 48h; triage and remediation assessment within 5 business days. | Stated target in `SECURITY.md` |
 
 ---
 
@@ -275,11 +272,11 @@ are listed in the second table further down (16 + 7 + 7 + 14 = 44).
 | Fact Distill | Quotable sentences per source with repeated statements struck from the findings and every struck occurrence kept visible in its own appendix |
 | Synopsis Merge | Section-wise merge of several documents with a source anchor per paragraph and disagreeing labels shown as conflict blocks instead of a silent choice |
 | Daily Arrivals | Comparison against a named snapshot with name, size, time and short content per new file, the owner where the platform can name one, and a task file you install yourself |
-| NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; proven by a real Token Factory run committed under `examples/proven-run/` |
+| NemoClaw skill package & Token Factory proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; proven by a real Token Factory run committed under `examples/proven-run/` |
 
 ### Gate-verified structured-source, web & specialist workflows
 
-Thirteen more workflows were built against the Ellmos use-case acceptance gates
+Fourteen more workflows were built against the Ellmos use-case acceptance gates
 (`G05`-`G14`, see [Section 8](#8-offline-proof--verification)) and structured/web
 sources ([Section 14](#14-structured-sources--controlled-output)); none had a
 table row before this pass.
@@ -573,6 +570,8 @@ endpoint rejects would spend the single approved run on an HTTP 400. NemoFold in
 its complete output schema inside the bounded user payload and validates the returned
 object locally. It therefore does not depend on model-specific server-side JSON-schema
 enforcement to protect the evidence contract.
+
+The NemoClaw/OpenShell runtime itself was not installed or executed for this submission. What is proven is the real Nebius Token Factory run (`examples/proven-run/`, `nemoclaw_proof: false`); the skill package in `skills/nemofold/` is ready to install.
 
 The optional declared NemoClaw version is metadata only. The result records
 `nemoclaw_proof: false`; only a separately captured, sanitized runtime log from the
@@ -917,7 +916,7 @@ not proof of a Nebius, Nemotron or NemoClaw runtime call; `cloud_proof` remains 
 <a id="sibling-ecosystem--integration"></a><a id="geschwister-oekosystem--integration"></a>
 ## 17. Sibling Ecosystem & Integration
 
-NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem and the wider `open-bricks` architecture. It seamlessly integrates with peer tools across the portfolio:
+NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem. Sister projects live in the `ellmos-ai`, `dev-bricks` and `doc-bricks` organizations; `open-bricks` is an umbrella profile organization without code repositories. Public peer tools:
 
 | Tool / Repository | Organization | Role & Interoperability |
 |:---|:---:|:---|
@@ -926,17 +925,12 @@ NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem 
 | **[ellmos-controlcenter-mcp](https://github.com/ellmos-ai/ellmos-controlcenter-mcp)** | `ellmos-ai` | Central orchestration and capability-routing MCP server |
 | **[ellmos-homebase-mcp](https://github.com/ellmos-ai/ellmos-homebase-mcp)** | `ellmos-ai` | Agent persistent memory, state management, and profile store |
 | **[report-forge](https://github.com/ellmos-ai/report-forge)** | `ellmos-ai` | Headless DOCX template engine and professional report renderer |
-| **[assistant-core](https://github.com/ellmos-ai/assistant-core)** | `ellmos-ai` | Unified prompt engine, multi-provider interfaces & agent runtime |
 | **[DevCenter](https://github.com/dev-bricks/DevCenter)** | `dev-bricks` | Multi-repository workspace manager and local developer dashboard |
 | **[ticket-master](https://github.com/dev-bricks/ticket-master)** | `dev-bricks` | Issue tracker, linear sprint workflow, and task engine |
 | **[lock-master](https://github.com/dev-bricks/lock-master)** | `dev-bricks` | Host concurrency locking, fail-closed access, and sync locks |
 | **[sync-master](https://github.com/dev-bricks/sync-master)** | `dev-bricks` | Multi-device file synchronizer and conflict copy resolution |
-| **[file-cleaner](https://github.com/file-bricks/file-cleaner)** | `file-bricks` | Batch temporary file scanner, duplicate resolver, and declutterer |
-| **[folder-organizer](https://github.com/file-bricks/folder-organizer)** | `file-bricks` | Rule-based folder taxonomies and automated directory structuring |
 | **[CleanMarkdown](https://github.com/doc-bricks/CleanMarkdown)** | `doc-bricks` | Markdown linter, anchor normalization, and documentation formatter |
-| **[ChainReaction](https://github.com/entertain-and-more/ChainReaction)** | `entertain-and-more` | Interactive turn-based board game with local AI agents |
-| **[githubbot](https://github.com/dev-bricks/githubbot)** | `dev-bricks` | Automated multi-organization repository maintenance and telemetry |
-| **[open-bricks](https://github.com/open-bricks)** | `open-bricks` | Umbrella open-source organization and standards federation |
+| **[open-bricks](https://github.com/open-bricks)** | `open-bricks` | Umbrella profile organization (no code repositories) |
 
 ---
 
@@ -973,7 +967,7 @@ NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem 
 - [Submission readiness](docs/submission-readiness.md)
 - [Competition code map](COMPETITION_CODE_MAP.md)
 - [Third-Party Software & Dependency Audit](THIRD_PARTY_LICENSES.md)
-- [Security Policy & 48h Vulnerability SLA](SECURITY.md)
+- [Security Policy & 48h response target](SECURITY.md)
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Release Gate Checklist](RELEASE_GATE.md)
 

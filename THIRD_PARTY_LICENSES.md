@@ -1,12 +1,12 @@
 # Third-Party Licenses & Dependency Inventory (Level 1 SBOM)
 
 > **Project:** `ellmos-ai/NemoFold`<br>
-> **Version:** `0.2.1` (frozen per `T-20260920-167562623`)<br>
+> **Version:** `0.2.1` (version frozen)<br>
 > **Audited:** 2026-10-03 (Pfad B Re-Audit; Prior audits: 2026-10-01, 2026-09-28, 2026-09-26, 2026-09-19, 2026-09-18)<br>
 > **Repository License:** [MIT License](LICENSE)<br>
 > **Attribution NOTICE:** [NOTICE](NOTICE)<br>
 > **Plain-Text Companion:** [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)<br>
-> **Architecture & Privacy:** 100% Local-First, Zero-Egress by default, Unprivileged User-Mode (`RunAsInvoker`)
+> **Architecture & Privacy:** Local-First by default (cloud transfer only on explicit approval), runs as a regular user without administrator rights
 
 ---
 
@@ -18,7 +18,7 @@ The core runtime strictly enforces a **Zero-Copyleft Guarantee**:
 - All direct and indirect runtime dependencies are distributed under strictly **permissive open-source licenses** (MIT, BSD-3-Clause, PSFL-2.0).
 - There are **zero AGPL, GPL, or copyleft dependencies** in the core runtime or packaging harness.
 - User files, extracted text, persistent SQLite indices, and generated reports remain 100% owned by the user.
-- The software runs entirely in unprivileged user space (`RunAsInvoker`) without requiring root, administrator rights, or background daemon installation.
+- The software runs as a regular user in unprivileged user space and requests no administrator rights; it does not require root or a background daemon installation.
 
 ### Governance & Runtime Invariants Matrix
 
@@ -26,16 +26,16 @@ NemoFold complies with ten canonical governance and runtime invariants:
 
 | Invariant ID | Name | Architectural Guarantee | Compliance Status |
 |:---:|:---|:---|:---:|
-| **INV-LOCAL-01** | 100% Local-First & Zero-Egress | Original documents, absolute paths, FTS index, policies, and ledger remain strictly local on host; zero automatic telemetry. | :white_check_mark: Verified |
+| **INV-LOCAL-01** | Local-First by default | Original documents, absolute paths, FTS index, policies, and ledger remain strictly local on host; zero automatic telemetry. | :white_check_mark: Verified |
 | **INV-EVID-02** | Byte-Exact Evidence Citation | Claims accepted only when verbatim quotes match source text byte-for-byte; line and page locators preserved. | :white_check_mark: Verified |
 | **INV-ACTION-03** | Reversible Actions & Journaled Undo | File mutations require pre-flight dry-run, atomic commit, and provide full reversible undo and resume via run journal. | :white_check_mark: Verified |
 | **INV-GATE-04** | Multi-Tier Explicit Approval Gates | File actions, external model transfers, cloud spend ceilings, and network exposure require explicit operator flags. | :white_check_mark: Verified |
 | **INV-ISOL-05** | Path-Free Sanitized Packaging | Outbound packages strip host paths, secrets, symlinks, and unapproved files; preflight validates package before network transit. | :white_check_mark: Verified |
 | **INV-PROV-06** | Provider-Neutral Loopback Surface | Pluggable local and remote backends; unauthenticated interfaces and Captain's Desk restricted strictly to loopback (127.0.0.1). | :white_check_mark: Verified |
 | **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 34 document workflows; reusable voyage drafts adapt without model fine-tuning. | :white_check_mark: Verified |
-| **INV-RUNAS-08** | Unprivileged User-Mode (`RunAsInvoker`) | Operates entirely under standard user privileges (`RunAsInvoker`); zero system daemon or administrative elevation required. | :white_check_mark: Verified |
+| **INV-RUNAS-08** | Unprivileged User-Mode | Runs as a regular user; requests no administrator rights; no system daemon required. | :white_check_mark: Verified |
 | **INV-DET-09** | Deterministic Artifacts & Ledgers | Deterministic SVG figures, structured reports, and cryptographic SHA-256 run ledgers guarantee reproducible audit trails. | :white_check_mark: Verified |
-| **INV-SLA-10** | 48h Security & Triage SLA | Security vulnerability disclosures acknowledged within 48h; triage and remediation assessment completed within 5 business days. | :white_check_mark: Verified |
+| **INV-SLA-10** | 48h Security & Triage Target | Target: security vulnerability disclosures acknowledged within 48h; triage and remediation assessment within 5 business days. | :white_check_mark: Verified |
 
 ---
 

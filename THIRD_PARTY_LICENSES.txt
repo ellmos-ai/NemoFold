@@ -1,18 +1,18 @@
 THIRD-PARTY LICENSES & LEVEL 1 SBOM NOTICE
 Project: ellmos-ai/NemoFold (NemoFold)
 Audited: 2026-10-03 (Pfad B Re-Audit; Prior audits: 2026-10-01, 2026-09-28, 2026-09-26, 2026-09-19, 2026-09-18)
-Repository Version: 0.2.1 (Version Freeze per T-20260920-167562623)
+Repository Version: 0.2.1 (version frozen)
 Repository License: MIT License (see LICENSE)
 Repository Attribution Notice: NOTICE (see NOTICE)
-Architecture & Privacy: 100% Local-First, Zero-Egress by default, Unprivileged User-Mode (RunAsInvoker), Fail-Closed
+Architecture & Privacy: Local-First by default (cloud transfer only on explicit approval), runs as a regular user without administrator rights, Fail-Closed
 
 ================================================================================
 1. EXECUTIVE SUMMARY & COMPLIANCE ASSURANCE
 ================================================================================
 
 NemoFold is engineered under strict architectural and governance invariants:
-100% Local-First, Zero-Egress by default, unprivileged user-mode execution
-(RunAsInvoker), and fail-closed safety gate interception. The core agent loop
+Local-First by default, unprivileged user-mode execution (runs as a regular
+user, no administrator rights), and fail-closed safety gate interception. The core agent loop
 turns explicitly approved local directories into a persistent working memory,
 keeps claims traceable to source locations, and makes file actions reversible.
 
@@ -30,19 +30,19 @@ root NOTICE file.
 
 Invariant ID  | Operational Scope & Guarantee       | Technical Enforcement                  | License Scope
 --------------+-------------------------------------+----------------------------------------+-------------------
-INV-LOCAL-01  | 100% Local-First & Zero-Egress      | nemofold.storage, nemofold.policy      | PSFL-2.0 / MIT
+INV-LOCAL-01  | Local-First by default            | nemofold.storage, nemofold.policy      | PSFL-2.0 / MIT
 INV-EVID-02   | Byte-Exact Evidence Citation        | nemofold.evidence, nemofold.indexer    | PSFL-2.0 / MIT
 INV-ACTION-03 | Reversible Actions & Journaled Undo | nemofold.journal, nemofold.actions     | PSFL-2.0 / MIT
 INV-GATE-04   | Explicit Approval Gate Controls     | nemofold.policy, nemofold.cli          | PSFL-2.0 / MIT
 INV-ISOL-05   | Path-Free Sanitized Packaging       | nemofold.artifacts, nemofold.export    | PSFL-2.0 / MIT
 INV-PROV-06   | Loopback-Restricted API Surface     | nemofold.web, nemofold.mcp_server      | MIT / BSD-3-Clause
 INV-POLICY-07 | Composable Primitives & Voyages     | nemofold.primitives, nemofold.voyages  | PSFL-2.0 / MIT
-INV-RUNAS-08  | Unprivileged User-Mode (RunAsInvoker)| nemofold.cli, nemofold.mcp_server     | PSFL-2.0 / MIT
+INV-RUNAS-08  | Unprivileged User-Mode           | nemofold.cli, nemofold.mcp_server     | PSFL-2.0 / MIT
 INV-DET-09   | Deterministic Artifacts & Ledgers   | nemofold.ledger, nemofold.reports      | PSFL-2.0 / MIT
-INV-SLA-10    | 48h Security & 5d Triage SLA        | SECURITY.md (security@open-bricks.org) | MIT
+INV-SLA-10    | 48h Security & 5d Triage Target     | SECURITY.md (security@open-bricks.org) | MIT
 
 ================================================================================
-3. ZERO-COPYLEFT ISOLATION GUARANTEE & RUNASINVOKER CERTIFICATION
+3. ZERO-COPYLEFT ISOLATION GUARANTEE & UNPRIVILEGED EXECUTION
 ================================================================================
 
 1. Zero-Copyleft Isolation Guarantee:
@@ -51,8 +51,8 @@ INV-SLA-10    | 48h Security & 5d Triage SLA        | SECURITY.md (security@open
    and runtime interfaces are completely free of GPL, AGPL, LGPL, SSPL, or
    reciprocal copyleft obligations.
 
-2. Unprivileged Execution (RunAsInvoker):
-   NemoFold enforces unprivileged user-mode execution under INV-RUNAS-08.
+2. Unprivileged Execution (regular user, no administrator rights):
+   NemoFold runs as a regular user and requests no administrator rights (INV-RUNAS-08).
    All document parsing, SQLite FTS indexing, and local action journals operate
    strictly within non-elevated user context without requiring administrative
    elevation, root privileges, or daemon background services.
