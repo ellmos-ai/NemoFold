@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from datetime import date
 
 from .document_index import SearchHit
 from .evidence_analyst import ContextReceipt
@@ -45,23 +46,64 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ),
     (
         "PHONE",
-        # A date is not a phone number: 14.03.2026 or 2026-03-14 has eight digits
-        # and used to be masked, which left an outbound timeline without dates.
-        # Only valid dates are exempt, and a match may not start inside one;
-        # every other digit run, including case and policy numbers, stays masked.
-        re.compile(
-            r"(?<!\w)(?<!\d\.)(?<!\d-)"
-            r"(?!(?:0?[1-9]|[12]\d|3[01])\.(?:0?[1-9]|1[0-2])\.(?:\d{4}|\d{2})(?![\d.]))"
-            r"(?!\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])(?!\d))"
-            r"(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)"
-        ),
+        re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)"),
     ),
 )
+
+_DATE_CANDIDATE = re.compile(
+    r"(?:(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{4}|\d{2})"
+    r"|(?P<iso_year>\d{4})-(?P<iso_month>\d{2})-(?P<iso_day>\d{2}))"
+    r"(?:[ ](?P<hour>\d{1,2}))?"
+)
+
+
+def _is_date(match: re.Match[str]) -> bool:
+    """A PHONE candidate that is exactly one calendar date stays readable.
+
+    A date has eight digits and used to be masked as a phone number, which left
+    an outbound timeline without a single date. The PHONE pattern itself is
+    unchanged; only a candidate that is nothing but a valid date between 1900
+    and 2100, at most followed by the hour of a time ("13.03.2026 17" before
+    ":00") or by sentence punctuation, is exempt. Anything else in the same
+    digit run (a following number, a longer identifier) keeps the whole run
+    masked.
+    """
+    candidate = match.group(0).rstrip(" .")
+    found = _DATE_CANDIDATE.fullmatch(candidate)
+    if found is None:
+        return False
+    if found["hour"] is not None and (
+        match.string[match.end() : match.end() + 1] != ":" or int(found["hour"]) > 23
+    ):
+        return False
+    if found["iso_year"] is not None:
+        year, month, day = (int(found[key]) for key in ("iso_year", "iso_month", "iso_day"))
+    else:
+        year, month, day = (int(found[key]) for key in ("year", "month", "day"))
+        if len(found["year"]) == 2:
+            year += 2000
+    if not 1900 <= year <= 2100:
+        return False
+    try:
+        date(year, month, day)
+    except ValueError:
+        return False
+    return True
+
+
+_EXEMPT: dict[str, Callable[[re.Match[str]], bool]] = {"PHONE": _is_date}
+
+
+def _sensitive_matches(category: str, pattern: re.Pattern[str], text: str) -> bool:
+    exempt = _EXEMPT.get(category)
+    return any(exempt is None or not exempt(match) for match in pattern.finditer(text))
 
 
 def detect_sensitive_categories(text: str) -> tuple[str, ...]:
     """Return deterministic categories still visible in an outbound text field."""
-    return tuple(category for category, pattern in PATTERNS if pattern.search(text))
+    return tuple(
+        category for category, pattern in PATTERNS if _sensitive_matches(category, pattern, text)
+    )
 
 
 class Pseudonymizer:
@@ -78,8 +120,11 @@ class Pseudonymizer:
 
     def _replace(self, text: str, category: str, pattern: re.Pattern[str]) -> str:
         replacements = self._maps.setdefault(category, {})
+        exempt = _EXEMPT.get(category)
 
         def replace_match(match: re.Match[str]) -> str:
+            if exempt is not None and exempt(match):
+                return match.group(0)
             key = match.group(0).casefold()
             if key not in replacements:
                 replacements[key] = f"<{category}_{len(replacements) + 1:03d}>"

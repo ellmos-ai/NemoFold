@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from nemofold.anonymizer import pseudonymize_text
+from nemofold.anonymizer import detect_sensitive_categories, pseudonymize_text
 
 
 def test_pseudonymizer_removes_common_identifiers_and_explicit_terms() -> None:
@@ -45,7 +45,7 @@ def test_dates_stay_readable_while_phone_and_case_numbers_are_masked() -> None:
     text = (
         "Am Samstag, 14.03.2026, gegen 21:30 Uhr. Annahme: 13.03.2026 17:00. "
         "ISO 2026-03-14. Police KV-2026-0447. Ruf 0761 1234567 oder +49 171 1234567, "
-        "am 01.03.2026 0761/987654."
+        "am 01.03.2026: 0761/987654."
     )
 
     result = pseudonymize_text(text)
@@ -55,3 +55,28 @@ def test_dates_stay_readable_while_phone_and_case_numbers_are_masked() -> None:
     for secret in ("0761 1234567", "+49 171 1234567", "0761/987654", "2026-0447"):
         assert secret not in result.text, secret
     assert result.replacement_counts == {"PHONE": 4}
+
+
+def test_a_date_never_frees_the_digits_around_it() -> None:
+    # Independent review R4 (Codex): a first date exemption let these through
+    # unmasked and unflagged. The PHONE pattern is the original one again; only
+    # a run that is exactly one calendar-valid date is exempt.
+    leaks = [
+        "14.03.2026-01711234567",
+        "2026-03-14-01711234567",
+        "2026-03-14.01711234567",
+        "Tel. 0761-12-30",
+        "Police KV-2026-03-14-1234",
+        "31.02.2026",
+        "29.02.2025",
+        "2026-02-31",
+        "0000-01-01",
+        "01.12.1234567",
+        "14.03.2026 99",
+    ]
+    for text in leaks:
+        assert "PHONE" in detect_sensitive_categories(text), text
+        assert pseudonymize_text(text).replacement_counts.get("PHONE") == 1, text
+    for text in ("Am 14.03.2026.", "Leap day 29.02.2024 ok", "um 13.03.2026 17:00 Uhr"):
+        assert detect_sensitive_categories(text) == (), text
+        assert pseudonymize_text(text).text == text, text
