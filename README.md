@@ -9,7 +9,7 @@ English | [Deutsch](README_de.md)
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1154%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1173%20passed%20%7C%202%20skipped-brightgreen.svg)](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20cloud%20opt--in-success.svg)](#sec-05)
@@ -381,6 +381,18 @@ full-suite pass. Personal GUI acceptance remains pending.
 See the [release gate](RELEASE_GATE.md) for the exact checks and product boundaries.
 The real cloud proof remains the historical 2026-09-02 run; today's verification
 does not claim a new cloud call or a hosted public demo.
+
+### Final acceptance round (2026-10-12)
+
+The personal GUI acceptance on 2026-10-12 reworked the console: the start page is
+now the workbench, blueprints and your own use cases are separate, a folder can be
+approved for a session from the folder dialog, and Nemotron on Nebius is selectable
+as a provider. It also fixed the anonymizer, so dates reach a cloud model readable
+while phone, case and policy numbers stay masked. Ten independent review rounds
+by a second model (Codex, OpenAI) checked these changes. The
+[hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933) on [`b0e2bc3`](https://github.com/ellmos-ai/NemoFold/commit/b0e2bc3b78fc045f605df94ca34f28c7079190fe) passed: Windows/Python 3.12 all
+1175 tests; Ubuntu/Python 3.11 and 3.12 each 1173 with 2 platform-specific
+skips.
 
 ### Acceptance gate register
 

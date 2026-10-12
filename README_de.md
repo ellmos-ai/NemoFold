@@ -9,7 +9,7 @@
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1154%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1173%20passed%20%7C%202%20skipped-brightgreen.svg)](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20cloud%20opt--in-success.svg)](#sec-05)
@@ -378,7 +378,19 @@ noch aus.
 
 Die genauen Prüfungen und Produktgrenzen stehen im [Release-Gate](RELEASE_GATE.md).
 Der echte Cloud-Beleg bleibt der historische Lauf vom 2026-09-02; die heutige
-Verifikation behauptet weder einen neuen Cloud-Aufruf noch eine gehostete öffentliche
+Verifikation behauptet weder einen ne### Schlussabnahme (2026-10-12)
+
+Die persönliche GUI-Abnahme am 2026-10-12 hat die Konsole umgebaut: Die Startseite ist
+jetzt die Werkbank, Blueprints und eigene Use Cases sind getrennt, ein Ordner lässt sich
+im Ordnerdialog für die Sitzung freigeben, und Nemotron auf Nebius ist als Provider
+wählbar. Außerdem wurde der Anonymisierer korrigiert: Datumsangaben erreichen ein
+Cloud-Modell lesbar, Telefon-, Akten- und Policennummern bleiben maskiert. Zehn
+unabhängige Review-Runden durch ein zweites Modell (Codex, OpenAI) haben diese
+Änderungen geprüft. Der [gehostete CI-Lauf](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933) auf [`b0e2bc3`](https://github.com/ellmos-ai/NemoFold/commit/b0e2bc3b78fc045f605df94ca34f28c7079190fe) bestand:
+Windows/Python 3.12 alle 1175 Tests; Ubuntu/Python 3.11 und 3.12 je 1173 bei 2
+plattformbedingten Skips.
+
+uen Cloud-Aufruf noch eine gehostete öffentliche
 Demo.
 
 ### Abnahmegate-Register

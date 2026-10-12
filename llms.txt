@@ -6,7 +6,7 @@
 Version: 0.2.1
 Organization: ellmos-ai
 Umbrella: open-bricks
-Tests: 1154 passed, 1 skipped
+Tests: 1173 passed, 2 skipped (Ubuntu); 1175 passed (Windows); CI run 38312717933 on b0e2bc3
 Workflows: 44 registered document workflows
 Acceptance gates: 16 of 18 done, re-verifiable offline (`nemofold acceptance-gates --evidence-root .`)
 
