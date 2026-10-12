@@ -47,6 +47,7 @@
         <span><strong>NemoFold</strong><small>Local evidence workspace</small></span>
       </a>
       <div class="nav-links" aria-label="Primary navigation">
+        <a href="/" data-page-link="overview">Engine room</a>
         <a href="/folders" data-page-link="folders">Folders</a>
         <a href="/processes" data-page-link="processes">Processes &amp; Workflows</a>
         <a href="/governance" data-page-link="governance">Governance</a>
@@ -58,20 +59,11 @@
         </svg>
         <span>Intro</span>
       </button>
-      <div class="masthead-state" role="note"><span aria-hidden="true"></span>DEFAULT: LOCAL AUTHORITY</div>
+      <div class="masthead-state" role="note"><span aria-hidden="true"></span><b id="modeBadge">DEFAULT: LOCAL AUTHORITY</b></div>
     </nav>
   </header>
 
   <main id="workspace">
-    <section class="briefing" aria-labelledby="briefingTitle" data-page-section="overview">
-      <div class="briefing-copy">
-        <p class="kicker">CASE FILE / NF-01</p>
-        <h1 id="briefingTitle">Know what your documents prove.</h1>
-        <p class="lede">NemoFold turns approved folders into traceable working memory.</p>
-      </div>
-    </section>
-
-
     <section id="captainsDesk" class="captains-desk" aria-labelledby="captainsDeskTitle" data-page-section="overview">
       <div class="desk-head">
         <p class="kicker">ASK THE CAPTAIN</p>
@@ -80,11 +72,11 @@
       </div>
       <form id="deskForm" class="desk-form">
         <label class="desk-request">Your request
-          <textarea id="deskRequest" rows="2" maxlength="2000" placeholder="Unfall mit Hyundai und schreib mir eine mail an zuständigen versicherungsberater füge bild ein als entwurf"></textarea>
+          <textarea id="deskRequest" rows="2" maxlength="2000" placeholder="Erstelle eine Zeitachse zum Fall und zeig mir, wessen Angaben sich widersprechen"></textarea>
         </label>
         <div class="desk-controls">
           <label>Approved folder <span>the root every step may read</span>
-            <input id="deskRoots" autocomplete="off" placeholder="examples/synthetic-home">
+            <input id="deskRoots" autocomplete="off" placeholder="examples/synthetic-case">
           </label>
           <button type="submit" id="deskPlan">Chart the voyage</button>
         </div>
@@ -92,243 +84,7 @@
       <div id="deskAnswer" class="desk-answer" role="status" aria-live="polite"></div>
     </section>
 
-    <nav class="product-areas" aria-label="NemoFold work areas" data-page-section="overview">
-      <a href="/folders"><span>HOME</span><b>Folders</b><small>Which folders are watched · what is on board</small><em>Open area →</em></a>
-      <a href="/processes"><span>WORK</span><b>Processes &amp; Workflows</b><small>Use cases · registry of instruments · artifacts</small><em>Open area →</em></a>
-      <a href="/governance"><span>BRIDGE</span><b>Governance</b><small>Policies · rules · the gates this server was started with</small><em>Open area →</em></a>
-      <a href="/connections"><span>STATUS</span><b>Connections</b><small>Platform proof only</small><em>Open area →</em></a>
-    </nav>
-
-    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="folders processes governance connections">
-      <div class="voyage-copy">
-        <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
-        <h2 id="voyageSceneTitle">Folders</h2>
-        <p id="voyageSceneText">The home of your folders: which ones are watched, what is actually on board, and the use cases that work on them. Nothing moves or leaves the Nautilus without being inspectable first.</p>
-        <small id="voyageRoadmap">ACTIVE · watched roots + corpus at a glance + the use cases bound to them</small>
-      </div>
-      <svg class="porthole-life" viewBox="0 0 400 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
-        <g transform="translate(330 108)"><g class="drifter jelly-a"><g transform="scale(0.42)">
-          <ellipse cx="0" cy="0" rx="15" ry="12"/>
-          <path d="M-12 3c2 12 4 20 3 30M-6 5c1 13 0 22-2 30M0 6c0 14 1 22 1 31M6 5c-1 13 0 22 2 30M12 3c-2 12-4 20-3 30"/>
-        </g></g></g>
-        <g transform="translate(250 108)"><g class="drifter jelly-b"><g transform="scale(0.42)">
-          <ellipse cx="0" cy="0" rx="10" ry="8"/>
-          <path d="M-8 2c1 11 3 18 2 27M-3 3c0 12 0 19-1 27M3 3c0 12 0 19 1 27M8 2c-1 11-3 18-2 27"/>
-        </g></g></g>
-        <g transform="translate(432 46)"><g class="drifter lantern"><g transform="scale(0.42)">
-          <path d="M-26 0c9-12 30-15 44-3 4 3 4 5 0 8-14 12-35 9-44-5Z"/>
-          <circle class="lamp" cx="-16" cy="-3" r="3"/><path d="M18-4c5 3 5 9 0 12"/>
-        </g></g></g>
-        <g transform="translate(300 106)"><circle class="mote m1" r="0.9"/></g>
-        <g transform="translate(210 106)"><circle class="mote m2" r="0.9"/></g>
-        <g transform="translate(150 106)"><circle class="mote m3" r="0.9"/></g>
-        <g transform="translate(270 106)"><circle class="mote m4" r="0.9"/></g>
-        <g transform="translate(180 106)"><circle class="mote m5" r="0.9"/></g>
-      </svg>
-    </section>
-
-    <nav class="area-tabs" aria-label="Processes and workflows" data-page-section="processes">
-      <span>Processes &amp; workflows</span>
-      <a href="/processes?tab=workflows" data-tab-link="workflows">Use cases &amp; Workflows</a>
-      <a href="/processes?tab=registry" data-tab-link="registry">Registry</a>
-      <a href="/processes?tab=artifacts" data-tab-link="artifacts">Artifacts</a>
-    </nav>
-
-    <section id="homeGlance" class="home-glance" aria-labelledby="homeGlanceTitle" data-page-section="folders">
-      <div class="glance-head">
-        <div>
-          <p class="kicker">A LOOK AROUND THE HOLD</p>
-          <h2 id="homeGlanceTitle">What is actually on board.</h2>
-        </div>
-        <div class="glance-controls">
-          <label>Corpus root<input id="homeGlanceRoot" autocomplete="off" placeholder="examples/synthetic-home"></label>
-          <button type="button" class="path-add secondary" data-folder-target="homeGlanceRoot">Choose folder</button>
-          <button type="button" id="homeGlanceLook">Look around</button>
-        </div>
-      </div>
-      <div class="glance-tiles" id="homeGlanceTiles">
-        <div class="tile"><span>FILES ABOARD</span><b id="glanceFiles">—</b><small>counted, never opened</small></div>
-        <div class="tile"><span>HOLD SIZE</span><b id="glanceBytes">—</b><small>on-disk size of the approved root</small></div>
-        <div class="tile"><span>TOP FORMATS</span><b id="glanceFormats">—</b><small>what this corpus is made of</small></div>
-      </div>
-      <div class="glance-recent">
-        <p class="kicker">CAME ABOARD MOST RECENTLY</p>
-        <div id="glanceNewest" class="glance-list" aria-live="polite"><p>Choose an approved root and look around.</p></div>
-      </div>
-      <p id="glanceState" class="glance-state" aria-live="polite">Counts and modification times only. No file is read and nothing leaves this host.</p>
-    </section>
-
-    <section id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" data-page-section="processes" data-page-tab="registry">
-      <div class="task-cards-head">
-        <p class="kicker">SINGLE INSTRUMENTS · ADVANCED</p>
-        <h2 id="taskCardsTitle">Every contract on its own, for when you want one.</h2>
-        <p>These are the individual job contracts a use case is built from. Reach for one to diagnose a step, to try a parameter, or to build something the library does not have yet.</p>
-      </div>
-      <div id="taskCardList" class="task-card-list" role="list"></div>
-    </section>
-
-    <section id="echoCheck" class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="processes" data-page-tab="workflows" hidden>
-      <div class="glance-head">
-        <div>
-          <p class="kicker"><svg class="instrument-icon radar" aria-hidden="true"><use href="#icon-radar"></use></svg>ECHO SOUNDING</p>
-          <h2 id="echoCheckTitle">What came back from the last pings.</h2>
-        </div>
-        <div class="glance-controls">
-          <label>Output scope<input id="echoOutputDir" autocomplete="off" placeholder="run-reports/web-console"></label>
-          <button type="button" id="echoCheckRun">Check echo</button>
-        </div>
-      </div>
-      <div id="echoList" class="echo-list" aria-live="polite"><p>No echo read yet. Check the output scope above.</p></div>
-    </section>
-
-    <section id="commandBridge" class="command-bridge" aria-labelledby="commandBridgeTitle" data-page-section="governance">
-      <div class="section-title bridge-title">
-        <p class="kicker">COMMAND BRIDGE</p>
-        <div>
-          <h2 id="commandBridgeTitle">Every lever this vessel answers to.</h2>
-          <p>The bridge shows the authority this server was started with. Gates are read here, never granted here: a closed gate can only be opened by restarting the server with the matching flag.</p>
-        </div>
-      </div>
-      <div class="bridge-console">
-        <div class="bridge-panel" role="group" aria-label="Authority instruments">
-          <div class="instrument" data-state="pending">
-            <span>FILE ACTIONS</span>
-            <b id="bridgeActionGate">Reading instruments…</b>
-            <small>Dry-run keeps every plan reversible until an explicit apply gate exists.</small>
-            <i class="lever" aria-hidden="true"></i>
-          </div>
-          <div class="instrument" data-state="pending">
-            <span>EXTERNAL MODELS</span>
-            <b id="bridgeExternalGate">Reading instruments…</b>
-            <small>A closed gate keeps every evidence package on this host.</small>
-            <i class="lever" aria-hidden="true"></i>
-          </div>
-          <div class="instrument" data-state="pending">
-            <span>NETWORK SURFACE</span>
-            <b id="bridgeNetworkGate">Reading instruments…</b>
-            <small>Loopback is the default berth. Exposure disables the provider surface.</small>
-            <i class="lever" aria-hidden="true"></i>
-          </div>
-        </div>
-        <dl class="bridge-gauges" aria-label="Bridge gauges">
-          <div><dt>Approved roots</dt><dd id="bridgeRootCount">—</dd></div>
-          <div><dt>Model budget ceiling</dt><dd id="bridgeBudget">—</dd></div>
-          <div><dt>Runtime cores</dt><dd id="bridgeCores">—</dd></div>
-          <div><dt>Contracted workflows</dt><dd id="bridgeWorkflows">—</dd></div>
-        </dl>
-      </div>
-      <div id="bridgeRoots" class="bridge-roots" aria-live="polite"><p>Reading approved roots…</p></div>
-      <button type="button" class="instrument-anchor section-anchor" data-collapse="bridgeDoctrine" aria-expanded="false" aria-controls="bridgeDoctrine">
-        <svg class="instrument-icon lifebuoy" aria-hidden="true"><use href="#icon-lifebuoy"></use></svg>
-        <span>Authority before inference</span>
-        <i class="chevron" aria-hidden="true"></i>
-      </button>
-      <div id="bridgeDoctrine" class="collapse-panel" hidden>
-      <div class="bridge-doctrine">
-        <p class="kicker">AUTHORITY BEFORE INFERENCE</p>
-        <p>NemoFold accepts a strict job contract. A run can read only approved roots and can write only to the declared output location and, for action workflows, approved target roots. Remote reasoning is a worker: it receives selected chunks, never ambient folder authority.</p>
-        <ol role="list">
-          <li><span>01</span><div><b>Declare</b><small>roots, question, workflow</small></div></li>
-          <li><span>02</span><div><b>Preview</b><small>files, policy, estimated cost</small></div></li>
-          <li><span>03</span><div><b>Execute</b><small>local by default</small></div></li>
-          <li><span>04</span><div><b>Verify</b><small>quotes, gaps, journal</small></div></li>
-        </ol>
-      </div>
-      </div>
-    </section>
-
-    <nav class="area-tabs" aria-label="Governance" data-page-section="governance">
-      <span>Governance</span>
-      <a href="/governance?tab=policies" data-tab-link="policies">Policies</a>
-      <a href="/governance?tab=rules" data-tab-link="rules">Rules</a>
-    </nav>
-
-    <section id="governanceRegister" class="governance-register" aria-labelledby="governanceRegisterTitle" data-page-section="governance">
-      <div class="section-title">
-        <p class="kicker" id="governanceRegisterKicker">POLICIES</p>
-        <div>
-          <h2 id="governanceRegisterTitle">What holds, in general.</h2>
-          <p id="governanceRegisterLede">A policy is a rule set you can bind to a voyage or to one of its steps. It is a written expectation, not a gate: allow roots, privacy mode, action mode and the per-run approvals still decide.</p>
-        </div>
-      </div>
-      <div class="register-toolbar">
-        <div><span>DEFAULT OUTBOUND RIGHT</span><b id="governanceDefaultRights">—</b></div>
-        <button type="button" id="governanceRefresh" class="secondary">Refresh</button>
-      </div>
-      <form id="policyForm" class="policy-form">
-        <div class="policy-form-head">
-          <p class="kicker" id="policyFormMode">NEW ENTRY</p>
-          <h3 id="policyFormTitle">Write it down once.</h3>
-        </div>
-        <label>Name<input id="policyName" maxlength="120" autocomplete="off" placeholder="e.g. Attachments never leave unconfirmed"></label>
-        <label>Kind
-          <select id="policyKind">
-            <option value="custom">custom · read by people only</option>
-            <option value="delivery_rules">delivery_rules · how something is sent</option>
-            <option value="rights_profile">rights_profile · the default outbound right</option>
-            <option value="cleanup_rules">cleanup_rules · consumed by the cleanup step</option>
-          </select>
-        </label>
-        <label class="wide">Description <span>optional</span><input id="policyDescription" maxlength="300" autocomplete="off"></label>
-        <label class="wide" id="policyStatementsRow">Statements <span>one sentence per line · a rule is exactly one</span><textarea id="policyStatements" rows="3"></textarea></label>
-        <label id="policyRightsRow" hidden>Default outbound right
-          <select id="policyRights">
-            <option value="draft_only">draft_only</option>
-            <option value="send_with_confirmation">send_with_confirmation</option>
-            <option value="send_when_ordered">send_when_ordered</option>
-          </select>
-        </label>
-        <label class="wide" id="policyBodyRow" hidden>Cleanup rules <span>strict JSON · a list of suffixes and a target root</span><textarea id="policyBody" rows="3">[{"suffixes": [".txt", ".md"], "target_root": 0}]</textarea></label>
-        <label class="policy-default-toggle"><input id="policyDefault" type="checkbox"> This is what applies when nobody said otherwise</label>
-        <div class="policy-form-actions">
-          <button type="submit" id="policySave">Save</button>
-          <button type="button" id="policyReset" class="secondary">New entry</button>
-          <span id="policyFormState" aria-live="polite"></span>
-        </div>
-      </form>
-      <div id="governanceList" class="governance-list" aria-live="polite"></div>
-      <div class="section-title exceptions-title">
-        <p class="kicker">KNOWN EXCEPTIONS</p>
-        <div>
-          <h2 id="governanceExceptionsTitle">And where something deviates from it.</h2>
-          <p>Departures are made at the voyage that needed them, so that is where they are changed. This is the reverse index: what deviates, where, and from what.</p>
-        </div>
-      </div>
-      <div id="governanceExceptions" class="governance-exceptions" aria-live="polite"></div>
-    </section>
-
-    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="processes" data-page-tab="registry" hidden>
-      <div class="notebook-head">
-        <div>
-          <p class="kicker">UC07 · RESEARCH NOTEBOOK</p>
-          <h2 id="researchNotebookTitle">Keep the whole investigation, not just one answer.</h2>
-          <p>Save the research goal, approved source roots, question set, reasoning route and verified run trail as one local investigation. Approvals and secrets are never stored.</p>
-        </div>
-        <div class="notebook-sonar" aria-hidden="true"><i></i><i></i><i></i><b>DEEP CORPUS</b></div>
-      </div>
-      <div class="notebook-grid">
-        <div class="notebook-library">
-          <label>Saved investigations<select id="notebookSelect"><option value="">No investigations loaded</option></select></label>
-          <div class="notebook-actions">
-            <button type="button" id="notebookRefresh" class="secondary">Refresh</button>
-            <button type="button" id="notebookLoad" class="secondary" disabled>Load</button>
-            <button type="button" id="notebookNew" class="secondary">New</button>
-          </div>
-        </div>
-        <label>Investigation name<input id="notebookName" maxlength="120" placeholder="e.g. Contract change investigation"></label>
-        <label class="wide">Research goal <span>the thread connecting all questions and runs</span><textarea id="notebookGoal" rows="3" maxlength="4000" placeholder="What should this investigation establish, compare or disprove?"></textarea></label>
-        <div class="notebook-snapshot wide">
-          <div><span>SOURCES</span><b id="notebookSourceCount">0 approved roots</b></div>
-          <div><span>TASKS</span><b id="notebookQuestionCount">0 questions or prompts</b></div>
-          <div><span>RUN TRAIL</span><b id="notebookRunCount">0 linked ledgers</b></div>
-          <button type="button" id="notebookSave">Save investigation snapshot</button>
-        </div>
-      </div>
-      <div id="notebookState" class="notebook-state" aria-live="polite">Open the Registry tab under Processes &amp; Workflows, define sources and questions, then save the investigation.</div>
-      <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
-    </section>
-
-    <aside id="engineRoom" class="engine-drawer" data-page-section="processes" data-page-tab="registry" aria-labelledby="consoleTitle" data-open="false">
+    <aside id="engineRoom" class="engine-drawer" data-page-section="overview processes" data-page-tab="registry" aria-labelledby="consoleTitle" data-open="false">
       <div class="drawer-shell">
         <div class="drawer-head">
           <div class="drawer-title">
@@ -348,12 +104,12 @@
             <legend>01 · Mission</legend>
             <div class="form-grid">
               <div class="workflow-choice">
-                <label>Technical workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>document_registry</option><option>fact_distill</option><option>synopsis_merge</option><option>daily_arrivals</option><option>person_registry</option><option>relation_model</option><option>person_timeline</option><option>coverage_timeline</option><option>cost_timeline</option><option>subscription_reconcile</option><option>medication_reconcile</option><option>database_reader</option><option>knowledge_composer</option><option>routine_query</option><option>ocr_pipeline</option><option>document_qa</option><option>alibi_weave</option><option>contradiction_synopsis</option><option>corpus_query</option><option>web_research</option><option>dossier</option><option>briefing</option><option>bundle_completeness_check</option><option>print_action</option><option>reference_check</option><option>rater_race</option><option>guide_compose</option><option>wiki_export</option><option>pattern_mining</option><option>chunk_export</option><option>document_compose</option><option>mail_merge_compose</option><option>platform_proof</option></select></label>
+                <label>Action<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>document_registry</option><option>fact_distill</option><option>synopsis_merge</option><option>daily_arrivals</option><option>person_registry</option><option>relation_model</option><option>person_timeline</option><option>coverage_timeline</option><option>cost_timeline</option><option>subscription_reconcile</option><option>medication_reconcile</option><option>database_reader</option><option>knowledge_composer</option><option>routine_query</option><option>ocr_pipeline</option><option>document_qa</option><option>alibi_weave</option><option>contradiction_synopsis</option><option>corpus_query</option><option>web_research</option><option>dossier</option><option>briefing</option><option>bundle_completeness_check</option><option>print_action</option><option>reference_check</option><option>rater_race</option><option>guide_compose</option><option>wiki_export</option><option>pattern_mining</option><option>chunk_export</option><option>document_compose</option><option>mail_merge_compose</option><option>platform_proof</option></select></label>
                 <p id="workflowHint" class="selection-description">Smart Inbox is the Folders entry point. Storage Policies are its controlled routing and retention settings.</p>
               </div>
               <div class="prompt-field wide">
-                <label>Questions or prompts <span>one task per line · all entries are processed</span><textarea id="questions" rows="4">When does the current policy begin?
-Which earlier wording changed?</textarea></label>
+                <label>Questions or prompts <span>one task per line · all entries are processed</span><textarea id="questions" rows="4">Welche Farbe hatte der Wagen mit dem Kennzeichen B-TL 4471?
+Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
                 <div class="prompt-actions">
                   <button type="button" id="promptLibraryButton" class="secondary">Open question &amp; prompt catalog</button>
                   <button type="button" id="promptSaveButton" class="secondary">Save current set</button>
@@ -393,7 +149,7 @@ Which earlier wording changed?</textarea></label>
             <legend>02 · Bounded territory</legend>
             <div class="form-grid">
               <div class="path-field wide">
-                <label>Approved input roots <span>one per line</span><textarea id="inputRoots" rows="2">examples/synthetic-home</textarea></label>
+                <label>Approved input roots <span>one per line</span><textarea id="inputRoots" rows="2">examples/synthetic-case</textarea></label>
                 <button type="button" class="path-add secondary" data-folder-target="inputRoots">+ Add source folder</button>
               </div>
             </div>
@@ -539,6 +295,261 @@ Which earlier wording changed?</textarea></label>
       </div>
     </aside>
 
+    <section class="briefing" aria-labelledby="briefingTitle" data-page-section="overview">
+      <div class="briefing-copy">
+        <p class="kicker">CASE FILE / NF-01</p>
+        <h1 id="briefingTitle">Know what your documents prove.</h1>
+        <p class="lede">NemoFold turns approved folders into traceable working memory.</p>
+      </div>
+    </section>
+
+
+
+    <nav class="product-areas" aria-label="NemoFold work areas" data-page-section="overview">
+      <a href="/folders"><span>HOME</span><b>Folders</b><small>Which folders are watched · what is on board</small><em>Open area →</em></a>
+      <a href="/processes"><span>WORK</span><b>Processes &amp; Workflows</b><small>Use cases · registry of instruments · artifacts</small><em>Open area →</em></a>
+      <a href="/governance"><span>BRIDGE</span><b>Governance</b><small>Policies · rules · the gates this server was started with</small><em>Open area →</em></a>
+      <a href="/connections"><span>STATUS</span><b>Connections</b><small>Platform proof only</small><em>Open area →</em></a>
+    </nav>
+
+    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="folders processes governance connections">
+      <div class="voyage-copy">
+        <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
+        <h2 id="voyageSceneTitle">Folders</h2>
+        <p id="voyageSceneText">The home of your folders: which ones are watched, what is actually on board, and the use cases that work on them. Nothing moves or leaves the Nautilus without being inspectable first.</p>
+        <small id="voyageRoadmap">ACTIVE · watched roots + corpus at a glance + the use cases bound to them</small>
+      </div>
+      <svg class="porthole-life" viewBox="0 0 400 100" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+        <g transform="translate(228 108)"><g class="drifter jelly-a"><g transform="scale(0.42)">
+          <ellipse cx="0" cy="0" rx="15" ry="12"/>
+          <path d="M-12 3c2 12 4 20 3 30M-6 5c1 13 0 22-2 30M0 6c0 14 1 22 1 31M6 5c-1 13 0 22 2 30M12 3c-2 12-4 20-3 30"/>
+        </g></g></g>
+        <g transform="translate(250 108)"><g class="drifter jelly-b"><g transform="scale(0.42)">
+          <ellipse cx="0" cy="0" rx="10" ry="8"/>
+          <path d="M-8 2c1 11 3 18 2 27M-3 3c0 12 0 19-1 27M3 3c0 12 0 19 1 27M8 2c-1 11-3 18-2 27"/>
+        </g></g></g>
+        <g transform="translate(278 106)"><circle class="mote m1" r="0.9"/></g>
+        <g transform="translate(210 106)"><circle class="mote m2" r="0.9"/></g>
+        <g transform="translate(236 106)"><circle class="mote m3" r="0.9"/></g>
+        <g transform="translate(270 106)"><circle class="mote m4" r="0.9"/></g>
+        <g transform="translate(224 106)"><circle class="mote m5" r="0.9"/></g>
+      </svg>
+    </section>
+
+    <nav class="area-tabs" aria-label="Processes and workflows" data-page-section="processes">
+      <span>Processes &amp; workflows</span>
+      <a href="/processes?tab=workflows" data-tab-link="workflows">My use cases</a>
+      <a href="/processes?tab=registry" data-tab-link="registry">Blueprints</a>
+      <a href="/processes?tab=artifacts" data-tab-link="artifacts">Artifacts</a>
+    </nav>
+
+    <section id="homeGlance" class="home-glance" aria-labelledby="homeGlanceTitle" data-page-section="folders">
+      <div class="glance-head">
+        <div>
+          <p class="kicker">A LOOK AROUND THE HOLD</p>
+          <h2 id="homeGlanceTitle">What is actually on board.</h2>
+        </div>
+        <div class="glance-controls">
+          <label>Corpus root<input id="homeGlanceRoot" autocomplete="off" placeholder="examples/synthetic-case"></label>
+          <button type="button" class="path-add secondary" data-folder-target="homeGlanceRoot">Choose folder</button>
+          <button type="button" id="homeGlanceLook">Look around</button>
+        </div>
+      </div>
+      <div class="glance-tiles" id="homeGlanceTiles">
+        <div class="tile"><span>FILES ABOARD</span><b id="glanceFiles">—</b><small>counted, never opened</small></div>
+        <div class="tile"><span>HOLD SIZE</span><b id="glanceBytes">—</b><small>on-disk size of the approved root</small></div>
+        <div class="tile"><span>TOP FORMATS</span><b id="glanceFormats">—</b><small>what this corpus is made of</small></div>
+      </div>
+      <div class="glance-recent">
+        <p class="kicker">CAME ABOARD MOST RECENTLY</p>
+        <div id="glanceNewest" class="glance-list" aria-live="polite"><p>Choose an approved root and look around.</p></div>
+      </div>
+      <p id="glanceState" class="glance-state" aria-live="polite">Counts and modification times only. No file is read and nothing leaves this host.</p>
+    </section>
+
+    <section id="blueprints" class="use-case-library" aria-labelledby="blueprintsTitle" data-page-section="processes" data-page-tab="registry">
+      <div class="library-head">
+        <div>
+          <p class="kicker">BLUEPRINTS</p>
+          <h2 id="blueprintsTitle">Start from a blueprint, make it your use case.</h2>
+          <p>An action is one step. A workflow chains two or more actions. Add a blueprint to your use cases as often as you like, then rename and adapt each copy; the blueprint itself stays as it is. Your own blueprints appear here after Save as blueprint.</p>
+        </div>
+      </div>
+      <div id="blueprintList" class="library-list" aria-live="polite"></div>
+    </section>
+
+    <section id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" data-page-section="processes" data-page-tab="registry">
+      <div class="task-cards-head">
+        <p class="kicker">SINGLE ACTIONS · ONE STEP EACH</p>
+        <h2 id="taskCardsTitle">Every action a workflow is built from.</h2>
+        <p>Each action is one job contract. Add it to your use cases, bound to your folders, or try it once in the engine room. Chain two or more and you have a workflow.</p>
+      </div>
+      <div id="taskCardList" class="task-card-list" role="list"></div>
+    </section>
+
+    <section id="echoCheck" class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="processes" data-page-tab="workflows" hidden>
+      <div class="glance-head">
+        <div>
+          <p class="kicker"><svg class="instrument-icon radar" aria-hidden="true"><use href="#icon-radar"></use></svg>ECHO SOUNDING</p>
+          <h2 id="echoCheckTitle">What came back from the last pings.</h2>
+        </div>
+        <div class="glance-controls">
+          <label>Output scope<input id="echoOutputDir" autocomplete="off" placeholder="run-reports/web-console"></label>
+          <button type="button" id="echoCheckRun">Check echo</button>
+        </div>
+      </div>
+      <div id="echoList" class="echo-list" aria-live="polite"><p>No echo read yet. Check the output scope above.</p></div>
+    </section>
+
+    <section id="commandBridge" class="command-bridge" aria-labelledby="commandBridgeTitle" data-page-section="governance">
+      <div class="section-title bridge-title">
+        <p class="kicker">COMMAND BRIDGE</p>
+        <div>
+          <h2 id="commandBridgeTitle">Every lever this vessel answers to.</h2>
+          <p>The bridge shows the authority this server was started with. Gates are read here, never granted here: a closed gate can only be opened by restarting the server with the matching flag.</p>
+          <p class="where-to-change"><b>Where to change this:</b> start flags <code>--allow-external-models</code>, <code>--max-external-cost-usd</code>, <code>--approve-actions</code>. Folders: approve one for this session in any folder dialog, or start with <code>--allow-root</code>. Your own rules: the Policies tab.</p>
+        </div>
+      </div>
+      <div class="bridge-console">
+        <div class="bridge-panel" role="group" aria-label="Authority instruments">
+          <div class="instrument" data-state="pending">
+            <span>FILE ACTIONS</span>
+            <b id="bridgeActionGate">Reading instruments…</b>
+            <small>Dry-run keeps every plan reversible until an explicit apply gate exists.</small>
+            <i class="lever" aria-hidden="true"></i>
+          </div>
+          <div class="instrument" data-state="pending">
+            <span>EXTERNAL MODELS</span>
+            <b id="bridgeExternalGate">Reading instruments…</b>
+            <small>A closed gate keeps every evidence package on this host.</small>
+            <i class="lever" aria-hidden="true"></i>
+          </div>
+          <div class="instrument" data-state="pending">
+            <span>NETWORK SURFACE</span>
+            <b id="bridgeNetworkGate">Reading instruments…</b>
+            <small>Loopback is the default berth. Exposure disables the provider surface.</small>
+            <i class="lever" aria-hidden="true"></i>
+          </div>
+        </div>
+        <dl class="bridge-gauges" aria-label="Bridge gauges">
+          <div><dt>Approved roots</dt><dd id="bridgeRootCount">—</dd></div>
+          <div><dt>Model budget ceiling</dt><dd id="bridgeBudget">—</dd></div>
+          <div><dt>Runtime cores</dt><dd id="bridgeCores">—</dd></div>
+          <div><dt>Contracted workflows</dt><dd id="bridgeWorkflows">—</dd></div>
+        </dl>
+      </div>
+      <div id="bridgeRoots" class="bridge-roots" aria-live="polite"><p>Reading approved roots…</p></div>
+      <button type="button" class="instrument-anchor section-anchor" data-collapse="bridgeDoctrine" aria-expanded="false" aria-controls="bridgeDoctrine">
+        <svg class="instrument-icon lifebuoy" aria-hidden="true"><use href="#icon-lifebuoy"></use></svg>
+        <span>Authority before inference</span>
+        <i class="chevron" aria-hidden="true"></i>
+      </button>
+      <div id="bridgeDoctrine" class="collapse-panel" hidden>
+      <div class="bridge-doctrine">
+        <p class="kicker">AUTHORITY BEFORE INFERENCE</p>
+        <p>NemoFold accepts a strict job contract. A run can read only approved roots and can write only to the declared output location and, for action workflows, approved target roots. Remote reasoning is a worker: it receives selected chunks, never ambient folder authority.</p>
+        <ol role="list">
+          <li><span>01</span><div><b>Declare</b><small>roots, question, workflow</small></div></li>
+          <li><span>02</span><div><b>Preview</b><small>files, policy, estimated cost</small></div></li>
+          <li><span>03</span><div><b>Execute</b><small>local by default</small></div></li>
+          <li><span>04</span><div><b>Verify</b><small>quotes, gaps, journal</small></div></li>
+        </ol>
+      </div>
+      </div>
+    </section>
+
+    <nav class="area-tabs" aria-label="Governance" data-page-section="governance">
+      <span>Governance</span>
+      <a href="/governance?tab=policies" data-tab-link="policies">Policies</a>
+      <a href="/governance?tab=rules" data-tab-link="rules">Rules</a>
+    </nav>
+
+    <section id="governanceRegister" class="governance-register" aria-labelledby="governanceRegisterTitle" data-page-section="governance">
+      <div class="section-title">
+        <p class="kicker" id="governanceRegisterKicker">POLICIES</p>
+        <div>
+          <h2 id="governanceRegisterTitle">What holds, in general.</h2>
+          <p id="governanceRegisterLede">A policy is a rule set you can bind to a voyage or to one of its steps. It is a written expectation, not a gate: allow roots, privacy mode, action mode and the per-run approvals still decide.</p>
+        </div>
+      </div>
+      <div class="register-toolbar">
+        <div><span>DEFAULT OUTBOUND RIGHT</span><b id="governanceDefaultRights">—</b></div>
+        <button type="button" id="governanceRefresh" class="secondary">Refresh</button>
+      </div>
+      <form id="policyForm" class="policy-form">
+        <div class="policy-form-head">
+          <p class="kicker" id="policyFormMode">NEW ENTRY</p>
+          <h3 id="policyFormTitle">Write it down once.</h3>
+        </div>
+        <label>Name<input id="policyName" maxlength="120" autocomplete="off" placeholder="e.g. Attachments never leave unconfirmed"></label>
+        <label>Kind
+          <select id="policyKind">
+            <option value="custom">custom · read by people only</option>
+            <option value="delivery_rules">delivery_rules · how something is sent</option>
+            <option value="rights_profile">rights_profile · the default outbound right</option>
+            <option value="cleanup_rules">cleanup_rules · consumed by the cleanup step</option>
+          </select>
+        </label>
+        <label class="wide">Description <span>optional</span><input id="policyDescription" maxlength="300" autocomplete="off"></label>
+        <label class="wide" id="policyStatementsRow">Statements <span>one sentence per line · a rule is exactly one</span><textarea id="policyStatements" rows="3"></textarea></label>
+        <label id="policyRightsRow" hidden>Default outbound right
+          <select id="policyRights">
+            <option value="draft_only">draft_only</option>
+            <option value="send_with_confirmation">send_with_confirmation</option>
+            <option value="send_when_ordered">send_when_ordered</option>
+          </select>
+        </label>
+        <label class="wide" id="policyBodyRow" hidden>Cleanup rules <span>strict JSON · a list of suffixes and a target root</span><textarea id="policyBody" rows="3">[{"suffixes": [".txt", ".md"], "target_root": 0}]</textarea></label>
+        <label class="policy-default-toggle"><input id="policyDefault" type="checkbox"> This is what applies when nobody said otherwise</label>
+        <div class="policy-form-actions">
+          <button type="submit" id="policySave">Save</button>
+          <button type="button" id="policyReset" class="secondary">New entry</button>
+          <span id="policyFormState" aria-live="polite"></span>
+        </div>
+      </form>
+      <div id="governanceList" class="governance-list" aria-live="polite"></div>
+      <div class="section-title exceptions-title">
+        <p class="kicker">KNOWN EXCEPTIONS</p>
+        <div>
+          <h2 id="governanceExceptionsTitle">And where something deviates from it.</h2>
+          <p>Departures are made at the voyage that needed them, so that is where they are changed. This is the reverse index: what deviates, where, and from what.</p>
+        </div>
+      </div>
+      <div id="governanceExceptions" class="governance-exceptions" aria-live="polite"></div>
+    </section>
+
+    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="processes" data-page-tab="registry" hidden>
+      <div class="notebook-head">
+        <div>
+          <p class="kicker">UC07 · RESEARCH NOTEBOOK</p>
+          <h2 id="researchNotebookTitle">Keep the whole investigation, not just one answer.</h2>
+          <p>Save the research goal, approved source roots, question set, reasoning route and verified run trail as one local investigation. Approvals and secrets are never stored.</p>
+        </div>
+        <div class="notebook-sonar" aria-hidden="true"><i></i><i></i><i></i><b>DEEP CORPUS</b></div>
+      </div>
+      <div class="notebook-grid">
+        <div class="notebook-library">
+          <label>Saved investigations<select id="notebookSelect"><option value="">No investigations loaded</option></select></label>
+          <div class="notebook-actions">
+            <button type="button" id="notebookRefresh" class="secondary">Refresh</button>
+            <button type="button" id="notebookLoad" class="secondary" disabled>Load</button>
+            <button type="button" id="notebookNew" class="secondary">New</button>
+          </div>
+        </div>
+        <label>Investigation name<input id="notebookName" maxlength="120" placeholder="e.g. Contract change investigation"></label>
+        <label class="wide">Research goal <span>the thread connecting all questions and runs</span><textarea id="notebookGoal" rows="3" maxlength="4000" placeholder="What should this investigation establish, compare or disprove?"></textarea></label>
+        <div class="notebook-snapshot wide">
+          <div><span>SOURCES</span><b id="notebookSourceCount">0 approved roots</b></div>
+          <div><span>TASKS</span><b id="notebookQuestionCount">0 questions or prompts</b></div>
+          <div><span>RUN TRAIL</span><b id="notebookRunCount">0 linked ledgers</b></div>
+          <button type="button" id="notebookSave">Save investigation snapshot</button>
+        </div>
+      </div>
+      <div id="notebookState" class="notebook-state" aria-live="polite">Open the Registry tab under Processes &amp; Workflows, define sources and questions, then save the investigation.</div>
+      <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
+    </section>
+
+
     <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="processes" data-page-tab="artifacts">
       <div class="section-title artifact-title">
         <p class="kicker">ARTIFACT STUDIO</p>
@@ -560,6 +571,7 @@ Which earlier wording changed?</textarea></label>
         <div>
           <h2 id="connectionPanelTitle">What is connected—and what is proven.</h2>
           <p>Configuration, runtime readiness, transfer and competition proof remain separate signals. A listed provider is not presented as a successful model call.</p>
+          <p class="where-to-change"><b>Where to change this:</b> this page only reports. Pick a provider and model for one run in the engine room (Reasoning worker), or for each step of a use case in its dialog. Whether external models may be used at all, and the cost ceiling, is set when the server starts: <code>--allow-external-models</code>, <code>--max-external-cost-usd</code>.</p>
         </div>
       </div>
       <dl class="connection-summary" aria-label="Current connection truth">
@@ -580,7 +592,7 @@ Which earlier wording changed?</textarea></label>
     <dialog id="folderDialog" class="folder-dialog" aria-labelledby="folderDialogTitle">
       <form method="dialog" class="folder-dialog-shell">
         <div class="folder-dialog-head">
-          <div><span>APPROVED ROOT BROWSER</span><h2 id="folderDialogTitle">Add a folder</h2></div>
+          <div><span>FOLDER BROWSER</span><h2 id="folderDialogTitle">Add a folder</h2></div>
           <button type="submit" id="folderClose" class="secondary" value="cancel">Close</button>
         </div>
         <p id="folderCurrent" class="folder-current">Loading server-approved roots…</p>
@@ -589,7 +601,7 @@ Which earlier wording changed?</textarea></label>
           <button type="button" id="folderSelectCurrent" disabled>Use this folder</button>
         </div>
         <div id="folderChoices" class="folder-choices" role="list" aria-live="polite"></div>
-        <p id="folderStatus" class="folder-status">Only folders inside the server-approved roots are visible.</p>
+        <p id="folderStatus" class="folder-status">Approved folders first; any other folder on this computer can be approved for this session.</p>
       </form>
     </dialog>
 
@@ -613,16 +625,16 @@ Which earlier wording changed?</textarea></label>
       </div>
       <div class="library-head">
         <div>
-          <p class="kicker">USE-CASE LIBRARY</p>
+          <p class="kicker">MY USE CASES</p>
           <h2 id="libraryTitle">My use cases.</h2>
-          <p>Saved voyages and the specialists that ship with NemoFold. A specialist is a read-only starting point: copy it, bind it to your folders, then edit it here or ask the captain to change it.</p>
+          <p>Every workflow and action you adopted, bound to your folders. Open one to rename, reorder, run or remove it; removing never touches its blueprint. New ones come from the <a href="/processes?tab=registry">blueprints</a> or from the captain's desk.</p>
         </div>
         <button type="button" id="libraryRefresh" class="secondary">Refresh</button>
       </div>
       <div id="libraryFilter" class="library-filter" role="group" aria-label="Filter use cases by topic"></div>
       <div id="libraryList" class="library-list" aria-live="polite"></div>
 
-      <section id="libraryDetail" class="library-detail" aria-labelledby="libraryDetailTitle" hidden>
+      <dialog id="libraryDetail" class="library-detail" aria-labelledby="libraryDetailTitle">
         <div class="detail-head">
           <div>
             <span id="libraryDetailSource" class="detail-source">SAVED VOYAGE</span>
@@ -632,6 +644,7 @@ Which earlier wording changed?</textarea></label>
           </div>
           <button type="button" id="libraryClose" class="secondary">Close</button>
         </div>
+        <label class="library-rename">Name<input id="libraryDetailName" autocomplete="off" maxlength="120"></label>
         <dl id="libraryGovernance" class="library-governance"></dl>
         <div id="librarySteps" class="library-steps" role="list"></div>
         <details id="libraryRunOptions" class="library-run-options">
@@ -645,9 +658,11 @@ Which earlier wording changed?</textarea></label>
           </div>
         </details>
         <div class="library-actions">
-          <button type="button" id="libraryRun" class="card-open">Run voyage</button>
+          <button type="button" id="libraryRun" class="card-open">Run</button>
+          <button type="button" id="libraryAdopt" class="card-open" hidden>Add to my use cases</button>
           <button type="button" id="librarySave" class="secondary">Save changes</button>
-          <button type="button" id="libraryDelete" class="secondary">Delete</button>
+          <button type="button" id="libraryBlueprint" class="secondary">Save as blueprint</button>
+          <button type="button" id="libraryDelete" class="secondary">Remove from my use cases</button>
         </div>
         <div id="libraryBinder" class="library-binder"></div>
         <div id="libraryRunResult" class="library-run" role="status" aria-live="polite"></div>
@@ -658,7 +673,7 @@ Which earlier wording changed?</textarea></label>
           <button type="submit" id="libraryEditAsk">Propose change</button>
         </form>
         <div id="libraryDiff" class="library-diff" aria-live="polite"></div>
-      </section>
+      </dialog>
     </section>
 
     <section class="trust-boundary" aria-labelledby="boundaryTitle" data-page-section="processes connections" data-page-tab="workflows">

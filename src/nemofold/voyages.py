@@ -41,7 +41,8 @@ MAX_VOYAGES = 200
 MAX_VOYAGE_BYTES = 1024 * 1024
 MAX_STEPS = 24
 LOCAL_ONLY = "local-only"
-VOYAGE_SOURCES = frozenset({"wizard", "manual", "preset"})
+# "template" is a blueprint the person saved; it is copied, not run (D-039).
+VOYAGE_SOURCES = frozenset({"wizard", "manual", "preset", "template"})
 STATUS_RUNNABLE = "runnable"
 STATUS_PENDING = "pending_capability"
 VOYAGE_STATUSES = frozenset({STATUS_RUNNABLE, STATUS_PENDING})
@@ -392,7 +393,7 @@ class VoyageStore:
                 )
         source = kept("source", "manual")
         if source not in VOYAGE_SOURCES:
-            raise ValueError("voyage source must be wizard, manual or preset")
+            raise ValueError("voyage source must be wizard, manual, preset or template")
         authority = kept("model_authority", AUTHORITY_LINKS_WIN)
         if authority not in MODEL_AUTHORITIES:
             raise ValueError("model_authority must be links_win or chain_wins")

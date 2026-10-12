@@ -199,21 +199,21 @@ fieldset .drawer-group+.drawer-group{margin-top:10px}
 @keyframes nf-sweep{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.instrument-icon.radar{animation:none}.instrument-icon.wheel{transition:none}}
 .porthole-life{position:absolute;z-index:2;display:none;inset:0;width:100%;height:100%;pointer-events:none}
+/* The creatures live inside the observation window: every x stays within the
+   glass circle (about x 195-291 at the top and bottom edge of this viewBox). */
 body[data-tab="workflows"] .porthole-life{display:block}
+@media(max-width:680px){body[data-tab="workflows"] .porthole-life{display:none}}
 .porthole-life .drifter{fill:none;stroke:var(--cyan);stroke-width:1.2;opacity:.24}
 .porthole-life .drifter ellipse{fill:rgba(120,209,202,.1)}
-.porthole-life .lantern .lamp{fill:var(--cyan);stroke:none;opacity:.8}
 .porthole-life .mote{fill:var(--cyan);opacity:.3}
 .porthole-life .jelly-a{animation:nf-rise 46s linear infinite,nf-glow 17s ease-in-out infinite}
 .porthole-life .jelly-b{animation:nf-rise 61s linear 9s infinite,nf-glow 23s ease-in-out 4s infinite}
-.porthole-life .lantern{animation:nf-swim 54s linear 6s infinite,nf-glow 13s ease-in-out infinite}
 .porthole-life .m1{animation:nf-rise 38s linear infinite}
 .porthole-life .m2{animation:nf-rise 52s linear 7s infinite}
 .porthole-life .m3{animation:nf-rise 44s linear 15s infinite}
 .porthole-life .m4{animation:nf-rise 59s linear 23s infinite}
 .porthole-life .m5{animation:nf-rise 33s linear 30s infinite}
 @keyframes nf-rise{0%{transform:translate(0,0)}50%{transform:translate(-7px,-58px)}100%{transform:translate(2px,-116px)}}
-@keyframes nf-swim{to{transform:translate(-500px,-9px)}}
 @keyframes nf-glow{0%,84%,100%{opacity:.2}92%{opacity:.62}}
 .section-anchor{margin-top:14px;border:1px solid var(--line-dark);background:linear-gradient(180deg,#f2f0e7,#e8e6dc);color:var(--deep)}
 .section-anchor:hover{background:#e4e8e1}
@@ -224,7 +224,6 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .porthole-life .drifter,.porthole-life .mote{animation:none}
 .porthole-life .jelly-a{transform:translate(-6px,-48px)}
 .porthole-life .jelly-b{transform:translate(0,-72px)}
-.porthole-life .lantern{transform:translate(-185px,0)}
 .porthole-life .mote{transform:translate(0,-55px)}
 }
 .ships-chart{margin-top:34px;border:1px solid var(--line-dark);background:var(--white);box-shadow:0 2px 0 rgba(9,47,59,.08)}
@@ -305,8 +304,16 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .library-steps-line{display:block;margin-bottom:12px;color:var(--muted);font:9px/1.5 var(--mono);overflow-wrap:anywhere}
 .library-card button{margin-top:auto;align-self:flex-start}
 .library-list>p{margin:0;padding:14px 0;color:var(--muted);font:11px var(--mono)}
-.library-detail{margin-top:22px;border:1px solid var(--line-dark);background:var(--surface);padding:18px}
-.library-detail[hidden]{display:none}
+.library-detail{width:min(980px,calc(100vw - 28px));max-height:88vh;overflow:auto;border:1px solid var(--line-dark);border-radius:0;background:var(--surface);padding:18px;color:var(--ink)}
+.library-detail::backdrop{background:rgba(3,20,26,.72)}
+.masthead-state b{font:inherit}
+.library-rename{display:grid;gap:6px;margin:14px 0}
+/* D-040: on the workbench the engine room is part of the page, not a drawer. */
+body[data-page="overview"] .engine-drawer{position:static;z-index:auto;width:auto;visibility:visible;transform:none;margin-top:18px;border:1px solid #8a6b3c;box-shadow:none}
+body[data-page="overview"] #engineClose{display:none}
+.where-to-change{margin-top:10px;padding:10px 12px;border-left:3px solid var(--cyan);background:rgba(120,209,202,.08)}
+.library-group-title{margin:22px 0 10px}
+.masthead-state.demo{color:#ffb4a2}
 .detail-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px}
 .detail-source{color:var(--sea);font:800 8px var(--mono);letter-spacing:.1em}
 .detail-head h3{margin:6px 0 0;font:400 23px var(--serif)}

@@ -395,7 +395,9 @@ def test_web_console_action_gate_uses_the_shared_explicit_approval_name(tmp_path
     assert args.approve_actions is True
 
 
-def test_local_folder_picker_is_allow_root_bounded(tmp_path) -> None:
+def test_local_folder_picker_marks_what_is_approved(tmp_path) -> None:
+    # D-039: the local picker may show any folder, but marks the ones outside
+    # the approved roots; reading them still waits for an explicit approval.
     documents = tmp_path / "documents"
     child = documents / "child"
     child.mkdir(parents=True)
@@ -403,12 +405,15 @@ def test_local_folder_picker_is_allow_root_bounded(tmp_path) -> None:
     with running_server(tmp_path) as base_url:
         roots = post_json(base_url + "/api/folders", {"path": None})
         listing = post_json(base_url + "/api/folders", {"path": str(documents)})
+        outside = post_json(base_url + "/api/folders", {"path": str(tmp_path.parent)})
         with pytest.raises(HTTPError) as captured:
-            post_json(base_url + "/api/folders", {"path": str(tmp_path.parent)})
+            post_json(base_url + "/api/corpus-glance", {"path": str(tmp_path.parent)})
 
     assert roots["roots"] == [{"name": tmp_path.name, "path": str(tmp_path)}]
     assert listing["current"]["path"] == str(documents)
+    assert listing["current"]["approved"] is True
     assert {entry["path"] for entry in listing["directories"]} == {str(child)}
+    assert outside["current"]["approved"] is False
     assert captured.value.code == 400
 
 
@@ -1009,7 +1014,7 @@ def test_use_cases_come_first_and_single_instruments_live_in_the_registry(tmp_pa
         'id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" '
         'data-page-section="processes" data-page-tab="registry"'
     ) in folders
-    assert "SINGLE INSTRUMENTS · ADVANCED" in folders
+    assert "SINGLE ACTIONS · ONE STEP EACH" in folders
     # The engine room is their editor and follows them.
     assert 'data-page-section="processes" data-page-tab="registry"' in folders
     assert "workflowCards" in script
@@ -1120,7 +1125,8 @@ def test_porthole_is_one_svg_and_explainers_start_collapsed(tmp_path) -> None:
     # One SVG overlay carries every creature; the loose mote divs are gone.
     assert '<svg class="porthole-life"' in html
     assert '<i class="mote' not in html
-    assert html.count('class="drifter') == 3
+    # Endabnahme 2026-10-12: the lantern fish swam outside the glass and left.
+    assert html.count('class="drifter') == 2
     assert html.count('class="mote') == 5
     # Explainer sections start collapsed behind a lifebuoy anchor.
     for group in ("trustBoundaryDetail", "bridgeDoctrine"):
@@ -1889,3 +1895,113 @@ def test_the_surface_states_no_contract_count_that_can_go_stale(tmp_path) -> Non
     for stale in ("sixteen", "Sixteen", "seventeen", "eighteen", "twenty"):
         assert stale not in html, stale
         assert stale not in script, stale
+
+
+def test_a_folder_outside_the_roots_can_be_browsed_and_approved_for_the_session(
+    tmp_path,
+) -> None:
+    # D-039 / Endabnahme 2026-10-12: the full local console lets its operator
+    # pick any folder; approving one does what --allow-root would have done.
+    root = tmp_path / "approved"
+    root.mkdir()
+    outside = tmp_path.parent / f"{tmp_path.name}-outside"
+    (outside / "inbox").mkdir(parents=True)
+    (outside / "inbox" / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    server = build_server(
+        WebAppConfig(base_dir=root, execution=ExecutionConfig(allowed_roots=(str(root),))),
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    base_url = "http://{}:{}".format(*server.server_address[:2])
+    try:
+        start = post_json(base_url + "/api/folders", {"path": None})
+        browsed = post_json(base_url + "/api/folders", {"path": str(outside)})
+        with pytest.raises(HTTPError) as refused_glance:
+            post_json(base_url + "/api/corpus-glance", {"path": str(outside / "inbox")})
+        with pytest.raises(HTTPError) as relative:
+            post_json(base_url + "/api/approve-root", {"path": "inbox"})
+        approved = post_json(base_url + "/api/approve-root", {"path": str(outside / "inbox")})
+        again = post_json(base_url + "/api/approve-root", {"path": str(outside / "inbox")})
+        glance = post_json(base_url + "/api/corpus-glance", {"path": str(outside / "inbox")})
+        inside = post_json(base_url + "/api/folders", {"path": str(outside / "inbox")})
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+    assert start["places"]
+    assert browsed["current"]["approved"] is False
+    assert [item["name"] for item in browsed["directories"]] == ["inbox"]
+    assert refused_glance.value.code == 400
+    assert relative.value.code == 400
+    assert approved["approved_roots"] == [str(root), str((outside / "inbox").resolve())]
+    assert again["approved_roots"] == approved["approved_roots"]
+    assert glance["total_files"] == 1
+    assert inside["current"]["approved"] is True
+
+
+def test_approving_a_folder_is_refused_in_the_demo_and_on_an_exposed_server(tmp_path) -> None:
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    with running_public_demo(source_root) as (_, base_url), pytest.raises(HTTPError) as demo:
+        post_json(base_url + "/api/approve-root", {"path": str(tmp_path)})
+    server = build_server(
+        WebAppConfig(
+            base_dir=tmp_path,
+            execution=ExecutionConfig(allowed_roots=(str(source_root),)),
+            exposed_to_network=True,
+        ),
+        host="127.0.0.1",
+        port=0,
+    )
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        with pytest.raises(HTTPError) as exposed:
+            post_json(
+                "http://{}:{}/api/approve-root".format(*server.server_address[:2]),
+                {"path": str(tmp_path)},
+            )
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+    assert demo.value.code == 404
+    assert exposed.value.code == 403
+    assert server.app_config.execution.allowed_roots == (str(source_root),)
+
+
+def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) -> None:
+    (tmp_path / "docs").mkdir()
+    (tmp_path / "docs" / "a.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    with running_server(tmp_path) as base_url:
+        copied = post_json(
+            base_url + "/api/voyage-preset",
+            {"preset_id": "preset_daily_arrivals", "input_roots": ["docs"],
+             "output_dir": "run-reports/web-console", "name": "Daily arrivals report (2)"},
+        )
+        loaded, _ = get_json(base_url + "/api/voyage?id=" + copied["voyage"]["voyage_id"])
+        blueprint = post_json(
+            base_url + "/api/voyages",
+            {"name": "My arrivals", "description": "", "steps": loaded["voyage"]["steps"],
+             "source": "template"},
+        )
+        listed, _ = get_json(base_url + "/api/voyages")
+        with urlopen(base_url + "/processes?tab=registry", timeout=5) as response:  # noqa: S310
+            html = response.read().decode()
+        with urlopen(base_url + "/assets/app.js", timeout=5) as response:  # noqa: S310
+            script = response.read().decode()
+
+    sources = {entry["name"]: entry["source"] for entry in listed["voyages"] if entry["editable"]}
+    assert copied["voyage"]["name"] == "Daily arrivals report (2)"
+    assert blueprint["voyage"]["source"] == "template"
+    assert sources == {"My arrivals": "template", "Daily arrivals report (2)": "preset"}
+    assert 'data-tab-link="registry">Blueprints</a>' in html
+    assert '<dialog id="libraryDetail" class="library-detail"' in html
+    assert 'id="blueprintList"' in html
+    for label in ("Add to my use cases", "Remove from my use cases", "Save as blueprint",
+                  "FULL LOCAL CONSOLE", "PUBLIC DEMO · SYNTHETIC DATA ONLY", "/api/approve-root"):
+        assert label in script, label
