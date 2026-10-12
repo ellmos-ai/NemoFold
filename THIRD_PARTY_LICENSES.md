@@ -1,8 +1,8 @@
-# Third-Party Licenses & Dependency Inventory (Level 1 SBOM)
+# Third-Party Licenses & Dependency Inventory
 
 > **Project:** `ellmos-ai/NemoFold`<br>
 > **Version:** `0.2.1` (version frozen)<br>
-> **Audited:** 2026-10-03 (Pfad B Re-Audit; Prior audits: 2026-10-01, 2026-09-28, 2026-09-26, 2026-09-19, 2026-09-18)<br>
+> **Audited:** 2026-10-03 (re-audit; prior audits: 2026-10-01, 2026-09-28, 2026-09-26, 2026-09-19, 2026-09-18)<br>
 > **Repository License:** [MIT License](LICENSE)<br>
 > **Attribution NOTICE:** [NOTICE](NOTICE)<br>
 > **Plain-Text Companion:** [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt)<br>
@@ -32,7 +32,7 @@ NemoFold complies with ten canonical governance and runtime invariants:
 | **INV-GATE-04** | Multi-Tier Explicit Approval Gates | File actions, external model transfers, cloud spend ceilings, and network exposure require explicit operator flags. | :white_check_mark: Verified |
 | **INV-ISOL-05** | Path-Free Sanitized Packaging | Outbound packages strip host paths, secrets, symlinks, and unapproved files; preflight validates package before network transit. | :white_check_mark: Verified |
 | **INV-PROV-06** | Provider-Neutral Loopback Surface | Pluggable local and remote backends; unauthenticated interfaces and Captain's Desk restricted strictly to loopback (127.0.0.1). | :white_check_mark: Verified |
-| **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 34 document workflows; reusable voyage drafts adapt without model fine-tuning. | :white_check_mark: Verified |
+| **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 44 document workflows; reusable voyage drafts adapt without model fine-tuning. | :white_check_mark: Verified |
 | **INV-RUNAS-08** | Unprivileged User-Mode | Runs as a regular user; requests no administrator rights; no system daemon required. | :white_check_mark: Verified |
 | **INV-DET-09** | Deterministic Artifacts & Ledgers | Deterministic SVG figures, structured reports, and cryptographic SHA-256 run ledgers guarantee reproducible audit trails. | :white_check_mark: Verified |
 | **INV-SLA-10** | 48h Security & Triage Target | Target: security vulnerability disclosures acknowledged within 48h; triage and remediation assessment within 5 business days. | :white_check_mark: Verified |

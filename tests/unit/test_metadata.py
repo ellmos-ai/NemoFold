@@ -42,7 +42,6 @@ def test_pyproject_project_urls():
         "Notice",
         "Third-Party Licenses",
         "Third-Party Licenses (Text)",
-        "Marketing Log",
         "Parent Organization",
         "Umbrella Ecosystem",
         "LLM Ready",
@@ -128,7 +127,7 @@ def test_third_party_licenses_audit():
     assert "INV-SLA-10" in lic_text
     assert "MIT" in lic_text
     assert "Apache-2.0" in lic_text
-    assert "Level 1 SBOM" in lic_text
+    assert "Dependency Inventory" in lic_text
     assert "2026-09-26" in lic_text
 
 
@@ -219,7 +218,7 @@ def test_pyproject_keywords_and_license_files():
         "ai-agents",
         "evidence-first",
         "reversible-actions",
-        "zero-egress",
+        "opt-in-cloud",
         "local-first",
     ]
     for expected_kw in expected_sample:
@@ -286,12 +285,12 @@ def test_auto_assign_and_label_sync_workflows():
 
 
 def test_third_party_licenses_plain_text():
-    """Verify plain-text companion THIRD_PARTY_LICENSES.txt exists with Level 1 SBOM invariants."""
+    """Verify plain-text companion THIRD_PARTY_LICENSES.txt exists with the inventory invariants."""
     txt_file = REPO_ROOT / "THIRD_PARTY_LICENSES.txt"
     assert txt_file.is_file(), "Missing THIRD_PARTY_LICENSES.txt"
     txt_content = txt_file.read_text(encoding="utf-8")
 
-    assert "LEVEL 1 SBOM" in txt_content or "Level 1 SBOM" in txt_content
+    assert "DEPENDENCY INVENTORY" in txt_content
     assert "INV-LOCAL-01" in txt_content
     assert "INV-SLA-10" in txt_content
     assert "administrator" in txt_content
