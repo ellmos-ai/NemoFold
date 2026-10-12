@@ -25,9 +25,11 @@ a generic JSON-mode hint; NemoFold still validates the returned object and every
 independently. The schema narrows question IDs and collection sizes to the current job;
 the validator still rejects duplicate question accounting or cross-question evidence.
 
-The generic registry deliberately contains no Nebius adapter. Nebius/Nemotron remains
-the separate `token-factory-preflight` / `token-factory-run` route with its immutable
-package, current price inputs, exactly-once transfer attempt, and competition verifier.
+Since 2026-10-12 the generic registry also offers Nemotron on Nebius Token Factory as
+provider `nebius` (key only from `NEBIUS_API_KEY`, fixed endpoint, the request dialect of
+the proven run, approval per run). The competition proof stays the separate
+`token-factory-preflight` / `token-factory-run` route with its immutable package, current
+price inputs, exactly-once transfer attempt, and competition verifier.
 A generic provider result always records `competition_proof: false` and
 `cloud_proof: false`, even when a transfer and a schema-valid response occurred.
 

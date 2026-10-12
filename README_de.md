@@ -222,7 +222,7 @@ NemoFold löst konkrete Herausforderungen von vier Hauptzielgruppen:
 | **Keine Privilegienerhöhung (`INV-PRIV-07`)** | Root/Service-Accounts | Benutzerabhängig | Server-Dienst | **Läuft als normaler Benutzer, keine Administratorrechte** |
 | **Offene Lizenzen (`INV-LIC-08`)** | Proprietär | Unterschiedlich | Teilweise Open Core | **100 % MIT / BSD Permissiv (`INV-LIC-08`)** |
 | **Workflows & Werkzeuge** | 1–3 generische Chats | 1 Chat-Interface | Keine Workflows | **44 integrierte Dokument-Workflows** |
-| **Sicherheits-SLA (`INV-SLA-10`)** | Undokumentiert | Community-best-effort | Kommerziell gestaffelt | **48h Antwort / 5 Tage Triage (Ziel, `INV-SLA-10`)** |
+| **Sicherheits-SLA (`INV-SLA-10`)** | Undokumentiert | Community-best-effort | Kommerziell gestaffelt | **48h Antwort / 5 Werktage Triage (Ziel, `INV-SLA-10`)** |
 
 ---
 
@@ -241,7 +241,7 @@ Das Design von NemoFold basiert auf zehn unverletzlichen System-Invarianten:
 - **`INV-PRIV-07` (Privilegien-Minimierung):** NemoFold erfordert keine Administrator- oder Root-Rechte und läuft als normaler Benutzer; verlangt keine Administratorrechte.
 - **`INV-LIC-08` (Permissive Lizenz-Hygiene):** Keine Copyleft-Abhängigkeiten (GPL/AGPL). Vollständige Transparenz in `THIRD_PARTY_LICENSES.md`.
 - **`INV-PARK-09` (Zweisprachige Parität):** Dokumentation und Governance existieren gleichwertig auf Deutsch und Englisch.
-- **`INV-SLA-10` (Verbindliche Sicherheits-Reaktionszeit):** Ziel: Bestätigung von Schwachstellenmeldungen binnen 48 Stunden, Triage binnen 5 Tagen gemäß `SECURITY.md`.
+- **`INV-SLA-10` (Unverbindliches Sicherheits-Reaktionsziel):** Ziel: Bestätigung von Schwachstellenmeldungen binnen 48 Stunden, Triage binnen 5 Werktagen gemäß `SECURITY.md`.
 
 ---
 
@@ -899,11 +899,11 @@ der Maschinenraum ist. Folders ist das Zuhause der Ordner: welche überwacht wer
 tatsächlich an Bord ist, und welche Usecases daran hängen. In der lokalen Konsole
 durchsucht der Ordnerdialog jeden Ordner dieses Rechners und gibt ihn für die laufende
 Sitzung frei (`/api/approve-root`); gelesen wird erst nach dieser Freigabe. Die
-Public Demo und ein netzfreigegebener Server verweigern das. Die Übersicht selbst bleibt
-bewusst karg — eine Überschrift, ein Satz und die Bereichskarten — und faltet
-Grenz-Kacheln, Evidenzkette, Vertragsregister und Roadmap hinter eine alte Seekarte, die
-sich per Klick oder Enter aufklappt. Nichts wird entfernt; die Dokumentation verschmutzt
-nur nicht mehr die Oberfläche.
+Public Demo und ein netzfreigegebener Server verweigern das. Unter der Werkbank behält die
+Startseite eine Überschrift, einen Satz und die Bereichskarten und faltet Grenz-Kacheln,
+Evidenzkette, Vertragsregister und Roadmap hinter eine alte Seekarte, die sich per Klick
+oder Enter aufklappt. Nichts wird entfernt; die Dokumentation verschmutzt nur nicht mehr
+die Oberfläche.
 
 Governance zeigt die Autorität, mit der dieser Server gestartet wurde — Gates für
 Dateiaktionen, externe Modelle und Netzexposition, freigegebene Roots, Budgetgrenze und
@@ -986,9 +986,9 @@ NemoFold ist eine zentrale Dokumenten-Intelligenzkomponente des `ellmos-ai`-Öko
 | **[ellmos-homebase-mcp](https://github.com/ellmos-ai/ellmos-homebase-mcp)** | `ellmos-ai` | Persistenter Agenten-Speicher, Zustandsverwaltung & Profil-Store |
 | **[report-forge](https://github.com/ellmos-ai/report-forge)** | `ellmos-ai` | Headless DOCX-Vorlagen-Engine & professionelles Berichtswesen |
 | **[DevCenter](https://github.com/dev-bricks/DevCenter)** | `dev-bricks` | Multi-Repository-Arbeitsplatzverwaltung & lokales Entwickler-Dashboard |
-| **[ticket-master](https://github.com/dev-bricks/ticket-master)** | `dev-bricks` | Issue-Tracker, lineare Sprint-Workflows & Aufgaben-Engine |
-| **[lock-master](https://github.com/dev-bricks/lock-master)** | `dev-bricks` | Host-Nebenläufigkeitssperren, Fail-Closed-Zugriffsschutz & Sync-Locks |
-| **[sync-master](https://github.com/dev-bricks/sync-master)** | `dev-bricks` | Multi-Geräte-Dateisynchronisation & Konfliktkopien-Bereinigung |
+| **[ticket-master](https://github.com/ellmos-ai/ticket-master)** | `ellmos-ai` | Ticket-Router für mehrere LLM-Anbieter und Triage-Konsole für Agenten |
+| **[lock-master](https://github.com/ellmos-ai/lock-master)** | `ellmos-ai` | Portable Datei-Sperren für mehrere Agenten: Exklusiv- und Team-Locks mit Scope und Ablauf |
+| **[system-gap-master](https://github.com/ellmos-ai/system-gap-master)** | `ellmos-ai` | Serverloser Sync-Hof für Setups mit mehreren Rechnern und Agenten |
 | **[CleanMarkdown](https://github.com/doc-bricks/CleanMarkdown)** | `doc-bricks` | Markdown-Linter, Anker-Normalisierung & Dokumentationsformatierung |
 | **[open-bricks](https://github.com/open-bricks)** | `open-bricks` | Umbrella-Profil-Organisation (keine Code-Repositories) |
 

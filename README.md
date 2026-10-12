@@ -877,11 +877,11 @@ engine room as their editor. Folders is the home of your folders: which ones are
 is actually on board, and the use cases bound to them. In the local console the folder
 dialog browses any folder on this computer and approves it for the current session
 (`/api/approve-root`); reading starts only after that approval. The public demo and a
-network-exposed server refuse it. The overview itself stays
-deliberately bare — one headline, one sentence and the area cards — and folds the
-boundary tiles, the evidence chain, the contract register and the roadmap behind an
-antique ship's chart that unfolds on click or Enter. Nothing is removed; documentation
-simply stops crowding the surface.
+network-exposed server refuse it. Below the workbench the start page keeps one
+headline, one sentence and the area cards, and folds the boundary tiles, the evidence
+chain, the contract register and the roadmap behind an antique ship's chart that
+unfolds on click or Enter. Nothing is removed; documentation simply stops crowding the
+surface.
 
 Governance renders the authority this server was started with — the file-action,
 external-model and network gates, approved roots, budget ceiling and contracted
@@ -957,9 +957,9 @@ NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem.
 | **[ellmos-homebase-mcp](https://github.com/ellmos-ai/ellmos-homebase-mcp)** | `ellmos-ai` | Agent persistent memory, state management, and profile store |
 | **[report-forge](https://github.com/ellmos-ai/report-forge)** | `ellmos-ai` | Headless DOCX template engine and professional report renderer |
 | **[DevCenter](https://github.com/dev-bricks/DevCenter)** | `dev-bricks` | Multi-repository workspace manager and local developer dashboard |
-| **[ticket-master](https://github.com/dev-bricks/ticket-master)** | `dev-bricks` | Issue tracker, linear sprint workflow, and task engine |
-| **[lock-master](https://github.com/dev-bricks/lock-master)** | `dev-bricks` | Host concurrency locking, fail-closed access, and sync locks |
-| **[sync-master](https://github.com/dev-bricks/sync-master)** | `dev-bricks` | Multi-device file synchronizer and conflict copy resolution |
+| **[ticket-master](https://github.com/ellmos-ai/ticket-master)** | `ellmos-ai` | Multi-provider LLM ticket router and agent triage console |
+| **[lock-master](https://github.com/ellmos-ai/lock-master)** | `ellmos-ai` | Portable multi-agent file locks: exclusive and team locks with scopes and expiry |
+| **[system-gap-master](https://github.com/ellmos-ai/system-gap-master)** | `ellmos-ai` | Serverless sync yard for multi-machine, multi-agent setups |
 | **[CleanMarkdown](https://github.com/doc-bricks/CleanMarkdown)** | `doc-bricks` | Markdown linter, anchor normalization, and documentation formatter |
 | **[open-bricks](https://github.com/open-bricks)** | `open-bricks` | Umbrella profile organization (no code repositories) |
 
