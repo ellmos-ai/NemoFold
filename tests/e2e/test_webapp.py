@@ -2013,7 +2013,7 @@ def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) ->
 def test_a_junction_is_neither_listed_nor_approvable(tmp_path) -> None:
     # Review R2-03: is_symlink() does not report a Windows junction.
     target = tmp_path / "target"
-    target.mkdir()
+    (target / "child").mkdir(parents=True)
     junction = tmp_path / "junction"
     created = subprocess.run(  # noqa: S603 - fixed argv, no shell input
         ["cmd", "/c", "mklink", "/J", str(junction), str(target)],
@@ -2025,9 +2025,12 @@ def test_a_junction_is_neither_listed_nor_approvable(tmp_path) -> None:
         listing = post_json(base_url + "/api/folders", {"path": str(tmp_path)})
         with pytest.raises(HTTPError) as refused:
             post_json(base_url + "/api/approve-root", {"path": str(junction)})
+        with pytest.raises(HTTPError) as behind:
+            post_json(base_url + "/api/approve-root", {"path": str(junction / "child")})
 
     assert {item["name"] for item in listing["directories"]} == {"target"}
     assert refused.value.code == 400
+    assert behind.value.code == 400
 
 
 def test_the_use_case_dialog_sits_outside_every_tab_scoped_section(tmp_path) -> None:

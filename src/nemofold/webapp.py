@@ -809,7 +809,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             raw = payload["path"]
             if not isinstance(raw, str) or not Path(raw).is_absolute():
                 raise ValueError("path must be an absolute folder path")
-            if _is_link(Path(raw)):
+            if any(_is_link(part) for part in (Path(raw), *Path(raw).parents)):
                 raise ValueError("a linked folder cannot be approved")
             folder = Path(raw).resolve()
             if not folder.is_dir():

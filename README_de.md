@@ -893,7 +893,8 @@ berührt. Usecase-Details öffnen als Dialog.
 Verändert hat sich, was vorn steht, nicht die Räume. Usecase-Kacheln sind das
 Primärobjekt, thematisch über Tags filterbar, und eine Routine ist schlicht ein Usecase
 mit Zeitplan und dem abgeleiteten Tag `scheduled` — dieser Filter macht aus dem Bullauge
-das Echolot und holt die letzten Routineläufe nach vorn. Die einzelnen Actions, also die
+das Echolot: die letzten Läufe der Actions, die deine Routinen nutzen, manuelle Läufe
+derselben Action eingeschlossen, denn NemoFold ordnet einen Lauf keinem Zeitplan zu. Die einzelnen Actions, also die
 44 Actions (Jobverträge) für sich, stehen im Reiter Blueprints, dessen Editor
 der Maschinenraum ist. Folders ist das Zuhause der Ordner: welche überwacht werden, was
 tatsächlich an Bord ist, und welche Usecases daran hängen. In der lokalen Konsole

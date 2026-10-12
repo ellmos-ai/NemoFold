@@ -1918,11 +1918,12 @@ async function loadFolderChoices(path = null) {
     choices.append(empty);
   }
   const skipped = Number(data.skipped_count || 0);
+  const scope = folderCurrentPath && !folderCurrentApproved
+    ? "Not approved yet. Approving works like --allow-root until the server stops: workflows may read this folder and write their reports into it; moving or deleting files still needs --approve-actions."
+    : "Approved folders first; any other folder on this computer can be approved for this session.";
   $("folderStatus").textContent = skipped
-    ? `${skipped} inaccessible or linked folders were omitted.`
-    : folderCurrentPath && !folderCurrentApproved
-      ? "Not approved yet. Approving works like --allow-root until the server stops: workflows may read this folder and write their reports into it; moving or deleting files still needs --approve-actions."
-      : "Approved folders first; any other folder on this computer can be approved for this session.";
+    ? `${skipped} inaccessible or linked folders were omitted. ${scope}`
+    : scope;
 }
 
 function showFolderError(error) {
@@ -3116,7 +3117,7 @@ function renderLibrary(entries) {
 
 // A copy carries the whole definition, so a local-only cap, rights and bound
 // policies survive; the derived "scheduled" tag travels with the schedule.
-async function copyDefinition(voyageId, name, source) {
+async function copyDefinition(voyageId, name, source, steps = null) {
   const loaded = await (await fetch(`/api/voyage?id=${encodeURIComponent(voyageId)}`)).json();
   if (loaded.ok !== true) throw new Error(loaded.detail || loaded.error || "not readable");
   const voyage = loaded.voyage;
@@ -3124,18 +3125,31 @@ async function copyDefinition(voyageId, name, source) {
     name,
     source,
     description: voyage.description || "",
-    steps: voyage.steps,
+    // The open editor's order wins over the stored one when it is passed.
+    steps: steps || voyage.steps,
     tags: (voyage.tags || []).filter((tag) => tag !== "scheduled")
   };
   for (const field of ["schedule", "model_pref", "model_authority", "authority_reason",
     "rights", "policy_refs", "status", "missing_capability"]) {
     if (voyage[field] !== undefined && voyage[field] !== null) body[field] = voyage[field];
   }
-  return fetch("/api/voyages", {
+  const post = (payload) => fetch("/api/voyages", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(body)
+    body: JSON.stringify(payload)
   });
+  const response = await post(body);
+  if (response.ok) return response;
+  const refusal = await response.clone().json().catch(() => ({}));
+  // A chain that lets an external model override its links needs a fresh,
+  // explicit confirmation for every copy; it is never carried over silently.
+  if (String(refusal.detail || "").includes("confirm_external_authority")
+      && globalThis.confirm(
+        "This chain lets an external model override its links. Confirm that authority for the copy as well?"
+      )) {
+    return post({...body, confirm_external_authority: true});
+  }
+  return response;
 }
 
 async function adoptBlueprint(entry) {
@@ -3409,7 +3423,8 @@ async function saveOpenAsBlueprint() {
     const response = await copyDefinition(
       openVoyage.voyage_id,
       uniqueName($("libraryDetailName").value.trim() || openVoyage.name, true),
-      "template"
+      "template",
+      openVoyage.steps
     );
     const payload = await response.json();
     if (!response.ok || payload.ok !== true) {

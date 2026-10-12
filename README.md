@@ -871,7 +871,8 @@ blueprint. Use-case details open as a dialog.
 What stands in front changed, not the rooms. Use-case tiles are the primary object,
 filtered by topic tags, and a routine is simply a use case that carries a schedule and
 the derived `scheduled` tag — choosing that filter is what turns the porthole into the
-echo sounder and surfaces the last routine ledgers. The single actions, meaning the
+echo sounder: recent runs of the actions your routines use, manual runs of the same
+action included, since NemoFold does not tie a run to a schedule. The single actions, meaning the
 44 actions (job contracts) on their own, are listed in the Blueprints tab, with the
 engine room as their editor. Folders is the home of your folders: which ones are watched, what
 is actually on board, and the use cases bound to them. In the local console the folder
