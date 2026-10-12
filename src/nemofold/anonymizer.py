@@ -59,36 +59,31 @@ _DATE_CANDIDATE = re.compile(
     r"|(?P<iso_year>\d{4})-(?P<iso_month>\d{2})-(?P<iso_day>\d{2}))"
     r"(?:[ ](?P<hour>\d{1,2}))?"
 )
-# After the hour: valid minutes. In the residual check of text this module
-# produced, also a placeholder that already holds the minutes together with a
-# following number; a placeholder in the input text proves nothing.
-_MINUTES = re.compile(r":(\d{2})(?!\d)")
-_MINUTES_IN_OUTPUT = re.compile(r":(?:(\d{2})(?!\d)|<PHONE_\d+>)")
+# After the hour: valid minutes that stand alone. When another digit run
+# follows the minutes directly, the minutes belong to that run and are masked
+# with it, so the date and hour are masked too; the produced text then never
+# needs an exemption that the input could forge.
+_MINUTES = re.compile(r":(\d{2})(?!\d)(?![ .()/\-]*\d)")
 _MIN_PHONE_DIGITS = 7
 
 
-def _is_date(match: re.Match[str], *, residual: bool = False) -> bool:
+def _is_date(match: re.Match[str]) -> bool:
     """A PHONE candidate that is exactly one calendar date stays readable.
 
     A date has eight digits and used to be masked as a phone number, which left
-    an outbound timeline without a single date. The PHONE pattern itself is
-    unchanged; only a candidate that is nothing but a valid date between 1900
-    and 2100, at most followed by the hour of a time with valid minutes
-    ("13.03.2026 17" before ":00"), is exempt. Anything else in the same digit
-    run (a following number, a longer identifier) keeps the whole run masked.
+    an outbound timeline without a single date. The PHONE pattern finds whole
+    digit runs; only a candidate that is nothing but a valid date between 1900
+    and 2100, at most followed by the hour of a time whose minutes stand alone
+    ("13.03.2026 17" before ":00", with no number right after), is exempt.
+    Anything else in the same digit run (a following number, a longer
+    identifier) keeps the whole run masked.
     """
     found = _DATE_CANDIDATE.fullmatch(match.group(0))
     if found is None:
         return False
     if found["hour"] is not None:
-        minutes = (_MINUTES_IN_OUTPUT if residual else _MINUTES).match(
-            match.string, match.end()
-        )
-        if (
-            int(found["hour"]) > 23
-            or minutes is None
-            or (minutes[1] is not None and int(minutes[1]) > 59)
-        ):
+        minutes = _MINUTES.match(match.string, match.end())
+        if int(found["hour"]) > 23 or minutes is None or int(minutes[1]) > 59:
             return False
     if found["iso_year"] is not None:
         year, month, day = (int(found[key]) for key in ("iso_year", "iso_month", "iso_day"))
@@ -105,20 +100,17 @@ def _is_date(match: re.Match[str], *, residual: bool = False) -> bool:
     return True
 
 
-def _not_a_phone_number(match: re.Match[str], *, residual: bool = False) -> bool:
+def _not_a_phone_number(match: re.Match[str]) -> bool:
     digits = sum(character.isdigit() for character in match.group(0))
-    return digits < _MIN_PHONE_DIGITS or _is_date(match, residual=residual)
+    return digits < _MIN_PHONE_DIGITS or _is_date(match)
 
 
-_EXEMPT: dict[str, Callable[..., bool]] = {"PHONE": _not_a_phone_number}
+_EXEMPT: dict[str, Callable[[re.Match[str]], bool]] = {"PHONE": _not_a_phone_number}
 
 
 def _sensitive_matches(category: str, pattern: re.Pattern[str], text: str) -> bool:
-    # Only ever called on outbound text this module produced: the residual check.
     exempt = _EXEMPT.get(category)
-    return any(
-        exempt is None or not exempt(match, residual=True) for match in pattern.finditer(text)
-    )
+    return any(exempt is None or not exempt(match) for match in pattern.finditer(text))
 
 
 def detect_sensitive_categories(text: str) -> tuple[str, ...]:

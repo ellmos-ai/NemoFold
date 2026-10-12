@@ -135,7 +135,8 @@ def test_minutes_never_stay_readable_by_themselves() -> None:
     # "99:12 3456789", and an exemption that relied on text masked in the same
     # pass blocked the residual check.
     for text, masked in (
-        ("13.03.2026 17:00 0761 1234567", "13.03.2026 17:<PHONE_001>"),
+        ("13.03.2026 17:00 0761 1234567", "<PHONE_001>:<PHONE_002>"),
+        ("13.03.2026 17:00, 0761 1234567", "13.03.2026 17:00, <PHONE_001>"),
         ("99:12 3456789", "99:<PHONE_001>"),
         ("9263428960:34.154191", "<PHONE_001>:<PHONE_002>"),
         ("0761 1234567 17:00 14.03.2026", "<PHONE_001>:<PHONE_002>"),
@@ -149,15 +150,18 @@ def test_a_placeholder_in_the_input_proves_nothing_and_masking_adds_no_residue()
     # an hour count as followed by masked minutes; and masking a run directly
     # before letters created a word boundary that turned "AB12..." into an IBAN.
     assert pseudonymize_text("13.03.2026 17:<PHONE_001>").text == "<PHONE_001>:<PHONE_001>"
+    # Review R9: the same check guards raw web queries and imported packages,
+    # so a placeholder never counts as minutes anywhere.
+    assert detect_sensitive_categories("13.03.2026 17:<PHONE_001>") == ("PHONE",)
     for text in ("1234567AB1234567890123", "1234567C:\\notes\\a.txt"):
         result = pseudonymize_text(text)
         assert detect_sensitive_categories(result.text) == (), result.text
 
 
 def test_every_digit_the_original_pattern_masked_is_still_masked() -> None:
-    # Property from review rounds R4-R7: apart from exact dates (with an hour
-    # before minutes), nothing the pre-2026-10-12 pattern masked may become
-    # readable, and masked text never trips the residual check.
+    # Property from review rounds R4-R9: apart from exact dates (with an hour
+    # before minutes that stand alone), nothing the pre-2026-10-12 pattern
+    # masked may become readable, and masked text never trips the residual check.
     original = re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)")
     phone = dict(PATTERNS)["PHONE"]
     for sep, width, count, tail in itertools.product(
@@ -179,3 +183,13 @@ def test_every_digit_the_original_pattern_masked_is_still_masked() -> None:
                 masked |= digits
         assert before <= masked | allowed, text
         assert detect_sensitive_categories(pseudonymize_text(text).text) == (), text
+
+
+def test_a_raw_web_query_with_a_forged_placeholder_is_refused() -> None:
+    # Review R9-01: raw web queries share the residual check.
+    from nemofold.web_research import validate_queries
+
+    queries, refused = validate_queries(["13.03.2026 17:<PHONE_001>", "Kiosk Uferstrasse"])
+
+    assert queries == ("Kiosk Uferstrasse",)
+    assert len(refused) == 1
