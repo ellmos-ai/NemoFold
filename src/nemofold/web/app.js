@@ -1921,7 +1921,7 @@ async function loadFolderChoices(path = null) {
   $("folderStatus").textContent = skipped
     ? `${skipped} inaccessible or linked folders were omitted.`
     : folderCurrentPath && !folderCurrentApproved
-      ? "Not approved yet: approving lets every workflow in this console read this folder until the server stops."
+      ? "Not approved yet. Approving works like --allow-root until the server stops: workflows may read this folder and write their reports into it; moving or deleting files still needs --approve-actions."
       : "Approved folders first; any other folder on this computer can be approved for this session.";
 }
 
@@ -3114,25 +3114,37 @@ function renderLibrary(entries) {
   renderLibraryCards(group, pending);
 }
 
+// A copy carries the whole definition, so a local-only cap, rights and bound
+// policies survive; the derived "scheduled" tag travels with the schedule.
+async function copyDefinition(voyageId, name, source) {
+  const loaded = await (await fetch(`/api/voyage?id=${encodeURIComponent(voyageId)}`)).json();
+  if (loaded.ok !== true) throw new Error(loaded.detail || loaded.error || "not readable");
+  const voyage = loaded.voyage;
+  const body = {
+    name,
+    source,
+    description: voyage.description || "",
+    steps: voyage.steps,
+    tags: (voyage.tags || []).filter((tag) => tag !== "scheduled")
+  };
+  for (const field of ["schedule", "model_pref", "model_authority", "authority_reason",
+    "rights", "policy_refs", "status", "missing_capability"]) {
+    if (voyage[field] !== undefined && voyage[field] !== null) body[field] = voyage[field];
+  }
+  return fetch("/api/voyages", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body)
+  });
+}
+
 async function adoptBlueprint(entry) {
   const list = $("blueprintList") || $("libraryList");
   const name = uniqueName(entry.name, false);
   try {
     let response;
     if (entry.editable) {
-      const loaded = await (await fetch(`/api/voyage?id=${encodeURIComponent(entry.voyage_id)}`)).json();
-      if (loaded.ok !== true) throw new Error(loaded.detail || loaded.error || "blueprint not readable");
-      response = await fetch("/api/voyages", {
-        method: "POST",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({
-          name,
-          description: loaded.voyage.description || "",
-          steps: loaded.voyage.steps,
-          tags: loaded.voyage.tags || [],
-          source: "manual"
-        })
-      });
+      response = await copyDefinition(entry.voyage_id, name, "manual");
     } else {
       response = await fetch("/api/voyage-preset", {
         method: "POST",
@@ -3394,17 +3406,11 @@ async function saveOpenAsBlueprint() {
   const diff = $("libraryDiff");
   diff.textContent = "";
   try {
-    const response = await fetch("/api/voyages", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        name: uniqueName($("libraryDetailName").value.trim() || openVoyage.name, true),
-        description: openVoyage.description || "",
-        steps: openVoyage.steps,
-        tags: openVoyage.tags || [],
-        source: "template"
-      })
-    });
+    const response = await copyDefinition(
+      openVoyage.voyage_id,
+      uniqueName($("libraryDetailName").value.trim() || openVoyage.name, true),
+      "template"
+    );
     const payload = await response.json();
     if (!response.ok || payload.ok !== true) {
       throw new Error(payload.detail || payload.error || `request failed (${response.status})`);

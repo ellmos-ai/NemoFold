@@ -775,6 +775,13 @@ def _execute_digest(
     )
 
 
+_QUESTION_WORDS = frozenset(
+    {"what", "which", "where", "when", "does", "have", "with", "from", "that", "this",
+     "welche", "welcher", "welches", "wann", "warum", "wieso", "hatte", "haben",
+     "sind", "wird", "wurde", "eine", "einer", "einem", "einen", "gegen", "nach"}
+)
+
+
 def _analysis_claim(
     question: str,
     hits: tuple[SearchHit, ...],
@@ -789,7 +796,9 @@ def _analysis_claim(
     # so a boilerplate opening line (a fixture's fiction notice, a letterhead)
     # does not stand in for the answer. The full passage stays in the evidence.
     sentences = re.split(r"(?<=[.!?])\s+", quote.strip())
-    terms = {word.casefold() for word in re.findall(r"\w{4,}", question)}
+    terms = {
+        word.casefold() for word in re.findall(r"\w{4,}", question)
+    } - _QUESTION_WORDS
     first_sentence = next(
         (
             sentence

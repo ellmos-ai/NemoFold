@@ -809,7 +809,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             raw = payload["path"]
             if not isinstance(raw, str) or not Path(raw).is_absolute():
                 raise ValueError("path must be an absolute folder path")
-            if Path(raw).is_symlink():
+            if _is_link(Path(raw)):
                 raise ValueError("a linked folder cannot be approved")
             folder = Path(raw).resolve()
             if not folder.is_dir():
@@ -1650,6 +1650,19 @@ def _matching_folder_root(candidate: Path, roots: tuple[Path, ...]) -> Path | No
     )
 
 
+# IO_REPARSE_TAG_MOUNT_POINT (junction) and IO_REPARSE_TAG_SYMLINK.
+_LINK_REPARSE_TAGS = frozenset({0xA0000003, 0xA000000C})
+
+
+def _is_link(path: Path) -> bool:
+    # A Windows junction is a reparse point that is_symlink() does not report.
+    # Cloud placeholders (OneDrive) are reparse points too, with other tags,
+    # and stay allowed.
+    if path.is_symlink():
+        return True
+    return getattr(os.lstat(path), "st_reparse_tag", 0) in _LINK_REPARSE_TAGS
+
+
 def _computer_places() -> list[dict[str, str]]:
     places = [str(Path.home())]
     if os.name == "nt":
@@ -1703,10 +1716,10 @@ def _folder_listing(
     # folder the cap left out, so it must not make a complete listing look cut.
     over_cap = 0
     for item in sorted(candidate.iterdir(), key=lambda path: path.name.casefold()):
-        if item.is_symlink():
-            skipped += 1
-            continue
         try:
+            if _is_link(item):
+                skipped += 1
+                continue
             resolved = item.resolve()
             if not resolved.is_dir() or _matching_folder_root(resolved, (root,)) is None:
                 continue

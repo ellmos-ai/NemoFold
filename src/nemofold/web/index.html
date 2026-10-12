@@ -392,6 +392,7 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
         <div>
           <p class="kicker"><svg class="instrument-icon radar" aria-hidden="true"><use href="#icon-radar"></use></svg>ECHO SOUNDING</p>
           <h2 id="echoCheckTitle">What came back from the last pings.</h2>
+          <p class="glance-state">Recent runs of the actions your folder routines and scheduled use cases use, newest first. A manual run of the same action shows here too: NemoFold does not tie a run to a schedule.</p>
         </div>
         <div class="glance-controls">
           <label>Output scope<input id="echoOutputDir" autocomplete="off" placeholder="run-reports/web-console"></label>
@@ -634,46 +635,6 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
       <div id="libraryFilter" class="library-filter" role="group" aria-label="Filter use cases by topic"></div>
       <div id="libraryList" class="library-list" aria-live="polite"></div>
 
-      <dialog id="libraryDetail" class="library-detail" aria-labelledby="libraryDetailTitle">
-        <div class="detail-head">
-          <div>
-            <span id="libraryDetailSource" class="detail-source">SAVED VOYAGE</span>
-            <h3 id="libraryDetailTitle">—</h3>
-            <p id="libraryDetailDescription"></p>
-            <p id="libraryDetailWarning" class="library-warning" hidden></p>
-          </div>
-          <button type="button" id="libraryClose" class="secondary">Close</button>
-        </div>
-        <label class="library-rename">Name<input id="libraryDetailName" autocomplete="off" maxlength="120"></label>
-        <dl id="libraryGovernance" class="library-governance"></dl>
-        <div id="librarySteps" class="library-steps" role="list"></div>
-        <details id="libraryRunOptions" class="library-run-options">
-          <summary>Run this once with a different model</summary>
-          <div class="run-override-grid">
-            <label>Provider
-              <select id="libraryOverrideProvider"><option value="">Use the stored setting</option></select>
-            </label>
-            <label>Model<input id="libraryOverrideModel" autocomplete="off" placeholder="qwen3:4b"></label>
-            <p class="run-override-note">This applies to this run only. Stored link and chain settings stay as they are, and a chain declared local-only still refuses an external model instead of quietly allowing it.</p>
-          </div>
-        </details>
-        <div class="library-actions">
-          <button type="button" id="libraryRun" class="card-open">Run</button>
-          <button type="button" id="libraryAdopt" class="card-open" hidden>Add to my use cases</button>
-          <button type="button" id="librarySave" class="secondary">Save changes</button>
-          <button type="button" id="libraryBlueprint" class="secondary">Save as blueprint</button>
-          <button type="button" id="libraryDelete" class="secondary">Remove from my use cases</button>
-        </div>
-        <div id="libraryBinder" class="library-binder"></div>
-        <div id="libraryRunResult" class="library-run" role="status" aria-live="polite"></div>
-        <form id="libraryEditForm" class="library-edit">
-          <label>Ask the captain to change this voyage
-            <input id="libraryEditRequest" autocomplete="off" placeholder="füge zwischen Schritt 2 und 3 einen Tagesbericht ein">
-          </label>
-          <button type="submit" id="libraryEditAsk">Propose change</button>
-        </form>
-        <div id="libraryDiff" class="library-diff" aria-live="polite"></div>
-      </dialog>
     </section>
 
     <section class="trust-boundary" aria-labelledby="boundaryTitle" data-page-section="processes connections" data-page-tab="workflows">
@@ -753,6 +714,46 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
         </div>
       </div>
     </section>
+      <dialog id="libraryDetail" class="library-detail" aria-labelledby="libraryDetailTitle">
+        <div class="detail-head">
+          <div>
+            <span id="libraryDetailSource" class="detail-source">SAVED VOYAGE</span>
+            <h3 id="libraryDetailTitle">—</h3>
+            <p id="libraryDetailDescription"></p>
+            <p id="libraryDetailWarning" class="library-warning" hidden></p>
+          </div>
+          <button type="button" id="libraryClose" class="secondary">Close</button>
+        </div>
+        <label class="library-rename">Name<input id="libraryDetailName" autocomplete="off" maxlength="120"></label>
+        <dl id="libraryGovernance" class="library-governance"></dl>
+        <div id="librarySteps" class="library-steps" role="list"></div>
+        <details id="libraryRunOptions" class="library-run-options">
+          <summary>Run this once with a different model</summary>
+          <div class="run-override-grid">
+            <label>Provider
+              <select id="libraryOverrideProvider"><option value="">Use the stored setting</option></select>
+            </label>
+            <label>Model<input id="libraryOverrideModel" autocomplete="off" placeholder="qwen3:4b"></label>
+            <p class="run-override-note">This applies to this run only. Stored link and chain settings stay as they are, and a chain declared local-only still refuses an external model instead of quietly allowing it.</p>
+          </div>
+        </details>
+        <div class="library-actions">
+          <button type="button" id="libraryRun" class="card-open">Run</button>
+          <button type="button" id="libraryAdopt" class="card-open" hidden>Add to my use cases</button>
+          <button type="button" id="librarySave" class="secondary">Save changes</button>
+          <button type="button" id="libraryBlueprint" class="secondary">Save as blueprint</button>
+          <button type="button" id="libraryDelete" class="secondary">Remove from my use cases</button>
+        </div>
+        <div id="libraryBinder" class="library-binder"></div>
+        <div id="libraryRunResult" class="library-run" role="status" aria-live="polite"></div>
+        <form id="libraryEditForm" class="library-edit">
+          <label>Ask the captain to change this voyage
+            <input id="libraryEditRequest" autocomplete="off" placeholder="füge zwischen Schritt 2 und 3 einen Tagesbericht ein">
+          </label>
+          <button type="submit" id="libraryEditAsk">Propose change</button>
+        </form>
+        <div id="libraryDiff" class="library-diff" aria-live="polite"></div>
+      </dialog>
   </main>
   <button type="button" id="engineHandle" class="engine-handle" aria-expanded="false" aria-controls="engineRoom">
     <svg class="instrument-icon wheel" aria-hidden="true"><use href="#icon-wheel"></use></svg>

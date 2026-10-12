@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
+import sys
 import threading
 from contextlib import contextmanager
 from pathlib import Path
@@ -2005,3 +2007,39 @@ def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) ->
     for label in ("Add to my use cases", "Remove from my use cases", "Save as blueprint",
                   "FULL LOCAL CONSOLE", "PUBLIC DEMO · SYNTHETIC DATA ONLY", "/api/approve-root"):
         assert label in script, label
+
+
+@pytest.mark.skipif(not sys.platform.startswith("win"), reason="junctions are a Windows feature")
+def test_a_junction_is_neither_listed_nor_approvable(tmp_path) -> None:
+    # Review R2-03: is_symlink() does not report a Windows junction.
+    target = tmp_path / "target"
+    target.mkdir()
+    junction = tmp_path / "junction"
+    created = subprocess.run(  # noqa: S603 - fixed argv, no shell input
+        ["cmd", "/c", "mklink", "/J", str(junction), str(target)],
+        capture_output=True, check=False,
+    )
+    if created.returncode != 0:
+        pytest.skip("mklink /J is unavailable on this host")
+    with running_server(tmp_path) as base_url:
+        listing = post_json(base_url + "/api/folders", {"path": str(tmp_path)})
+        with pytest.raises(HTTPError) as refused:
+            post_json(base_url + "/api/approve-root", {"path": str(junction)})
+
+    assert {item["name"] for item in listing["directories"]} == {"target"}
+    assert refused.value.code == 400
+
+
+def test_the_use_case_dialog_sits_outside_every_tab_scoped_section(tmp_path) -> None:
+    # Review R2-04: inside the library section the dialog opened invisibly on
+    # the Blueprints tab, where that section is hidden.
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/processes?tab=registry", timeout=5) as response,  # noqa: S310
+    ):
+        html = response.read().decode()
+
+    main = html.split('<main id="workspace">', 1)[1].split("</main>", 1)[0]
+    dialog_at = main.index('<dialog id="libraryDetail"')
+    assert dialog_at > main.rindex("</section>")
+    assert dialog_at > main.rindex("</aside>")
