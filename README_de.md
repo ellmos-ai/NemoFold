@@ -48,9 +48,9 @@ lassen sie sich auch für Fälle verketten, für die noch niemand einen Workflow
 geschrieben hat.
 
 Es passt sich Ihren Usecases auf zwei ehrliche Arten an: Das Captain's Desk plant aus
-einem einfachen Satz neue Kombinationen vorhandener Bausteine, und jede vorbereitete
-Fahrt wird zu einem wiederverwendbaren Entwurf. Das ist die ganze Lerngeschichte — eine
-wachsende Bibliothek von Fahrten, kein Modell, das auf Ihren Dateien trainiert. Es wird
+einem einfachen Satz neue Kombinationen vorhandener Bausteine, und jeder vorbereitete
+Plan wird zu einem wiederverwendbaren Entwurf. Das ist die ganze Lerngeschichte — eine
+wachsende Bibliothek von Usecases, kein Modell, das auf Ihren Dateien trainiert. Es wird
 nichts feinjustiert, und nichts aus Ihren Dokumenten verlässt den Rechner ohne Ihre
 Freigabe für genau diesen Transfer.
 
@@ -250,7 +250,9 @@ Das Design von NemoFold basiert auf zehn unverletzlichen System-Invarianten:
 <a id="was-implementiert-ist"></a>
 ## 6. Implementierte Dokument-Workflows
 
-`SUPPORTED_WORKFLOWS` registriert 44 Jobverträge. Die gründenden sechzehn stehen
+`SUPPORTED_WORKFLOWS` registriert 44 Jobverträge; in der Konsole ist jeder davon eine
+**Action** (ein einzelner Schritt), ein **Workflow** dagegen eine Kette aus zwei oder
+mehr Actions ([Abschnitt 16](#16-lokale-webkonsole--routen)). Die gründenden sechzehn stehen
 unten; die Fallchronik-Tiefenanalyse ergänzt sieben weitere
 ([Abschnitt 13](#13-fallchronik-tiefenanalyse)), das Prüf-/Vergleichs-/Komponier-Set
 sieben ([Abschnitt 15](#15-pruefen-vergleichen--komponieren)), und vierzehn weitere
@@ -300,7 +302,7 @@ keiner davon hatte vor diesem Durchgang eine Tabellenzeile.
 | Print Action (`print_action`) | Übergibt eine benannte Datei an das betriebssystemseitig registrierte Druckprogramm und hält fest, dass das Drucken selbst Ihr Schritt ist, nicht der Lauf |
 | Chunk Export (`chunk_export`) | Deterministische, überlappende Retrieval-Chunks für Ihren eigenen RAG-Index, jeder mit Quelle, Zeichen-Offsets, Zeilen und SHA-256, dazu ein gehashtes Manifest; ungelesene oder leere Quellen bleiben aufgeführt, und ein Korpus über der erklärten Grenze wird als Ganzes abgelehnt statt teilweise exportiert |
 
-Der Reiter Registry unter Processes & Workflows enthält außerdem den lokalen
+Der Reiter Blueprints unter Processes & Workflows enthält außerdem den lokalen
 **Research-Notebook**-Arbeitsbereich. Er hält Untersuchungsziel, freigegebene Wurzeln,
 wiederverwendbare Fragen/Prompts, Provider-Konfiguration und die Spur verifizierter
 Laufjournale zusammen, ohne API-Schlüssel oder Freigaben zu speichern.
@@ -314,7 +316,7 @@ Abdeckungslücken erhalten.
 Cloud-Kosten, Uploads, echte NemoClaw-/Nebius-Ausführung und weitere Änderungen an
 Devpost bleiben getrennte menschliche Freigabegates.
 
-![NemoFold-Konsole, Processes & Workflows: die Use-Case-Bibliothek mit gespeicherten Voyages und den mitgelieferten Spezialisten](docs/media/nemofold-console.png)
+![NemoFold-Konsole, Startseite als Werkbank: oben das Captain's Desk, darunter der geöffnete Maschinenraum](docs/media/nemofold-console.png)
 
 <a id="sec-07"></a><a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
 <a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
@@ -460,9 +462,15 @@ claude mcp add --scope user nemofold -- python -m nemofold mcp `
 
 Lokale Provider sind auf Loopback beschränkt. Externe Adapter verlangen `allow_once`,
 ein serverseitiges Gate für externe Modelle und eine Freigabe je Übertragung. Schlüssel
-werden nur aus Umgebungsvariablen gelesen. Generische Providerbelege werden niemals
-zum Nebius-Wettbewerbsnachweis; dafür bleibt ausschließlich der nächste Abschnitt
-zuständig. Siehe [Provideradapter, lokale API und MCP](docs/providers-and-mcp.md).
+werden nur aus Umgebungsvariablen gelesen. Nemotron auf der Nebius Token Factory ist
+in der lokalen Konsole außerdem als Provider `nebius` wählbar: Der Schlüssel kommt nur
+aus `NEBIUS_API_KEY`, der Server muss mit
+`--allow-external-models --max-external-cost-usd <n>` gestartet sein, jeder Lauf
+braucht eine eigene Freigabe mit Datenschutzmodus `allow_once`, und gesendet werden nur
+pseudonymisierte Ausschnitte. Generische Providerbelege, auch ein Konsolenlauf mit
+`nebius`, werden niemals zum Nebius-Wettbewerbsnachweis; dafür bleibt ausschließlich
+der nächste Abschnitt (der separate Pfad `token-factory-run`, eingecheckt unter
+`examples/proven-run/`) zuständig. Siehe [Provideradapter, lokale API und MCP](docs/providers-and-mcp.md).
 
 <a id="sec-11"></a><a id="11-approved-nebius-token-factory-run"></a><a id="11-belegter-nebius-token-factory-lauf"></a>
 <a id="approved-nebius-token-factory-run"></a><a id="belegter-nebius-token-factory-lauf"></a>
@@ -599,10 +607,15 @@ und des Journals fortsetzen.
 <a id="my-use-cases-the-voyages-library"></a><a id="meine-usecases-die-fahrten-bibliothek"></a>
 ## 12. Fahrtbibliothek & Captain's Desk
 
-Ein Plan, den Sie behalten, bekommt einen Namen. Die Übersicht trägt die Bibliothek:
-gespeicherte Fahrten neben fünf Spezialisten, die NemoFold mitbringt — Faktendestillat
+Ein Plan, den Sie behalten, bekommt einen Namen und heißt **Usecase**: eine Action oder
+ein Workflow, aus einem Blueprint übernommen (oder vom Captain geplant) und an Ihre
+eigenen Ordner gebunden. Die Konsole listet sie unter *My use cases*; die
+mitgelieferten Ausgangspunkte stehen unter *Blueprints*
+([Abschnitt 16](#16-lokale-webkonsole--routen)). Im Folgenden ist eine „Fahrt“ der
+gespeicherte Plan hinter einem Usecase. Die Bibliothek trägt gespeicherte Fahrten neben
+fünf Blueprints, die NemoFold mitbringt — Faktendestillat
 als PDF, Themenbündel mit Belegen, Tagesbericht, Verzeichnistabelle und
-Angebotssynopse. Ein Spezialist ist ein schreibgeschützter Ausgangspunkt: Er trägt
+Angebotssynopse. Ein mitgelieferter Blueprint ist ein schreibgeschützter Ausgangspunkt: Er trägt
 Workflows und Parameter, aber keinen Pfad. Eine mitgelieferte Datei kann deshalb nie
 einen Ordner auf Ihrem Rechner benennen und nie von selbst laufen. Beim Kopieren wird
 sie an Ihre freigegebenen Roots gebunden und ist danach ein gewöhnlicher, bearbeitbarer
@@ -843,7 +856,10 @@ $env:PYTHONPATH = "$PWD\src"
 python -m nemofold serve --allow-root $PWD --base-dir $PWD
 ```
 
-Öffne `http://127.0.0.1:8765`. Die Konsole verwendet denselben strikten Auftragsparser
+Öffne `http://127.0.0.1:8765`; das Etikett oben lautet `FULL LOCAL CONSOLE` (die Demo
+unten: `PUBLIC DEMO · SYNTHETIC DATA ONLY`). Der Standard-Beispielordner ist die
+fiktive Fallakte `examples/synthetic-case` mit deutschen Standardfragen. Die Konsole
+verwendet denselben strikten Auftragsparser
 und Anwendungsdienst wie die CLI. Sie bindet nur an Loopback, lehnt Cross-Origin-POSTs
 ab und verlangt `--expose-network`, bevor sie eine Nicht-Loopback-Adresse verwendet.
 Auch dann bleiben die autoritätstragenden Flächen Loopback-only: Ein netzexponierter
@@ -852,22 +868,38 @@ Hosting für andere Personen läuft über `serve-demo`. Preview ist der standard
 sichere Pfad; Aktionsworkflows benötigen zusätzlich das serverseitige Gate
 `--approve-actions`, bevor eine Apply-Anfrage erfolgreich sein kann.
 
-Übersicht und vier Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt
+Die Startseite `/` ist die **Werkbank**: oben das Captain's Desk, darunter der
+geöffnete Maschinenraum (erster Menüpunkt: *Engine room*). Übersicht und vier
+Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt
 Sprüngen innerhalb einer langen Seite: `/`, `/folders`, `/processes`, `/governance` und
 `/connections`. Analysis, Routines und Artifacts waren einmal eigene Räume — damit
 entschied die Tür, durch die man kam, darüber, was man sehen konnte. Sie sind jetzt drei
-Untertabs von Processes & Workflows: `?tab=workflows`, `?tab=registry` und
-`?tab=artifacts`. Die alten Routen führen weiterhin irgendwohin: `/document-center`,
+Untertabs von Processes & Workflows: `?tab=workflows` (My use cases), `?tab=registry`
+(Blueprints) und `?tab=artifacts` (die URL-Schlüssel sind unverändert). Die alten Routen führen weiterhin irgendwohin: `/document-center`,
 `/analysis`, `/routines` und `/artifacts` leiten auf ihren Nachfolger um, und ein Link,
-der einen einzelnen Vertrag nennt, landet im Register mit genau diesem Vertrag.
+der einen einzelnen Vertrag nennt, landet im Reiter Blueprints mit genau diesem Vertrag.
+
+Begriffe: Eine **Action** ist ein Schritt, also einer der 44 Jobverträge (das API-Feld
+heißt weiterhin `workflow`); ein **Workflow** ist eine Kette aus zwei oder mehr
+Actions; ein **Usecase** ist eine übernommene, an Ihre eigenen Ordner gebundene Action
+oder ein ebensolcher Workflow; **Blueprints** sind die Vorlagen. Der Reiter Blueprints
+listet Workflow-Blueprints (zwei oder mehr Schritte), Single-Action-Blueprints,
+*My blueprints* und darunter alle 44 Actions, jeweils mit *Add to my use cases* und
+*Try once*. Ein Blueprint lässt sich beliebig oft übernehmen (Kopien werden
+nummeriert) und im Dialog umbenennen; ein Usecase lässt sich als eigener Blueprint
+speichern oder mit *Remove from my use cases* entfernen, was den Blueprint nie
+berührt. Usecase-Details öffnen als Dialog.
 
 Verändert hat sich, was vorn steht, nicht die Räume. Usecase-Kacheln sind das
 Primärobjekt, thematisch über Tags filterbar, und eine Routine ist schlicht ein Usecase
 mit Zeitplan und dem abgeleiteten Tag `scheduled` — dieser Filter macht aus dem Bullauge
-das Echolot und holt die letzten Routineläufe nach vorn. Die Einzelinstrumente, also die
-44 Jobverträge für sich, leben in einem nicht-thematischen Register, dessen Editor
+das Echolot und holt die letzten Routineläufe nach vorn. Die einzelnen Actions, also die
+44 Actions (Jobverträge) für sich, stehen im Reiter Blueprints, dessen Editor
 der Maschinenraum ist. Folders ist das Zuhause der Ordner: welche überwacht werden, was
-tatsächlich an Bord ist, und welche Usecases daran hängen. Die Übersicht selbst bleibt
+tatsächlich an Bord ist, und welche Usecases daran hängen. In der lokalen Konsole
+durchsucht der Ordnerdialog jeden Ordner dieses Rechners und gibt ihn für die laufende
+Sitzung frei (`/api/approve-root`); gelesen wird erst nach dieser Freigabe. Die
+Public Demo und ein netzfreigegebener Server verweigern das. Die Übersicht selbst bleibt
 bewusst karg — eine Überschrift, ein Satz und die Bereichskarten — und faltet
 Grenz-Kacheln, Evidenzkette, Vertragsregister und Roadmap hinter eine alte Seekarte, die
 sich per Klick oder Enter aufklappt. Nichts wird entfernt; die Dokumentation verschmutzt
@@ -880,7 +912,8 @@ geschlossenes Gate verlangt weiterhin einen Neustart mit dem passenden Flag. Dar
 liegen die beiden Register aus dem nächsten Abschnitt. Artifacts öffnet ausgeführte oder
 blockierte Ledger und prüft jeden erfassten Artefakthash. Connections ist eine reine
 Statusseite und trennt konfigurierte Adapter, ausgeführte Providerläufe, Transfers und
-Cloud-Nachweise sichtbar voneinander. Das Register enthält weiterhin alles, was es immer
+Cloud-Nachweise sichtbar voneinander; Connections und Governance sagen jeweils, wo
+sich eine Einstellung ändern lässt. Die Konsole enthält weiterhin alles, was es immer
 enthielt: erklärbare Cleanup Rules, schreibgeschützten Mail-to-Case-Ingest, kontrollierte
 E-Mail-Entwürfe, den quellengebundenen Contact Monitor, deterministische
 Bundle-Vorbereitung, Datenschutz-Preflight, Evidence Analyst, wiederverwendbare

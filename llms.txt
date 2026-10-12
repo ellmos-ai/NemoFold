@@ -28,6 +28,13 @@ Primary documentation:
 
 Current local implementation boundary:
 - Forty-four workflow contracts share the strict job service.
+- Console vocabulary: an action is one of the 44 job contracts (API field `workflow`); a
+  workflow is a chain of two or more actions; a use case is an action or workflow adopted
+  from a blueprint and bound to your own folders. The start page is the workbench.
+- Nemotron on Nebius Token Factory is selectable in the local console (provider `nebius`,
+  key only from `NEBIUS_API_KEY`, server started with `--allow-external-models
+  --max-external-cost-usd <n>`, per-run approval). A console run is not competition proof;
+  the committed proof is the separate `token-factory-run` path in examples/proven-run.
 - Saved voyages can be run through loopback HTTP, `nemofold voyage-run`, and
   `nemofold_run_voyage` MCP with the same root, policy, action, and model gates.
 - Runnable saved voyages require a `nemofold.voyage-receipt.v1` SHA-256 bound

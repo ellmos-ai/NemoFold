@@ -48,9 +48,9 @@ shared rather than private to one workflow, the same building blocks can be chai
 for a case nobody has written a workflow for yet.
 
 It adapts to your use cases in two honest ways: the Captain's Desk plans new
-combinations of existing primitives from one plain sentence, and every prepared voyage
+combinations of existing primitives from one plain sentence, and every prepared plan
 becomes a reusable draft. That is the whole learning story - a growing library of
-voyages, not a model that trains on your files. Nothing is fine-tuned, and nothing
+use cases, not a model that trains on your files. Nothing is fine-tuned, and nothing
 about your documents leaves the host unless you approve that specific transfer.
 
 The same core serves both ends of the range: everyday work on a laptop with a small
@@ -249,7 +249,9 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 <a id="what-is-implemented"></a>
 ## 6. Implemented Document Workflows
 
-`SUPPORTED_WORKFLOWS` registers 44 job contracts. The founding sixteen are below;
+`SUPPORTED_WORKFLOWS` registers 44 job contracts; in the console each one is an
+**action** (a single step), while a **workflow** is a chain of two or more actions
+([Section 16](#16-local-web-console--routes)). The founding sixteen are below;
 Case Chronicle deep analysis adds seven more ([Section 13](#13-case-chronicle-deep-analysis)),
 the checking/comparing/composing set adds seven ([Section 15](#15-checking-comparing--composing)),
 and fourteen further gate-verified structured-source, web, export and specialist workflows
@@ -298,7 +300,7 @@ table row before this pass.
 | Print Action (`print_action`) | Hands one named file to the OS-registered print handler and records that printing, not the run, is the user's own step |
 | Chunk Export (`chunk_export`) | Deterministic, overlapping retrieval chunks for your own RAG index, each with source, character offsets, lines and SHA-256, plus a hashed manifest; unread or empty sources stay listed, and a corpus over the declared bound is refused whole instead of exported in part |
 
-The Registry tab under Processes & Workflows also holds the local **Research Notebook**
+The Blueprints tab under Processes & Workflows also holds the local **Research Notebook**
 workspace. It keeps an investigation goal, approved roots, reusable questions/prompts,
 provider configuration, and a trail of verified run ledgers together without storing
 API keys or approvals.
@@ -311,7 +313,7 @@ unreadable files remain visible as coverage gaps.
 Cloud spend, uploads, live NemoClaw/Nebius execution, and further Devpost changes
 remain separate human approval gates.
 
-![NemoFold console, Processes & Workflows: the use-case library with saved voyages and the shipped specialists](docs/media/nemofold-console.png)
+![NemoFold console start page, the workbench: the Captain's Desk on top, the engine room open below it](docs/media/nemofold-console.png)
 
 <a id="sec-07"></a><a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
 <a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
@@ -458,8 +460,14 @@ claude mcp add --scope user nemofold -- python -m nemofold mcp `
 
 Local providers are restricted to loopback. External adapters require `allow_once`, a
 server-side external-model gate, and per-call transfer approval. Keys come only from
-environment variables. Generic provider receipts never become Nebius competition
-proof; the next section remains the only such route. See
+environment variables. Nemotron on Nebius Token Factory is also selectable in the
+local console as provider `nebius`: the key comes only from `NEBIUS_API_KEY`, the
+server must be started with `--allow-external-models --max-external-cost-usd <n>`,
+every run needs its own approval with privacy `allow_once`, and only pseudonymized
+excerpts are sent. Generic provider receipts, including a console run on `nebius`,
+never become Nebius competition proof; the next section (the separate
+`token-factory-run` path, committed under `examples/proven-run/`) remains the only
+such route. See
 [Provider adapters, local API, and MCP](docs/providers-and-mcp.md).
 
 <a id="sec-11"></a><a id="11-approved-nebius-token-factory-run"></a><a id="11-belegter-nebius-token-factory-lauf"></a>
@@ -589,9 +597,13 @@ preserving the original job identity and journal.
 <a id="my-use-cases-the-voyage-library"></a>
 ## 12. Voyage Library & Captain's Desk
 
-A plan you keep gets a name. The overview holds the library: saved voyages next to
-five specialists that ship with NemoFold - fact digest as PDF, topic bundle with
-evidence, daily arrivals, registry table, and offer synopsis. A specialist is a
+A plan you keep gets a name and is called a **use case**: an action or a workflow
+adopted from a blueprint (or planned by the captain) and bound to your own folders.
+The console lists them under *My use cases*; the shipped starting points live under
+*Blueprints* ([Section 16](#16-local-web-console--routes)). In the text below, a
+"voyage" is the stored plan behind a use case. The library holds saved voyages next to
+five blueprints that ship with NemoFold - fact digest as PDF, topic bundle with
+evidence, daily arrivals, registry table, and offer synopsis. A shipped blueprint is a
 read-only starting point that carries workflows and parameters but no path, so a
 shipped file can never name a folder on your machine and can never run by itself.
 Copying one binds it to your approved roots; from then on it is an ordinary entry you
@@ -823,7 +835,10 @@ $env:PYTHONPATH = "$PWD\src"
 python -m nemofold serve --allow-root $PWD --base-dir $PWD
 ```
 
-Open `http://127.0.0.1:8765`. The console uses the same strict job parser and
+Open `http://127.0.0.1:8765`; the label at the top reads `FULL LOCAL CONSOLE` (the
+demo below reads `PUBLIC DEMO · SYNTHETIC DATA ONLY`). The default example folder is the
+fictional case file `examples/synthetic-case`, with default questions in German. The
+console uses the same strict job parser and
 application service as the CLI. It starts on loopback only, rejects cross-origin POSTs,
 and requires `--expose-network` before it will bind to a non-loopback address. Even
 then the authority-bearing surfaces stay loopback-only: a network-exposed server
@@ -832,22 +847,37 @@ hosting for other people goes through `serve-demo`. Preview is the default safe 
 action workflows additionally require the server-side `--approve-actions` gate before
 an apply request can succeed.
 
-The overview and four work areas use distinct, bookmarkable routes instead of in-page
+The start page `/` is the **workbench**: the Captain's Desk on top and the engine room
+open below it (the first menu item is *Engine room*). The overview and four work areas use distinct, bookmarkable routes instead of in-page
 scroll jumps: `/`, `/folders`, `/processes`, `/governance` and `/connections`. Analysis,
 Routines and Artifacts used to be rooms of their own, which meant the door you came
 through decided what you could see. They are now three tabs of Processes & Workflows —
-`?tab=workflows`, `?tab=registry` and `?tab=artifacts`. The old routes still lead
+`?tab=workflows` (My use cases), `?tab=registry` (Blueprints) and `?tab=artifacts`
+(the URL keys are unchanged). The old routes still lead
 somewhere: `/document-center`, `/analysis`, `/routines` and `/artifacts` redirect to
-their replacement, and a link that names one contract lands in the registry with that
-contract selected.
+their replacement, and a link that names one contract lands in the Blueprints tab with
+that contract selected.
+
+Vocabulary: an **action** is one step, i.e. one of the 44 job contracts (the API field
+is still `workflow`); a **workflow** is a chain of two or more actions; a **use case**
+is an action or workflow you adopted and bound to your own folders; **blueprints** are
+the templates. The Blueprints tab lists workflow blueprints (two or more steps),
+single-action blueprints, *My blueprints*, and below them all 44 actions, each with
+*Add to my use cases* and *Try once*. A blueprint can be adopted any number of times
+(copies are numbered) and renamed in the dialog; a use case can be saved as a blueprint
+of your own or removed with *Remove from my use cases*, which never touches its
+blueprint. Use-case details open as a dialog.
 
 What stands in front changed, not the rooms. Use-case tiles are the primary object,
 filtered by topic tags, and a routine is simply a use case that carries a schedule and
 the derived `scheduled` tag — choosing that filter is what turns the porthole into the
-echo sounder and surfaces the last routine ledgers. The single instruments, meaning the
-44 job contracts on their own, live in one non-thematic registry with the engine
-room as their editor. Folders is the home of your folders: which ones are watched, what
-is actually on board, and the use cases bound to them. The overview itself stays
+echo sounder and surfaces the last routine ledgers. The single actions, meaning the
+44 actions (job contracts) on their own, are listed in the Blueprints tab, with the
+engine room as their editor. Folders is the home of your folders: which ones are watched, what
+is actually on board, and the use cases bound to them. In the local console the folder
+dialog browses any folder on this computer and approves it for the current session
+(`/api/approve-root`); reading starts only after that approval. The public demo and a
+network-exposed server refuse it. The overview itself stays
 deliberately bare — one headline, one sentence and the area cards — and folds the
 boundary tiles, the evidence chain, the contract register and the roadmap behind an
 antique ship's chart that unfolds on click or Enter. Nothing is removed; documentation
@@ -859,7 +889,8 @@ workflows. Gates are read there, never granted there: a closed gate still requir
 restart with the matching flag. Below them sit the two registers described in the next
 section. Artifacts opens executed or blocked ledgers and verifies every recorded
 artifact hash. Connections is a pure status page that keeps configured adapters,
-executed provider runs, transfers, and cloud proof visibly separate. The registry still
+executed provider runs, transfers, and cloud proof visibly separate; Connections and
+Governance each say where a setting is changed. The console still
 holds everything it always did: explainable Cleanup Rules, read-only Mail-to-Case
 intake, Controlled Email drafts, the source-grounded Contact Monitor, deterministic
 bundle preparation, privacy preflight, Evidence Analyst, reusable prompt sets and
