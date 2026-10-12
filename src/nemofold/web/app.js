@@ -41,6 +41,7 @@ document.body.dataset.tab = currentTab;
 document.title = tabTitles[currentTab] || pageConfiguration[currentPage].title;
 const lines = (value) => value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
 let publicDemo = false;
+let publicDemoParameters = {};
 let folderPickerEnabled = false;
 let providerSurfaceEnabled = false;
 let externalModelsAllowed = false;
@@ -965,7 +966,7 @@ async function askTheCaptain(event) {
       answer,
       "p",
       "desk-note",
-      "The captain's desk is a loopback-only surface and stays closed on this server."
+      "The captain's desk opens only in a loopback console started with nemofold serve; this server keeps it closed."
     );
     return;
   }
@@ -1307,7 +1308,11 @@ async function loadEcho() {
     if (!response.ok || payload.ok !== true) {
       throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
     }
-    const routineWorkflows = new Set(pageConfiguration.routines.workflows);
+    // The routines room became a filter (D-036), so the instruments that
+    // answer an echo are the registry's folder-routine group.
+    const routineWorkflows = new Set(
+      registryGroups.find((group) => group.title === "Folder routines")?.workflows || []
+    );
     const runs = (Array.isArray(payload.runs) ? payload.runs : [])
       .filter((run) => routineWorkflows.has(run.workflow));
     list.textContent = "";
@@ -1694,9 +1699,13 @@ function updateProviderAvailability() {
 function applyWorkflowDefaults() {
   const defaults = workflowDefaults[$("workflow").value];
   if (!defaults) return;
+  // The public demo runs only the server's own parameters, so show exactly
+  // those and keep the analysis scale from rewriting them.
+  const demoParameters = publicDemo ? publicDemoParameters[$("workflow").value] : undefined;
   $("questions").value = defaults.questions.join("\n");
-  $("parameters").value = JSON.stringify(defaults.parameters, null, 2);
-  $("analysisScale").disabled = !["evidence_analyst", "platform_proof"].includes($("workflow").value);
+  $("parameters").value = JSON.stringify(demoParameters || defaults.parameters, null, 2);
+  $("analysisScale").disabled = Boolean(demoParameters)
+    || !["evidence_analyst", "platform_proof"].includes($("workflow").value);
   if (!$("analysisScale").disabled) applyAnalysisScale();
   updateVoyageScene();
   renderWorkflowMap();
@@ -2233,7 +2242,7 @@ async function loadHomeModules() {
     if (folderPickerEnabled) await loadHomeGlance();
     else {
       $("glanceState").textContent =
-        "The corpus overview is a loopback-only surface and stays closed here.";
+        "The corpus overview opens only in a loopback console started with nemofold serve; this server keeps it closed.";
     }
   }
   if ($("echoCheck")) {
@@ -2242,7 +2251,7 @@ async function loadHomeModules() {
     else {
       $("echoList").textContent = "";
       const note = document.createElement("p");
-      note.textContent = "Echo sounding is a loopback-only surface and stays closed here.";
+      note.textContent = "Echo sounding opens only in a loopback console started with nemofold serve; this server keeps it closed.";
       $("echoList").append(note);
     }
   }
@@ -2527,7 +2536,7 @@ async function loadGovernanceRegister() {
   if (!list || currentPage !== "governance") return;
   if (!policySurfaceEnabled) {
     list.textContent = "";
-    libraryNote(list, "The policy register is a loopback-only surface and stays closed here.");
+    libraryNote(list, "The policy register opens only in a loopback console started with nemofold serve; this server keeps it closed.");
     return;
   }
   try {
@@ -2568,6 +2577,7 @@ async function loadStatus() {
     renderWebRoute(status);
     renderCommandBridge(status);
     if (publicDemo) {
+      publicDemoParameters = status.public_demo_parameters || {};
       const supported = new Set(status.workflows);
       for (const option of [...$("workflow").options]) {
         if (!supported.has(option.value)) option.remove();
@@ -2589,6 +2599,12 @@ async function loadStatus() {
       updateProviderPanel();
       for (const button of document.querySelectorAll("[data-folder-target]")) button.disabled = true;
     } else {
+      // The shipped default names the repository's synthetic corpus; a server
+      // started on other folders says which approved root to begin with.
+      if (status.default_input_root
+          && $("inputRoots").value.trim() === $("inputRoots").defaultValue.trim()) {
+        $("inputRoots").value = status.default_input_root;
+      }
       configureRoutedPage();
       applyWorkflowDefaults();
       for (const button of document.querySelectorAll("[data-folder-target]")) {
@@ -2810,7 +2826,7 @@ async function loadLibrary() {
   if (!list) return;
   if (!voyageSurfaceEnabled) {
     list.textContent = "";
-    libraryNote(list, "The use-case library is a loopback-only surface and stays closed here.");
+    libraryNote(list, "The use-case library opens only in a loopback console started with nemofold serve; this server keeps it closed.");
     return;
   }
   try {

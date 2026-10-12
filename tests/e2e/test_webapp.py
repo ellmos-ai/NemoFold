@@ -900,6 +900,70 @@ def test_public_demo_status_withholds_root_locations_but_keeps_the_count(tmp_pat
     assert status["approved_root_count"] == 1
     assert status["apply_actions_allowed"] is False
     assert status["max_external_cost_usd"] == 0.0
+    assert status["default_input_root"] is None
+
+
+def test_every_public_demo_workflow_runs_with_the_parameters_the_status_publishes(
+    tmp_path,
+) -> None:
+    # Endabnahme 2026-10-12: the console's own max_chunks default (256) differed
+    # from the server-controlled demo value (8), so Evidence Analyst and
+    # Platform Proof were rejected from the demo engine room. The console now
+    # takes the parameters from the status instead of keeping its own copy.
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "policy.txt").write_text("Coverage begins on 1 April 2026.", encoding="utf-8")
+
+    with running_public_demo(source_root) as (_, base_url):
+        status, _ = get_json(base_url + "/api/status")
+        results = {
+            workflow: post_json(
+                base_url + "/api/run",
+                {
+                    "job": public_demo_job(
+                        workflow=workflow,
+                        parameters=status["public_demo_parameters"][workflow],
+                    )
+                },
+            )
+            for workflow in status["workflows"]
+        }
+        script = urlopen(base_url + "/assets/app.js", timeout=5).read().decode()  # noqa: S310
+
+    assert sorted(status["public_demo_parameters"]) == status["workflows"]
+    for workflow, result in results.items():
+        assert result["ok"] is True, workflow
+        assert result["report"]["status"] == "executed", workflow
+    assert "publicDemoParameters = status.public_demo_parameters" in script
+
+
+def test_the_default_input_root_follows_the_approved_roots(tmp_path) -> None:
+    with running_server(tmp_path) as base_url:
+        without_examples, _ = get_json(base_url + "/api/status")
+    (tmp_path / "examples" / "synthetic-home").mkdir(parents=True)
+    with running_server(tmp_path) as base_url:
+        with_examples, _ = get_json(base_url + "/api/status")
+
+    assert without_examples["default_input_root"] == str(tmp_path.resolve())
+    assert with_examples["default_input_root"] == "examples/synthetic-home"
+    assert without_examples["public_demo_parameters"] == {}
+
+
+def test_every_page_configuration_the_console_reads_is_defined(tmp_path) -> None:
+    # Endabnahme 2026-10-12: the echo sounder still read
+    # pageConfiguration.routines after the routines room became a filter,
+    # and showed a TypeError instead of the routine runs.
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/assets/app.js", timeout=5) as response,  # noqa: S310
+    ):
+        script = response.read().decode()
+
+    literal = script.split("const pageConfiguration = {", 1)[1].split("\n};", 1)[0]
+    defined = set(re.findall(r"^\s*(\w+): \{", literal, flags=re.MULTILINE))
+    used = set(re.findall(r"pageConfiguration\.(\w+)", script))
+    assert defined >= {"overview", "folders", "processes", "governance", "connections"}
+    assert used <= defined
 
 
 def test_the_scene_follows_the_tab_and_the_schedule_filter(tmp_path) -> None:

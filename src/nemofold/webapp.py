@@ -436,6 +436,21 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                         else []
                     ),
                     "approved_root_count": len(self.server.app_config.execution.allowed_roots),
+                    # The console's shipped default names the repository's own
+                    # synthetic corpus; a server started on other folders says
+                    # where to start instead, under the same disclosure rule.
+                    "default_input_root": (
+                        _default_input_root(self.server.app_config)
+                        if provider_surface_enabled
+                        else None
+                    ),
+                    # The public demo accepts only these parameters, so the
+                    # console takes them from here rather than keeping a copy.
+                    "public_demo_parameters": (
+                        {name: PUBLIC_DEMO_PARAMETERS[name] for name in sorted(available_workflows)}
+                        if public_demo
+                        else {}
+                    ),
                     "network_exposed": self.server.app_config.exposed_to_network,
                     "public_demo": public_demo,
                     "read_only": public_demo,
@@ -1567,6 +1582,16 @@ def _allowed_folder_roots(config: WebAppConfig) -> tuple[Path, ...]:
         if candidate.is_dir() and candidate not in roots:
             roots.append(candidate)
     return tuple(roots)
+
+
+def _default_input_root(config: WebAppConfig) -> str | None:
+    roots = _allowed_folder_roots(config)
+    if not roots:
+        return None
+    synthetic = config.base_dir / "examples" / "synthetic-home"
+    if synthetic.is_dir() and _matching_folder_root(synthetic.resolve(), roots) is not None:
+        return "examples/synthetic-home"
+    return str(roots[0])
 
 
 def _matching_folder_root(candidate: Path, roots: tuple[Path, ...]) -> Path | None:
