@@ -45,7 +45,16 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ),
     (
         "PHONE",
-        re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)"),
+        # A date is not a phone number: 14.03.2026 or 2026-03-14 has eight digits
+        # and used to be masked, which left an outbound timeline without dates.
+        # Only valid dates are exempt, and a match may not start inside one;
+        # every other digit run, including case and policy numbers, stays masked.
+        re.compile(
+            r"(?<!\w)(?<!\d\.)(?<!\d-)"
+            r"(?!(?:0?[1-9]|[12]\d|3[01])\.(?:0?[1-9]|1[0-2])\.(?:\d{4}|\d{2})(?![\d.]))"
+            r"(?!\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])(?!\d))"
+            r"(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)"
+        ),
     ),
 )
 
