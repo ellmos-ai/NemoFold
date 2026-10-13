@@ -499,6 +499,14 @@ class VoyagePlan:
         return bool(self.steps or self.unavailable)
 
 
+# Words that make a request a question about the approved documents, so an
+# otherwise unmatched one falls back to Evidence Analyst instead of a refusal.
+DOCUMENT_TASK_WORDS = (
+    "ordner", "dokument", "datei", "unterlag", "akte", "information", "such", "finde",
+    "folder", "document", "file", "search", "find", "look up", "look for",
+)
+
+
 def mentions(haystack: str, keyword: str) -> bool:
     """Match a keyword at a word start so German inflections still count."""
     return re.search(r"(?<!\w)" + re.escape(keyword), haystack) is not None
@@ -962,6 +970,23 @@ def plan_voyage(
             + " directly, so no separate Report Studio step is needed."
         )
 
+    # A document request no task word matches still gets a plan: the general
+    # workflow answers the sentence itself against the approved folders, with
+    # quotes. A request about anything else is still refused, not guessed.
+    fallback = (
+        not workflows
+        and not unavailable
+        and any(mentions(haystack, keyword) for keyword in DOCUMENT_TASK_WORDS)
+    )
+    if fallback:
+        workflows.add("evidence_analyst")
+        notes.append(
+            "No specific workflow matched, so the captain prepares Evidence Analyst: it "
+            "answers your sentence against the approved folders with exact quotes. A task "
+            "word such as timeline, contradiction, summary or registry gives a more "
+            "specific plan."
+        )
+
     ordered = sorted(workflows, key=lambda item: WORKFLOW_ORDER[item])
     steps: list[VoyageStep] = []
     produced: dict[str, str] = {}
@@ -976,7 +1001,9 @@ def plan_voyage(
             input_roots=step_roots,
             output_dir=step_output,
             questions=(
-                ("Which claims do the approved sources support?",)
+                (request,)
+                if fallback
+                else ("Which claims do the approved sources support?",)
                 if workflow in {"evidence_analyst", "platform_proof"}
                 else ()
             ),

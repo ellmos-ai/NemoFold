@@ -969,9 +969,10 @@ def test_the_default_input_root_follows_the_approved_roots(tmp_path) -> None:
     with running_server(tmp_path) as base_url:
         with_examples, _ = get_json(base_url + "/api/status")
 
-    # D-043: the full console never prefers the demo case over the approved root.
-    assert without_examples["default_input_root"] == str(tmp_path.resolve())
-    assert with_examples["default_input_root"] == str(tmp_path.resolve())
+    # D-043: the full console never prefers the demo case, and the base folder
+    # that only holds the reports is no starting folder either.
+    assert without_examples["default_input_root"] is None
+    assert with_examples["default_input_root"] is None
     assert without_examples["public_demo_parameters"] == {}
 
 
@@ -1026,7 +1027,9 @@ def test_use_cases_come_first_and_single_instruments_live_in_the_registry(tmp_pa
 
     # Folders keeps the corpus overview and the use cases bound to it.
     assert 'id="homeGlance"' in folders
-    assert 'data-folder-target="homeGlanceRoot"' in folders
+    # The glance looks at a working folder; choosing folders is the list above.
+    assert 'data-folder-target="workingFolders"' in folders
+    assert 'data-folder-target="homeGlanceRoot"' not in folders
     assert 'data-page-section="folders"' in folders
     assert 'data-page-section="folders processes"' in folders
     # D-042: every one-step workflow is a tile among the blueprints, filtered
@@ -2037,6 +2040,25 @@ def serving(config: WebAppConfig):
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
+
+
+def test_connections_report_what_this_computer_shows_without_reading_keys(
+    tmp_path, monkeypatch
+) -> None:
+    # 2026-10-13: every adapter used to read "Configured", running or not.
+    monkeypatch.setenv("NEBIUS_API_KEY", "secret-value-123")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    with running_server(tmp_path) as base_url:
+        status, _ = get_json(base_url + "/api/status")
+        with urlopen(base_url + "/api/status", timeout=5) as response:  # noqa: S310
+            raw = response.read().decode()
+
+    readiness = {item["provider_id"]: item["readiness"] for item in status["providers"]}
+    assert readiness["nebius"] == "key_present"
+    assert readiness["openai"] == "no_key"
+    assert readiness["ollama"] in {"running", "not_running"}
+    assert readiness["codex-cli"] in {"cli_found", "cli_missing"}
+    assert "secret-value-123" not in raw
 
 
 def test_working_folders_stay_approved_across_restarts_and_can_be_removed(tmp_path) -> None:

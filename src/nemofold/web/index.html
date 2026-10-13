@@ -299,6 +299,37 @@
       </div>
     </aside>
 
+    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="overview" hidden>
+      <div class="notebook-head">
+        <div>
+          <p class="kicker">QUICK INVESTIGATION MODE · RESEARCH NOTEBOOK</p>
+          <h2 id="researchNotebookTitle">Keep the whole investigation, not just one answer.</h2>
+          <p>Save the research goal, approved source roots, question set, reasoning route and verified run trail as one local investigation. Approvals and secrets are never stored.</p>
+        </div>
+        <div class="notebook-sonar" aria-hidden="true"><i></i><i></i><i></i><b>DEEP CORPUS</b></div>
+      </div>
+      <div class="notebook-grid">
+        <div class="notebook-library">
+          <label>Saved investigations<select id="notebookSelect"><option value="">No investigations loaded</option></select></label>
+          <div class="notebook-actions">
+            <button type="button" id="notebookRefresh" class="secondary">Refresh</button>
+            <button type="button" id="notebookLoad" class="secondary" disabled>Load</button>
+            <button type="button" id="notebookNew" class="secondary">New</button>
+          </div>
+        </div>
+        <label>Investigation name<input id="notebookName" maxlength="120" placeholder="e.g. Contract change investigation"></label>
+        <label class="wide">Research goal <span>the thread connecting all questions and runs</span><textarea id="notebookGoal" rows="3" maxlength="4000" placeholder="What should this investigation establish, compare or disprove?"></textarea></label>
+        <div class="notebook-snapshot wide">
+          <div><span>SOURCES</span><b id="notebookSourceCount">0 approved roots</b></div>
+          <div><span>TASKS</span><b id="notebookQuestionCount">0 questions or prompts</b></div>
+          <div><span>RUN TRAIL</span><b id="notebookRunCount">0 linked ledgers</b></div>
+          <button type="button" id="notebookSave">Save investigation snapshot</button>
+        </div>
+      </div>
+      <div id="notebookState" class="notebook-state" aria-live="polite">Open the Registry tab under Processes &amp; Workflows, define sources and questions, then save the investigation.</div>
+      <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
+    </section>
+
 
     <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="folders processes governance connections">
       <div class="voyage-copy">
@@ -345,9 +376,8 @@
           <p class="kicker">A LOOK AROUND THE HOLD</p>
           <h2 id="homeGlanceTitle">What is actually on board.</h2>
         </div>
-        <div class="glance-controls">
-          <label>Corpus root<input id="homeGlanceRoot" autocomplete="off" placeholder="An approved folder"></label>
-          <button type="button" class="path-add secondary" data-folder-target="homeGlanceRoot">Choose folder</button>
+        <div class="glance-controls" hidden>
+          <input id="homeGlanceRoot" type="hidden">
           <button type="button" id="homeGlanceLook">Look around</button>
         </div>
       </div>
@@ -358,7 +388,7 @@
       </div>
       <div class="glance-recent">
         <p class="kicker">CAME ABOARD MOST RECENTLY</p>
-        <div id="glanceNewest" class="glance-list" aria-live="polite"><p>Choose an approved root and look around.</p></div>
+        <div id="glanceNewest" class="glance-list" aria-live="polite"><p>Click Look around at one of your working folders above.</p></div>
       </div>
       <p id="glanceState" class="glance-state" aria-live="polite">Counts and modification times only. No file is read and nothing leaves this host.</p>
     </section>
@@ -507,36 +537,6 @@
       <div id="governanceExceptions" class="governance-exceptions" aria-live="polite"></div>
     </section>
 
-    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="processes" data-page-tab="registry" hidden>
-      <div class="notebook-head">
-        <div>
-          <p class="kicker">UC07 · RESEARCH NOTEBOOK</p>
-          <h2 id="researchNotebookTitle">Keep the whole investigation, not just one answer.</h2>
-          <p>Save the research goal, approved source roots, question set, reasoning route and verified run trail as one local investigation. Approvals and secrets are never stored.</p>
-        </div>
-        <div class="notebook-sonar" aria-hidden="true"><i></i><i></i><i></i><b>DEEP CORPUS</b></div>
-      </div>
-      <div class="notebook-grid">
-        <div class="notebook-library">
-          <label>Saved investigations<select id="notebookSelect"><option value="">No investigations loaded</option></select></label>
-          <div class="notebook-actions">
-            <button type="button" id="notebookRefresh" class="secondary">Refresh</button>
-            <button type="button" id="notebookLoad" class="secondary" disabled>Load</button>
-            <button type="button" id="notebookNew" class="secondary">New</button>
-          </div>
-        </div>
-        <label>Investigation name<input id="notebookName" maxlength="120" placeholder="e.g. Contract change investigation"></label>
-        <label class="wide">Research goal <span>the thread connecting all questions and runs</span><textarea id="notebookGoal" rows="3" maxlength="4000" placeholder="What should this investigation establish, compare or disprove?"></textarea></label>
-        <div class="notebook-snapshot wide">
-          <div><span>SOURCES</span><b id="notebookSourceCount">0 approved roots</b></div>
-          <div><span>TASKS</span><b id="notebookQuestionCount">0 questions or prompts</b></div>
-          <div><span>RUN TRAIL</span><b id="notebookRunCount">0 linked ledgers</b></div>
-          <button type="button" id="notebookSave">Save investigation snapshot</button>
-        </div>
-      </div>
-      <div id="notebookState" class="notebook-state" aria-live="polite">Open the Registry tab under Processes &amp; Workflows, define sources and questions, then save the investigation.</div>
-      <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
-    </section>
 
 
     <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="processes" data-page-tab="artifacts">
@@ -575,7 +575,7 @@
         <a class="status-json-link" href="/api/status" target="_blank" rel="noopener">Open machine status ↗</a>
       </div>
       <div id="connectionRegistry" class="connection-registry" aria-live="polite"><p>Loading provider contracts…</p></div>
-      <p class="connection-warning"><b>Proof rule:</b> Nebius, Nemotron and NemoClaw remain unproven until their own bounded execution receipts exist. Local readiness never upgrades them automatically.</p>
+      <p class="connection-warning"><b>Proof rule:</b> a run from this console is never the competition proof. Nemotron on Nebius Token Factory is proven by the historical bounded run of 2026-09-02 in <code>examples/proven-run</code> (check it with <code>nemofold verify-result examples/proven-run</code>); NemoClaw has no execution receipt and stays unproven. A key, a running server or a found CLI never upgrades an adapter on its own.</p>
     </section>
 
     <dialog id="folderDialog" class="folder-dialog" aria-labelledby="folderDialogTitle">

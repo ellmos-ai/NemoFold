@@ -642,7 +642,38 @@ function currentSceneKey() {
   return currentPage === "overview" ? null : currentPage;
 }
 
+// D-045: the research notebook ships as one of My use cases; while it is
+// there it sits under the engine room as the quick investigation mode.
+// ponytail: kept per browser; a server-side flag once several browsers share a console.
+function notebookInUseCases() {
+  try {
+    return localStorage.getItem("nemofold.notebook") !== "removed";
+  } catch {
+    return true;
+  }
+}
+
+function setNotebookInUseCases(kept) {
+  try {
+    if (kept) localStorage.removeItem("nemofold.notebook");
+    else localStorage.setItem("nemofold.notebook", "removed");
+  } catch { /* storage unavailable */ }
+  renderLibrary(libraryEntries);
+  updateNotebookVisibility();
+}
+
+function updateNotebookVisibility() {
+  const visible = currentPage === "overview" && !publicDemo && notebookInUseCases();
+  $("researchNotebook").hidden = !visible;
+  if (visible) updateNotebookSnapshot();
+}
+
+const notebookDescription =
+  "Quick investigation mode under the engine room: keep a research goal, the question "
+  + "set and the verified run trail as one local investigation.";
+
 function updateVoyageScene(area = null) {
+  updateNotebookVisibility();
   const key = area || currentSceneKey();
   const scene = voyageScenes[key];
   const container = $("voyageScene");
@@ -652,9 +683,6 @@ function updateVoyageScene(area = null) {
   $("voyageSceneTitle").textContent = scene.title;
   $("voyageSceneText").textContent = scene.text;
   $("voyageRoadmap").textContent = scene.roadmap;
-  const notebookVisible = currentTab === "registry" && $("workflow").value === "evidence_analyst";
-  $("researchNotebook").hidden = !notebookVisible;
-  if (notebookVisible) updateNotebookSnapshot();
   // The echo sounder belongs to the routines, so it surfaces with their scene.
   if ($("echoCheck")) $("echoCheck").hidden = key !== "scheduled";
 }
@@ -1295,6 +1323,7 @@ async function loadHomeGlance() {
       throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
     }
     $("homeGlanceRoot").value = payload.root;
+    $("homeGlanceTitle").textContent = `What is on board in ${folderName(payload.root)}.`;
     renderHomeGlance(payload);
   } catch (error) {
     $("glanceState").textContent = `No overview: ${error.message}`;
@@ -1482,9 +1511,18 @@ function renderConnectionStatus(status) {
     const proofLabel = document.createElement("span");
     proofLabel.textContent = "CURRENT CLAIM";
     const proofValue = document.createElement("b");
+    // What this computer shows right now; a console run is never a proof.
+    const readiness = {
+      running: "Running here · console run unverified",
+      not_running: "Not running on this computer",
+      cli_found: "CLI found · console run unverified",
+      cli_missing: "CLI not found on this computer",
+      key_present: `${provider.api_key_env} set · console run unverified`,
+      no_key: `No ${provider.api_key_env} set`
+    };
     proofValue.textContent = provider.competition_proof
       ? "Competition proof recorded"
-      : "Configured · execution unverified";
+      : readiness[provider.readiness] || "Adapter built in · not checked";
     proof.append(proofLabel, proofValue);
     row.append(identity, transport, boundary, proof);
     registry.append(row);
@@ -2389,9 +2427,11 @@ async function linkResearchRun(runId) {
 async function loadHomeModules() {
   if ($("homeGlance")) {
     if (!$("homeGlanceRoot").value.trim()) {
-      $("homeGlanceRoot").value = lines($("inputRoots").value)[0] || "";
+      $("homeGlanceRoot").value = workingFolders[0] || lines($("inputRoots").value)[0] || "";
     }
-    if (folderPickerEnabled) await loadHomeGlance();
+    // Nothing to look at until a folder is chosen; the note says where to start.
+    if (folderPickerEnabled && $("homeGlanceRoot").value.trim()) await loadHomeGlance();
+    else if (folderPickerEnabled) $("glanceState").textContent = "Add a working folder above, then look around in it.";
     else {
       $("glanceState").textContent =
         "The corpus overview opens only in a loopback console started with nemofold serve; this server keeps it closed.";
@@ -3065,11 +3105,21 @@ function renderLibraryCards(list, entries) {
     button.className = "card-open";
     button.append(instrumentIcon("wheel"), blueprint ? "Add to my use cases" : "Open");
     button.addEventListener("click", () => {
-      if (entry.contract) adoptAction(entry.contract, card);
+      if (entry.notebook) globalThis.location.assign("/#researchNotebook");
+      else if (entry.notebookBlueprint) setNotebookInUseCases(true);
+      else if (entry.contract) adoptAction(entry.contract, card);
       else if (blueprint) adoptBlueprint(entry);
       else openLibraryEntry(entry.voyage_id);
     });
     card.append(button);
+    if (entry.notebook) {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "secondary";
+      remove.textContent = "Remove from my use cases";
+      remove.addEventListener("click", () => setNotebookInUseCases(false));
+      card.append(remove);
+    }
     if (entry.contract) {
       const trial = document.createElement("button");
       trial.type = "button";
@@ -3170,7 +3220,10 @@ function renderBlueprints(entries) {
     editable: false,
     tags: actionTags(workflow)
   }));
-  const tiles = [...entries.filter(isBlueprint), ...oneStep];
+  const notebook = notebookInUseCases() || publicDemo ? [] : [{notebookBlueprint: true,
+    name: "Research notebook", description: notebookDescription, workflows: ["evidence_analyst"],
+    editable: false, tags: ["document-analysis"]}];
+  const tiles = [...notebook, ...entries.filter(isBlueprint), ...oneStep];
   renderTagChips($("blueprintFilter"), tiles, blueprintTag, (tag) => {
     const cameFromChip = document.activeElement?.dataset?.tagFilter !== undefined;
     blueprintTag = tag;
@@ -3186,6 +3239,10 @@ function renderLibrary(entries) {
   list.textContent = "";
   renderBlueprints(entries);
   entries = entries.filter((entry) => !isBlueprint(entry));
+  if (notebookInUseCases() && !publicDemo) {
+    entries = [{notebook: true, name: "Research notebook", description: notebookDescription,
+      workflows: ["evidence_analyst"], editable: true, tags: ["document-analysis"]}, ...entries];
+  }
   renderLibraryFilter(entries);
   if (!entries.length) {
     libraryNote(

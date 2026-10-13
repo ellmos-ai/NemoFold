@@ -146,6 +146,16 @@ def test_unmatched_request_says_so_instead_of_guessing() -> None:
     assert any("Governance and Connections" in note for note in plan.notes)
 
 
+def test_a_document_request_without_a_task_word_falls_back_to_evidence_analyst() -> None:
+    # 2026-10-13 GUI test: "Ich suche eine Information im root des Ordners" hit
+    # a dead end; the sentence itself becomes the question, and the note says so.
+    plan = plan_voyage("Ich suche eine Information im root des Ordners")
+
+    assert [step.workflow for step in plan.steps] == ["evidence_analyst"]
+    assert plan.steps[0].job["questions"] == ["Ich suche eine Information im root des Ordners"]
+    assert any("No specific workflow matched" in note for note in plan.notes)
+
+
 def test_missing_root_becomes_a_question_rather_than_a_guess() -> None:
     plan = plan_voyage("bündle die unterlagen")
 

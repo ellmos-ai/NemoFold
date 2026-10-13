@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import socket
 import subprocess
 import sys
 import threading
@@ -477,7 +479,14 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "workflows": sorted(available_workflows),
                     "workflow_graphs": workflow_graphs(available_workflows),
                     "cores": list(CORE_NAMES),
-                    "providers": provider_capabilities() if provider_surface_enabled else [],
+                    "providers": (
+                        [
+                            {**item, "readiness": _provider_readiness(item)}
+                            for item in provider_capabilities()
+                        ]
+                        if provider_surface_enabled
+                        else []
+                    ),
                 }
             )
             return
@@ -1732,13 +1741,42 @@ def _allowed_folder_roots(config: WebAppConfig) -> tuple[Path, ...]:
 
 def _default_input_root(config: WebAppConfig) -> str | None:
     # D-043/D-044: the full console starts clean, at the operator's first
-    # working folder or else the first folder approved at start; the
-    # fictional case file belongs to the public demo only.
+    # working folder or else the first approved folder that is more than the
+    # base folder holding the reports; the fictional case file belongs to the
+    # public demo only.
     kept = _load_working_folders(config.base_dir)
     if kept and not config.public_demo:
         return kept[0]
-    roots = _allowed_folder_roots(config)
+    base = config.base_dir.resolve()
+    roots = [root for root in _allowed_folder_roots(config) if root != base]
     return str(roots[0]) if roots else None
+
+
+_CLI_EXECUTABLES = {"codex-cli": "codex", "claude-code": "claude"}
+
+
+def _provider_readiness(item: dict[str, object]) -> str:
+    """What this computer shows of an adapter right now; never a proof of a run.
+
+    A key is only reported as present or absent, never read out; a local model
+    server is a loopback port that answers or not; a personal CLI bridge is an
+    executable on PATH or not.
+    """
+    transport = item.get("transport")
+    if transport == "provider_api":
+        variable = item.get("api_key_env")
+        return "key_present" if isinstance(variable, str) and os.environ.get(variable) else "no_key"
+    if transport == "subscription_cli":
+        executable = _CLI_EXECUTABLES.get(str(item.get("provider_id")), "")
+        return "cli_found" if executable and shutil.which(executable) else "cli_missing"
+    url = urlparse(str(item.get("default_base_url") or ""))
+    if url.hostname not in {"127.0.0.1", "localhost", "::1"} or url.port is None:
+        return "unknown"
+    try:
+        with socket.create_connection((url.hostname, url.port), timeout=0.2):
+            return "running"
+    except OSError:
+        return "not_running"
 
 
 def _approvable_folder(raw: object) -> Path:

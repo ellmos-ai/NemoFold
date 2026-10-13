@@ -290,6 +290,7 @@ body[data-tab="workflows"] .porthole-life{display:block}
 /* Cards sit in .library-group grids; the list itself stacks group titles,
    groups and notes, so a title never takes a card cell. */
 .library-list{margin-top:18px}
+.glance-controls[hidden]{display:none}
 /* Engine room: one tile per settings area, each in its own tint. */
 #jobForm>fieldset{margin:0 0 14px;padding:16px 18px 18px;border:1px solid var(--line);border-left:5px solid var(--area);background:var(--area-tint)}
 #jobForm>fieldset>legend{float:left;width:100%;margin:0 0 14px;padding:0;color:var(--area);font:400 22px/1.15 var(--serif);letter-spacing:0;text-transform:none}
