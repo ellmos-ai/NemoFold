@@ -119,6 +119,10 @@ WORKFLOW_TITLES = {
     "platform_proof": "Platform Proof",
 }
 
+# A summary is a question a reasoning worker can answer with quotes, so it goes
+# to Evidence Analyst with the sentence itself as the question.
+SUMMARY_WORDS = ("zusammenfass", "fasse", "fass mir", "summar")
+
 WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     "reference_check": (
         # "prüf" alone is far too greedy in German: it catches "prüfe neue Files
@@ -260,7 +264,7 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
         # "widerspr" is the common stem of Widerspruch, Widersprüche and
         # widersprechen; the umlaut in the plural breaks a full-word match.
         "was steht", "widerspr", "conflict", "frage an", "beantworte",
-        "extrahier", "extract",
+        "extrahier", "extract", *SUMMARY_WORDS,
     ),
     "folder_digest": (
         "überblick", "ueberblick", "digest", "geändert", "geaendert", "changed",
@@ -286,7 +290,6 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "synopsis_merge": (
         "synopse", "synopsis", "zusammenführ", "zusammenfuehr", "zusammenfassen zu einem",
-        "zusammenfass", "fasse", "fass mir", "summar",
         "merge", "vergleiche die dokumente", "gegenüberstell", "gegenueberstell",
         "in ein dokument",
     ),
@@ -1002,7 +1005,9 @@ def plan_voyage(
             output_dir=step_output,
             questions=(
                 (request,)
-                if fallback
+                if workflow == "evidence_analyst" and (
+                    fallback or any(mentions(haystack, word) for word in SUMMARY_WORDS)
+                )
                 else ("Which claims do the approved sources support?",)
                 if workflow in {"evidence_analyst", "platform_proof"}
                 else ()

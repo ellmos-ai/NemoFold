@@ -136,6 +136,11 @@ class ProviderConfig:
         descriptor = self.descriptor
         if descriptor.transport is ProviderTransport.LOCAL_HTTP:
             _validated_local_base_url(self.base_url or descriptor.default_base_url or "")
+            if is_relayed_cloud_model(self.model):
+                raise ValueError(
+                    "a cloud model relayed by the local server leaves this computer, "
+                    "so NemoFold does not run it as a local model"
+                )
         elif self.base_url not in {None, descriptor.default_base_url}:
             raise ValueError("cloud API base_url cannot be overridden")
         if descriptor.api_key_env and not (self.api_key or "").strip():
@@ -337,6 +342,12 @@ class SubprocessRunner:
             creationflags=creationflags,
         )
         return ProcessResult(completed.returncode, completed.stdout, completed.stderr)
+
+
+def is_relayed_cloud_model(model: str) -> bool:
+    """Ollama names models it forwards to its own cloud with a ``cloud`` tag."""
+    tag = model.strip().casefold().rpartition(":")[2]
+    return tag == "cloud" or tag.endswith("-cloud")
 
 
 def _validated_local_base_url(value: str) -> str:

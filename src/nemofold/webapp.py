@@ -15,6 +15,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 from urllib.parse import parse_qs, quote, urlparse
+from urllib.request import urlopen
 from uuid import uuid4
 
 from . import __version__
@@ -25,7 +26,12 @@ from .job_io import ALLOWED_FIELDS, SUPPORTED_WORKFLOWS, JobFileError, parse_job
 from .notebooks import ResearchNotebookStore
 from .policies import PolicyStore, default_rights, policy_exceptions
 from .provider_analysis import analyze_with_provider, preview_provider_context
-from .providers import provider_capabilities, provider_config_from_mapping
+from .providers import (
+    PROVIDER_DESCRIPTORS,
+    is_relayed_cloud_model,
+    provider_capabilities,
+    provider_config_from_mapping,
+)
 from .report_verifier import verify_run_report
 from .voyage_edit import edit_to_primitive, plan_voyage_edit
 from .voyage_runs import run_voyage, voyage_run_payload
@@ -490,6 +496,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 }
             )
             return
+        if path == "/api/local-models":
+            self._handle_local_models(parse_qs(parsed_path.query).get("provider", [""])[0])
+            return
         if path == "/api/drafts":
             self._handle_draft_list()
             return
@@ -906,6 +915,43 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "approved_roots": list(self.server.app_config.execution.allowed_roots),
             }
         )
+
+    def _handle_local_models(self, provider_id: str) -> None:
+        # Asks the local model server on its fixed loopback address which models
+        # it holds, so the console offers what is installed instead of a guess.
+        # No document leaves; the demo and a network-exposed server never ask.
+        if self.server.app_config.public_demo:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/local-models")
+            return
+        if self.server.app_config.exposed_to_network:
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "surface_loopback_only",
+                "/api/local-models is disabled when the HTTP server is network-exposed",
+            )
+            return
+        descriptor = PROVIDER_DESCRIPTORS.get(provider_id)
+        if descriptor is None or descriptor.external_transfer or not descriptor.default_base_url:
+            self._error(HTTPStatus.BAD_REQUEST, "local_models_rejected", "not a local provider")
+            return
+        try:
+            with urlopen(descriptor.default_base_url + "/models", timeout=2) as response:  # noqa: S310
+                payload = json.load(response)
+        except (OSError, ValueError):
+            self._json({"ok": True, "reachable": False, "models": []})
+            return
+        data = payload.get("data") if isinstance(payload, dict) else None
+        # A model the local server only relays to a cloud is not local.
+        models = sorted(
+            {
+                str(item["id"])
+                for item in data or []
+                if isinstance(item, dict)
+                and item.get("id")
+                and not is_relayed_cloud_model(str(item["id"]))
+            }
+        )
+        self._json({"ok": True, "reachable": True, "models": models})
 
     def _handle_pick_folder(self) -> None:
         # The server runs on the operator's own computer, so it can open the
@@ -1959,17 +2005,31 @@ def _ledger_paths(output: Path) -> tuple[Path, ...]:
 
 
 def _ledger_candidates(output: Path) -> tuple[Path, ...]:
-    """Every ledger in ``output``, newest first and without the display cap."""
-    ledger_root = output / "ledger"
-    if not ledger_root.is_dir() or ledger_root.is_symlink():
-        return ()
+    """Every ledger in ``output``, newest first and without the display cap.
+
+    A voyage step writes into its own folder below the output scope
+    (``voyage/01-<workflow>/ledger``), so ledgers up to two folders deep count
+    too; a link that leads outside the scope never does.
+    """
+    output = output.resolve()
+    seen: set[Path] = set()
     candidates: list[tuple[int, Path]] = []
-    for path in ledger_root.glob("*.json"):
-        try:
-            if path.is_file() and not path.is_symlink():
-                candidates.append((path.stat().st_mtime_ns, path.resolve()))
-        except OSError:
-            continue
+    for pattern in ("ledger/*.json", "*/ledger/*.json", "*/*/ledger/*.json"):
+        for path in output.glob(pattern):
+            try:
+                resolved = path.resolve()
+                if (
+                    resolved in seen
+                    or not path.is_file()
+                    or path.is_symlink()
+                    or path.parent.is_symlink()
+                    or not resolved.is_relative_to(output)
+                ):
+                    continue
+                seen.add(resolved)
+                candidates.append((path.stat().st_mtime_ns, resolved))
+            except OSError:
+                continue
     candidates.sort(key=lambda item: (item[0], item[1].name.casefold()), reverse=True)
     return tuple(path for _, path in candidates)
 

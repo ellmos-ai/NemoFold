@@ -1070,6 +1070,57 @@ def test_artifact_catalog_reports_when_each_ledger_was_written(tmp_path) -> None
     assert run["recorded_at"].endswith("+00:00")
 
 
+def test_artifact_catalog_lists_a_voyage_step_below_the_output_scope(tmp_path) -> None:
+    # GUI test 2026-10-13: a captain voyage step writes into
+    # output/voyage/01-<workflow>; Artifacts listed only output/ledger.
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "folder_digest",
+        "input_roots": ["documents"],
+        "output_dir": "output/voyage/01-folder_digest",
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+    }
+
+    with running_server(tmp_path) as base_url:
+        post_json(base_url + "/api/run", {"run_id": "voyage_step", "job": job})
+        catalog = post_json(base_url + "/api/artifacts", {"output_dir": "output"})
+
+    run = next(item for item in catalog["runs"] if item["run_id"] == "voyage_step")
+    assert run["workflow"] == "folder_digest"
+    assert run["verification"]["valid"] is True
+
+
+def test_synopsis_merge_refuses_a_folder_too_large_for_one_synopsis(tmp_path, monkeypatch) -> None:
+    import nemofold.application as application
+
+    monkeypatch.setattr(application, "MAX_SYNOPSIS_SOURCES", 2)
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    for index in range(3):
+        (documents / f"offer-{index}.md").write_text(f"# Price\n{index} EUR", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "synopsis_merge",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {"application_domain": "general_documents", "formats": ["md"]},
+    }
+
+    with running_server(tmp_path) as base_url, pytest.raises(HTTPError) as failed:
+        post_json(base_url + "/api/run", {"run_id": "too_large", "job": job})
+
+    assert failed.value.code == 409
+    report = json.load(failed.value)["report"]
+    assert report["status"] == "failed"
+    assert any("folds at most 2 documents" in error for error in report["errors"])
+
+
 def test_corpus_glance_feeds_the_document_center_home_module(tmp_path) -> None:
     documents = tmp_path / "documents"
     documents.mkdir()
@@ -2059,6 +2110,34 @@ def test_connections_report_what_this_computer_shows_without_reading_keys(
     assert readiness["ollama"] in {"running", "not_running"}
     assert readiness["codex-cli"] in {"cli_found", "cli_missing"}
     assert "secret-value-123" not in raw
+
+
+def test_local_models_are_read_from_the_running_model_server(tmp_path, monkeypatch) -> None:
+    # 2026-10-13: the model field offered only a fixed default name.
+    import io
+
+    import nemofold.webapp as webapp
+
+    asked: list[str] = []
+
+    def fake_urlopen(url, timeout):
+        asked.append(url)
+        if "11434" in url:
+            body = {"data": [{"id": "qwen3:4b"}, {"id": "qwen3:32b"}, {"id": "kimi-k3:cloud"}]}
+            return io.BytesIO(json.dumps(body).encode())
+        raise OSError("connection refused")
+
+    monkeypatch.setattr(webapp, "urlopen", fake_urlopen)
+    with running_server(tmp_path) as base_url:
+        ollama, _ = get_json(base_url + "/api/local-models?provider=ollama")
+        lm_studio, _ = get_json(base_url + "/api/local-models?provider=lm-studio")
+        with pytest.raises(HTTPError) as cloud:
+            get_json(base_url + "/api/local-models?provider=nebius")
+
+    assert ollama == {"ok": True, "reachable": True, "models": ["qwen3:32b", "qwen3:4b"]}
+    assert lm_studio == {"ok": True, "reachable": False, "models": []}
+    assert cloud.value.code == 400
+    assert asked == ["http://127.0.0.1:11434/v1/models", "http://127.0.0.1:1234/v1/models"]
 
 
 def test_working_folders_stay_approved_across_restarts_and_can_be_removed(tmp_path) -> None:

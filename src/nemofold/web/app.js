@@ -1658,6 +1658,32 @@ function showLocalProviderState(message) {
     : "Use Preview first to inspect the exact source scope. Provider runtime health is established only by a real bounded run.";
 }
 
+// A local model server lists what it holds; the field then offers exactly
+// those models and keeps a typed name if it is one of them.
+async function offerLocalModels(providerId) {
+  const list = $("providerModelList");
+  list.replaceChildren();
+  try {
+    const response = await fetch(`/api/local-models?provider=${encodeURIComponent(providerId)}`);
+    const data = await response.json();
+    if (!response.ok || !data.reachable) {
+      $("providerModel").placeholder = "Local model server not reachable on this computer";
+      return;
+    }
+    for (const model of data.models) {
+      const option = document.createElement("option");
+      option.value = model;
+      list.append(option);
+    }
+    if (data.models.length && !data.models.includes($("providerModel").value.trim())) {
+      $("providerModel").value = data.models[0];
+    }
+    $("providerModel").placeholder = `${data.models.length} models found on this computer`;
+  } catch {
+    $("providerModel").placeholder = "Local model list unavailable";
+  }
+}
+
 function updateProviderPanel({resetModel = false} = {}) {
   const enabled = providerExecutionSelected();
   const descriptor = selectedProvider();
@@ -1681,6 +1707,8 @@ function updateProviderPanel({resetModel = false} = {}) {
     $("providerModel").value = providerModelDefaults[descriptor.provider_id] || "";
     previousProviderId = descriptor.provider_id;
     $("externalApproval").checked = false;
+    if (descriptor.transport === "local_http") offerLocalModels(descriptor.provider_id);
+    else $("providerModelList").replaceChildren();
   }
   const external = descriptor.external_transfer === true;
   $("providerRoute").textContent = external ? "EXTERNAL WORKER" : "LOOPBACK WORKER";
@@ -2095,6 +2123,19 @@ function artifactLink(label, outputDir, path) {
   return link;
 }
 
+// After a reload the dossier names the newest recorded run instead of
+// claiming that nothing ran; the run itself stays one click away.
+function showLastRecordedRun(run) {
+  const result = $("result");
+  if (!run || !result.textContent.startsWith("Nothing has run")) return;
+  result.textContent = "";
+  const status = String(run.status || "unknown").toUpperCase();
+  deskLine(result, "p", null, `Last recorded run: ${run.workflow} · ${status} · ${run.recorded_at || "time unknown"}`);
+  if (run.errors?.length) deskLine(result, "p", null, String(run.errors[0]));
+  const link = deskLine(result, "a", null, "Open it under Artifacts →");
+  link.href = "/processes?tab=artifacts";
+}
+
 async function loadArtifacts() {
   const gallery = $("artifactGallery");
   const outputDir = $("outputDir").value.trim();
@@ -2115,6 +2156,7 @@ async function loadArtifacts() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || data.error || "Artifact catalog failed.");
     gallery.replaceChildren();
+    showLastRecordedRun(data.runs?.[0]);
     if (!data.runs?.length) {
       const empty = document.createElement("p");
       empty.textContent = "No run ledgers exist in this output directory yet.";

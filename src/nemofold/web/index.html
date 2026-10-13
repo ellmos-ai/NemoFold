@@ -222,7 +222,7 @@
                 </select>
               </label>
               <label>Provider model
-                <input id="providerModel" autocomplete="off" disabled placeholder="Select a provider first">
+                <input id="providerModel" autocomplete="off" disabled placeholder="Select a provider first" list="providerModelList"><datalist id="providerModelList"></datalist>
               </label>
               <label>Maximum output tokens <span>response ceiling, not corpus size</span>
                 <input id="providerTokens" type="number" min="1" max="131072" step="1" value="32768" disabled>
