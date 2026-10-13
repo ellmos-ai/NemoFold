@@ -285,7 +285,15 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .desk-planner[hidden],.desk-approve[hidden]{display:none}
 .desk-planner label{display:flex;flex-direction:column;gap:5px;color:var(--cyan);font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}
 .desk-planner select,.desk-planner input[type=text],.desk-planner input:not([type]){min-width:220px;border:1px solid #2c5f6b;background:rgba(4,22,29,.72);padding:8px 10px;color:#f2f6f3;font:11px var(--mono)}
-.desk-planner .desk-approve{flex-direction:row;align-items:center;color:#f3e7d0;letter-spacing:0;text-transform:none;font:11px var(--mono)}
+.desk-planner .desk-approve{flex-direction:row;align-items:center;gap:8px;color:#f3e7d0;letter-spacing:0;text-transform:none;font:11px var(--mono)}
+.desk-planner .desk-approve input{flex:none;width:auto;margin:0}
+.desk-created{margin:10px 0 0;border-left:3px solid var(--cyan);padding:6px 10px;color:#d8ece9;font:12px var(--mono)}
+.engine-voyage{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;border:1px solid #8a6b3c;border-left:5px solid #8a6b3c;background:#fbf6ea;padding:12px 16px}
+.engine-voyage[hidden]{display:none}
+.engine-voyage .kicker{flex-basis:100%;margin:0;color:#8a6b3c}
+.engine-voyage b{flex-basis:100%;font:400 20px var(--serif)}
+.engine-voyage p{flex-basis:100%;margin:0;font-size:12px}
+.engine-voyage .voyage-run-steps{flex-basis:100%;margin:4px 0 0;padding-left:18px;font:11px var(--mono)}
 .desk-brief{max-height:340px;overflow:auto;white-space:pre-wrap;border:1px solid #2c5f6b;background:rgba(4,22,29,.72);padding:12px;color:#d8ece9;font:11px/1.5 var(--mono)}
 .desk-folders{display:flex;min-width:0;flex:1 1 100%;flex-direction:column;gap:6px}
 .desk-folders label{flex:none}
