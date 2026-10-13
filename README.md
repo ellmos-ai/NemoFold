@@ -9,7 +9,7 @@ English | [Deutsch](README_de.md)
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1173%20passed%20%7C%202%20skipped-brightgreen.svg)](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933)
+[![Tests](https://img.shields.io/badge/tests-1187%20passed%20%7C%202%20skipped-brightgreen.svg)](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20cloud%20opt--in-success.svg)](#sec-05)
@@ -393,6 +393,28 @@ by a second model (Codex, OpenAI) checked these changes. The
 [hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933) on [`b0e2bc3`](https://github.com/ellmos-ai/NemoFold/commit/b0e2bc3b78fc045f605df94ca34f28c7079190fe) passed: Windows/Python 3.12 all
 1175 tests; Ubuntu/Python 3.11 and 3.12 each 1173 with 2 platform-specific
 skips.
+
+### Owner's GUI acceptance completed (2026-10-13)
+
+On 2026-10-13 the owner tested the console live, with his own folders, in eight
+rounds and closed the acceptance. The rounds made everything runnable a workflow of
+one step or several in one blueprint grid, split the clean full console from the
+public demo, added working folders that stay approved across restarts, a typed path
+and the system folder dialog, three captain modes (keywords, a model choosing from
+the catalogue, a brief for a CLI agent), Artifacts as its own area and a Connections
+page that reports what the computer actually shows. A real folder of about 8,000
+files exposed a memory limit in Synopsis Merge, which now refuses more than 500
+documents with a sentence naming the alternatives. Codex (OpenAI) reviewed the two
+pull requests of these rounds (#6, #7) as a second model and merged them after its
+verdict MERGE-FÄHIG; the first review of #7 found a double-run bug, fixed before the
+merge. The [hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345)
+on [`6b13d12`](https://github.com/ellmos-ai/NemoFold/commit/6b13d12cdb269e8693053ed0d90d173b8a6c8123) passed:
+Windows/Python 3.12 all 1189 tests; Ubuntu/Python 3.11 and 3.12 each 1187 with 2
+platform-specific skips.
+
+**Judge test build:** [latest release](https://github.com/ellmos-ai/NemoFold/releases/latest) - a ZIP with the wheel, start
+commands for the full local console and the public demo, and the fictional example
+case; unpacked and installed into a fresh environment, both paths ran.
 
 ### Acceptance gate register
 
