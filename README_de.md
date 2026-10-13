@@ -9,7 +9,7 @@
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1173%20passed%20%7C%202%20skipped-brightgreen.svg)](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933)
+[![Tests](https://img.shields.io/badge/tests-1187%20passed%20%7C%202%20skipped-brightgreen.svg)](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
 [![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20cloud%20opt--in-success.svg)](#sec-05)
@@ -392,6 +392,32 @@ unabhängige Review-Runden durch ein zweites Modell (Codex, OpenAI) haben diese
 Änderungen geprüft. Der [gehostete CI-Lauf](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933) auf [`b0e2bc3`](https://github.com/ellmos-ai/NemoFold/commit/b0e2bc3b78fc045f605df94ca34f28c7079190fe) bestand:
 Windows/Python 3.12 alle 1175 Tests; Ubuntu/Python 3.11 und 3.12 je 1173 bei 2
 plattformbedingten Skips.
+
+### GUI-Abnahme durch den Eigentümer abgeschlossen (2026-10-13)
+
+Der Eigentümer hat die Abnahme am 2026-10-13 in acht Runden abgeschlossen, in denen er
+die Konsole live mit eigenen Ordnern getestet hat. Seitdem ist alles Ausführbare ein
+Workflow aus einem oder mehreren Schritten in einem gemeinsamen Raster der Vorlagen
+(*Blueprints*), und die saubere Vollversion ist von der öffentlichen Demo getrennt.
+Hinzugekommen sind Arbeitsordner, die nach einem Neustart freigegeben bleiben, die
+Eingabe eines Pfads und der Ordnerdialog des Systems, drei Planungsarten des Captains
+(Stichworte, ein Modell wählt aus dem Katalog, ein Auftrag für einen Kommandozeilen-Agenten),
+ein eigener Bereich für Ergebnisse (*Artifacts*) und eine Verbindungsübersicht
+(*Connections*), die zeigt, was der Rechner tatsächlich meldet. Ein echter Ordner mit
+rund 8.000 Dateien legte eine Speichergrenze in Synopsis Merge offen; der Workflow lehnt
+jetzt mehr als 500 Dokumente mit einem Satz ab, der die Alternativen nennt. Codex (OpenAI)
+hat die beiden Änderungsanträge dieser Runden (#6, #7) als zweites Modell geprüft und
+nach dem Urteil MERGE-FÄHIG zusammengeführt; seine erste Prüfung von #7 fand einen
+Fehler, durch den eine Kette doppelt laufen konnte, und er wurde vor der Zusammenführung
+behoben. Der [gehostete CI-Lauf](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345)
+auf [`6b13d12`](https://github.com/ellmos-ai/NemoFold/commit/6b13d12cdb269e8693053ed0d90d173b8a6c8123) bestand:
+Windows/Python 3.12 alle 1189 Tests; Ubuntu/Python 3.11 und 3.12 je 1187 bestandene
+und 2 plattformbedingt übersprungene Tests.
+
+**Testpaket für die Jury:** [neueste Veröffentlichung](https://github.com/ellmos-ai/NemoFold/releases/latest) - ein ZIP mit dem
+Wheel, Startbefehlen für die volle lokale Konsole und die öffentliche Demo sowie dem
+fiktiven Beispielfall; entpackt und in eine frische Umgebung installiert liefen beide
+Wege.
 
 ### Abnahmegate-Register
 
