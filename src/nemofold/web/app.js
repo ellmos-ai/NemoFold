@@ -686,8 +686,6 @@ function updateVoyageScene(area = null) {
   $("voyageSceneTitle").textContent = scene.title;
   $("voyageSceneText").textContent = scene.text;
   $("voyageRoadmap").textContent = scene.roadmap;
-  // The echo sounder belongs to the routines, so it surfaces with their scene.
-  if ($("echoCheck")) $("echoCheck").hidden = key !== "scheduled";
 }
 
 const workflowCards = {
@@ -1433,7 +1431,7 @@ function actionTags(workflow) {
 }
 
 // A one-step workflow becomes a use case bound to the current folders.
-async function adoptAction(workflow, card) {
+async function adoptAction(workflow, card, {name = "", blueprint = false} = {}) {
   const defaults = workflowDefaults[workflow] || {questions: [], parameters: {}};
   const output = $("outputDir").value.trim().replace(/[\\/]+$/, "");
   try {
@@ -1441,9 +1439,10 @@ async function adoptAction(workflow, card) {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        name: uniqueName(workflowCards[workflow]?.title || workflow, false),
+        name: uniqueName(name || workflowCards[workflow]?.title || workflow, blueprint),
         description: workflowCards[workflow]?.benefit || "",
-        source: "manual",
+        // An own blueprint is a template; a use case is a manual entry.
+        source: blueprint ? "template" : "manual",
         // "scheduled" follows a schedule field, which a fresh copy does not have.
         tags: actionTags(workflow).filter((tag) => tag !== "scheduled"),
         steps: [{
@@ -3122,6 +3121,34 @@ if (requestedWorkflow && currentTab === "registry") {
 $("runId").value = "";
 $("workflow").addEventListener("change", applyWorkflowDefaults);
 if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
+// "+ New use case" / "+ New blueprint": a name and a first step, then the
+// dialog that opens next takes further steps.
+for (const opener of document.querySelectorAll("[data-new-open]")) {
+  opener.addEventListener("click", () => {
+    const form = document.querySelector(`[data-new-entry="${opener.dataset.newOpen}"]`);
+    const select = form.elements.workflow;
+    if (!select.options.length) {
+      for (const option of $("workflow").options) {
+        if (!workflowCards[option.value]) continue;
+        select.append(new Option(`${workflowCards[option.value].title} · ${option.value}`, option.value));
+      }
+    }
+    form.hidden = false;
+    form.elements.name.focus();
+  });
+}
+for (const form of document.querySelectorAll("[data-new-entry]")) {
+  form.querySelector("[data-new-cancel]").addEventListener("click", () => { form.hidden = true; });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await adoptAction(form.elements.workflow.value, form, {
+      name: form.elements.name.value.trim(),
+      blueprint: form.dataset.newEntry === "blueprint"
+    });
+    form.hidden = true;
+    form.reset();
+  });
+}
 for (const radio of document.querySelectorAll("input[name=deskMode]")) {
   radio.addEventListener("change", updateDeskMode);
 }
@@ -3358,7 +3385,11 @@ function renderLibraryCards(list, entries) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "card-open";
-    button.append(instrumentIcon("wheel"), blueprint ? "Add to my use cases" : "Open");
+    // The notebook is no configurable workflow: its button starts it.
+    button.append(
+      instrumentIcon("wheel"),
+      entry.notebook ? "Start" : blueprint ? "Add to my use cases" : "Open"
+    );
     button.addEventListener("click", () => {
       if (entry.notebook) globalThis.location.assign("/#researchNotebook");
       else if (entry.notebookBlueprint) setNotebookInUseCases(true);

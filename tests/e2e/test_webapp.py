@@ -2279,6 +2279,9 @@ def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) ->
     assert '<dialog id="libraryDetail" class="library-detail"' in html
     assert 'id="blueprintList"' in html
     assert "Save as blueprint" in html
+    # 2026-10-13: both libraries can start an entry from scratch.
+    assert 'data-new-open="usecase"' in html
+    assert 'data-new-open="blueprint"' in html
     for label in ("Add to my use cases", "Remove from my use cases", "Try once",
                   "FULL LOCAL CONSOLE", "PUBLIC DEMO · SYNTHETIC DATA ONLY", "/api/approve-root"):
         assert label in script, label
