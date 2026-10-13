@@ -888,14 +888,15 @@ Die Startseite `/` ist die **Werkbank**: oben das Captain's Desk, darunter der
 geöffnete Maschinenraum und am Ende die gefaltete Seekarte, sonst nichts (erster
 Menüpunkt: *Engine room*). Der Maschinenraum zeigt seine vier Bereiche - Mission,
 Bounded territory, Authority and budget, Reasoning worker - als getrennte, farbig
-hinterlegte Kacheln. Übersicht und vier
+hinterlegte Kacheln. Übersicht und fünf
 Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt
-Sprüngen innerhalb einer langen Seite: `/`, `/folders`, `/processes`, `/governance` und
-`/connections`. Analysis, Routines und Artifacts waren einmal eigene Räume — damit
-entschied die Tür, durch die man kam, darüber, was man sehen konnte. Sie sind jetzt drei
-Untertabs von Processes & Workflows: `?tab=workflows` (My use cases), `?tab=registry`
-(Blueprints) und `?tab=artifacts` (die URL-Schlüssel sind unverändert). Die alten Routen führen weiterhin irgendwohin: `/document-center`,
-`/analysis`, `/routines` und `/artifacts` leiten auf ihren Nachfolger um, und ein Link,
+Sprüngen innerhalb einer langen Seite: `/`, `/folders`, `/processes`, `/artifacts`,
+`/governance` und `/connections`. Analysis und Routines waren einmal eigene Räume —
+damit entschied die Tür, durch die man kam, darüber, was man sehen konnte. Sie sind
+jetzt die beiden Untertabs von Processes & Workflows, `?tab=workflows` (My use cases)
+und `?tab=registry` (Blueprints); Artifacts ist ein eigener Bereich. Die alten Routen
+führen weiterhin irgendwohin: `/document-center`, `/analysis` und `/routines` leiten
+auf ihren Nachfolger um, `/processes?tab=artifacts` auf `/artifacts`, und ein Link,
 der einen einzelnen Vertrag nennt, landet im Reiter Blueprints mit genau diesem Vertrag.
 
 Begriffe: Alles, was sich ausführen lässt, ist ein **Workflow**, mit einem Schritt oder
@@ -932,6 +933,31 @@ immer ein eigener Klick, und gelesen wird erst danach. Die Public Demo und ein
 netzfreigegebener Server verweigern all das, und ein netzfreigegebener Server lädt nie
 Arbeitsordner. Die Seekarte am Ende der Startseite faltet Grenz-Kacheln, Evidenzkette,
 Bereichskarte und Roadmap; sie klappt per Klick oder Enter auf.
+
+Der Captain plant in einem von drei Modi, je Anfrage wählbar. *Keywords* (Standard)
+ist ein lokaler, deterministischer Abgleich von Aufgabenwörtern; eine Dokumentanfrage
+ohne ein solches Wort fällt auf Evidence Analyst zurück, mit dem Satz selbst als Frage.
+Bei *A model chooses* liest ein Reasoning-Worker den Satz und den Workflow-Katalog - nie
+ein Dokument - und wählt bis zu sechs Workflows; die Wahl wird gegen den Katalog geprüft,
+und der Plan entsteht genau wie bei Keywords. Ein lokales Ollama- oder LM-Studio-Modell
+braucht keine Freigabe; ein externer Anbieter braucht `--allow-external-models` und eine
+Freigabe für genau diese Anfrage und erhält den Satz pseudonymisiert. *Brief for a CLI
+agent* kopiert einen Auftrag mit Ordnern, Katalog, Jobformat, Befehlen und Regeln in die
+Zwischenablage, für einen Agenten wie Claude Code oder Codex. Ein Plan lässt sich als
+Entwürfe in die Job-Inbox legen (Maschinenraum, *Run identity & prepared jobs*) oder
+sofort ausführen: *Run all steps* behält ihn als einen deiner Usecases und führt die
+Schritte nacheinander aus, lokal und als Trockenlauf.
+
+Das Modellfeld eines lokalen Anbieters bietet die Modelle an, die dieser Server
+tatsächlich hat; Modelle, die er nur an eine Cloud weiterreicht (`:cloud`), werden nicht
+angeboten und als lokales Modell abgelehnt, damit „loopback, local only“ stimmt.
+Manche lokalen Builds können keine JSON-Antwort erzwingen; der Adapter fragt dann einmal
+mit dem Schema als Anweisung nach. Das Research Notebook steht als schneller
+Untersuchungsmodus unter dem Maschinenraum und ist ab Auslieferung einer deiner
+Usecases. Artifacts listet jeden Lauf-Ledger unterhalb des Ausgabebereichs, auch
+fehlgeschlagene und blockierte Läufe, mit Datum und Uhrzeit. Connections zeigt je Adapter,
+was dieser Rechner zeigt - lokaler Server läuft, CLI gefunden, Schlüsselvariable gesetzt,
+nie ein Schlüsselwert - und nennt den Lauf vom 2026-09-02 als einzigen Nemotron-Beleg.
 
 Governance zeigt die Autorität, mit der dieser Server gestartet wurde — Gates für
 Dateiaktionen, externe Modelle und Netzexposition, freigegebene Roots, Budgetgrenze und

@@ -865,15 +865,15 @@ an apply request can succeed.
 The start page `/` is the **workbench**: the Captain's Desk on top, the engine room
 open below it and the folded ship's chart at the end, nothing else (the first menu item
 is *Engine room*). The engine room shows its four areas - mission, bounded territory,
-authority and budget, reasoning worker - as separate tinted tiles. The overview and four work areas use distinct, bookmarkable routes instead of in-page
-scroll jumps: `/`, `/folders`, `/processes`, `/governance` and `/connections`. Analysis,
-Routines and Artifacts used to be rooms of their own, which meant the door you came
-through decided what you could see. They are now three tabs of Processes & Workflows —
-`?tab=workflows` (My use cases), `?tab=registry` (Blueprints) and `?tab=artifacts`
-(the URL keys are unchanged). The old routes still lead
-somewhere: `/document-center`, `/analysis`, `/routines` and `/artifacts` redirect to
-their replacement, and a link that names one contract lands in the Blueprints tab with
-that contract selected.
+authority and budget, reasoning worker - as separate tinted tiles. The overview and five work areas use distinct, bookmarkable routes instead of in-page
+scroll jumps: `/`, `/folders`, `/processes`, `/artifacts`, `/governance` and
+`/connections`. Analysis and Routines used to be rooms of their own, which meant the
+door you came through decided what you could see. They are now the two tabs of
+Processes & Workflows, `?tab=workflows` (My use cases) and `?tab=registry`
+(Blueprints); Artifacts is an area of its own. The old routes still lead somewhere:
+`/document-center`, `/analysis` and `/routines` redirect to their replacement,
+`/processes?tab=artifacts` to `/artifacts`, and a link that names one contract lands
+in the Blueprints tab with that contract selected.
 
 Vocabulary: everything you can run is a **workflow**, with one step or several; a step
 is one of the 44 job contracts (the API field is still `workflow`). A **use case** is a
@@ -907,6 +907,31 @@ and reading starts only after it. The public demo and a network-exposed server r
 all of these, and a network-exposed server never loads working folders. The ship's
 chart at the end of the start page folds the boundary tiles, the evidence chain, the
 area map and the roadmap; it unfolds on click or Enter.
+
+The captain plans in one of three modes, chosen per request. *Keywords* (the default)
+is a local, deterministic match of task words; a document request without one falls
+back to Evidence Analyst with the sentence itself as the question. *A model chooses*
+lets a reasoning worker read the sentence and the workflow catalogue - never a
+document - and pick up to six workflows; the choice is checked against the catalogue
+and the plan is built exactly as for keywords. A local Ollama or LM Studio model needs
+no approval; an external provider needs `--allow-external-models` and an approval for
+that one request, and receives the sentence pseudonymized. *Brief for a CLI agent*
+copies a prompt with the folders, the catalogue, the job format, the commands and the
+rules to the clipboard, for an agent such as Claude Code or Codex. A plan can be
+prepared as drafts in the job inbox (engine room, *Run identity & prepared jobs*) or
+run at once: *Run all steps* keeps it as one of My use cases and runs its steps one
+after another, locally and as a dry run.
+
+The model field of a local provider offers the models that server actually holds;
+models it only relays to a cloud (`:cloud`) are not offered and are refused as a local
+model, so "loopback, local only" stays true. Some local builds cannot force a JSON
+answer; the adapter then asks once more with the schema as an instruction. The
+research notebook sits under the engine room as the quick investigation mode and
+ships as one of My use cases. Artifacts lists every run ledger below the output scope,
+failed and blocked runs included, with the date and time it was written. Connections
+shows what this computer shows per adapter - local server running, CLI found, key
+variable set, never a key value - and names the 2026-09-02 proof run as the only
+Nemotron proof.
 
 Governance renders the authority this server was started with — the file-action,
 external-model and network gates, approved roots, budget ceiling and contracted

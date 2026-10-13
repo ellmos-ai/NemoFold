@@ -31,8 +31,10 @@ Current local implementation boundary:
 - Console vocabulary: everything runnable is a workflow with one step or several; a step
   is one of the 44 job contracts (API field `workflow`); a use case is a workflow adopted
   from a blueprint and bound to your own folders. The start page is the workbench
-  (captain, engine room, folded chart); working folders stay approved across restarts of
-  the loopback console; the full console starts without the demo case.
+  (captain, engine room, research notebook, folded chart); working folders stay approved
+  across restarts of the loopback console; the full console starts without the demo case.
+  The captain plans by keywords, lets a model choose from the catalogue (sentence and
+  catalogue only), or copies a brief for a CLI agent; Artifacts is its own area.
 - Nemotron on Nebius Token Factory is selectable in the local console (provider `nebius`,
   key only from `NEBIUS_API_KEY`, server started with `--allow-external-models
   --max-external-cost-usd <n>`, per-run approval). A console run is not competition proof;

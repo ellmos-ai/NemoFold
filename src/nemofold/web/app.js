@@ -939,7 +939,7 @@ function deskMode() {
 }
 
 // D-046: the captain plans by keywords, lets a model choose from the
-// catalogue, or writes a brief for an external coding agent.
+// catalogue, or writes a brief for a CLI agent.
 function updateDeskMode() {
   $("deskPlanner").hidden = deskMode() !== "model";
   $("deskPlan").textContent = deskMode() === "brief" ? "Copy the brief" : "Chart the voyage";
@@ -1051,8 +1051,8 @@ async function copyAgentBrief(text) {
     "p",
     "desk-note",
     copied
-      ? "The brief is on the clipboard. Paste it into Claude Code or Codex CLI, started in a folder that may hold the reports. Nothing was sent from here."
-      : "Copy the brief below into Claude Code or Codex CLI. Nothing was sent from here."
+      ? "The brief is on the clipboard. Paste it into your CLI agent (for example Claude Code or Codex), started in a folder that may hold the reports. Nothing was sent from here."
+      : "Copy the brief below into your CLI agent (for example Claude Code or Codex). Nothing was sent from here."
   );
   deskLine(answer, "pre", "desk-brief", brief);
 }
