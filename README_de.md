@@ -6,6 +6,11 @@
 
 **Demovideo (2:16):** https://youtu.be/wOToLqDBvvE · gebaut für den Nebius x NVIDIA Global AI Hackathon
 
+**Testpaket für die Jury:** [aus der neuesten Veröffentlichung herunterladen](https://github.com/ellmos-ai/NemoFold/releases/latest),
+das ZIP entpacken und der beiliegenden `README.txt` folgen (kein Konto und kein
+API-Schlüssel nötig); Einzelheiten unter
+[Installation & Schnellstart](#7-installation--schnellstart).
+
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
@@ -322,6 +327,28 @@ Devpost bleiben getrennte menschliche Freigabegates.
 <a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
 <a id="install"></a>
 ## 7. Installation & Schnellstart
+
+Python 3.11 oder neuer. Es gibt zwei Wege; keiner braucht ein Konto oder einen
+API-Schlüssel.
+
+**Testpaket für die Jury (für einen ersten Eindruck empfohlen):**
+`nemofold-judge-testbuild-6b13d12.zip` aus der [neuesten Veröffentlichung](https://github.com/ellmos-ai/NemoFold/releases/latest)
+herunterladen, entpacken, im entpackten Ordner ein Terminal öffnen und ausführen:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install nemofold-0.2.1-py3-none-any.whl
+.venv\Scripts\python -m nemofold serve --allow-root . --base-dir .
+```
+
+Danach http://127.0.0.1:8765 öffnen (volle lokale Konsole) und einen Arbeitsordner
+hinzufügen, etwa `examples/synthetic-case` (ein fiktiver Fall, deutsch). Den
+öffentlichen Demomodus startet
+`.venv\Scripts\python -m nemofold serve-demo --demo-root examples/synthetic-case`.
+Die `README.txt` im ZIP enthält alle Schritte, auch den optionalen Nemotron-Lauf mit
+eigenem Nebius-Schlüssel.
+
+**Aus dem Quellcode:** dieses Repository klonen und dann ausführen:
 
 ```powershell
 python -m venv .venv

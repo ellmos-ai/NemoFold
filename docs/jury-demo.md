@@ -1,5 +1,13 @@
 # Three-minute jury demo
 
+## Update 2026-10-13
+
+The owner's personal GUI acceptance is completed. Account-free test access is now the
+[judge test build in the latest release](https://github.com/ellmos-ai/NemoFold/releases/latest) (`nemofold-judge-testbuild-6b13d12.zip`),
+built from [`6b13d12`](https://github.com/ellmos-ai/NemoFold/commit/6b13d12cdb269e8693053ed0d90d173b8a6c8123), whose [hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345) passed on Windows and Linux. See
+[Owner's GUI acceptance completed](../README.md#owners-gui-acceptance-completed-2026-10-13).
+The dated sections below are kept as the historical record.
+
 ## Current references 2026-10-08
 
 - Public video reference: [NemoFold demo (2:16)](https://youtu.be/wOToLqDBvvE).
