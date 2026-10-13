@@ -1198,7 +1198,7 @@ def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> No
         "ORIGIN",
         "ACTION",
         "PRODUCT MAP",
-        "one contract per instrument.",  # a count here goes stale silently
+        "one contract per step.",  # a count here goes stale silently
         "ROADMAP:",
     ):
         assert marker in folded_away, marker
@@ -2023,6 +2023,80 @@ def test_the_system_folder_dialog_only_navigates_and_never_approves(tmp_path, mo
     assert cancelled == {"available": True, "path": None}
     assert with_body.value.code == 400
     assert listing["current"]["approved"] is False
+
+
+@contextmanager
+def serving(config: WebAppConfig):
+    server = build_server(config, port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    try:
+        yield f"http://{host}:{port}", server
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_working_folders_stay_approved_across_restarts_and_can_be_removed(tmp_path) -> None:
+    # D-044: folders the operator keeps are approved at every later start of a
+    # loopback console; removing one forgets it and ends its approval.
+    base = tmp_path / "base"
+    base.mkdir()
+    taxes = tmp_path / "Steuer"
+    taxes.mkdir()
+    (taxes / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    config = WebAppConfig(base_dir=base, execution=ExecutionConfig(allowed_roots=(str(base),)))
+    with serving(config) as (base_url, _):
+        before, _ = get_json(base_url + "/api/status")
+        added = post_json(base_url + "/api/working-folders", {"add": str(taxes)})
+        with pytest.raises(HTTPError) as relative:
+            post_json(base_url + "/api/working-folders", {"add": "Steuer"})
+        with pytest.raises(HTTPError) as both:
+            post_json(base_url + "/api/working-folders", {"add": str(taxes), "remove": str(taxes)})
+    with serving(config) as (base_url, server):
+        after, _ = get_json(base_url + "/api/status")
+        glance = post_json(base_url + "/api/corpus-glance", {"path": str(taxes)})
+        removed = post_json(base_url + "/api/working-folders", {"remove": str(taxes.resolve())})
+        roots_after_removal = server.app_config.execution.allowed_roots
+
+    assert before["working_folders"] == []
+    assert added["working_folders"] == [str(taxes.resolve())]
+    assert relative.value.code == 400
+    assert both.value.code == 400
+    assert after["working_folders"] == [str(taxes.resolve())]
+    assert after["default_input_root"] == str(taxes.resolve())
+    assert glance["total_files"] == 1
+    assert removed["working_folders"] == []
+    assert roots_after_removal == (str(base),)
+
+
+def test_working_folders_are_closed_in_the_demo_and_on_an_exposed_server(tmp_path) -> None:
+    kept = tmp_path / "kept"
+    kept.mkdir()
+    target = tmp_path / "run-reports" / "web-console" / "working-folders.json"
+    target.parent.mkdir(parents=True)
+    target.write_text(json.dumps({"folders": [str(kept)]}), encoding="utf-8")
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    with running_public_demo(source_root) as (_, base_url), pytest.raises(HTTPError) as demo:
+        post_json(base_url + "/api/working-folders", {"add": str(kept)})
+    exposed_config = WebAppConfig(
+        base_dir=tmp_path,
+        execution=ExecutionConfig(allowed_roots=(str(source_root),)),
+        exposed_to_network=True,
+    )
+    with serving(exposed_config) as (base_url, server):
+        with pytest.raises(HTTPError) as exposed:
+            post_json(base_url + "/api/working-folders", {"add": str(kept)})
+        exposed_roots = server.app_config.execution.allowed_roots
+
+    assert demo.value.code == 404
+    assert exposed.value.code == 403
+    # A network-exposed server never widens its roots from the kept file.
+    assert exposed_roots == (str(source_root),)
 
 
 def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) -> None:

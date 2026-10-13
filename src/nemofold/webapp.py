@@ -235,6 +235,17 @@ class NemoFoldHTTPServer(ThreadingHTTPServer):
         self.app_config = config
         self.demo_slots = threading.BoundedSemaphore(config.max_parallel_jobs)
         self.roots_lock = threading.Lock()
+        # D-044: the operator's working folders stay approved across restarts
+        # of a loopback console; the demo and a network-exposed server never
+        # widen their roots from a file.
+        self.cli_roots = config.execution.allowed_roots
+        if not config.public_demo and not config.exposed_to_network:
+            roots = config.execution.allowed_roots
+            kept = tuple(f for f in _load_working_folders(config.base_dir) if f not in roots)
+            if kept:
+                self.app_config = replace(
+                    config, execution=replace(config.execution, allowed_roots=(*roots, *kept))
+                )
 
 
 class NemoFoldRequestHandler(BaseHTTPRequestHandler):
@@ -447,6 +458,11 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                         if provider_surface_enabled
                         else None
                     ),
+                    "working_folders": (
+                        _load_working_folders(self.server.app_config.base_dir)
+                        if provider_surface_enabled and not public_demo
+                        else []
+                    ),
                     # The public demo accepts only these parameters, so the
                     # console takes them from here rather than keeping a copy.
                     "public_demo_parameters": (
@@ -527,6 +543,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/folders",
             "/api/approve-root",
             "/api/pick-folder",
+            "/api/working-folders",
             "/api/corpus-glance",
             "/api/artifacts",
             "/api/drafts",
@@ -553,6 +570,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/folders",
                 "/api/approve-root",
                 "/api/pick-folder",
+                "/api/working-folders",
                 "/api/corpus-glance",
                 "/api/artifacts",
                 "/api/drafts",
@@ -612,6 +630,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/pick-folder":
             self._handle_pick_folder()
+            return
+        if path == "/api/working-folders":
+            self._handle_working_folders()
             return
         if path == "/api/corpus-glance":
             self._handle_corpus_glance()
@@ -813,26 +834,69 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             payload = self._read_json()
             if not isinstance(payload, dict) or set(payload) != {"path"}:
                 raise ValueError("request body must carry only path")
-            raw = payload["path"]
-            if not isinstance(raw, str) or not Path(raw).is_absolute():
-                raise ValueError("path must be an absolute folder path")
-            if any(_is_link(part) for part in (Path(raw), *Path(raw).parents)):
-                raise ValueError("a linked folder cannot be approved")
-            folder = Path(raw).resolve()
-            if not folder.is_dir():
-                raise ValueError("folder must be an existing directory")
-            with self.server.roots_lock:
-                config = self.server.app_config
-                roots = config.execution.allowed_roots
-                if _matching_folder_root(folder, _allowed_folder_roots(config)) is None:
-                    roots = (*roots, str(folder))
-                    self.server.app_config = replace(
-                        config, execution=replace(config.execution, allowed_roots=roots)
-                    )
+            folder = _approvable_folder(payload["path"])
+            roots = self._approve_for_session(folder)
         except (OSError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "approve_root_rejected", str(exc))
             return
         self._json({"ok": True, "path": str(folder), "approved_roots": list(roots)})
+
+    def _approve_for_session(self, folder: Path) -> tuple[str, ...]:
+        with self.server.roots_lock:
+            config = self.server.app_config
+            roots = config.execution.allowed_roots
+            if _matching_folder_root(folder, _allowed_folder_roots(config)) is None:
+                roots = (*roots, str(folder))
+                self.server.app_config = replace(
+                    config, execution=replace(config.execution, allowed_roots=roots)
+                )
+            return roots
+
+    def _handle_working_folders(self) -> None:
+        # Kept folders are approved like --allow-root, now and at every later
+        # start of this loopback console. Removing one forgets it and ends its
+        # approval unless the server was started with it; files are untouched.
+        if self.server.app_config.exposed_to_network:
+            self._reject_before_body_read(
+                HTTPStatus.FORBIDDEN,
+                "folder_picker_loopback_only",
+                "working folders are disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict) or set(payload) not in ({"add"}, {"remove"}):
+                raise ValueError("request body must carry exactly one of add or remove")
+            base_dir = self.server.app_config.base_dir
+            kept = list(_load_working_folders(base_dir))
+            if "add" in payload:
+                folder = str(_approvable_folder(payload["add"]))
+                self._approve_for_session(Path(folder))
+                if folder not in kept:
+                    kept.append(folder)
+            else:
+                folder = payload["remove"]
+                if folder not in kept:
+                    raise ValueError("not a working folder")
+                kept.remove(folder)
+                with self.server.roots_lock:
+                    config = self.server.app_config
+                    if folder not in self.server.cli_roots:
+                        roots = tuple(r for r in config.execution.allowed_roots if r != folder)
+                        self.server.app_config = replace(
+                            config, execution=replace(config.execution, allowed_roots=roots)
+                        )
+            _save_working_folders(base_dir, kept)
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "working_folders_rejected", str(exc))
+            return
+        self._json(
+            {
+                "ok": True,
+                "working_folders": kept,
+                "approved_roots": list(self.server.app_config.execution.allowed_roots),
+            }
+        )
 
     def _handle_pick_folder(self) -> None:
         # The server runs on the operator's own computer, so it can open the
@@ -1667,10 +1731,58 @@ def _allowed_folder_roots(config: WebAppConfig) -> tuple[Path, ...]:
 
 
 def _default_input_root(config: WebAppConfig) -> str | None:
-    # D-043: the full console starts clean, at the first folder its operator
-    # approved; the fictional case file belongs to the public demo only.
+    # D-043/D-044: the full console starts clean, at the operator's first
+    # working folder or else the first folder approved at start; the
+    # fictional case file belongs to the public demo only.
+    kept = _load_working_folders(config.base_dir)
+    if kept and not config.public_demo:
+        return kept[0]
     roots = _allowed_folder_roots(config)
     return str(roots[0]) if roots else None
+
+
+def _approvable_folder(raw: object) -> Path:
+    if not isinstance(raw, str) or not Path(raw).is_absolute():
+        raise ValueError("path must be an absolute folder path")
+    if any(_is_link(part) for part in (Path(raw), *Path(raw).parents)):
+        raise ValueError("a linked folder cannot be approved")
+    folder = Path(raw).resolve()
+    if not folder.is_dir():
+        raise ValueError("folder must be an existing directory")
+    return folder
+
+
+def _working_folders_file(base_dir: Path) -> Path:
+    return base_dir / "run-reports" / "web-console" / "working-folders.json"
+
+
+def _load_working_folders(base_dir: Path) -> tuple[str, ...]:
+    """The operator's kept folders that still exist; anything else is skipped."""
+    try:
+        payload = json.loads(_working_folders_file(base_dir).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ()
+    folders = payload.get("folders") if isinstance(payload, dict) else None
+    kept: list[str] = []
+    for raw in folders if isinstance(folders, list) else []:
+        try:
+            folder = str(_approvable_folder(raw))
+        except (OSError, ValueError):
+            continue
+        if folder not in kept:
+            kept.append(folder)
+    return tuple(kept)
+
+
+def _save_working_folders(base_dir: Path, folders: list[str]) -> None:
+    target = _working_folders_file(base_dir)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    data = json.dumps(
+        {"schema": "nemofold.working-folders.v1", "folders": folders}, indent=2
+    ).encode("utf-8")
+    tmp = target.with_name(target.name + ".tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, target)
 
 
 def _matching_folder_root(candidate: Path, roots: tuple[Path, ...]) -> Path | None:

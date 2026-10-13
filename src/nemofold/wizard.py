@@ -286,6 +286,7 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "synopsis_merge": (
         "synopse", "synopsis", "zusammenführ", "zusammenfuehr", "zusammenfassen zu einem",
+        "zusammenfass", "fasse", "fass mir", "summar",
         "merge", "vergleiche die dokumente", "gegenüberstell", "gegenueberstell",
         "in ein dokument",
     ),

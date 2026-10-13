@@ -44,6 +44,15 @@ let publicDemo = false;
 let folderCurrentApproved = false;
 let publicDemoParameters = {};
 let folderPickerEnabled = false;
+let workingFolders = [];
+const rememberedFolderFields = ["inputRoots", "deskRoots", "homeGlanceRoot"];
+if (currentPage === "folders" && $("libraryTitle")) {
+  // On Folders the library shows the use cases that watch folders.
+  $("libraryKicker").textContent = "YOUR FOLDER WORKFLOWS";
+  $("libraryTitle").textContent = "Your folder workflows.";
+  $("libraryTitle").nextElementSibling.textContent =
+    "The use cases that watch or file your folders. Open one to rename, reorder, run or remove it; all your use cases are under Processes & Workflows.";
+}
 let providerSurfaceEnabled = false;
 let externalModelsAllowed = false;
 let providerContracts = new Map();
@@ -990,6 +999,8 @@ async function askTheCaptain(event) {
     deskLine(answer, "p", "desk-note", "Write one sentence about what you need.");
     return;
   }
+  const named = workingFolderNamedIn(text);
+  if (named) $("deskRoots").value = named;
   answer.textContent = "";
   deskLine(answer, "p", "desk-note", "Charting…");
   try {
@@ -1838,9 +1849,11 @@ async function loadFolderChoices(path = null) {
   $("folderUp").disabled = !data.parent;
   $("folderUp").dataset.path = data.parent || "";
   $("folderSelectCurrent").disabled = !folderCurrentPath;
-  $("folderSelectCurrent").textContent = !folderCurrentPath || folderCurrentApproved
-    ? "Use this folder"
-    : "Approve for this session and use";
+  $("folderSelectCurrent").textContent = folderTargetId === "workingFolders"
+    ? "Keep as working folder"
+    : !folderCurrentPath || folderCurrentApproved
+      ? "Use this folder"
+      : "Approve for this session and use";
   const choices = $("folderChoices");
   choices.replaceChildren();
   const entries = folderCurrentPath
@@ -1891,6 +1904,90 @@ async function pickNativeFolder() {
   else $("folderStatus").textContent = "No folder chosen.";
 }
 
+async function changeWorkingFolders(change) {
+  const response = await fetch("/api/working-folders", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(change)
+  });
+  const data = await response.json();
+  if (!response.ok || data.ok !== true) throw new Error(data.detail || data.error || "Working folders unchanged.");
+  workingFolders = data.working_folders;
+  renderWorkingFolders();
+}
+
+function folderName(path) {
+  return path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || path;
+}
+
+// D-044: the kept folders are listed on Folders and offered as one-click
+// choices wherever a task needs a folder.
+function renderWorkingFolders() {
+  const list = $("workingFolderList");
+  if (list) {
+    list.textContent = "";
+    if (!workingFolders.length) {
+      libraryNote(list, "No working folders yet. Add the folders you work in; they stay approved after a restart.");
+    }
+    for (const path of workingFolders) {
+      const row = deskLine(list, "div", "working-folder");
+      row.setAttribute("role", "listitem");
+      deskLine(row, "b", null, folderName(path));
+      deskLine(row, "span", null, path);
+      const look = document.createElement("button");
+      look.type = "button";
+      look.className = "secondary";
+      look.textContent = "Look around";
+      look.addEventListener("click", () => {
+        $("homeGlanceRoot").value = path;
+        $("homeGlanceLook").click();
+      });
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "secondary";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", () =>
+        changeWorkingFolders({remove: path}).catch((error) => libraryNote(row, error.message))
+      );
+      row.append(look, remove);
+    }
+  }
+  for (const box of document.querySelectorAll("[data-chips-for]")) {
+    box.textContent = "";
+    const field = $(box.dataset.chipsFor);
+    for (const path of workingFolders) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "folder-chip";
+      chip.title = path;
+      chip.textContent = folderName(path);
+      chip.addEventListener("click", () => {
+        if (field.tagName === "TEXTAREA") {
+          const values = lines(field.value);
+          field.value = (values.includes(path) ? values.filter((value) => value !== path) : [...values, path]).join("\n");
+        } else {
+          field.value = path;
+        }
+        field.dispatchEvent(new Event("change"));
+      });
+      box.append(chip);
+    }
+  }
+}
+
+// "Fasse die Dokumente im Ordner Steuer zusammen": a request that names
+// exactly one working folder runs on that folder.
+function workingFolderNamedIn(text) {
+  const folded = text.toLocaleLowerCase();
+  const edge = (character) => !character || !/[\p{L}\p{N}]/u.test(character);
+  const named = workingFolders.filter((path) => {
+    const name = folderName(path).toLocaleLowerCase();
+    const at = folded.indexOf(name);
+    return name && at >= 0 && edge(folded[at - 1]) && edge(folded[at + name.length]);
+  });
+  return named.length === 1 ? named[0] : null;
+}
+
 function showFolderError(error) {
   $("folderStatus").textContent = error instanceof Error ? error.message : String(error);
 }
@@ -1905,6 +2002,15 @@ function openFolderDialog(targetId) {
 
 async function useCurrentFolder() {
   if (!folderCurrentPath || !folderTargetId) return;
+  if (folderTargetId === "workingFolders") {
+    try {
+      await changeWorkingFolders({add: folderCurrentPath});
+      $("folderDialog").close();
+    } catch (error) {
+      showFolderError(error);
+    }
+    return;
+  }
   if (!folderCurrentApproved) {
     const response = await fetch("/api/approve-root", {
       method: "POST",
@@ -1926,6 +2032,7 @@ async function useCurrentFolder() {
     if (!values.includes(folderCurrentPath)) values.push(folderCurrentPath);
     target.value = values.join("\n");
   }
+  target.dispatchEvent(new Event("change"));
   $("folderDialog").close();
   if (folderTargetId === "outputDir" && artifactSurfaceEnabled) loadArtifacts();
 }
@@ -2601,6 +2708,8 @@ async function loadStatus() {
     const response = await fetch("/api/status");
     const status = await response.json();
     if (status.version) $("footerVersion").textContent = `NemoFold ${status.version}`;
+    workingFolders = Array.isArray(status.working_folders) ? status.working_folders : [];
+    renderWorkingFolders();
     workflowGraphs = new Map(
       (Array.isArray(status.workflow_graphs) ? status.workflow_graphs : []).map((item) => [item.workflow, item])
     );
@@ -2644,7 +2753,16 @@ async function loadStatus() {
       updateProviderPanel();
       for (const button of document.querySelectorAll("[data-folder-target]")) button.disabled = true;
     } else {
-      // The full console begins at the first folder its operator approved.
+      // The folders chosen last stay chosen across pages (this browser only);
+      // otherwise the console begins at the first working or approved folder.
+      for (const id of rememberedFolderFields) {
+        let kept = "";
+        try { kept = localStorage.getItem(`nemofold.${id}`) || ""; } catch { kept = ""; }
+        if (kept && $(id)) $(id).value = kept;
+        $(id)?.addEventListener("change", () => {
+          try { localStorage.setItem(`nemofold.${id}`, $(id).value); } catch { /* storage unavailable */ }
+        });
+      }
       if (status.default_input_root && !$("inputRoots").value.trim()) {
         $("inputRoots").value = status.default_input_root;
       }

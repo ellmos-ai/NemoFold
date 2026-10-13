@@ -246,7 +246,7 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .desk-controls{display:flex;flex-wrap:wrap;align-items:end;gap:12px;margin-top:13px}
 .desk-controls label{display:flex;min-width:0;flex:1 1 260px;flex-direction:column;gap:5px;color:var(--cyan);font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}
 .desk-controls label span{color:#8fb0b1;font-weight:400;letter-spacing:0;text-transform:none}
-.desk-controls input{min-width:0;border:1px solid #2c5f6b;background:rgba(4,22,29,.72);padding:9px 11px;color:#f2f6f3;font:11px var(--mono)}
+.desk-controls input,.desk-controls textarea{min-width:0;border:1px solid #2c5f6b;background:rgba(4,22,29,.72);padding:9px 11px;color:#f2f6f3;font:11px var(--mono)}
 #deskPlan{border:1px solid var(--cyan);background:var(--cyan);color:#06202a;font-weight:800}
 #deskPlan:hover{background:#8fe0d8}
 .desk-answer:empty{display:none}
@@ -275,6 +275,13 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .voyage-link{display:inline-block;margin-top:9px;color:var(--cyan);font:800 10px var(--mono);letter-spacing:.06em}
 .voyage-receipt small{display:block;margin-top:8px;color:#9fbcba;font:10px/1.5 var(--mono)}
 @media(max-width:600px){.captains-desk{padding:20px 16px}.voyage-steps{grid-template-columns:minmax(0,1fr)}.desk-controls #deskPlan{width:100%}}
+/* The captain takes several folders, like the engine room. */
+.desk-folders{display:flex;min-width:0;flex:1 1 100%;flex-direction:column;gap:6px}
+.desk-folders label{flex:none}
+.desk-folders textarea{resize:vertical}
+.desk-folders .path-add{align-self:flex-start;border:1px solid #2c5f6b;background:transparent;color:#d8ece9}
+.desk-folders .path-add:hover{background:rgba(120,209,202,.12)}
+.desk-folders .folder-chip{border-color:#2c5f6b;background:rgba(4,22,29,.72);color:#d8ece9}
 .use-case-library{margin-top:30px;border:1px solid var(--line-dark);background:var(--white);padding:24px}
 .library-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:3px solid var(--deep);padding-bottom:14px}
 .library-head h2{margin:6px 0 0;font:400 clamp(23px,3vw,32px)/1.05 var(--serif);letter-spacing:-.02em}
@@ -282,6 +289,26 @@ body[data-tab="workflows"] .porthole-life{display:block}
 /* Cards sit in .library-group grids; the list itself stacks group titles,
    groups and notes, so a title never takes a card cell. */
 .library-list{margin-top:18px}
+/* Engine room: one tile per settings area, each in its own tint. */
+#jobForm>fieldset{margin:0 0 14px;padding:16px 18px 18px;border:1px solid var(--line);border-left:5px solid var(--area);background:var(--area-tint)}
+#jobForm>fieldset>legend{float:left;width:100%;margin:0 0 14px;padding:0;color:var(--area);font:400 22px/1.15 var(--serif);letter-spacing:0;text-transform:none}
+#jobForm>fieldset>legend+*{clear:both}
+#jobForm>fieldset:nth-of-type(1){--area:#2a6aa3;--area-tint:#eef4fa}
+#jobForm>fieldset:nth-of-type(2){--area:#2f7d4c;--area-tint:#eef6ef}
+#jobForm>fieldset:nth-of-type(3){--area:#a8432f;--area-tint:#faefec}
+#jobForm>fieldset:nth-of-type(4){--area:#6e4fa0;--area-tint:#f3eef9}
+.working-folders{margin-top:28px;border:1px solid var(--line-dark);background:var(--surface);padding:18px 18px 20px}
+.working-folders h2{margin:4px 0 6px;font:400 clamp(22px,2.6vw,30px)/1.1 var(--serif)}
+.working-folders>p:not(.kicker){max-width:760px;margin:0;color:var(--ink);font-size:12px;line-height:1.5}
+.working-folder-list{display:grid;gap:8px;margin:14px 0}
+.working-folder{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:2px 10px;border:1px solid var(--line);background:var(--white);padding:9px 12px}
+.working-folder b{font:400 17px var(--serif)}
+.working-folder span{grid-column:1;color:var(--muted);font:10px var(--mono);overflow-wrap:anywhere}
+.working-folder button{grid-row:1/span 2}
+@media(max-width:600px){.working-folder{grid-template-columns:minmax(0,1fr)}.working-folder button{grid-row:auto;justify-self:start}}
+.folder-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.folder-chips:empty{display:none}
+.folder-chip{border:1px solid var(--line-dark);background:var(--white);padding:3px 10px;color:var(--ink);font:10px var(--mono);cursor:pointer}
 .folder-path-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
 .folder-path-row label{font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}
 .folder-path-row input{flex:1 1 260px;min-width:0;font:12px var(--mono)}
@@ -302,6 +329,9 @@ body[data-tab="workflows"] .porthole-life{display:block}
 /* D-040: on the workbench the engine room is part of the page, not a drawer. */
 body[data-page="overview"] .engine-drawer{position:static;z-index:auto;width:auto;visibility:visible;transform:none;margin-top:18px;border:1px solid #8a6b3c;box-shadow:none}
 body[data-page="overview"] #engineClose{display:none}
+/* Embedded on the start page the engine room scrolls with the page; the
+   drawer's own scroll box would swallow the wheel over the form. */
+body[data-page="overview"] .drawer-body{overflow:visible;overscroll-behavior:auto}
 .where-to-change{margin-top:10px;padding:10px 12px;border-left:3px solid var(--cyan);background:rgba(120,209,202,.08)}
 .masthead-state.demo{color:#ffb4a2}
 .detail-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px}
