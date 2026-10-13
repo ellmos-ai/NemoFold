@@ -136,6 +136,11 @@ class ProviderConfig:
         descriptor = self.descriptor
         if descriptor.transport is ProviderTransport.LOCAL_HTTP:
             _validated_local_base_url(self.base_url or descriptor.default_base_url or "")
+            if is_relayed_cloud_model(self.model):
+                raise ValueError(
+                    "a cloud model relayed by the local server leaves this computer, "
+                    "so NemoFold does not run it as a local model"
+                )
         elif self.base_url not in {None, descriptor.default_base_url}:
             raise ValueError("cloud API base_url cannot be overridden")
         if descriptor.api_key_env and not (self.api_key or "").strip():
@@ -339,6 +344,12 @@ class SubprocessRunner:
         return ProcessResult(completed.returncode, completed.stdout, completed.stderr)
 
 
+def is_relayed_cloud_model(model: str) -> bool:
+    """Ollama names models it forwards to its own cloud with a ``cloud`` tag."""
+    tag = model.strip().casefold().rpartition(":")[2]
+    return tag == "cloud" or tag.endswith("-cloud")
+
+
 def _validated_local_base_url(value: str) -> str:
     parsed = urlsplit(value)
     if (
@@ -352,6 +363,13 @@ def _validated_local_base_url(value: str) -> str:
     ):
         raise ValueError("local provider base_url must be a loopback HTTP URL")
     return value.rstrip("/")
+
+
+def _structured_output_refused(exchange: HTTPExchange) -> bool:
+    if exchange.status not in {400, 422, 501}:
+        return False
+    message = exchange.body[:2000].decode("utf-8", "replace").casefold()
+    return "structured output" in message or "response_format" in message
 
 
 def _json_body(exchange: HTTPExchange) -> dict[str, Any]:
@@ -442,13 +460,28 @@ class OpenAICompatibleAdapter:
             # hidden reasoning trace. Ollama documents `none` for thinking control
             # on its OpenAI-compatible chat-completions endpoint.
             payload["reasoning_effort"] = "none"
-        body = json.dumps(payload).encode()
         exchange = self.transport.post(
             f"{base_url}/chat/completions",
             headers={"Content-Type": "application/json"},
-            body=body,
+            body=json.dumps(payload).encode(),
             timeout_seconds=self.config.timeout_seconds,
         )
+        if _structured_output_refused(exchange):
+            # Some local models (an MLX build behind Ollama, for one) answer
+            # "structured output is unavailable". Ask once more with the schema
+            # as an instruction; the caller still validates what comes back.
+            payload.pop("response_format")
+            payload["messages"][0]["content"] = (
+                request.system_prompt
+                + "\n\nAnswer with one JSON object only, matching this JSON schema:\n"
+                + json.dumps(request.response_schema)
+            )
+            exchange = self.transport.post(
+                f"{base_url}/chat/completions",
+                headers={"Content-Type": "application/json"},
+                body=json.dumps(payload).encode(),
+                timeout_seconds=self.config.timeout_seconds,
+            )
         payload = _json_body(exchange)
         try:
             text = payload["choices"][0]["message"]["content"]

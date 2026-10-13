@@ -117,7 +117,8 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert 'href="/processes"' in html
     assert 'href="/governance"' in html
     assert 'href="/connections"' in html
-    assert "Know what your documents prove." in html
+    # D-043: the start page is the captain and the engine room only.
+    assert "Know what your documents prove." not in html
     assert "EVIDENCE CHAIN" in html
     assert "ORIGIN" in html
     assert "ACTION" in html
@@ -248,7 +249,7 @@ def test_web_api_preserves_the_medical_authority_block(tmp_path) -> None:
         ("/folders", "folders", ""),
         ("/processes", "processes", "workflows"),
         ("/processes?tab=registry", "processes", "registry"),
-        ("/processes?tab=artifacts", "processes", "artifacts"),
+        ("/artifacts", "artifacts", "artifacts"),
         ("/processes?tab=nonsense", "processes", "workflows"),
         ("/governance", "governance", "policies"),
         ("/governance?tab=rules", "governance", "rules"),
@@ -268,7 +269,8 @@ def test_web_console_serves_each_area_and_tab_as_a_real_route(tmp_path, route, p
     assert f'<body data-page="{page}" data-tab="{tab}">' in html
     assert 'data-page-link="folders"' in html
     assert 'data-page-link="processes"' in html
-    assert 'data-page-section="folders processes governance connections"' in html
+    assert 'data-page-section="folders processes governance connections artifacts"' in html
+    assert 'data-page-link="artifacts"' in html
 
 
 @pytest.mark.parametrize(
@@ -277,7 +279,8 @@ def test_web_console_serves_each_area_and_tab_as_a_real_route(tmp_path, route, p
         ("/document-center", "/folders"),
         ("/analysis", "/processes?tab=workflows"),
         ("/routines", "/processes?tab=workflows&tag=scheduled"),
-        ("/artifacts", "/processes?tab=artifacts"),
+        # Artifacts became its own area on 2026-10-13; the old tab link follows it.
+        ("/processes?tab=artifacts", "/artifacts"),
         # A link that names one contract lands where single instruments live.
         ("/analysis?workflow=fact_distill", "/processes?tab=registry&workflow=fact_distill"),
         ("/document-center?workflow=smart_inbox", "/processes?tab=registry&workflow=smart_inbox"),
@@ -322,6 +325,23 @@ def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
     assert "renderConnectionStatus" in script
 
 
+def test_blueprint_group_titles_span_the_list_and_the_engine_handle_sits_on_use_cases(
+    tmp_path,
+) -> None:
+    # 2026-10-13 GUI acceptance: the list was itself a card grid, so each group
+    # title took a card cell; the engine-room tab belongs on "My use cases".
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/assets/app.css", timeout=5) as response,  # noqa: S310
+    ):
+        stylesheet = response.read().decode()
+
+    assert ".library-list{display:grid" not in stylesheet
+    assert ".library-group{display:grid" in stylesheet
+    assert 'body[data-page="processes"][data-tab="workflows"] .engine-handle' in stylesheet
+    assert 'body[data-tab="registry"] .engine-handle' not in stylesheet
+
+
 def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> None:
     with (
         running_server(tmp_path) as base_url,
@@ -349,8 +369,8 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert ".exception-row" in stylesheet
     assert ".connection-registry" in stylesheet
     assert ".command-bridge" in stylesheet
-    assert ".task-card" in stylesheet
-    assert ".home-glance,.task-cards,.echo-check" in stylesheet
+    assert ".library-group{display:grid" in stylesheet
+    assert ".home-glance,.echo-check" in stylesheet
     assert ".form-grid>*{min-width:0}" in stylesheet
     assert 'body[data-page="governance"]' in stylesheet
     # Pin the effect, not its formatting: the porthole must have a branch that
@@ -361,7 +381,7 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     # column; two cramped columns were still readable but clipped their captions.
     assert "@media(max-width:600px){" in stylesheet
     assert (
-        ".glance-tiles,.bridge-panel,.task-card-list,.bridge-doctrine ol,.bridge-gauges"
+        ".glance-tiles,.bridge-panel,.bridge-doctrine ol,.bridge-gauges"
         "{grid-template-columns:minmax(0,1fr)}"
     ) in stylesheet
 
@@ -951,8 +971,10 @@ def test_the_default_input_root_follows_the_approved_roots(tmp_path) -> None:
     with running_server(tmp_path) as base_url:
         with_examples, _ = get_json(base_url + "/api/status")
 
-    assert without_examples["default_input_root"] == str(tmp_path.resolve())
-    assert with_examples["default_input_root"] == "examples/synthetic-home"
+    # D-043: the full console never prefers the demo case, and the base folder
+    # that only holds the reports is no starting folder either.
+    assert without_examples["default_input_root"] is None
+    assert with_examples["default_input_root"] is None
     assert without_examples["public_demo_parameters"] == {}
 
 
@@ -982,7 +1004,7 @@ def test_the_scene_follows_the_tab_and_the_schedule_filter(tmp_path) -> None:
 
     # D-036b: the scenes did not disappear with the rooms, they moved to the
     # tabs and to the schedule filter.
-    assert 'if (currentTab === "artifacts") return "artifacts";' in script
+    assert 'if (currentPage === "artifacts") return "artifacts";' in script
     assert 'if (currentTab === "registry") return "registry";' in script
     assert 'return activeTag === "scheduled" ? "scheduled" : "workflows";' in script
     # Line endings differ per checkout, so compare on normalised whitespace.
@@ -1007,20 +1029,20 @@ def test_use_cases_come_first_and_single_instruments_live_in_the_registry(tmp_pa
 
     # Folders keeps the corpus overview and the use cases bound to it.
     assert 'id="homeGlance"' in folders
-    assert 'data-folder-target="homeGlanceRoot"' in folders
+    # The glance looks at a working folder; choosing folders is the list above.
+    assert 'data-folder-target="workingFolders"' in folders
+    assert 'data-folder-target="homeGlanceRoot"' not in folders
     assert 'data-page-section="folders"' in folders
-    assert 'data-page-section="overview folders processes"' in folders
-    # The single instruments are one collapsed advanced view in the registry,
-    # not a card deck repeated in every room.
-    assert (
-        'id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" '
-        'data-page-section="processes" data-page-tab="registry"'
-    ) in folders
-    assert "SINGLE ACTIONS · ONE STEP EACH" in folders
+    assert 'data-page-section="folders processes"' in folders
+    # D-042: every one-step workflow is a tile among the blueprints, filtered
+    # by topic; there is no separate card deck of single actions.
+    assert 'id="blueprintFilter"' in folders
+    assert 'id="taskCards"' not in folders
+    assert "SINGLE ACTIONS" not in folders
     # The engine room is their editor and follows them.
-    assert 'data-page-section="processes" data-page-tab="registry"' in folders
+    assert 'data-page-tab="registry workflows"' in folders
     assert "workflowCards" in script
-    assert "renderTaskCards" in script
+    assert "renderBlueprints" in script
     assert "loadHomeGlance" in script
     assert "loadEcho" in script
     assert "prepareWorkflow" in script
@@ -1048,6 +1070,57 @@ def test_artifact_catalog_reports_when_each_ledger_was_written(tmp_path) -> None
     assert run["workflow"] == "folder_digest"
     assert isinstance(run["recorded_at"], str)
     assert run["recorded_at"].endswith("+00:00")
+
+
+def test_artifact_catalog_lists_a_voyage_step_below_the_output_scope(tmp_path) -> None:
+    # GUI test 2026-10-13: a captain voyage step writes into
+    # output/voyage/01-<workflow>; Artifacts listed only output/ledger.
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    (documents / "policy.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "folder_digest",
+        "input_roots": ["documents"],
+        "output_dir": "output/voyage/01-folder_digest",
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+    }
+
+    with running_server(tmp_path) as base_url:
+        post_json(base_url + "/api/run", {"run_id": "voyage_step", "job": job})
+        catalog = post_json(base_url + "/api/artifacts", {"output_dir": "output"})
+
+    run = next(item for item in catalog["runs"] if item["run_id"] == "voyage_step")
+    assert run["workflow"] == "folder_digest"
+    assert run["verification"]["valid"] is True
+
+
+def test_synopsis_merge_refuses_a_folder_too_large_for_one_synopsis(tmp_path, monkeypatch) -> None:
+    import nemofold.application as application
+
+    monkeypatch.setattr(application, "MAX_SYNOPSIS_SOURCES", 2)
+    documents = tmp_path / "documents"
+    documents.mkdir()
+    for index in range(3):
+        (documents / f"offer-{index}.md").write_text(f"# Price\n{index} EUR", encoding="utf-8")
+    job = {
+        "schema": "nemofold.job.v1",
+        "workflow": "synopsis_merge",
+        "input_roots": ["documents"],
+        "output_dir": "output",
+        "privacy_mode": "local_only",
+        "action_mode": "dry_run",
+        "parameters": {"application_domain": "general_documents", "formats": ["md"]},
+    }
+
+    with running_server(tmp_path) as base_url, pytest.raises(HTTPError) as failed:
+        post_json(base_url + "/api/run", {"run_id": "too_large", "job": job})
+
+    assert failed.value.code == 409
+    report = json.load(failed.value)["report"]
+    assert report["status"] == "failed"
+    assert any("folds at most 2 documents" in error for error in report["errors"])
 
 
 def test_corpus_glance_feeds_the_document_center_home_module(tmp_path) -> None:
@@ -1181,18 +1254,13 @@ def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> No
         "ORIGIN",
         "ACTION",
         "PRODUCT MAP",
-        "one contract per instrument.",  # a count here goes stale silently
+        "one contract per step.",  # a count here goes stale silently
         "ROADMAP:",
     ):
         assert marker in folded_away, marker
-    # The hero keeps one sentence and the area cards stay in the open.
-    assert (
-        '<p class="lede">NemoFold turns approved folders into traceable working memory.</p>'
-        in html
-    )
-    hero_and_cards = html.split('id="chartDetail"', 1)[0]
-    assert 'class="product-areas"' in hero_and_cards
-    assert "Governance" in hero_and_cards
+    # D-043: no hero and no area cards repeat the navigation on the start page.
+    assert 'class="product-areas"' not in html
+    assert 'id="captainsDeskTitle"' in html
 
 
 def test_captains_desk_plans_and_prepares_drafts_without_running_anything(tmp_path) -> None:
@@ -1249,6 +1317,54 @@ def test_captains_desk_refuses_a_request_it_cannot_turn_into_a_step(tmp_path) ->
     assert plan["matched"] is False
     assert refused.value.code == 400
     assert json.load(refused.value)["error"] == "wizard_nothing_to_prepare"
+
+
+def test_an_external_captain_planner_needs_the_gate_and_one_request_approval(
+    tmp_path, monkeypatch
+) -> None:
+    # D-046: the captain may let a model choose; an external one needs the
+    # server gate and an approval, and Prepare repeats the choice without
+    # asking the model again.
+    import nemofold.webapp as webapp
+
+    calls: list[str] = []
+
+    def fake_planner(text, config):
+        calls.append(config.provider_id)
+        return ("evidence_analyst",), "one question against the folder"
+
+    monkeypatch.setattr(webapp, "plan_with_model", fake_planner)
+    monkeypatch.setenv("NEBIUS_API_KEY", "test-key")
+    with running_server(tmp_path) as base_url:
+        with pytest.raises(HTTPError) as refused:
+            post_json(
+                base_url + "/api/wizard",
+                {
+                    "text": "Fasse die Akten zusammen",
+                    "planner": {"provider_id": "nebius", "model": "m", "approve_transfer": True},
+                },
+            )
+        local = post_json(
+            base_url + "/api/wizard",
+            {
+                "text": "Fasse die Akten zusammen",
+                "planner": {
+                    "provider_id": "ollama",
+                    "model": "qwen3:4b",
+                    "approve_transfer": False,
+                },
+            },
+        )
+        repeated = post_json(
+            base_url + "/api/wizard",
+            {"text": "Fasse die Akten zusammen", "workflows": ["fact_distill"]},
+        )
+
+    assert refused.value.code == 400
+    assert calls == ["ollama"]
+    assert [step["workflow"] for step in local["steps"]] == ["evidence_analyst"]
+    assert any("reasoning worker chose" in note for note in local["notes"])
+    assert [step["workflow"] for step in repeated["steps"]] == ["fact_distill"]
 
 
 def test_captains_desk_is_absent_in_the_public_demo(tmp_path) -> None:
@@ -1831,7 +1947,9 @@ def test_the_registry_offers_every_contract_the_server_supports(tmp_path) -> Non
         assert f">{workflow}</option>" in html, workflow
         assert f"  {workflow}: {{\n    title:" in script.replace("\r\n", "\n"), workflow
     assert "const registryGroups" in script
-    assert "NOT YET GROUPED" in script
+    # Every contract with a card is a blueprint tile, grouped or not.
+    assert "function actionTags" in script
+    assert ".filter((workflow) => workflowCards[workflow])" in script
 
 
 def test_a_run_that_asked_back_is_rendered_with_answer_fields(tmp_path) -> None:
@@ -1947,8 +2065,11 @@ def test_approving_a_folder_is_refused_in_the_demo_and_on_an_exposed_server(tmp_
     source_root = tmp_path / "synthetic-home"
     source_root.mkdir()
     (source_root / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
-    with running_public_demo(source_root) as (_, base_url), pytest.raises(HTTPError) as demo:
-        post_json(base_url + "/api/approve-root", {"path": str(tmp_path)})
+    with running_public_demo(source_root) as (_, base_url):
+        with pytest.raises(HTTPError) as demo:
+            post_json(base_url + "/api/approve-root", {"path": str(tmp_path)})
+        with pytest.raises(HTTPError) as demo_pick:
+            post_json(base_url + "/api/pick-folder", {})
     server = build_server(
         WebAppConfig(
             base_dir=tmp_path,
@@ -1966,14 +2087,167 @@ def test_approving_a_folder_is_refused_in_the_demo_and_on_an_exposed_server(tmp_
                 "http://{}:{}/api/approve-root".format(*server.server_address[:2]),
                 {"path": str(tmp_path)},
             )
+        with pytest.raises(HTTPError) as exposed_pick:
+            post_json("http://{}:{}/api/pick-folder".format(*server.server_address[:2]), {})
     finally:
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
 
     assert demo.value.code == 404
+    assert demo_pick.value.code == 404
     assert exposed.value.code == 403
+    assert exposed_pick.value.code == 403
     assert server.app_config.execution.allowed_roots == (str(source_root),)
+
+
+def test_the_system_folder_dialog_only_navigates_and_never_approves(tmp_path, monkeypatch) -> None:
+    import subprocess
+
+    import nemofold.webapp as webapp
+
+    root = tmp_path / "root"
+    root.mkdir()
+    picked = tmp_path / "picked"
+    picked.mkdir()
+    answers = [picked.as_posix() + "\n", ""]
+    monkeypatch.setattr(
+        webapp.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args, 0, stdout=answers.pop(0)),
+    )
+    with running_server(root) as base_url:
+        chosen = post_json(base_url + "/api/pick-folder", {})
+        cancelled = post_json(base_url + "/api/pick-folder", {})
+        with pytest.raises(HTTPError) as with_body:
+            post_json(base_url + "/api/pick-folder", {"path": "C:\\"})
+        listing = post_json(base_url + "/api/folders", {"path": chosen["path"]})
+
+    assert chosen == {"available": True, "path": str(picked)}
+    assert cancelled == {"available": True, "path": None}
+    assert with_body.value.code == 400
+    assert listing["current"]["approved"] is False
+
+
+@contextmanager
+def serving(config: WebAppConfig):
+    server = build_server(config, port=0)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    host, port = server.server_address[:2]
+    try:
+        yield f"http://{host}:{port}", server
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+
+
+def test_connections_report_what_this_computer_shows_without_reading_keys(
+    tmp_path, monkeypatch
+) -> None:
+    # 2026-10-13: every adapter used to read "Configured", running or not.
+    monkeypatch.setenv("NEBIUS_API_KEY", "secret-value-123")
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    with running_server(tmp_path) as base_url:
+        status, _ = get_json(base_url + "/api/status")
+        with urlopen(base_url + "/api/status", timeout=5) as response:  # noqa: S310
+            raw = response.read().decode()
+
+    readiness = {item["provider_id"]: item["readiness"] for item in status["providers"]}
+    assert readiness["nebius"] == "key_present"
+    assert readiness["openai"] == "no_key"
+    assert readiness["ollama"] in {"running", "not_running"}
+    assert readiness["codex-cli"] in {"cli_found", "cli_missing"}
+    assert "secret-value-123" not in raw
+
+
+def test_local_models_are_read_from_the_running_model_server(tmp_path, monkeypatch) -> None:
+    # 2026-10-13: the model field offered only a fixed default name.
+    import io
+
+    import nemofold.webapp as webapp
+
+    asked: list[str] = []
+
+    def fake_urlopen(url, timeout):
+        asked.append(url)
+        if "11434" in url:
+            body = {"data": [{"id": "qwen3:4b"}, {"id": "qwen3:32b"}, {"id": "kimi-k3:cloud"}]}
+            return io.BytesIO(json.dumps(body).encode())
+        raise OSError("connection refused")
+
+    monkeypatch.setattr(webapp, "urlopen", fake_urlopen)
+    with running_server(tmp_path) as base_url:
+        ollama, _ = get_json(base_url + "/api/local-models?provider=ollama")
+        lm_studio, _ = get_json(base_url + "/api/local-models?provider=lm-studio")
+        with pytest.raises(HTTPError) as cloud:
+            get_json(base_url + "/api/local-models?provider=nebius")
+
+    assert ollama == {"ok": True, "reachable": True, "models": ["qwen3:32b", "qwen3:4b"]}
+    assert lm_studio == {"ok": True, "reachable": False, "models": []}
+    assert cloud.value.code == 400
+    assert asked == ["http://127.0.0.1:11434/v1/models", "http://127.0.0.1:1234/v1/models"]
+
+
+def test_working_folders_stay_approved_across_restarts_and_can_be_removed(tmp_path) -> None:
+    # D-044: folders the operator keeps are approved at every later start of a
+    # loopback console; removing one forgets it and ends its approval.
+    base = tmp_path / "base"
+    base.mkdir()
+    taxes = tmp_path / "Steuer"
+    taxes.mkdir()
+    (taxes / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    config = WebAppConfig(base_dir=base, execution=ExecutionConfig(allowed_roots=(str(base),)))
+    with serving(config) as (base_url, _):
+        before, _ = get_json(base_url + "/api/status")
+        added = post_json(base_url + "/api/working-folders", {"add": str(taxes)})
+        with pytest.raises(HTTPError) as relative:
+            post_json(base_url + "/api/working-folders", {"add": "Steuer"})
+        with pytest.raises(HTTPError) as both:
+            post_json(base_url + "/api/working-folders", {"add": str(taxes), "remove": str(taxes)})
+    with serving(config) as (base_url, server):
+        after, _ = get_json(base_url + "/api/status")
+        glance = post_json(base_url + "/api/corpus-glance", {"path": str(taxes)})
+        removed = post_json(base_url + "/api/working-folders", {"remove": str(taxes.resolve())})
+        roots_after_removal = server.app_config.execution.allowed_roots
+
+    assert before["working_folders"] == []
+    assert added["working_folders"] == [str(taxes.resolve())]
+    assert relative.value.code == 400
+    assert both.value.code == 400
+    assert after["working_folders"] == [str(taxes.resolve())]
+    assert after["default_input_root"] == str(taxes.resolve())
+    assert glance["total_files"] == 1
+    assert removed["working_folders"] == []
+    assert roots_after_removal == (str(base),)
+
+
+def test_working_folders_are_closed_in_the_demo_and_on_an_exposed_server(tmp_path) -> None:
+    kept = tmp_path / "kept"
+    kept.mkdir()
+    target = tmp_path / "run-reports" / "web-console" / "working-folders.json"
+    target.parent.mkdir(parents=True)
+    target.write_text(json.dumps({"folders": [str(kept)]}), encoding="utf-8")
+    source_root = tmp_path / "synthetic-home"
+    source_root.mkdir()
+    (source_root / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
+    with running_public_demo(source_root) as (_, base_url), pytest.raises(HTTPError) as demo:
+        post_json(base_url + "/api/working-folders", {"add": str(kept)})
+    exposed_config = WebAppConfig(
+        base_dir=tmp_path,
+        execution=ExecutionConfig(allowed_roots=(str(source_root),)),
+        exposed_to_network=True,
+    )
+    with serving(exposed_config) as (base_url, server):
+        with pytest.raises(HTTPError) as exposed:
+            post_json(base_url + "/api/working-folders", {"add": str(kept)})
+        exposed_roots = server.app_config.execution.allowed_roots
+
+    assert demo.value.code == 404
+    assert exposed.value.code == 403
+    # A network-exposed server never widens its roots from the kept file.
+    assert exposed_roots == (str(source_root),)
 
 
 def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) -> None:
@@ -2004,7 +2278,8 @@ def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) ->
     assert 'data-tab-link="registry">Blueprints</a>' in html
     assert '<dialog id="libraryDetail" class="library-detail"' in html
     assert 'id="blueprintList"' in html
-    for label in ("Add to my use cases", "Remove from my use cases", "Save as blueprint",
+    assert "Save as blueprint" in html
+    for label in ("Add to my use cases", "Remove from my use cases", "Try once",
                   "FULL LOCAL CONSOLE", "PUBLIC DEMO · SYNTHETIC DATA ONLY", "/api/approve-root"):
         assert label in script, label
 

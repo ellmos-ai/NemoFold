@@ -3,11 +3,13 @@ const pageByPath = new Map([
   ["/", "overview"],
   ["/folders", "folders"],
   ["/processes", "processes"],
+  ["/artifacts", "artifacts"],
   ["/governance", "governance"],
   ["/connections", "connections"]
 ]);
 const pageTabs = {
-  processes: ["workflows", "registry", "artifacts"],
+  processes: ["workflows", "registry"],
+  artifacts: ["artifacts"],
   governance: ["policies", "rules"]
 };
 const normalizedPath = globalThis.location.pathname.replace(/\/+$/, "") || "/";
@@ -33,6 +35,7 @@ const pageConfiguration = {
   overview: {title: "NemoFold — Engine room", defaultWorkflow: "evidence_analyst", workflows: []},
   folders: {title: "Folders — NemoFold", defaultWorkflow: "smart_inbox", workflows: []},
   processes: {title: "Processes & Workflows — NemoFold", defaultWorkflow: "evidence_analyst", workflows: []},
+  artifacts: {title: "Artifacts — NemoFold", defaultWorkflow: "evidence_analyst", workflows: []},
   governance: {title: "Governance — NemoFold", defaultWorkflow: "storage_policy", workflows: []},
   connections: {title: "Connections — NemoFold", defaultWorkflow: "platform_proof", workflows: []}
 };
@@ -44,6 +47,15 @@ let publicDemo = false;
 let folderCurrentApproved = false;
 let publicDemoParameters = {};
 let folderPickerEnabled = false;
+let workingFolders = [];
+const rememberedFolderFields = ["inputRoots", "deskRoots", "homeGlanceRoot"];
+if (currentPage === "folders" && $("libraryTitle")) {
+  // On Folders the library shows the use cases that watch folders.
+  $("libraryKicker").textContent = "YOUR FOLDER WORKFLOWS";
+  $("libraryTitle").textContent = "Your folder workflows.";
+  $("libraryTitle").nextElementSibling.textContent =
+    "The use cases that watch or file your folders. Open one to rename, reorder, run or remove it; all your use cases are under Processes & Workflows.";
+}
 let providerSurfaceEnabled = false;
 let externalModelsAllowed = false;
 let providerContracts = new Map();
@@ -104,6 +116,16 @@ const providerModelDefaults = {
   anthropic: "",
   nebius: "nvidia/nemotron-3-super-120b-a12b"
 };
+// D-043: questions about the fictional case file exist only in the public
+// demo, which reads that case; the full console starts with an empty list.
+const demoQuestions = {
+  evidence_analyst: [
+    "Welche Farbe hatte der Wagen mit dem Kennzeichen B-TL 4471?",
+    "Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?"
+  ],
+  corpus_query: ["Wo taucht ein blauer VW Golf auf?"]
+};
+
 const workflowDefaults = {
   cleanup_rules: {
     questions: [],
@@ -146,11 +168,7 @@ const workflowDefaults = {
     hint: "Contact Monitor extracts email and responsibility candidates with source quotes, compares a named earlier snapshot and never auto-deletes missing contacts."
   },
   evidence_analyst: {
-    // D-040: the default questions fit the fictional case file, the default folder.
-    questions: [
-      "Welche Farbe hatte der Wagen mit dem Kennzeichen B-TL 4471?",
-      "Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?"
-    ],
+    questions: [],
     parameters: {max_chunks: 256, formats: ["md", "txt"], conflict_scan: true},
     hint: "Evidence Analyst searches the approved inputs and reports exact source locations, conflicts and coverage."
   },
@@ -245,7 +263,7 @@ const workflowDefaults = {
     hint: "Contradiction Synopsis puts disagreeing statements side by side in both wordings with their anchors. It names which sources disagree; it never decides which is right."
   },
   corpus_query: {
-    questions: ["Wo taucht ein blauer VW Golf auf?"],
+    questions: [],
     parameters: {formats: ["md"], terms: [], partition_size: 20, dedupe_scope: "normalized"},
     hint: "Corpus Query answers one narrow question over a large bundle through staged aggregation. Every match is a quoted sentence with its sources; no match means the corpus does not contain one."
   },
@@ -589,8 +607,8 @@ const voyageScenes = {
     className: "analysis-lab",
     kicker: "THE BLUEPRINT LIBRARY",
     title: "Blueprints",
-    text: "Workflow blueprints and single actions: adopt one into your use cases as often as you like, or try a single action once in the engine room.",
-    roadmap: "ACTIVE · workflow blueprints + single actions + my blueprints"
+    text: "Every blueprint is a workflow with one step or several: adopt one into your use cases as often as you like, or try a one-step workflow once in the engine room.",
+    roadmap: "ACTIVE · shipped and my blueprints · filtered by topic"
   },
   artifacts: {
     className: "artifact-library",
@@ -619,15 +637,46 @@ const voyageScenes = {
 // Porthole for the workflows, echo sounder for the standing routines, library
 // for the artifacts, bridge for governance, home port for the folders.
 function currentSceneKey() {
+  if (currentPage === "artifacts") return "artifacts";
   if (currentPage === "processes") {
-    if (currentTab === "artifacts") return "artifacts";
     if (currentTab === "registry") return "registry";
     return activeTag === "scheduled" ? "scheduled" : "workflows";
   }
   return currentPage === "overview" ? null : currentPage;
 }
 
+// D-045: the research notebook ships as one of My use cases; while it is
+// there it sits under the engine room as the quick investigation mode.
+// ponytail: kept per browser; a server-side flag once several browsers share a console.
+function notebookInUseCases() {
+  try {
+    return localStorage.getItem("nemofold.notebook") !== "removed";
+  } catch {
+    return true;
+  }
+}
+
+function setNotebookInUseCases(kept) {
+  try {
+    if (kept) localStorage.removeItem("nemofold.notebook");
+    else localStorage.setItem("nemofold.notebook", "removed");
+  } catch { /* storage unavailable */ }
+  renderLibrary(libraryEntries);
+  updateNotebookVisibility();
+}
+
+function updateNotebookVisibility() {
+  const visible = currentPage === "overview" && !publicDemo && notebookInUseCases();
+  $("researchNotebook").hidden = !visible;
+  if (visible) updateNotebookSnapshot();
+}
+
+const notebookDescription =
+  "Quick investigation mode under the engine room: keep a research goal, the question "
+  + "set and the verified run trail as one local investigation.";
+
 function updateVoyageScene(area = null) {
+  updateNotebookVisibility();
   const key = area || currentSceneKey();
   const scene = voyageScenes[key];
   const container = $("voyageScene");
@@ -637,9 +686,6 @@ function updateVoyageScene(area = null) {
   $("voyageSceneTitle").textContent = scene.title;
   $("voyageSceneText").textContent = scene.text;
   $("voyageRoadmap").textContent = scene.roadmap;
-  const notebookVisible = currentTab === "registry" && $("workflow").value === "evidence_analyst";
-  $("researchNotebook").hidden = !notebookVisible;
-  if (notebookVisible) updateNotebookSnapshot();
   // The echo sounder belongs to the routines, so it surfaces with their scene.
   if ($("echoCheck")) $("echoCheck").hidden = key !== "scheduled";
 }
@@ -883,16 +929,132 @@ function setEngineDrawer(open, {moveFocus = true} = {}) {
 const reducedMotionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
 let wizardSurfaceEnabled = false;
 let lastVoyageRequest = null;
+// Workflows a model chose for the last plan; Prepare repeats them instead of
+// asking the model a second time.
+let lastPlannedWorkflows = null;
+let plannerProviders = [];
 
-function pageForWorkflow(workflow) {
-  const match = Object.entries(pageConfiguration)
-    .find(([, configuration]) => configuration.workflows.includes(workflow));
-  return match ? match[0] : "document";
+function deskMode() {
+  return document.querySelector("input[name=deskMode]:checked")?.value || "keywords";
 }
 
-function routeForPage(page) {
-  for (const [path, name] of pageByPath) if (name === page) return path;
-  return "/document-center";
+// D-046: the captain plans by keywords, lets a model choose from the
+// catalogue, or writes a brief for a CLI agent.
+function updateDeskMode() {
+  $("deskPlanner").hidden = deskMode() !== "model";
+  $("deskPlan").textContent = deskMode() === "brief" ? "Copy the brief" : "Chart the voyage";
+  if (deskMode() === "model") updateDeskProvider();
+}
+
+function renderPlannerProviders(providers, externalAllowed) {
+  plannerProviders = (providers || []).filter((item) =>
+    (item.transport === "local_http" && item.readiness === "running")
+    || (item.transport === "provider_api" && item.readiness === "key_present" && externalAllowed)
+  );
+  const select = $("deskProvider");
+  select.replaceChildren();
+  for (const item of plannerProviders) {
+    const option = document.createElement("option");
+    option.value = item.provider_id;
+    option.textContent = `${item.label}${item.external_transfer ? " · external" : " · this computer"}`;
+    select.append(option);
+  }
+  if (!plannerProviders.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No model reachable: start Ollama or LM Studio, or set a provider key";
+    select.append(option);
+  }
+}
+
+async function updateDeskProvider() {
+  const item = plannerProviders.find((entry) => entry.provider_id === $("deskProvider").value);
+  $("deskApproveRow").hidden = !item?.external_transfer;
+  $("deskApprove").checked = false;
+  $("deskModelList").replaceChildren();
+  if (!item) return;
+  $("deskModel").value = providerModelDefaults[item.provider_id] || "";
+  if (item.transport !== "local_http") return;
+  try {
+    const response = await fetch(`/api/local-models?provider=${encodeURIComponent(item.provider_id)}`);
+    const data = await response.json();
+    for (const model of data.models || []) {
+      const option = document.createElement("option");
+      option.value = model;
+      $("deskModelList").append(option);
+    }
+    if (!(data.models || []).includes($("deskModel").value)) $("deskModel").value = "";
+  } catch {
+    /* the field stays free text */
+  }
+}
+
+function agentBrief(text) {
+  const roots = lines($("deskRoots").value);
+  const output = $("outputDir").value.trim() || "run-reports/web-console";
+  const catalogue = Object.entries(workflowCards).map(([id, card]) => {
+    const parameters = workflowDefaults[id]?.parameters;
+    const defaults = parameters && Object.keys(parameters).length
+      ? ` Default parameters: ${JSON.stringify(parameters)}`
+      : "";
+    return `- ${id}: ${card.title}. ${card.benefit}${defaults}`;
+  }).join("\n");
+  return [
+    "# Task for NemoFold",
+    "",
+    `Request: ${text}`,
+    "",
+    "Approved folders:",
+    ...(roots.length ? roots.map((root) => `- ${root}`) : ["- none chosen yet: ask the person which folder"]),
+    "",
+    `Output folder: ${output}`,
+    "",
+    "NemoFold 0.2.1 is a local evidence workspace (CLI `nemofold`, console at "
+      + "http://127.0.0.1:8765). Everything it runs is a workflow with one step or several; "
+      + "each step is one of these job contracts:",
+    "",
+    catalogue,
+    "",
+    "A job file (JSON) for one step:",
+    '{"schema": "nemofold.job.v1", "workflow": "<id>", "input_roots": ["<folder>"], '
+      + '"output_dir": "<output>/<nn>-<id>", "questions": ["<question>"], "parameters": {}, '
+      + '"privacy_mode": "local_only", "action_mode": "dry_run", "model_budget_usd": 0}',
+    "",
+    "Check, then run each step, then verify its ledger:",
+    "  nemofold preview --job step.json --allow-root <folder> --run-id <id>",
+    "  nemofold run --job step.json --allow-root <folder> --run-id <id>",
+    "  nemofold verify <output>/<nn>-<id>/ledger/<id>.json",
+    "Chain steps by pointing a step's input_roots at the previous step's output folder.",
+    "",
+    "Rules: stay dry_run and local_only unless the person approves otherwise; never move, "
+      + "change or delete their files; quote sources from the ledger; when a parameter is "
+      + "unclear, read the error preview reports instead of guessing.",
+    "",
+    "Report back: which steps ran, their status (executed, blocked, failed), the ledger "
+      + "paths, and the answer to the request in the person's language."
+  ].join("\n");
+}
+
+async function copyAgentBrief(text) {
+  const answer = $("deskAnswer");
+  const brief = agentBrief(text);
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(brief);
+    copied = true;
+  } catch {
+    copied = false;
+  }
+  answer.textContent = "";
+  deskLine(
+    answer,
+    "p",
+    "desk-note",
+    copied
+      ? "The brief is on the clipboard. Paste it into your CLI agent (for example Claude Code or Codex), started in a folder that may hold the reports. Nothing was sent from here."
+      : "Copy the brief below into your CLI agent (for example Claude Code or Codex). Nothing was sent from here."
+  );
+  deskLine(answer, "pre", "desk-brief", brief);
 }
 
 function deskLine(parent, tag, className, text) {
@@ -955,13 +1117,74 @@ function renderVoyagePlan(plan) {
     prepare.className = "card-open";
     prepare.append(instrumentIcon("wheel"), "Prepare voyage");
     prepare.addEventListener("click", prepareVoyage);
-    actions.append(prepare);
+    const runAll = document.createElement("button");
+    runAll.type = "button";
+    runAll.id = "deskRunAll";
+    runAll.className = "card-open";
+    runAll.append(instrumentIcon("wheel"), plan.steps.length > 1 ? "Run all steps" : "Run it");
+    runAll.addEventListener("click", () => runWholeVoyage(plan));
+    actions.append(prepare, runAll);
     deskLine(
       actions,
       "small",
       null,
-      "Preparing writes drafts into the job inbox. It runs nothing and sends nothing."
+      "Prepare writes drafts into the job inbox (engine room · Run identity & prepared "
+      + "jobs) and runs nothing. Run keeps the plan as one of your use cases and runs "
+      + "its steps one after another, locally and as a dry run."
     );
+  }
+}
+
+// The whole plan in one go: kept as a use case, then run step after step,
+// each step reading the previous output where the plan says so.
+async function runWholeVoyage(plan) {
+  const answer = $("deskAnswer");
+  const button = $("deskRunAll");
+  if (button) button.disabled = true;
+  const status = deskLine(answer, "p", "desk-note", `Running ${plan.steps.length} step(s)…`);
+  try {
+    const name = `Captain · ${plan.request_text}`.slice(0, 110);
+    const saved = await fetch("/api/voyages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        name: uniqueName(name, false),
+        description: plan.request_text.slice(0, 400),
+        source: "wizard",
+        steps: plan.steps.map((step) => ({
+          workflow: step.workflow,
+          job: step.job,
+          note: "",
+          reads_previous_output: step.reads_previous_step === true
+        }))
+      })
+    });
+    const kept = await saved.json();
+    if (!saved.ok || kept.ok !== true) throw new Error(kept.detail || kept.error || "not kept");
+    const response = await fetch("/api/voyage-run", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: kept.voyage.voyage_id})
+    });
+    const result = await response.json();
+    if (result.steps === undefined) {
+      throw new Error(result.detail || result.error || `request failed (${response.status})`);
+    }
+    status.textContent = result.status === "executed"
+      ? `Done: ${result.steps.length} step(s) ran. Kept as “${kept.voyage.name}” under My use cases.`
+      : `Stopped at step ${result.stopped_at}. Kept as “${kept.voyage.name}” under My use cases.`;
+    const list = deskLine(answer, "ul", "voyage-run-steps");
+    result.steps.forEach((step, index) => {
+      const errors = Array.isArray(step.errors) && step.errors.length ? ` · ${step.errors[0]}` : "";
+      deskLine(list, "li", null, `${index + 1} · ${step.workflow} · ${String(step.status).toUpperCase()}${errors}`);
+    });
+    const link = deskLine(answer, "a", "voyage-link", "Open the results under Artifacts →");
+    link.href = "/artifacts";
+    await loadLibrary();
+  } catch (error) {
+    status.textContent = `Not run: ${error.message}`;
+  } finally {
+    if (button) button.disabled = false;
   }
 }
 
@@ -984,18 +1207,34 @@ async function askTheCaptain(event) {
     deskLine(answer, "p", "desk-note", "Write one sentence about what you need.");
     return;
   }
+  const named = workingFolderNamedIn(text);
+  if (named) $("deskRoots").value = named;
+  const mode = deskMode();
+  if (mode === "brief") {
+    await copyAgentBrief(text);
+    return;
+  }
+  const body = {text, context: {input_roots: lines($("deskRoots").value)}};
+  if (mode === "model") {
+    body.planner = {
+      provider_id: $("deskProvider").value,
+      model: $("deskModel").value.trim(),
+      approve_transfer: $("deskApprove").checked
+    };
+  }
   answer.textContent = "";
-  deskLine(answer, "p", "desk-note", "Charting…");
+  deskLine(answer, "p", "desk-note", mode === "model" ? "The model is choosing workflows…" : "Charting…");
   try {
     const response = await fetch("/api/wizard", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text, context: {input_roots: lines($("deskRoots").value)}})
+      body: JSON.stringify(body)
     });
     const plan = await response.json();
     if (!response.ok || plan.ok !== true) {
       throw new Error(plan.detail || plan.error || `request failed (${response.status})`);
     }
+    lastPlannedWorkflows = mode === "model" ? plan.steps.map((step) => step.workflow) : null;
     renderVoyagePlan(plan);
   } catch (error) {
     answer.textContent = "";
@@ -1013,7 +1252,8 @@ async function prepareVoyage() {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         text: lastVoyageRequest || $("deskRequest").value.trim(),
-        context: {input_roots: lines($("deskRoots").value)}
+        context: {input_roots: lines($("deskRoots").value)},
+        ...(lastPlannedWorkflows ? {workflows: lastPlannedWorkflows} : {})
       })
     });
     const result = await response.json();
@@ -1023,24 +1263,41 @@ async function prepareVoyage() {
     const receipt = deskLine(answer, "div", "voyage-receipt");
     deskLine(receipt, "span", null, `${result.drafts.length} DRAFTS PREPARED`);
     const list = deskLine(receipt, "ul", null);
-    for (const draft of result.drafts) deskLine(list, "li", null, draft.name);
-    const first = result.drafts[0];
-    const page = pageForWorkflow(first.workflow);
-    const link = deskLine(receipt, "a", "voyage-link", "Open the engine room →");
-    link.href = `${routeForPage(page)}?workflow=${encodeURIComponent(first.workflow)}`;
+    // The engine room sits right below the captain: each prepared step loads
+    // there with its folders, questions and parameters; nothing runs by itself.
+    for (const draft of result.drafts) {
+      const item = deskLine(list, "li", null, `${draft.name} `);
+      const load = document.createElement("button");
+      load.type = "button";
+      load.className = "voyage-load";
+      load.textContent = "Load into the engine room";
+      load.addEventListener("click", () => loadPreparedStep(draft.draft_id));
+      item.append(load);
+    }
     deskLine(
       receipt,
       "small",
       null,
-      "They wait in the prepared job inbox. Nothing has run and no approval was stored."
+      "Step 1 is loaded below. All steps also wait in the prepared job inbox. "
+      + "Nothing has run and no approval was stored."
     );
-    receipt.scrollIntoView({behavior: reducedMotionQuery?.matches ? "auto" : "smooth",
-      block: "nearest"});
+    await loadPreparedStep(result.drafts[0].draft_id);
   } catch (error) {
     deskLine(answer, "p", "desk-note", `Not prepared: ${error.message}`);
   } finally {
     if (button) button.disabled = false;
   }
+}
+
+async function loadPreparedStep(draftId) {
+  const response = await fetch(`/api/draft?id=${encodeURIComponent(draftId)}`);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || data.error || "Draft load failed.");
+  applyDraft(data.draft);
+  await loadDraftInbox();
+  $("draftSelect").value = draftId;
+  $("engineRoom").scrollIntoView({behavior: reducedMotionQuery?.matches ? "auto" : "smooth",
+    block: "start"});
 }
 
 function toggleCollapse(button) {
@@ -1078,7 +1335,6 @@ function prepareWorkflow(workflow) {
   if (!option) return;
   select.value = workflow;
   applyWorkflowDefaults();
-  renderTaskCards();
   setEngineDrawer(true);
 }
 
@@ -1087,16 +1343,16 @@ function prepareWorkflow(workflow) {
 // contract does to your files, which is the distinction a reader is actually
 // making when they scan it.
 const registryGroups = [
-  {title: "Intake and filing", workflows: ["smart_inbox", "cleanup_rules", "storage_policy"]},
-  {title: "Mail", workflows: ["mail_to_case", "controlled_email"]},
-  {title: "Reading a corpus", workflows: ["evidence_analyst", "bundle_export", "fact_distill",
+  {title: "Intake and filing", tags: ["folder-watch"], workflows: ["smart_inbox", "cleanup_rules", "storage_policy"]},
+  {title: "Mail", tags: ["document-analysis"], workflows: ["mail_to_case", "controlled_email"]},
+  {title: "Reading a corpus", tags: ["document-analysis"], workflows: ["evidence_analyst", "bundle_export", "fact_distill",
     "synopsis_merge", "document_registry", "corpus_query", "pattern_mining", "chunk_export", "ocr_pipeline"]},
-  {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
+  {title: "Case chronicle", tags: ["case-analysis"], workflows: ["person_registry", "relation_model", "person_timeline",
     "coverage_timeline", "cost_timeline", "subscription_reconcile", "medication_reconcile", "database_reader", "alibi_weave", "contradiction_synopsis"]},
-  {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "routine_query", "version_resolver",
+  {title: "Folder routines", tags: ["folder-watch"], workflows: ["folder_digest", "daily_arrivals", "routine_query", "version_resolver",
     "contact_monitor"]},
-  {title: "Outward and status", workflows: ["web_research", "dossier", "briefing", "platform_proof"]},
-  {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check",
+  {title: "Outward and status", tags: ["reporting"], workflows: ["web_research", "dossier", "briefing", "platform_proof"]},
+  {title: "Checks and output", tags: ["reporting", "review"], workflows: ["bundle_completeness_check", "reference_check",
     "rater_race", "report_studio", "guide_compose", "wiki_export",
     "document_compose", "mail_merge_compose", "knowledge_composer", "document_qa", "print_action"]}
 ];
@@ -1171,75 +1427,12 @@ function applyAnswers() {
     + "Run it again to continue.";
 }
 
-function renderTaskCards() {
-  const list = $("taskCardList");
-  if (!list) return;
-  // Non-thematic on purpose: the registry lists every contract the server
-  // actually offers, in the order the contract dropdown holds them.
-  const workflows = [...$("workflow").options]
-    .map((option) => option.value)
-    .filter((item) => workflowCards[item]);
-  list.textContent = "";
-  if (!workflows.length) {
-    const note = document.createElement("p");
-    note.textContent = "This server offers no job contract.";
-    list.append(note);
-    return;
-  }
-  const active = $("workflow").value;
-  const grouped = new Set();
-  for (const group of registryGroups) {
-    const present = group.workflows.filter((item) => workflows.includes(item));
-    if (!present.length) continue;
-    const heading = document.createElement("p");
-    heading.className = "kicker task-group";
-    heading.textContent = group.title.toUpperCase();
-    list.append(heading);
-    for (const workflow of present) {
-      grouped.add(workflow);
-      list.append(taskCard(workflow, active));
-    }
-  }
-  // Anything a group forgot still shows, rather than disappearing because a
-  // list somewhere was not updated.
-  const ungrouped = workflows.filter((item) => !grouped.has(item));
-  if (ungrouped.length) {
-    const heading = document.createElement("p");
-    heading.className = "kicker task-group";
-    heading.textContent = "NOT YET GROUPED";
-    list.append(heading);
-    for (const workflow of ungrouped) list.append(taskCard(workflow, active));
-  }
+function actionTags(workflow) {
+  const tags = registryGroups.find((group) => group.workflows.includes(workflow))?.tags || [];
+  return workflow === "daily_arrivals" ? [...tags, "scheduled"] : tags;
 }
 
-function taskCard(workflow, active) {
-  {
-    const card = document.createElement("article");
-    card.className = "task-card";
-    card.setAttribute("role", "listitem");
-    if (workflow === active) card.dataset.active = "true";
-    const title = document.createElement("b");
-    title.textContent = workflowCards[workflow].title;
-    const benefit = document.createElement("p");
-    benefit.textContent = workflowCards[workflow].benefit;
-    const technical = document.createElement("span");
-    technical.textContent = workflow;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "card-open";
-    button.append(instrumentIcon("wheel"), "Add to my use cases");
-    button.addEventListener("click", () => adoptAction(workflow, card));
-    const trial = document.createElement("button");
-    trial.type = "button";
-    trial.className = "secondary";
-    trial.textContent = workflow === active ? "Selected · open engine room" : "Try once";
-    trial.addEventListener("click", () => prepareWorkflow(workflow));
-    card.append(technical, title, benefit, button, trial);
-    return card;
-  }
-}
-
-// D-039: a single action becomes a one-step use case bound to the current folders.
+// A one-step workflow becomes a use case bound to the current folders.
 async function adoptAction(workflow, card) {
   const defaults = workflowDefaults[workflow] || {questions: [], parameters: {}};
   const output = $("outputDir").value.trim().replace(/[\\/]+$/, "");
@@ -1251,6 +1444,8 @@ async function adoptAction(workflow, card) {
         name: uniqueName(workflowCards[workflow]?.title || workflow, false),
         description: workflowCards[workflow]?.benefit || "",
         source: "manual",
+        // "scheduled" follows a schedule field, which a fresh copy does not have.
+        tags: actionTags(workflow).filter((tag) => tag !== "scheduled"),
         steps: [{
           workflow,
           job: {
@@ -1334,6 +1529,7 @@ async function loadHomeGlance() {
       throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
     }
     $("homeGlanceRoot").value = payload.root;
+    $("homeGlanceTitle").textContent = `What is on board in ${folderName(payload.root)}.`;
     renderHomeGlance(payload);
   } catch (error) {
     $("glanceState").textContent = `No overview: ${error.message}`;
@@ -1521,9 +1717,18 @@ function renderConnectionStatus(status) {
     const proofLabel = document.createElement("span");
     proofLabel.textContent = "CURRENT CLAIM";
     const proofValue = document.createElement("b");
+    // What this computer shows right now; a console run is never a proof.
+    const readiness = {
+      running: "Running here · console run unverified",
+      not_running: "Not running on this computer",
+      cli_found: "CLI found · console run unverified",
+      cli_missing: "CLI not found on this computer",
+      key_present: `${provider.api_key_env} set · console run unverified`,
+      no_key: `No ${provider.api_key_env} set`
+    };
     proofValue.textContent = provider.competition_proof
       ? "Competition proof recorded"
-      : "Configured · execution unverified";
+      : readiness[provider.readiness] || "Adapter built in · not checked";
     proof.append(proofLabel, proofValue);
     row.append(identity, transport, boundary, proof);
     registry.append(row);
@@ -1659,6 +1864,32 @@ function showLocalProviderState(message) {
     : "Use Preview first to inspect the exact source scope. Provider runtime health is established only by a real bounded run.";
 }
 
+// A local model server lists what it holds; the field then offers exactly
+// those models and keeps a typed name if it is one of them.
+async function offerLocalModels(providerId) {
+  const list = $("providerModelList");
+  list.replaceChildren();
+  try {
+    const response = await fetch(`/api/local-models?provider=${encodeURIComponent(providerId)}`);
+    const data = await response.json();
+    if (!response.ok || !data.reachable) {
+      $("providerModel").placeholder = "Local model server not reachable on this computer";
+      return;
+    }
+    for (const model of data.models) {
+      const option = document.createElement("option");
+      option.value = model;
+      list.append(option);
+    }
+    if (data.models.length && !data.models.includes($("providerModel").value.trim())) {
+      $("providerModel").value = data.models[0];
+    }
+    $("providerModel").placeholder = `${data.models.length} models found on this computer`;
+  } catch {
+    $("providerModel").placeholder = "Local model list unavailable";
+  }
+}
+
 function updateProviderPanel({resetModel = false} = {}) {
   const enabled = providerExecutionSelected();
   const descriptor = selectedProvider();
@@ -1682,6 +1913,8 @@ function updateProviderPanel({resetModel = false} = {}) {
     $("providerModel").value = providerModelDefaults[descriptor.provider_id] || "";
     previousProviderId = descriptor.provider_id;
     $("externalApproval").checked = false;
+    if (descriptor.transport === "local_http") offerLocalModels(descriptor.provider_id);
+    else $("providerModelList").replaceChildren();
   }
   const external = descriptor.external_transfer === true;
   $("providerRoute").textContent = external ? "EXTERNAL WORKER" : "LOOPBACK WORKER";
@@ -1754,7 +1987,7 @@ function applyWorkflowDefaults() {
   // The public demo runs only the server's own parameters, so show exactly
   // those and keep the analysis scale from rewriting them.
   const demoParameters = publicDemo ? publicDemoParameters[$("workflow").value] : undefined;
-  $("questions").value = defaults.questions.join("\n");
+  $("questions").value = ((publicDemo && demoQuestions[$("workflow").value]) || defaults.questions).join("\n");
   $("parameters").value = JSON.stringify(demoParameters || defaults.parameters, null, 2);
   $("analysisScale").disabled = Boolean(demoParameters)
     || !["evidence_analyst", "platform_proof"].includes($("workflow").value);
@@ -1888,13 +2121,17 @@ async function loadFolderChoices(path = null) {
   if (!response.ok) throw new Error(data.detail || data.error || "Folder request failed.");
   folderCurrentPath = data.current?.path || null;
   folderCurrentApproved = data.current?.approved === true;
+  $("folderPathInput").value = folderCurrentPath || "";
+  $("folderCurrent").hidden = Boolean(folderCurrentPath);
   $("folderCurrent").textContent = folderCurrentPath || "Choose an approved folder or a place on this computer.";
   $("folderUp").disabled = !data.parent;
   $("folderUp").dataset.path = data.parent || "";
   $("folderSelectCurrent").disabled = !folderCurrentPath;
-  $("folderSelectCurrent").textContent = !folderCurrentPath || folderCurrentApproved
-    ? "Use this folder"
-    : "Approve for this session and use";
+  $("folderSelectCurrent").textContent = folderTargetId === "workingFolders"
+    ? "Keep as working folder"
+    : !folderCurrentPath || folderCurrentApproved
+      ? "Use this folder"
+      : "Approve for this session and use";
   const choices = $("folderChoices");
   choices.replaceChildren();
   const entries = folderCurrentPath
@@ -1926,6 +2163,109 @@ async function loadFolderChoices(path = null) {
     : scope;
 }
 
+function goToTypedFolder() {
+  const typed = $("folderPathInput").value.trim().replace(/^"(.*)"$/, "$1");
+  if (typed) loadFolderChoices(typed).catch(showFolderError);
+}
+
+async function pickNativeFolder() {
+  $("folderStatus").textContent = "The system folder dialog is open on this computer…";
+  const response = await fetch("/api/pick-folder", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: "{}"
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || data.error || "The system folder dialog failed.");
+  if (!data.available) throw new Error("No system folder dialog on this computer. Type the path instead.");
+  if (data.path) await loadFolderChoices(data.path);
+  else $("folderStatus").textContent = "No folder chosen.";
+}
+
+async function changeWorkingFolders(change) {
+  const response = await fetch("/api/working-folders", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(change)
+  });
+  const data = await response.json();
+  if (!response.ok || data.ok !== true) throw new Error(data.detail || data.error || "Working folders unchanged.");
+  workingFolders = data.working_folders;
+  renderWorkingFolders();
+}
+
+function folderName(path) {
+  return path.replace(/[\\/]+$/, "").split(/[\\/]/).pop() || path;
+}
+
+// D-044: the kept folders are listed on Folders and offered as one-click
+// choices wherever a task needs a folder.
+function renderWorkingFolders() {
+  const list = $("workingFolderList");
+  if (list) {
+    list.textContent = "";
+    if (!workingFolders.length) {
+      libraryNote(list, "No working folders yet. Add the folders you work in; they stay approved after a restart.");
+    }
+    for (const path of workingFolders) {
+      const row = deskLine(list, "div", "working-folder");
+      row.setAttribute("role", "listitem");
+      deskLine(row, "b", null, folderName(path));
+      deskLine(row, "span", null, path);
+      const look = document.createElement("button");
+      look.type = "button";
+      look.className = "secondary";
+      look.textContent = "Look around";
+      look.addEventListener("click", () => {
+        $("homeGlanceRoot").value = path;
+        $("homeGlanceLook").click();
+      });
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "secondary";
+      remove.textContent = "Remove";
+      remove.addEventListener("click", () =>
+        changeWorkingFolders({remove: path}).catch((error) => libraryNote(row, error.message))
+      );
+      row.append(look, remove);
+    }
+  }
+  for (const box of document.querySelectorAll("[data-chips-for]")) {
+    box.textContent = "";
+    const field = $(box.dataset.chipsFor);
+    for (const path of workingFolders) {
+      const chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "folder-chip";
+      chip.title = path;
+      chip.textContent = folderName(path);
+      chip.addEventListener("click", () => {
+        if (field.tagName === "TEXTAREA") {
+          const values = lines(field.value);
+          field.value = (values.includes(path) ? values.filter((value) => value !== path) : [...values, path]).join("\n");
+        } else {
+          field.value = path;
+        }
+        field.dispatchEvent(new Event("change"));
+      });
+      box.append(chip);
+    }
+  }
+}
+
+// "Fasse die Dokumente im Ordner Steuer zusammen": a request that names
+// exactly one working folder runs on that folder.
+function workingFolderNamedIn(text) {
+  const folded = text.toLocaleLowerCase();
+  const edge = (character) => !character || !/[\p{L}\p{N}]/u.test(character);
+  const named = workingFolders.filter((path) => {
+    const name = folderName(path).toLocaleLowerCase();
+    const at = folded.indexOf(name);
+    return name && at >= 0 && edge(folded[at - 1]) && edge(folded[at + name.length]);
+  });
+  return named.length === 1 ? named[0] : null;
+}
+
 function showFolderError(error) {
   $("folderStatus").textContent = error instanceof Error ? error.message : String(error);
 }
@@ -1940,6 +2280,15 @@ function openFolderDialog(targetId) {
 
 async function useCurrentFolder() {
   if (!folderCurrentPath || !folderTargetId) return;
+  if (folderTargetId === "workingFolders") {
+    try {
+      await changeWorkingFolders({add: folderCurrentPath});
+      $("folderDialog").close();
+    } catch (error) {
+      showFolderError(error);
+    }
+    return;
+  }
   if (!folderCurrentApproved) {
     const response = await fetch("/api/approve-root", {
       method: "POST",
@@ -1961,6 +2310,7 @@ async function useCurrentFolder() {
     if (!values.includes(folderCurrentPath)) values.push(folderCurrentPath);
     target.value = values.join("\n");
   }
+  target.dispatchEvent(new Event("change"));
   $("folderDialog").close();
   if (folderTargetId === "outputDir" && artifactSurfaceEnabled) loadArtifacts();
 }
@@ -1977,6 +2327,19 @@ function artifactLink(label, outputDir, path) {
   link.rel = "noopener";
   link.textContent = label;
   return link;
+}
+
+// After a reload the dossier names the newest recorded run instead of
+// claiming that nothing ran; the run itself stays one click away.
+function showLastRecordedRun(run) {
+  const result = $("result");
+  if (!run || !result.textContent.startsWith("Nothing has run")) return;
+  result.textContent = "";
+  const status = String(run.status || "unknown").toUpperCase();
+  deskLine(result, "p", null, `Last recorded run: ${run.workflow} · ${status} · ${run.recorded_at || "time unknown"}`);
+  if (run.errors?.length) deskLine(result, "p", null, String(run.errors[0]));
+  const link = deskLine(result, "a", null, "Open it under Artifacts →");
+  link.href = "/artifacts";
 }
 
 async function loadArtifacts() {
@@ -1999,6 +2362,7 @@ async function loadArtifacts() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.detail || data.error || "Artifact catalog failed.");
     gallery.replaceChildren();
+    showLastRecordedRun(data.runs?.[0]);
     if (!data.runs?.length) {
       const empty = document.createElement("p");
       empty.textContent = "No run ledgers exist in this output directory yet.";
@@ -2011,7 +2375,9 @@ async function loadArtifacts() {
       card.className = `artifact-run ${status}`;
       const head = document.createElement("div");
       const heading = document.createElement("h3");
-      heading.textContent = `${run.workflow} · ${run.run_id}`;
+      // When the ledger was written, in this computer's local time.
+      const when = run.recorded_at ? new Date(run.recorded_at).toLocaleString() : "time unknown";
+      heading.textContent = `${run.workflow} · ${when} · ${run.run_id}`;
       const badge = document.createElement("span");
       badge.textContent = run.verification?.valid
         ? `${String(run.status).toUpperCase()} · LEDGER VERIFIED`
@@ -2311,9 +2677,11 @@ async function linkResearchRun(runId) {
 async function loadHomeModules() {
   if ($("homeGlance")) {
     if (!$("homeGlanceRoot").value.trim()) {
-      $("homeGlanceRoot").value = lines($("inputRoots").value)[0] || "";
+      $("homeGlanceRoot").value = workingFolders[0] || lines($("inputRoots").value)[0] || "";
     }
-    if (folderPickerEnabled) await loadHomeGlance();
+    // Nothing to look at until a folder is chosen; the note says where to start.
+    if (folderPickerEnabled && $("homeGlanceRoot").value.trim()) await loadHomeGlance();
+    else if (folderPickerEnabled) $("glanceState").textContent = "Add a working folder above, then look around in it.";
     else {
       $("glanceState").textContent =
         "The corpus overview opens only in a loopback console started with nemofold serve; this server keeps it closed.";
@@ -2635,6 +3003,10 @@ async function loadStatus() {
   try {
     const response = await fetch("/api/status");
     const status = await response.json();
+    if (status.version) $("footerVersion").textContent = `NemoFold ${status.version}`;
+    workingFolders = Array.isArray(status.working_folders) ? status.working_folders : [];
+    if ($("deskProvider")) renderPlannerProviders(status.providers, status.external_models_allowed === true);
+    renderWorkingFolders();
     workflowGraphs = new Map(
       (Array.isArray(status.workflow_graphs) ? status.workflow_graphs : []).map((item) => [item.workflow, item])
     );
@@ -2678,10 +3050,17 @@ async function loadStatus() {
       updateProviderPanel();
       for (const button of document.querySelectorAll("[data-folder-target]")) button.disabled = true;
     } else {
-      // The shipped default names the repository's synthetic corpus; a server
-      // started on other folders says which approved root to begin with.
-      if (status.default_input_root
-          && $("inputRoots").value.trim() === $("inputRoots").defaultValue.trim()) {
+      // The folders chosen last stay chosen across pages (this browser only);
+      // otherwise the console begins at the first working or approved folder.
+      for (const id of rememberedFolderFields) {
+        let kept = "";
+        try { kept = localStorage.getItem(`nemofold.${id}`) || ""; } catch { kept = ""; }
+        if (kept && $(id)) $(id).value = kept;
+        $(id)?.addEventListener("change", () => {
+          try { localStorage.setItem(`nemofold.${id}`, $(id).value); } catch { /* storage unavailable */ }
+        });
+      }
+      if (status.default_input_root && !$("inputRoots").value.trim()) {
         $("inputRoots").value = status.default_input_root;
       }
       configureRoutedPage();
@@ -2690,7 +3069,7 @@ async function loadStatus() {
         button.disabled = !folderPickerEnabled;
       }
     }
-    renderTaskCards();
+    renderBlueprints(libraryEntries);
     if ($("deskRoots") && !$("deskRoots").value.trim()) {
       $("deskRoots").value = lines($("inputRoots").value)[0] || "";
     }
@@ -2720,7 +3099,6 @@ configureRoutedPage();
 // answered. currentPage/currentTab/activeTag are already known from the URL,
 // so the scene can be set in this same synchronous render step.
 updateVoyageScene();
-renderTaskCards();
 if ($("engineHandle")) {
   $("engineHandle").addEventListener("click", () => setEngineDrawer(!engineDrawerIsOpen()));
 }
@@ -2742,8 +3120,12 @@ if (requestedWorkflow && currentTab === "registry") {
   setEngineDrawer(true, {moveFocus: false});
 }
 $("runId").value = "";
-$("workflow").addEventListener("change", () => { applyWorkflowDefaults(); renderTaskCards(); });
+$("workflow").addEventListener("change", applyWorkflowDefaults);
 if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
+for (const radio of document.querySelectorAll("input[name=deskMode]")) {
+  radio.addEventListener("change", updateDeskMode);
+}
+if ($("deskProvider")) $("deskProvider").addEventListener("change", updateDeskProvider);
 if ($("libraryRefresh")) $("libraryRefresh").addEventListener("click", loadLibrary);
 if ($("governanceRefresh")) {
   $("governanceRefresh").addEventListener("click", loadGovernanceRegister);
@@ -2788,6 +3170,13 @@ for (const button of document.querySelectorAll("[data-folder-target]")) {
 }
 $("folderUp").addEventListener("click", () => loadFolderChoices($("folderUp").dataset.path || null).catch(showFolderError));
 $("folderSelectCurrent").addEventListener("click", useCurrentFolder);
+$("folderPathGo").addEventListener("click", goToTypedFolder);
+$("folderPathInput").addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  goToTypedFolder();
+});
+$("folderNative").addEventListener("click", () => pickNativeFolder().catch(showFolderError));
 $("promptLibraryButton").addEventListener("click", () => openPromptLibrary("catalog"));
 $("promptSaveButton").addEventListener("click", saveCurrentPromptSet);
 $("promptLibraryClose").addEventListener("click", () => $("promptLibraryDialog").close());
@@ -2937,13 +3326,9 @@ function renderLibraryCards(list, entries) {
     card.setAttribute("role", "listitem");
     const blueprint = isBlueprint(entry);
     if (blueprint) card.dataset.shipped = "true";
-    const shape = entry.workflows.length > 1 ? `WORKFLOW · ${entry.workflows.length} ACTIONS` : "ACTION";
-    deskLine(
-      card,
-      "span",
-      "library-kind",
-      blueprint ? `${entry.editable ? "MY BLUEPRINT" : "BLUEPRINT"} · ${shape}` : shape
-    );
+    const count = entry.workflows.length;
+    const shape = `WORKFLOW · ${count} ${count === 1 ? "STEP" : "STEPS"}`;
+    deskLine(card, "span", "library-kind", blueprint && entry.editable ? `MY BLUEPRINT · ${shape}` : shape);
     if (entry.overrides_links) {
       const warning = deskLine(card, "p", "library-warning");
       deskLine(warning, "span", "warning-mark", "▲");
@@ -2974,10 +3359,47 @@ function renderLibraryCards(list, entries) {
     button.type = "button";
     button.className = "card-open";
     button.append(instrumentIcon("wheel"), blueprint ? "Add to my use cases" : "Open");
-    button.addEventListener("click", () =>
-      blueprint ? adoptBlueprint(entry) : openLibraryEntry(entry.voyage_id)
-    );
+    button.addEventListener("click", () => {
+      if (entry.notebook) globalThis.location.assign("/#researchNotebook");
+      else if (entry.notebookBlueprint) setNotebookInUseCases(true);
+      else if (entry.contract) adoptAction(entry.contract, card);
+      else if (blueprint) adoptBlueprint(entry);
+      else openLibraryEntry(entry.voyage_id);
+    });
     card.append(button);
+    if (!blueprint) {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "secondary";
+      remove.textContent = "Remove from my use cases";
+      remove.addEventListener("click", () => {
+        // A second click confirms; the blueprint it came from stays untouched.
+        if (remove.dataset.armed !== "true") {
+          remove.dataset.armed = "true";
+          remove.textContent = "Click again to remove";
+          globalThis.setTimeout(() => {
+            remove.dataset.armed = "false";
+            remove.textContent = "Remove from my use cases";
+          }, 4000);
+          return;
+        }
+        if (entry.notebook) setNotebookInUseCases(false);
+        else removeUseCase(entry.voyage_id, card);
+      });
+      card.append(remove);
+    }
+    // Every blueprint can be tried once: a one-step contract as it is, a
+    // shipped or own blueprint with the job of its first step.
+    if (entry.contract || (blueprint && entry.voyage_id)) {
+      const trial = document.createElement("button");
+      trial.type = "button";
+      trial.className = "secondary";
+      trial.textContent = entry.workflows.length > 1 ? "Try step 1 once" : "Try once";
+      trial.addEventListener("click", () =>
+        entry.contract ? prepareWorkflow(entry.contract) : tryBlueprintOnce(entry, card)
+      );
+      card.append(trial);
+    }
     if (blueprint && entry.editable) {
       const edit = document.createElement("button");
       edit.type = "button";
@@ -3029,9 +3451,15 @@ function renderLibraryFilter(entries) {
   const panel = $("libraryFilter");
   if (!panel) return;
   panel.textContent = "";
-  // Only on the tabs where a topic is the point. The registry is non-thematic
-  // and the overview shows everything someone kept.
+  // Only on the tab where a topic is the point; the overview shows everything
+  // someone kept.
   if (!(currentPage === "processes" && currentTab === "workflows")) return;
+  renderTagChips(panel, entries, activeTag, setLibraryTag);
+}
+
+function renderTagChips(panel, entries, active, choose) {
+  if (!panel) return;
+  panel.textContent = "";
   const tags = [...new Set(entries.flatMap((entry) => entry.tags || []))].sort();
   if (!tags.length) return;
   for (const [tag, label] of [["", "All"], ...tags.map((tag) => [tag, tagLabel(tag)])]) {
@@ -3039,30 +3467,43 @@ function renderLibraryFilter(entries) {
     chip.type = "button";
     chip.dataset.tagFilter = tag;
     chip.textContent = label;
-    chip.setAttribute("aria-pressed", String(tag === activeTag));
-    chip.addEventListener("click", () => setLibraryTag(tag));
+    chip.setAttribute("aria-pressed", String(tag === active));
+    chip.addEventListener("click", () => choose(tag));
     panel.append(chip);
   }
 }
 
+let blueprintTag = "";
+
+// D-042: everything is a workflow with one step or several. Shipped presets,
+// the person's own blueprints and every one-step contract the server offers sit
+// side by side and filter by the same topics as the use cases.
 function renderBlueprints(entries) {
   const list = $("blueprintList");
   if (!list) return;
   list.textContent = "";
-  const blueprints = entries.filter(isBlueprint);
-  const sections = [
-    ["WORKFLOW BLUEPRINTS · TWO OR MORE ACTIONS", blueprints.filter((e) => !e.editable && e.workflows.length > 1)],
-    ["SINGLE-ACTION BLUEPRINTS · PRECONFIGURED", blueprints.filter((e) => !e.editable && e.workflows.length === 1)],
-    ["MY BLUEPRINTS", blueprints.filter((e) => e.editable)]
-  ];
-  for (const [title, items] of sections) {
-    deskLine(list, "p", "kicker library-group-title", title);
-    if (!items.length) {
-      libraryNote(list, "None yet. Open one of your use cases and choose Save as blueprint.");
-      continue;
-    }
-    renderLibraryCards(deskLine(list, "div", "library-group"), items);
-  }
+  const contracts = [...new Set([...$("workflow").options].map((option) => option.value))]
+    .filter((workflow) => workflowCards[workflow]);
+  const oneStep = contracts.map((workflow) => ({
+    contract: workflow,
+    name: workflowCards[workflow].title,
+    description: workflowCards[workflow].benefit,
+    workflows: [workflow],
+    editable: false,
+    tags: actionTags(workflow)
+  }));
+  const notebook = notebookInUseCases() || publicDemo ? [] : [{notebookBlueprint: true,
+    name: "Research notebook", description: notebookDescription, workflows: ["evidence_analyst"],
+    editable: false, tags: ["document-analysis"]}];
+  const tiles = [...notebook, ...entries.filter(isBlueprint), ...oneStep];
+  renderTagChips($("blueprintFilter"), tiles, blueprintTag, (tag) => {
+    const cameFromChip = document.activeElement?.dataset?.tagFilter !== undefined;
+    blueprintTag = tag;
+    renderBlueprints(libraryEntries);
+    if (cameFromChip) $("blueprintFilter").querySelector(`[data-tag-filter="${CSS.escape(tag)}"]`)?.focus();
+  });
+  const shown = blueprintTag ? tiles.filter((tile) => (tile.tags || []).includes(blueprintTag)) : tiles;
+  renderLibraryCards(deskLine(list, "div", "library-group"), shown);
 }
 
 function renderLibrary(entries) {
@@ -3070,6 +3511,10 @@ function renderLibrary(entries) {
   list.textContent = "";
   renderBlueprints(entries);
   entries = entries.filter((entry) => !isBlueprint(entry));
+  if (notebookInUseCases() && !publicDemo) {
+    entries = [{notebook: true, name: "Research notebook", description: notebookDescription,
+      workflows: ["evidence_analyst"], editable: true, tags: ["document-analysis"]}, ...entries];
+  }
   renderLibraryFilter(entries);
   if (!entries.length) {
     libraryNote(
@@ -3179,6 +3624,31 @@ async function adoptBlueprint(entry) {
     await openLibraryEntry(payload.voyage.voyage_id);
   } catch (error) {
     libraryNote(list, `Not added: ${error.message}`);
+  }
+}
+
+async function tryBlueprintOnce(entry, card) {
+  if (entry.first_step) {
+    // A shipped blueprint: its first contract with the blueprint's settings,
+    // on the folders currently chosen in the engine room.
+    prepareWorkflow(entry.workflows[0]);
+    $("questions").value = (entry.first_step.questions || []).join("\n");
+    $("parameters").value = JSON.stringify(entry.first_step.parameters || {}, null, 2);
+    $("draftState").textContent = `Loaded “${entry.name}”, step 1 of ${entry.workflows.length}, for review.`;
+    return;
+  }
+  try {
+    const response = await fetch(`/api/voyage?id=${encodeURIComponent(entry.voyage_id)}`);
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    const first = payload.voyage.steps?.[0];
+    if (!first?.job) throw new Error("this blueprint has no step to try");
+    applyDraft({job: first.job, name: `${entry.name} · step 1 of ${entry.workflows.length}`});
+    setEngineDrawer(true);
+  } catch (error) {
+    libraryNote(card, `Not loaded: ${error.message}`);
   }
 }
 
@@ -3434,6 +3904,21 @@ async function saveOpenAsBlueprint() {
     libraryNote(diff, `Saved as blueprint "${payload.voyage.name}". It is listed under Blueprints.`);
   } catch (error) {
     libraryNote(diff, `Not saved as blueprint: ${error.message}`);
+  }
+}
+
+async function removeUseCase(voyageId, card) {
+  try {
+    const response = await fetch("/api/voyage-delete", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: voyageId})
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || payload.error || "not removed");
+    await loadLibrary();
+  } catch (error) {
+    libraryNote(card, `Not removed: ${error.message}`);
   }
 }
 

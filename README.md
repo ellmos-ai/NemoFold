@@ -848,8 +848,11 @@ python -m nemofold serve --allow-root $PWD --base-dir $PWD
 ```
 
 Open `http://127.0.0.1:8765`; the label at the top reads `FULL LOCAL CONSOLE` (the
-demo below reads `PUBLIC DEMO · SYNTHETIC DATA ONLY`). The default example folder is the
-fictional case file `examples/synthetic-case`, with default questions in German. The
+demo below reads `PUBLIC DEMO · SYNTHETIC DATA ONLY`). The full console starts clean:
+no example folder and no example questions; it begins at your first working folder, or
+else at the first folder passed with `--allow-root`. The fictional case file
+`examples/synthetic-case` and its German questions belong to the public demo
+(`--allow-root examples/synthetic-case` opens the same case in the full console). The
 console uses the same strict job parser and
 application service as the CLI. It starts on loopback only, rejects cross-origin POSTs,
 and requires `--expose-network` before it will bind to a non-loopback address. Even
@@ -859,23 +862,26 @@ hosting for other people goes through `serve-demo`. Preview is the default safe 
 action workflows additionally require the server-side `--approve-actions` gate before
 an apply request can succeed.
 
-The start page `/` is the **workbench**: the Captain's Desk on top and the engine room
-open below it (the first menu item is *Engine room*). The overview and four work areas use distinct, bookmarkable routes instead of in-page
-scroll jumps: `/`, `/folders`, `/processes`, `/governance` and `/connections`. Analysis,
-Routines and Artifacts used to be rooms of their own, which meant the door you came
-through decided what you could see. They are now three tabs of Processes & Workflows —
-`?tab=workflows` (My use cases), `?tab=registry` (Blueprints) and `?tab=artifacts`
-(the URL keys are unchanged). The old routes still lead
-somewhere: `/document-center`, `/analysis`, `/routines` and `/artifacts` redirect to
-their replacement, and a link that names one contract lands in the Blueprints tab with
-that contract selected.
+The start page `/` is the **workbench**: the Captain's Desk on top, the engine room
+open below it and the folded ship's chart at the end, nothing else (the first menu item
+is *Engine room*). The engine room shows its four areas - mission, bounded territory,
+authority and budget, reasoning worker - as separate tinted tiles. The overview and five work areas use distinct, bookmarkable routes instead of in-page
+scroll jumps: `/`, `/folders`, `/processes`, `/artifacts`, `/governance` and
+`/connections`. Analysis and Routines used to be rooms of their own, which meant the
+door you came through decided what you could see. They are now the two tabs of
+Processes & Workflows, `?tab=workflows` (My use cases) and `?tab=registry`
+(Blueprints); Artifacts is an area of its own. The old routes still lead somewhere:
+`/document-center`, `/analysis` and `/routines` redirect to their replacement,
+`/processes?tab=artifacts` to `/artifacts`, and a link that names one contract lands
+in the Blueprints tab with that contract selected.
 
-Vocabulary: an **action** is one step, i.e. one of the 44 job contracts (the API field
-is still `workflow`); a **workflow** is a chain of two or more actions; a **use case**
-is an action or workflow you adopted and bound to your own folders; **blueprints** are
-the templates. The Blueprints tab lists workflow blueprints (two or more steps),
-single-action blueprints, *My blueprints*, and below them all 44 actions, each with
-*Add to my use cases* and *Try once*. A blueprint can be adopted any number of times
+Vocabulary: everything you can run is a **workflow**, with one step or several; a step
+is one of the 44 job contracts (the API field is still `workflow`). A **use case** is a
+workflow you adopted and bound to your own folders; **blueprints** are the templates.
+The Blueprints tab shows every blueprint as an equal tile - the shipped presets, *My
+blueprints* and the 44 one-step workflows - filtered by the same topic chips as My use
+cases. Each tile offers *Add to my use cases*; a one-step workflow can also be tried
+once in the engine room. A blueprint can be adopted any number of times
 (copies are numbered) and renamed in the dialog; a use case can be saved as a blueprint
 of your own or removed with *Remove from my use cases*, which never touches its
 blueprint. Use-case details open as a dialog.
@@ -884,17 +890,48 @@ What stands in front changed, not the rooms. Use-case tiles are the primary obje
 filtered by topic tags, and a routine is simply a use case that carries a schedule and
 the derived `scheduled` tag — choosing that filter is what turns the porthole into the
 echo sounder: recent runs of the actions your routines use, manual runs of the same
-action included, since NemoFold does not tie a run to a schedule. The single actions, meaning the
-44 actions (job contracts) on their own, are listed in the Blueprints tab, with the
-engine room as their editor. Folders is the home of your folders: which ones are watched, what
-is actually on board, and the use cases bound to them. In the local console the folder
-dialog browses any folder on this computer and approves it for the current session
-(`/api/approve-root`); reading starts only after that approval. The public demo and a
-network-exposed server refuse it. Below the workbench the start page keeps one
-headline, one sentence and the area cards, and folds the boundary tiles, the evidence
-chain, the contract register and the roadmap behind an antique ship's chart that
-unfolds on click or Enter. Nothing is removed; documentation simply stops crowding the
-surface.
+action included, since NemoFold does not tie a run to a schedule. The one-step
+workflows sit among the blueprints, with the engine room as their editor.
+
+Folders is the home of your **working folders**: you add them once and they stay
+approved at every later start of this loopback console
+(`run-reports/web-console/working-folders.json`, `/api/working-folders`). The captain
+and the engine room offer them as one-click chips, the captain takes several folders,
+and a request that names exactly one working folder ("Summarize the documents in
+Taxes") runs on that folder. Folders also shows what is actually on board and *Your
+folder workflows*. In the local console the folder dialog browses any folder on this
+computer, takes a typed or pasted path, or opens the system folder dialog of this
+computer (`/api/pick-folder`); approving a folder for the session
+(`/api/approve-root`) or keeping it as a working folder is always an explicit click,
+and reading starts only after it. The public demo and a network-exposed server refuse
+all of these, and a network-exposed server never loads working folders. The ship's
+chart at the end of the start page folds the boundary tiles, the evidence chain, the
+area map and the roadmap; it unfolds on click or Enter.
+
+The captain plans in one of three modes, chosen per request. *Keywords* (the default)
+is a local, deterministic match of task words; a document request without one falls
+back to Evidence Analyst with the sentence itself as the question. *A model chooses*
+lets a reasoning worker read the sentence and the workflow catalogue - never a
+document - and pick up to six workflows; the choice is checked against the catalogue
+and the plan is built exactly as for keywords. A local Ollama or LM Studio model needs
+no approval; an external provider needs `--allow-external-models` and an approval for
+that one request, and receives the sentence pseudonymized. *Brief for a CLI agent*
+copies a prompt with the folders, the catalogue, the job format, the commands and the
+rules to the clipboard, for an agent such as Claude Code or Codex. A plan can be
+prepared as drafts in the job inbox (engine room, *Run identity & prepared jobs*) or
+run at once: *Run all steps* keeps it as one of My use cases and runs its steps one
+after another, locally and as a dry run.
+
+The model field of a local provider offers the models that server actually holds;
+models it only relays to a cloud (`:cloud`) are not offered and are refused as a local
+model, so "loopback, local only" stays true. Some local builds cannot force a JSON
+answer; the adapter then asks once more with the schema as an instruction. The
+research notebook sits under the engine room as the quick investigation mode and
+ships as one of My use cases. Artifacts lists every run ledger below the output scope,
+failed and blocked runs included, with the date and time it was written. Connections
+shows what this computer shows per adapter - local server running, CLI found, key
+variable set, never a key value - and names the 2026-09-02 proof run as the only
+Nemotron proof.
 
 Governance renders the authority this server was started with — the file-action,
 external-model and network gates, approved roots, budget ceiling and contracted

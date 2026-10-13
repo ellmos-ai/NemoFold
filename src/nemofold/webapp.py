@@ -2,6 +2,10 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
+import socket
+import subprocess
+import sys
 import threading
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
@@ -11,6 +15,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any
 from urllib.parse import parse_qs, quote, urlparse
+from urllib.request import urlopen
 from uuid import uuid4
 
 from . import __version__
@@ -18,10 +23,16 @@ from .application import ExecutionConfig, preview_job, run_job
 from .contracts import RunStatus, to_primitive
 from .drafts import DraftStore
 from .job_io import ALLOWED_FIELDS, SUPPORTED_WORKFLOWS, JobFileError, parse_job_payload
+from .model_planner import plan_with_model
 from .notebooks import ResearchNotebookStore
 from .policies import PolicyStore, default_rights, policy_exceptions
 from .provider_analysis import analyze_with_provider, preview_provider_context
-from .providers import provider_capabilities, provider_config_from_mapping
+from .providers import (
+    PROVIDER_DESCRIPTORS,
+    is_relayed_cloud_model,
+    provider_capabilities,
+    provider_config_from_mapping,
+)
 from .report_verifier import verify_run_report
 from .voyage_edit import edit_to_primitive, plan_voyage_edit
 from .voyage_runs import run_voyage, voyage_run_payload
@@ -79,11 +90,14 @@ PAGE_ROUTES: dict[str, str] = {
     "/": "overview",
     "/folders": "folders",
     "/processes": "processes",
+    "/artifacts": "artifacts",
     "/governance": "governance",
     "/connections": "connections",
 }
 PAGE_TABS: dict[str, tuple[str, ...]] = {
-    "processes": ("workflows", "registry", "artifacts"),
+    "processes": ("workflows", "registry"),
+    # Artifacts is its own area since 2026-10-13; its one tab keeps the styles.
+    "artifacts": ("artifacts",),
     "governance": ("policies", "rules"),
 }
 # The old routes keep working. A link that names one technical contract lands in
@@ -93,7 +107,6 @@ ROUTE_ALIASES: dict[str, str] = {
     "/document-center": "/folders",
     "/analysis": "/processes?tab=workflows",
     "/routines": "/processes?tab=workflows&tag=scheduled",
-    "/artifacts": "/processes?tab=artifacts",
 }
 
 
@@ -233,6 +246,17 @@ class NemoFoldHTTPServer(ThreadingHTTPServer):
         self.app_config = config
         self.demo_slots = threading.BoundedSemaphore(config.max_parallel_jobs)
         self.roots_lock = threading.Lock()
+        # D-044: the operator's working folders stay approved across restarts
+        # of a loopback console; the demo and a network-exposed server never
+        # widen their roots from a file.
+        self.cli_roots = config.execution.allowed_roots
+        if not config.public_demo and not config.exposed_to_network:
+            roots = config.execution.allowed_roots
+            kept = tuple(f for f in _load_working_folders(config.base_dir) if f not in roots)
+            if kept:
+                self.app_config = replace(
+                    config, execution=replace(config.execution, allowed_roots=(*roots, *kept))
+                )
 
 
 class NemoFoldRequestHandler(BaseHTTPRequestHandler):
@@ -347,6 +371,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         if page_path in ROUTE_ALIASES:
             self._redirect(_alias_target(page_path, parsed_path.query))
             return
+        if page_path == "/processes" and "artifacts" in parse_qs(parsed_path.query).get("tab", []):
+            self._redirect("/artifacts")
+            return
         if page_path in PAGE_ROUTES:
             try:
                 page = (WEB_ROOT / "index.html").read_text(encoding="utf-8")
@@ -445,6 +472,11 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                         if provider_surface_enabled
                         else None
                     ),
+                    "working_folders": (
+                        _load_working_folders(self.server.app_config.base_dir)
+                        if provider_surface_enabled and not public_demo
+                        else []
+                    ),
                     # The public demo accepts only these parameters, so the
                     # console takes them from here rather than keeping a copy.
                     "public_demo_parameters": (
@@ -459,9 +491,19 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                     "workflows": sorted(available_workflows),
                     "workflow_graphs": workflow_graphs(available_workflows),
                     "cores": list(CORE_NAMES),
-                    "providers": provider_capabilities() if provider_surface_enabled else [],
+                    "providers": (
+                        [
+                            {**item, "readiness": _provider_readiness(item)}
+                            for item in provider_capabilities()
+                        ]
+                        if provider_surface_enabled
+                        else []
+                    ),
                 }
             )
+            return
+        if path == "/api/local-models":
+            self._handle_local_models(parse_qs(parsed_path.query).get("provider", [""])[0])
             return
         if path == "/api/drafts":
             self._handle_draft_list()
@@ -524,6 +566,8 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/provider-preview",
             "/api/folders",
             "/api/approve-root",
+            "/api/pick-folder",
+            "/api/working-folders",
             "/api/corpus-glance",
             "/api/artifacts",
             "/api/drafts",
@@ -549,6 +593,8 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/provider-preview",
                 "/api/folders",
                 "/api/approve-root",
+                "/api/pick-folder",
+                "/api/working-folders",
                 "/api/corpus-glance",
                 "/api/artifacts",
                 "/api/drafts",
@@ -605,6 +651,12 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/approve-root":
             self._handle_approve_root()
+            return
+        if path == "/api/pick-folder":
+            self._handle_pick_folder()
+            return
+        if path == "/api/working-folders":
+            self._handle_working_folders()
             return
         if path == "/api/corpus-glance":
             self._handle_corpus_glance()
@@ -806,26 +858,138 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             payload = self._read_json()
             if not isinstance(payload, dict) or set(payload) != {"path"}:
                 raise ValueError("request body must carry only path")
-            raw = payload["path"]
-            if not isinstance(raw, str) or not Path(raw).is_absolute():
-                raise ValueError("path must be an absolute folder path")
-            if any(_is_link(part) for part in (Path(raw), *Path(raw).parents)):
-                raise ValueError("a linked folder cannot be approved")
-            folder = Path(raw).resolve()
-            if not folder.is_dir():
-                raise ValueError("folder must be an existing directory")
-            with self.server.roots_lock:
-                config = self.server.app_config
-                roots = config.execution.allowed_roots
-                if _matching_folder_root(folder, _allowed_folder_roots(config)) is None:
-                    roots = (*roots, str(folder))
-                    self.server.app_config = replace(
-                        config, execution=replace(config.execution, allowed_roots=roots)
-                    )
+            folder = _approvable_folder(payload["path"])
+            roots = self._approve_for_session(folder)
         except (OSError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "approve_root_rejected", str(exc))
             return
         self._json({"ok": True, "path": str(folder), "approved_roots": list(roots)})
+
+    def _approve_for_session(self, folder: Path) -> tuple[str, ...]:
+        with self.server.roots_lock:
+            config = self.server.app_config
+            roots = config.execution.allowed_roots
+            if _matching_folder_root(folder, _allowed_folder_roots(config)) is None:
+                roots = (*roots, str(folder))
+                self.server.app_config = replace(
+                    config, execution=replace(config.execution, allowed_roots=roots)
+                )
+            return roots
+
+    def _handle_working_folders(self) -> None:
+        # Kept folders are approved like --allow-root, now and at every later
+        # start of this loopback console. Removing one forgets it and ends its
+        # approval unless the server was started with it; files are untouched.
+        if self.server.app_config.exposed_to_network:
+            self._reject_before_body_read(
+                HTTPStatus.FORBIDDEN,
+                "folder_picker_loopback_only",
+                "working folders are disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict) or set(payload) not in ({"add"}, {"remove"}):
+                raise ValueError("request body must carry exactly one of add or remove")
+            base_dir = self.server.app_config.base_dir
+            kept = list(_load_working_folders(base_dir))
+            if "add" in payload:
+                folder = str(_approvable_folder(payload["add"]))
+                self._approve_for_session(Path(folder))
+                if folder not in kept:
+                    kept.append(folder)
+            else:
+                folder = payload["remove"]
+                if folder not in kept:
+                    raise ValueError("not a working folder")
+                kept.remove(folder)
+                with self.server.roots_lock:
+                    config = self.server.app_config
+                    if folder not in self.server.cli_roots:
+                        roots = tuple(r for r in config.execution.allowed_roots if r != folder)
+                        self.server.app_config = replace(
+                            config, execution=replace(config.execution, allowed_roots=roots)
+                        )
+            _save_working_folders(base_dir, kept)
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "working_folders_rejected", str(exc))
+            return
+        self._json(
+            {
+                "ok": True,
+                "working_folders": kept,
+                "approved_roots": list(self.server.app_config.execution.allowed_roots),
+            }
+        )
+
+    def _handle_local_models(self, provider_id: str) -> None:
+        # Asks the local model server on its fixed loopback address which models
+        # it holds, so the console offers what is installed instead of a guess.
+        # No document leaves; the demo and a network-exposed server never ask.
+        if self.server.app_config.public_demo:
+            self._error(HTTPStatus.NOT_FOUND, "not_found", "/api/local-models")
+            return
+        if self.server.app_config.exposed_to_network:
+            self._error(
+                HTTPStatus.FORBIDDEN,
+                "surface_loopback_only",
+                "/api/local-models is disabled when the HTTP server is network-exposed",
+            )
+            return
+        descriptor = PROVIDER_DESCRIPTORS.get(provider_id)
+        if descriptor is None or descriptor.external_transfer or not descriptor.default_base_url:
+            self._error(HTTPStatus.BAD_REQUEST, "local_models_rejected", "not a local provider")
+            return
+        try:
+            with urlopen(descriptor.default_base_url + "/models", timeout=2) as response:  # noqa: S310
+                payload = json.load(response)
+        except (OSError, ValueError):
+            self._json({"ok": True, "reachable": False, "models": []})
+            return
+        data = payload.get("data") if isinstance(payload, dict) else None
+        # A model the local server only relays to a cloud is not local.
+        models = sorted(
+            {
+                str(item["id"])
+                for item in data or []
+                if isinstance(item, dict)
+                and item.get("id")
+                and not is_relayed_cloud_model(str(item["id"]))
+            }
+        )
+        self._json({"ok": True, "reachable": True, "models": models})
+
+    def _handle_pick_folder(self) -> None:
+        # The server runs on the operator's own computer, so it can open the
+        # system folder dialog there; a browser never hands a page a real path.
+        # The pick only navigates the folder browser: approving stays a click.
+        if self.server.app_config.exposed_to_network:
+            self._reject_before_body_read(
+                HTTPStatus.FORBIDDEN,
+                "folder_picker_loopback_only",
+                "the system folder dialog is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if payload != {}:
+                raise ValueError("request body must be an empty object")
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "pick_folder_rejected", str(exc))
+            return
+        try:
+            picked = subprocess.run(  # noqa: S603 - fixed interpreter and script
+                [sys.executable, "-c", _PICK_FOLDER_SCRIPT],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=600,
+                check=True,
+            ).stdout.strip()
+        except (OSError, subprocess.SubprocessError) as exc:
+            self._json({"available": False, "path": None, "detail": str(exc)[:300]})
+            return
+        self._json({"available": True, "path": os.path.normpath(picked) if picked else None})
 
     def _handle_corpus_glance(self) -> None:
         if self.server.app_config.exposed_to_network:
@@ -869,7 +1033,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             payload = self._read_json()
             if not isinstance(payload, dict):
                 raise ValueError("request body must be an object")
-            unknown = sorted(set(payload) - {"text", "context"})
+            unknown = sorted(set(payload) - {"text", "context", "planner", "workflows"})
             if unknown:
                 raise ValueError(f"unknown request fields: {', '.join(unknown)}")
             context = payload.get("context") or {}
@@ -889,8 +1053,15 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             text = payload.get("text")
             if not isinstance(text, str):
                 raise ValueError("text must be a string")
-            plan = plan_voyage(text, input_roots=tuple(input_roots), output_dir=output_dir)
-        except (OSError, ValueError) as exc:
+            chosen, reason = self._planned_workflows(payload, text)
+            plan = plan_voyage(
+                text,
+                input_roots=tuple(input_roots),
+                output_dir=output_dir,
+                chosen=chosen,
+                chosen_reason=reason,
+            )
+        except (OSError, RuntimeError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "wizard_request_rejected", str(exc))
             return
         result = plan_to_primitive(plan)
@@ -948,6 +1119,48 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         result["prepared"] = True
         result["drafts"] = drafts
         self._json(result)
+
+    def _planned_workflows(
+        self, payload: dict[str, Any], text: str
+    ) -> tuple[tuple[str, ...] | None, str]:
+        """Workflows a reasoning worker chose, or None for the keyword planner.
+
+        ``workflows`` carries a choice already made (Prepare repeats the plan
+        without asking the worker again); ``planner`` asks one now. The worker
+        reads the sentence and the catalogue only, never a document, and an
+        external one needs the server gate and a one-request approval.
+        """
+        workflows = payload.get("workflows")
+        if workflows is not None:
+            if not isinstance(workflows, list) or not all(isinstance(i, str) for i in workflows):
+                raise ValueError("workflows must be a list of workflow ids")
+            return tuple(workflows), ""
+        planner = payload.get("planner")
+        if planner is None:
+            return None, ""
+        if not isinstance(planner, dict) or set(planner) - {
+            "provider_id",
+            "model",
+            "approve_transfer",
+        }:
+            raise ValueError("planner must carry provider_id, model and approve_transfer")
+        config = provider_config_from_mapping(
+            {
+                "provider_id": planner.get("provider_id"),
+                "model": planner.get("model"),
+                "max_output_tokens": 800,
+                "timeout_seconds": 300,
+            }
+        )
+        if config.descriptor.external_transfer and not (
+            self.server.app_config.execution.external_models_allowed
+            and planner.get("approve_transfer") is True
+        ):
+            raise ValueError(
+                "an external planner needs a server started with --allow-external-models "
+                "and your approval for this one request"
+            )
+        return plan_with_model(text, config)
 
     def _voyage_store(self) -> VoyageStore:
         return VoyageStore(
@@ -1628,15 +1841,87 @@ def _allowed_folder_roots(config: WebAppConfig) -> tuple[Path, ...]:
 
 
 def _default_input_root(config: WebAppConfig) -> str | None:
-    roots = _allowed_folder_roots(config)
-    if not roots:
-        return None
-    # D-040: the fictional case file is the example to start from.
-    for name in ("synthetic-case", "synthetic-home"):
-        synthetic = config.base_dir / "examples" / name
-        if synthetic.is_dir() and _matching_folder_root(synthetic.resolve(), roots) is not None:
-            return f"examples/{name}"
-    return str(roots[0])
+    # D-043/D-044: the full console starts clean, at the operator's first
+    # working folder or else the first approved folder that is more than the
+    # base folder holding the reports; the fictional case file belongs to the
+    # public demo only.
+    kept = _load_working_folders(config.base_dir)
+    if kept and not config.public_demo:
+        return kept[0]
+    base = config.base_dir.resolve()
+    roots = [root for root in _allowed_folder_roots(config) if root != base]
+    return str(roots[0]) if roots else None
+
+
+_CLI_EXECUTABLES = {"codex-cli": "codex", "claude-code": "claude"}
+
+
+def _provider_readiness(item: dict[str, object]) -> str:
+    """What this computer shows of an adapter right now; never a proof of a run.
+
+    A key is only reported as present or absent, never read out; a local model
+    server is a loopback port that answers or not; a personal CLI bridge is an
+    executable on PATH or not.
+    """
+    transport = item.get("transport")
+    if transport == "provider_api":
+        variable = item.get("api_key_env")
+        return "key_present" if isinstance(variable, str) and os.environ.get(variable) else "no_key"
+    if transport == "subscription_cli":
+        executable = _CLI_EXECUTABLES.get(str(item.get("provider_id")), "")
+        return "cli_found" if executable and shutil.which(executable) else "cli_missing"
+    url = urlparse(str(item.get("default_base_url") or ""))
+    if url.hostname not in {"127.0.0.1", "localhost", "::1"} or url.port is None:
+        return "unknown"
+    try:
+        with socket.create_connection((url.hostname, url.port), timeout=0.2):
+            return "running"
+    except OSError:
+        return "not_running"
+
+
+def _approvable_folder(raw: object) -> Path:
+    if not isinstance(raw, str) or not Path(raw).is_absolute():
+        raise ValueError("path must be an absolute folder path")
+    if any(_is_link(part) for part in (Path(raw), *Path(raw).parents)):
+        raise ValueError("a linked folder cannot be approved")
+    folder = Path(raw).resolve()
+    if not folder.is_dir():
+        raise ValueError("folder must be an existing directory")
+    return folder
+
+
+def _working_folders_file(base_dir: Path) -> Path:
+    return base_dir / "run-reports" / "web-console" / "working-folders.json"
+
+
+def _load_working_folders(base_dir: Path) -> tuple[str, ...]:
+    """The operator's kept folders that still exist; anything else is skipped."""
+    try:
+        payload = json.loads(_working_folders_file(base_dir).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ()
+    folders = payload.get("folders") if isinstance(payload, dict) else None
+    kept: list[str] = []
+    for raw in folders if isinstance(folders, list) else []:
+        try:
+            folder = str(_approvable_folder(raw))
+        except (OSError, ValueError):
+            continue
+        if folder not in kept:
+            kept.append(folder)
+    return tuple(kept)
+
+
+def _save_working_folders(base_dir: Path, folders: list[str]) -> None:
+    target = _working_folders_file(base_dir)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    data = json.dumps(
+        {"schema": "nemofold.working-folders.v1", "folders": folders}, indent=2
+    ).encode("utf-8")
+    tmp = target.with_name(target.name + ".tmp")
+    tmp.write_bytes(data)
+    os.replace(tmp, target)
 
 
 def _matching_folder_root(candidate: Path, roots: tuple[Path, ...]) -> Path | None:
@@ -1676,6 +1961,16 @@ def _computer_places() -> list[dict[str, str]]:
     else:
         places.append("/")
     return [{"name": place, "path": place} for place in places]
+
+
+_PICK_FOLDER_SCRIPT = """
+import tkinter, tkinter.filedialog
+root = tkinter.Tk()
+root.withdraw()
+root.attributes("-topmost", True)
+path = tkinter.filedialog.askdirectory(title="Choose a folder for NemoFold", mustexist=True)
+print(path or "")
+"""
 
 
 def _folder_listing(
@@ -1765,17 +2060,31 @@ def _ledger_paths(output: Path) -> tuple[Path, ...]:
 
 
 def _ledger_candidates(output: Path) -> tuple[Path, ...]:
-    """Every ledger in ``output``, newest first and without the display cap."""
-    ledger_root = output / "ledger"
-    if not ledger_root.is_dir() or ledger_root.is_symlink():
-        return ()
+    """Every ledger in ``output``, newest first and without the display cap.
+
+    A voyage step writes into its own folder below the output scope
+    (``voyage/01-<workflow>/ledger``), so ledgers up to two folders deep count
+    too; a link that leads outside the scope never does.
+    """
+    output = output.resolve()
+    seen: set[Path] = set()
     candidates: list[tuple[int, Path]] = []
-    for path in ledger_root.glob("*.json"):
-        try:
-            if path.is_file() and not path.is_symlink():
-                candidates.append((path.stat().st_mtime_ns, path.resolve()))
-        except OSError:
-            continue
+    for pattern in ("ledger/*.json", "*/ledger/*.json", "*/*/ledger/*.json"):
+        for path in output.glob(pattern):
+            try:
+                resolved = path.resolve()
+                if (
+                    resolved in seen
+                    or not path.is_file()
+                    or path.is_symlink()
+                    or path.parent.is_symlink()
+                    or not resolved.is_relative_to(output)
+                ):
+                    continue
+                seen.add(resolved)
+                candidates.append((path.stat().st_mtime_ns, resolved))
+            except OSError:
+                continue
     candidates.sort(key=lambda item: (item[0], item[1].name.casefold()), reverse=True)
     return tuple(path for _, path in candidates)
 

@@ -292,6 +292,12 @@ def _failure_reason(exc: BaseException) -> str:
     """
     if isinstance(exc, NotImplementedError):
         return str(exc)
+    if isinstance(exc, MemoryError):
+        return (
+            "workflow_error:MemoryError: this folder is too large for this workflow on this "
+            "computer. Choose a narrower folder, or use Corpus Query or Evidence Analyst, "
+            "which read a large corpus in bounded pieces."
+        )
     frame = exc.__traceback__
     origin = ""
     while frame is not None:
@@ -2471,6 +2477,9 @@ def _check_insurance_authority(
     )
 
 
+MAX_SYNOPSIS_SOURCES = 500
+
+
 def _execute_synopsis_merge(
     job: JobEnvelope,
     inventory: InventoryResult,
@@ -2484,6 +2493,14 @@ def _execute_synopsis_merge(
     insurance_metadata = _check_insurance_authority(
         job, inventory, run_id=run_id
     )
+    # One synopsis of thousands of documents helps nobody and exhausted the
+    # memory of a laptop on a real 8,000-file folder (GUI test 2026-10-13).
+    if len(inventory.records) > MAX_SYNOPSIS_SOURCES:
+        raise ValueError(
+            f"Synopsis Merge folds at most {MAX_SYNOPSIS_SOURCES} documents into one "
+            f"synopsis; this folder holds {len(inventory.records)}. Choose a narrower "
+            "folder, or use Corpus Query or Evidence Analyst for a large corpus."
+        )
     texts = _read_text_sources(inventory, job)
     structured_source_ids = frozenset(
         record.source_id for record in inventory.records

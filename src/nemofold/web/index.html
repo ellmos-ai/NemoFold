@@ -50,6 +50,7 @@
         <a href="/" data-page-link="overview">Engine room</a>
         <a href="/folders" data-page-link="folders">Folders</a>
         <a href="/processes" data-page-link="processes">Processes &amp; Workflows</a>
+        <a href="/artifacts" data-page-link="artifacts">Artifacts</a>
         <a href="/governance" data-page-link="governance">Governance</a>
         <a href="/connections" data-page-link="connections">Connections</a>
       </div>
@@ -67,24 +68,39 @@
     <section id="captainsDesk" class="captains-desk" aria-labelledby="captainsDeskTitle" data-page-section="overview">
       <div class="desk-head">
         <p class="kicker">ASK THE CAPTAIN</p>
-        <h2 id="captainsDeskTitle">Say what you need. The desk prepares the work.</h2>
+        <h1 id="captainsDeskTitle">Say what you need. The desk prepares the work.</h1>
         <p>The desk reads one plain sentence and prepares a chain of job drafts for you to check and run. It plans only: nothing is executed, nothing is sent, and every draft stays dry-run and local until you open it.</p>
       </div>
       <form id="deskForm" class="desk-form">
         <label class="desk-request">Your request
-          <textarea id="deskRequest" rows="2" maxlength="2000" placeholder="Erstelle eine Zeitachse zum Fall und zeig mir, wessen Angaben sich widersprechen"></textarea>
+          <textarea id="deskRequest" rows="2" maxlength="2000" placeholder="e.g. Build a timeline from these files and show me where statements contradict each other"></textarea>
         </label>
+        <fieldset class="desk-modes">
+          <legend>How the captain plans</legend>
+          <label><input type="radio" name="deskMode" value="keywords" checked> Keywords <span>local and instant</span></label>
+          <label><input type="radio" name="deskMode" value="model"> A model chooses <span>it reads your sentence and the workflow list, never a document</span></label>
+          <label><input type="radio" name="deskMode" value="brief"> Brief for a CLI agent <span>e.g. Claude Code or Codex · copied to the clipboard</span></label>
+        </fieldset>
+        <div id="deskPlanner" class="desk-planner" hidden>
+          <label>Provider<select id="deskProvider"></select></label>
+          <label>Model<input id="deskModel" autocomplete="off" list="deskModelList" placeholder="Choose a model"><datalist id="deskModelList"></datalist></label>
+          <label id="deskApproveRow" class="desk-approve" hidden><input type="checkbox" id="deskApprove"> Send this one sentence, pseudonymized, to this provider</label>
+        </div>
         <div class="desk-controls">
-          <label>Approved folder <span>the root every step may read</span>
-            <input id="deskRoots" autocomplete="off" placeholder="examples/synthetic-case">
-          </label>
+          <div class="desk-folders">
+            <label>Approved folders <span>one per line · every step may read them</span>
+              <textarea id="deskRoots" rows="2" spellcheck="false" placeholder="Add a folder, or click a working folder below"></textarea>
+            </label>
+            <button type="button" class="path-add secondary" data-folder-target="deskRoots">+ Add folder</button>
+            <div class="folder-chips" data-chips-for="deskRoots"></div>
+          </div>
           <button type="submit" id="deskPlan">Chart the voyage</button>
         </div>
       </form>
       <div id="deskAnswer" class="desk-answer" role="status" aria-live="polite"></div>
     </section>
 
-    <aside id="engineRoom" class="engine-drawer" data-page-section="overview processes" data-page-tab="registry" aria-labelledby="consoleTitle" data-open="false">
+    <aside id="engineRoom" class="engine-drawer" data-page-section="overview processes" data-page-tab="registry workflows" aria-labelledby="consoleTitle" data-open="false">
       <div class="drawer-shell">
         <div class="drawer-head">
           <div class="drawer-title">
@@ -104,12 +120,11 @@
             <legend>01 · Mission</legend>
             <div class="form-grid">
               <div class="workflow-choice">
-                <label>Action<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>document_registry</option><option>fact_distill</option><option>synopsis_merge</option><option>daily_arrivals</option><option>person_registry</option><option>relation_model</option><option>person_timeline</option><option>coverage_timeline</option><option>cost_timeline</option><option>subscription_reconcile</option><option>medication_reconcile</option><option>database_reader</option><option>knowledge_composer</option><option>routine_query</option><option>ocr_pipeline</option><option>document_qa</option><option>alibi_weave</option><option>contradiction_synopsis</option><option>corpus_query</option><option>web_research</option><option>dossier</option><option>briefing</option><option>bundle_completeness_check</option><option>print_action</option><option>reference_check</option><option>rater_race</option><option>guide_compose</option><option>wiki_export</option><option>pattern_mining</option><option>chunk_export</option><option>document_compose</option><option>mail_merge_compose</option><option>platform_proof</option></select></label>
+                <label>Workflow<select id="workflow"><option selected>smart_inbox</option><option>storage_policy</option><option>cleanup_rules</option><option>mail_to_case</option><option>controlled_email</option><option>bundle_export</option><option>evidence_analyst</option><option>folder_digest</option><option>version_resolver</option><option>contact_monitor</option><option>report_studio</option><option>document_registry</option><option>fact_distill</option><option>synopsis_merge</option><option>daily_arrivals</option><option>person_registry</option><option>relation_model</option><option>person_timeline</option><option>coverage_timeline</option><option>cost_timeline</option><option>subscription_reconcile</option><option>medication_reconcile</option><option>database_reader</option><option>knowledge_composer</option><option>routine_query</option><option>ocr_pipeline</option><option>document_qa</option><option>alibi_weave</option><option>contradiction_synopsis</option><option>corpus_query</option><option>web_research</option><option>dossier</option><option>briefing</option><option>bundle_completeness_check</option><option>print_action</option><option>reference_check</option><option>rater_race</option><option>guide_compose</option><option>wiki_export</option><option>pattern_mining</option><option>chunk_export</option><option>document_compose</option><option>mail_merge_compose</option><option>platform_proof</option></select></label>
                 <p id="workflowHint" class="selection-description">Smart Inbox is the Folders entry point. Storage Policies are its controlled routing and retention settings.</p>
               </div>
               <div class="prompt-field wide">
-                <label>Questions or prompts <span>one task per line · all entries are processed</span><textarea id="questions" rows="4">Welche Farbe hatte der Wagen mit dem Kennzeichen B-TL 4471?
-Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
+                <label>Questions or prompts <span>one task per line · all entries are processed</span><textarea id="questions" rows="4" placeholder="One question or task per line"></textarea></label>
                 <div class="prompt-actions">
                   <button type="button" id="promptLibraryButton" class="secondary">Open question &amp; prompt catalog</button>
                   <button type="button" id="promptSaveButton" class="secondary">Save current set</button>
@@ -149,8 +164,9 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
             <legend>02 · Bounded territory</legend>
             <div class="form-grid">
               <div class="path-field wide">
-                <label>Approved input roots <span>one per line</span><textarea id="inputRoots" rows="2">examples/synthetic-case</textarea></label>
+                <label>Approved input roots <span>one per line</span><textarea id="inputRoots" rows="2" placeholder="Add a folder, or start the server with --allow-root"></textarea></label>
                 <button type="button" class="path-add secondary" data-folder-target="inputRoots">+ Add source folder</button>
+                <div class="folder-chips" data-chips-for="inputRoots"></div>
               </div>
             </div>
             <div class="drawer-group">
@@ -161,7 +177,7 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
               </button>
               <div id="grpOutputs" class="collapse-panel form-grid" hidden>
               <div class="path-field wide">
-                <label>Approved target roots <span>one per line · required only for action workflows</span><textarea id="targetRoots" rows="2" placeholder="examples/synthetic-home/archive"></textarea></label>
+                <label>Approved target roots <span>one per line · required only for action workflows</span><textarea id="targetRoots" rows="2" placeholder="Only for workflows that move or write files"></textarea></label>
                 <button type="button" class="path-add secondary" data-folder-target="targetRoots">+ Add target folder</button>
               </div>
               <div class="path-field wide">
@@ -218,7 +234,7 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
                 </select>
               </label>
               <label>Provider model
-                <input id="providerModel" autocomplete="off" disabled placeholder="Select a provider first">
+                <input id="providerModel" autocomplete="off" disabled placeholder="Select a provider first" list="providerModelList"><datalist id="providerModelList"></datalist>
               </label>
               <label>Maximum output tokens <span>response ceiling, not corpus size</span>
                 <input id="providerTokens" type="number" min="1" max="131072" step="1" value="32768" disabled>
@@ -295,24 +311,39 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
       </div>
     </aside>
 
-    <section class="briefing" aria-labelledby="briefingTitle" data-page-section="overview">
-      <div class="briefing-copy">
-        <p class="kicker">CASE FILE / NF-01</p>
-        <h1 id="briefingTitle">Know what your documents prove.</h1>
-        <p class="lede">NemoFold turns approved folders into traceable working memory.</p>
+    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="overview" hidden>
+      <div class="notebook-head">
+        <div>
+          <p class="kicker">QUICK INVESTIGATION MODE · RESEARCH NOTEBOOK</p>
+          <h2 id="researchNotebookTitle">Keep the whole investigation, not just one answer.</h2>
+          <p>Save the research goal, approved source roots, question set, reasoning route and verified run trail as one local investigation. Approvals and secrets are never stored.</p>
+        </div>
+        <div class="notebook-sonar" aria-hidden="true"><i></i><i></i><i></i><b>DEEP CORPUS</b></div>
       </div>
+      <div class="notebook-grid">
+        <div class="notebook-library">
+          <label>Saved investigations<select id="notebookSelect"><option value="">No investigations loaded</option></select></label>
+          <div class="notebook-actions">
+            <button type="button" id="notebookRefresh" class="secondary">Refresh</button>
+            <button type="button" id="notebookLoad" class="secondary" disabled>Load</button>
+            <button type="button" id="notebookNew" class="secondary">New</button>
+          </div>
+        </div>
+        <label>Investigation name<input id="notebookName" maxlength="120" placeholder="e.g. Contract change investigation"></label>
+        <label class="wide">Research goal <span>the thread connecting all questions and runs</span><textarea id="notebookGoal" rows="3" maxlength="4000" placeholder="What should this investigation establish, compare or disprove?"></textarea></label>
+        <div class="notebook-snapshot wide">
+          <div><span>SOURCES</span><b id="notebookSourceCount">0 approved roots</b></div>
+          <div><span>TASKS</span><b id="notebookQuestionCount">0 questions or prompts</b></div>
+          <div><span>RUN TRAIL</span><b id="notebookRunCount">0 linked ledgers</b></div>
+          <button type="button" id="notebookSave">Save investigation snapshot</button>
+        </div>
+      </div>
+      <div id="notebookState" class="notebook-state" aria-live="polite">Open the Registry tab under Processes &amp; Workflows, define sources and questions, then save the investigation.</div>
+      <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
     </section>
 
 
-
-    <nav class="product-areas" aria-label="NemoFold work areas" data-page-section="overview">
-      <a href="/folders"><span>HOME</span><b>Folders</b><small>Which folders are watched · what is on board</small><em>Open area →</em></a>
-      <a href="/processes"><span>WORK</span><b>Processes &amp; Workflows</b><small>Use cases · registry of instruments · artifacts</small><em>Open area →</em></a>
-      <a href="/governance"><span>BRIDGE</span><b>Governance</b><small>Policies · rules · the gates this server was started with</small><em>Open area →</em></a>
-      <a href="/connections"><span>STATUS</span><b>Connections</b><small>Platform proof only</small><em>Open area →</em></a>
-    </nav>
-
-    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="folders processes governance connections">
+    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="folders processes governance connections artifacts">
       <div class="voyage-copy">
         <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
         <h2 id="voyageSceneTitle">Folders</h2>
@@ -340,8 +371,15 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
       <span>Processes &amp; workflows</span>
       <a href="/processes?tab=workflows" data-tab-link="workflows">My use cases</a>
       <a href="/processes?tab=registry" data-tab-link="registry">Blueprints</a>
-      <a href="/processes?tab=artifacts" data-tab-link="artifacts">Artifacts</a>
     </nav>
+
+    <section id="workingFolders" class="working-folders" aria-labelledby="workingFoldersTitle" data-page-section="folders">
+      <p class="kicker">WORKING FOLDERS</p>
+      <h2 id="workingFoldersTitle">The folders you work in.</h2>
+      <p>Add them once: they stay approved every time this console starts on this computer, and the captain, the engine room and your use cases choose from them. Removing one forgets it; its files are never touched.</p>
+      <div id="workingFolderList" class="working-folder-list" role="list" aria-live="polite"></div>
+      <button type="button" class="path-add secondary" data-folder-target="workingFolders">+ Add working folder</button>
+    </section>
 
     <section id="homeGlance" class="home-glance" aria-labelledby="homeGlanceTitle" data-page-section="folders">
       <div class="glance-head">
@@ -349,9 +387,8 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
           <p class="kicker">A LOOK AROUND THE HOLD</p>
           <h2 id="homeGlanceTitle">What is actually on board.</h2>
         </div>
-        <div class="glance-controls">
-          <label>Corpus root<input id="homeGlanceRoot" autocomplete="off" placeholder="examples/synthetic-case"></label>
-          <button type="button" class="path-add secondary" data-folder-target="homeGlanceRoot">Choose folder</button>
+        <div class="glance-controls" hidden>
+          <input id="homeGlanceRoot" type="hidden">
           <button type="button" id="homeGlanceLook">Look around</button>
         </div>
       </div>
@@ -362,7 +399,7 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
       </div>
       <div class="glance-recent">
         <p class="kicker">CAME ABOARD MOST RECENTLY</p>
-        <div id="glanceNewest" class="glance-list" aria-live="polite"><p>Choose an approved root and look around.</p></div>
+        <div id="glanceNewest" class="glance-list" aria-live="polite"><p>Click Look around at one of your working folders above.</p></div>
       </div>
       <p id="glanceState" class="glance-state" aria-live="polite">Counts and modification times only. No file is read and nothing leaves this host.</p>
     </section>
@@ -372,19 +409,11 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
         <div>
           <p class="kicker">BLUEPRINTS</p>
           <h2 id="blueprintsTitle">Start from a blueprint, make it your use case.</h2>
-          <p>An action is one step. A workflow chains two or more actions. Add a blueprint to your use cases as often as you like, then rename and adapt each copy; the blueprint itself stays as it is. Your own blueprints appear here after Save as blueprint.</p>
+          <p>Every blueprint is a workflow: one step, or several chained. Add one to your use cases as often as you like, then rename and adapt each copy; the blueprint itself stays as it is. A one-step workflow can also be tried once in the engine room. Your own blueprints appear here after Save as blueprint.</p>
         </div>
       </div>
+      <div id="blueprintFilter" class="library-filter" role="group" aria-label="Filter blueprints by topic"></div>
       <div id="blueprintList" class="library-list" aria-live="polite"></div>
-    </section>
-
-    <section id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" data-page-section="processes" data-page-tab="registry">
-      <div class="task-cards-head">
-        <p class="kicker">SINGLE ACTIONS · ONE STEP EACH</p>
-        <h2 id="taskCardsTitle">Every action a workflow is built from.</h2>
-        <p>Each action is one job contract. Add it to your use cases, bound to your folders, or try it once in the engine room. Chain two or more and you have a workflow.</p>
-      </div>
-      <div id="taskCardList" class="task-card-list" role="list"></div>
     </section>
 
     <section id="echoCheck" class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="processes" data-page-tab="workflows" hidden>
@@ -519,39 +548,9 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
       <div id="governanceExceptions" class="governance-exceptions" aria-live="polite"></div>
     </section>
 
-    <section id="researchNotebook" class="research-notebook" aria-labelledby="researchNotebookTitle" data-page-section="processes" data-page-tab="registry" hidden>
-      <div class="notebook-head">
-        <div>
-          <p class="kicker">UC07 · RESEARCH NOTEBOOK</p>
-          <h2 id="researchNotebookTitle">Keep the whole investigation, not just one answer.</h2>
-          <p>Save the research goal, approved source roots, question set, reasoning route and verified run trail as one local investigation. Approvals and secrets are never stored.</p>
-        </div>
-        <div class="notebook-sonar" aria-hidden="true"><i></i><i></i><i></i><b>DEEP CORPUS</b></div>
-      </div>
-      <div class="notebook-grid">
-        <div class="notebook-library">
-          <label>Saved investigations<select id="notebookSelect"><option value="">No investigations loaded</option></select></label>
-          <div class="notebook-actions">
-            <button type="button" id="notebookRefresh" class="secondary">Refresh</button>
-            <button type="button" id="notebookLoad" class="secondary" disabled>Load</button>
-            <button type="button" id="notebookNew" class="secondary">New</button>
-          </div>
-        </div>
-        <label>Investigation name<input id="notebookName" maxlength="120" placeholder="e.g. Contract change investigation"></label>
-        <label class="wide">Research goal <span>the thread connecting all questions and runs</span><textarea id="notebookGoal" rows="3" maxlength="4000" placeholder="What should this investigation establish, compare or disprove?"></textarea></label>
-        <div class="notebook-snapshot wide">
-          <div><span>SOURCES</span><b id="notebookSourceCount">0 approved roots</b></div>
-          <div><span>TASKS</span><b id="notebookQuestionCount">0 questions or prompts</b></div>
-          <div><span>RUN TRAIL</span><b id="notebookRunCount">0 linked ledgers</b></div>
-          <button type="button" id="notebookSave">Save investigation snapshot</button>
-        </div>
-      </div>
-      <div id="notebookState" class="notebook-state" aria-live="polite">Open the Registry tab under Processes &amp; Workflows, define sources and questions, then save the investigation.</div>
-      <div id="notebookRuns" class="notebook-runs" aria-live="polite"><p>No verified runs linked yet.</p></div>
-    </section>
 
 
-    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="processes" data-page-tab="artifacts">
+    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="artifacts" data-page-tab="artifacts">
       <div class="section-title artifact-title">
         <p class="kicker">ARTIFACT STUDIO</p>
         <div>
@@ -587,7 +586,7 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
         <a class="status-json-link" href="/api/status" target="_blank" rel="noopener">Open machine status ↗</a>
       </div>
       <div id="connectionRegistry" class="connection-registry" aria-live="polite"><p>Loading provider contracts…</p></div>
-      <p class="connection-warning"><b>Proof rule:</b> Nebius, Nemotron and NemoClaw remain unproven until their own bounded execution receipts exist. Local readiness never upgrades them automatically.</p>
+      <p class="connection-warning"><b>Proof rule:</b> a run from this console is never the competition proof. Nemotron on Nebius Token Factory is proven by the historical bounded run of 2026-09-02 in <code>examples/proven-run</code> (check it with <code>nemofold verify-result examples/proven-run</code>); NemoClaw has no execution receipt and stays unproven. A key, a running server or a found CLI never upgrades an adapter on its own.</p>
     </section>
 
     <dialog id="folderDialog" class="folder-dialog" aria-labelledby="folderDialogTitle">
@@ -597,6 +596,12 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
           <button type="submit" id="folderClose" class="secondary" value="cancel">Close</button>
         </div>
         <p id="folderCurrent" class="folder-current">Loading server-approved roots…</p>
+        <div class="folder-path-row">
+          <label for="folderPathInput">Path</label>
+          <input id="folderPathInput" type="text" spellcheck="false" autocomplete="off" placeholder="Type or paste a folder path, then press Enter">
+          <button type="button" id="folderPathGo" class="secondary">Go</button>
+          <button type="button" id="folderNative" class="secondary">System folder dialog…</button>
+        </div>
         <div class="folder-toolbar">
           <button type="button" id="folderUp" class="secondary" disabled>↑ Parent</button>
           <button type="button" id="folderSelectCurrent" disabled>Use this folder</button>
@@ -618,7 +623,7 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
       </div>
     </dialog>
 
-    <section id="useCaseLibrary" class="use-case-library" aria-labelledby="libraryTitle" data-page-section="overview folders processes" data-page-tab="workflows">
+    <section id="useCaseLibrary" class="use-case-library" aria-labelledby="libraryTitle" data-page-section="folders processes" data-page-tab="workflows">
       <div class="core-claim" data-page-section="processes" data-page-tab="workflows">
         <p class="kicker">WHAT THIS IS FOR</p>
         <h2>Documents become data. NemoFold makes knowledge usable.</h2>
@@ -626,7 +631,7 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
       </div>
       <div class="library-head">
         <div>
-          <p class="kicker">MY USE CASES</p>
+          <p class="kicker" id="libraryKicker">MY USE CASES</p>
           <h2 id="libraryTitle">My use cases.</h2>
           <p>Every workflow and action you adopted, bound to your folders. Open one to rename, reorder, run or remove it; removing never touches its blueprint. New ones come from the <a href="/processes?tab=registry">blueprints</a> or from the captain's desk.</p>
         </div>
@@ -699,17 +704,18 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
         <section id="workflowRegister" class="workflow-register" aria-labelledby="registerTitle">
           <div class="section-title">
             <p class="kicker">PRODUCT MAP</p>
-            <h2 id="registerTitle">Four areas, six views, one contract per instrument.</h2>
+            <h2 id="registerTitle">Where everything lives, one contract per step.</h2>
           </div>
           <div class="register-table" role="list">
-            <a href="/folders" role="listitem"><span>01 / HOME</span><h3>Folders</h3><p>The home of your folders: which are watched, what is on board, and the use cases that work on them.</p><b>watched roots · corpus at a glance</b></a>
-            <a href="/processes?tab=workflows" role="listitem"><span>02 / WORK</span><h3>Workflows</h3><p>Every saved use case and every shipped specialist, filtered by topic. A routine is a workflow with a schedule, not a separate room.</p><b>my use cases · specialists · standing routines</b></a>
-            <a href="/processes?tab=registry" role="listitem"><span>03 / REGISTRY</span><h3>Registry</h3><p>Every job contract on its own, without a topic: the instruments a use case is built from.</p><b>smart_inbox · evidence_analyst · document_registry · fact_distill · synopsis_merge · daily_arrivals · …</b></a>
-            <a href="/processes?tab=artifacts" role="listitem"><span>04 / OUTPUT</span><h3>Artifacts</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
-            <a href="/governance" role="listitem"><span>05 / BRIDGE</span><h3>Governance</h3><p>Named policies and single rules, the exceptions to them, and the gates this server was actually started with.</p><b>policies · rules · gates are read, not granted</b></a>
-            <a href="/connections" role="listitem"><span>06 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
+            <a href="/" role="listitem"><span>01 / ENGINE ROOM</span><h3>Engine room</h3><p>The captain turns one sentence into a chain of workflows to check; the engine room runs one workflow on approved folders.</p><b>captain · engine room · this chart</b></a>
+            <a href="/folders" role="listitem"><span>02 / HOME</span><h3>Folders</h3><p>Your working folders, kept across restarts, what is on board, and the workflows that watch or file them.</p><b>working folders · corpus at a glance · folder workflows</b></a>
+            <a href="/processes?tab=workflows" role="listitem"><span>03 / WORK</span><h3>My use cases</h3><p>Every workflow you adopted, bound to your folders and filtered by topic. A routine is a workflow with a schedule, not a separate room.</p><b>my use cases · standing routines</b></a>
+            <a href="/processes?tab=registry" role="listitem"><span>04 / BLUEPRINTS</span><h3>Blueprints</h3><p>Everything you can start from is a workflow, with one step or several: shipped presets, your own blueprints and every single contract, filtered by the same topics.</p><b>adopt · try once · save as blueprint</b></a>
+            <a href="/artifacts" role="listitem"><span>05 / OUTPUT</span><h3>Artifacts</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
+            <a href="/governance" role="listitem"><span>06 / BRIDGE</span><h3>Governance</h3><p>Named policies and single rules, the exceptions to them, and the gates this server was actually started with.</p><b>policies · rules · gates are read, not granted</b></a>
+            <a href="/connections" role="listitem"><span>07 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
           </div>
-          <p class="text-alt"><b>ROADMAP:</b> UC10 remains the separate design track. Planned Document Services include synopses, bilingual sync, rich ingest and OCR, document redaction, RAG export, dossiers, templates, QA, forms, duplicate review and verified conversions; none are presented as active before their own acceptance gate.</p>
+          <p class="text-alt"><b>ROADMAP:</b> UC10 remains the separate design track. Synopses, OCR, RAG export, dossiers, templates and document QA now run as workflows. Still planned: bilingual sync, rich ingest, document redaction, forms, duplicate review and verified conversions; none is presented as active before its own acceptance gate.</p>
         </section>
         </div>
       </div>
@@ -759,7 +765,7 @@ Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?</textarea></label>
     <svg class="instrument-icon wheel" aria-hidden="true"><use href="#icon-wheel"></use></svg>
     <span>Engine room</span>
   </button>
-  <footer><span>NemoFold 0.1</span><span>Evidence before inference</span><span>Live Nebius proof remains an explicit gate</span></footer>
+  <footer><span id="footerVersion">NemoFold</span><span>Evidence before inference</span><span>Live Nebius proof remains an explicit gate</span></footer>
 
   <!-- Cinematic Intro Video Modal Overlay -->
   <aside id="introOverlay" class="intro-overlay" role="dialog" aria-modal="true" aria-label="NemoFold Cinematic Intro" hidden>
