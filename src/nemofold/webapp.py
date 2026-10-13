@@ -23,6 +23,7 @@ from .application import ExecutionConfig, preview_job, run_job
 from .contracts import RunStatus, to_primitive
 from .drafts import DraftStore
 from .job_io import ALLOWED_FIELDS, SUPPORTED_WORKFLOWS, JobFileError, parse_job_payload
+from .model_planner import plan_with_model
 from .notebooks import ResearchNotebookStore
 from .policies import PolicyStore, default_rights, policy_exceptions
 from .provider_analysis import analyze_with_provider, preview_provider_context
@@ -89,11 +90,14 @@ PAGE_ROUTES: dict[str, str] = {
     "/": "overview",
     "/folders": "folders",
     "/processes": "processes",
+    "/artifacts": "artifacts",
     "/governance": "governance",
     "/connections": "connections",
 }
 PAGE_TABS: dict[str, tuple[str, ...]] = {
-    "processes": ("workflows", "registry", "artifacts"),
+    "processes": ("workflows", "registry"),
+    # Artifacts is its own area since 2026-10-13; its one tab keeps the styles.
+    "artifacts": ("artifacts",),
     "governance": ("policies", "rules"),
 }
 # The old routes keep working. A link that names one technical contract lands in
@@ -103,7 +107,6 @@ ROUTE_ALIASES: dict[str, str] = {
     "/document-center": "/folders",
     "/analysis": "/processes?tab=workflows",
     "/routines": "/processes?tab=workflows&tag=scheduled",
-    "/artifacts": "/processes?tab=artifacts",
 }
 
 
@@ -367,6 +370,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         page_path = path.rstrip("/") or "/"
         if page_path in ROUTE_ALIASES:
             self._redirect(_alias_target(page_path, parsed_path.query))
+            return
+        if page_path == "/processes" and "artifacts" in parse_qs(parsed_path.query).get("tab", []):
+            self._redirect("/artifacts")
             return
         if page_path in PAGE_ROUTES:
             try:
@@ -1027,7 +1033,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             payload = self._read_json()
             if not isinstance(payload, dict):
                 raise ValueError("request body must be an object")
-            unknown = sorted(set(payload) - {"text", "context"})
+            unknown = sorted(set(payload) - {"text", "context", "planner", "workflows"})
             if unknown:
                 raise ValueError(f"unknown request fields: {', '.join(unknown)}")
             context = payload.get("context") or {}
@@ -1047,8 +1053,15 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             text = payload.get("text")
             if not isinstance(text, str):
                 raise ValueError("text must be a string")
-            plan = plan_voyage(text, input_roots=tuple(input_roots), output_dir=output_dir)
-        except (OSError, ValueError) as exc:
+            chosen, reason = self._planned_workflows(payload, text)
+            plan = plan_voyage(
+                text,
+                input_roots=tuple(input_roots),
+                output_dir=output_dir,
+                chosen=chosen,
+                chosen_reason=reason,
+            )
+        except (OSError, RuntimeError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "wizard_request_rejected", str(exc))
             return
         result = plan_to_primitive(plan)
@@ -1106,6 +1119,48 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
         result["prepared"] = True
         result["drafts"] = drafts
         self._json(result)
+
+    def _planned_workflows(
+        self, payload: dict[str, Any], text: str
+    ) -> tuple[tuple[str, ...] | None, str]:
+        """Workflows a reasoning worker chose, or None for the keyword planner.
+
+        ``workflows`` carries a choice already made (Prepare repeats the plan
+        without asking the worker again); ``planner`` asks one now. The worker
+        reads the sentence and the catalogue only, never a document, and an
+        external one needs the server gate and a one-request approval.
+        """
+        workflows = payload.get("workflows")
+        if workflows is not None:
+            if not isinstance(workflows, list) or not all(isinstance(i, str) for i in workflows):
+                raise ValueError("workflows must be a list of workflow ids")
+            return tuple(workflows), ""
+        planner = payload.get("planner")
+        if planner is None:
+            return None, ""
+        if not isinstance(planner, dict) or set(planner) - {
+            "provider_id",
+            "model",
+            "approve_transfer",
+        }:
+            raise ValueError("planner must carry provider_id, model and approve_transfer")
+        config = provider_config_from_mapping(
+            {
+                "provider_id": planner.get("provider_id"),
+                "model": planner.get("model"),
+                "max_output_tokens": 800,
+                "timeout_seconds": 300,
+            }
+        )
+        if config.descriptor.external_transfer and not (
+            self.server.app_config.execution.external_models_allowed
+            and planner.get("approve_transfer") is True
+        ):
+            raise ValueError(
+                "an external planner needs a server started with --allow-external-models "
+                "and your approval for this one request"
+            )
+        return plan_with_model(text, config)
 
     def _voyage_store(self) -> VoyageStore:
         return VoyageStore(

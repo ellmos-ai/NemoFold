@@ -156,6 +156,15 @@ def test_a_document_request_without_a_task_word_falls_back_to_evidence_analyst()
     assert any("No specific workflow matched" in note for note in plan.notes)
 
 
+def test_every_workflow_the_planner_knows_has_a_title_and_a_purpose() -> None:
+    # A planned step needs both; three were missing until 2026-10-13.
+    from nemofold.wizard import WORKFLOW_ORDER, WORKFLOW_TITLES, workflow_purpose
+
+    for workflow in WORKFLOW_ORDER:
+        assert WORKFLOW_TITLES[workflow], workflow
+        assert workflow_purpose(workflow), workflow
+
+
 def test_missing_root_becomes_a_question_rather_than_a_guess() -> None:
     plan = plan_voyage("bündle die unterlagen")
 

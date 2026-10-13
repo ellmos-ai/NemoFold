@@ -86,6 +86,7 @@ WORKFLOW_TITLES = {
     "web_research": "Web Research",
     "dossier": "Dossier",
     "briefing": "Briefing",
+    "ocr_pipeline": "OCR Pipeline",
     "bundle_completeness_check": "Completeness Check",
     "document_qa": "Document QA",
     "person_registry": "Person Registry",
@@ -650,6 +651,18 @@ def _why(workflow: str) -> str:
             "Searches the open web behind four separate gates and keeps only what came "
             "back with an address. Nothing is sent until you approve that call."
         ),
+        "briefing": (
+            "Assembles cited facts, clear inferences and open uncertainties from web "
+            "research into a meeting briefing."
+        ),
+        "document_qa": (
+            "Validates document completeness, forbids unbound placeholders and seals the "
+            "outputs into a publication package."
+        ),
+        "ocr_pipeline": (
+            "Processes scanned and image documents with OCR quality gates, delta "
+            "indexation and verified full-text retrieval."
+        ),
         "dossier": (
             "Collects cited search results on a subject you name into a reading list. It "
             "is not a finding about anybody, and the artifact says so."
@@ -778,6 +791,10 @@ def _why(workflow: str) -> str:
             "Records a platform proof package; it never upgrades readiness into proof."
         ),
     }[workflow]
+
+
+# The same sentence a model planner reads in the catalogue.
+workflow_purpose = _why
 
 
 def parameters_for(workflow: str, text: str) -> dict[str, Any]:
@@ -919,19 +936,33 @@ def plan_voyage(
     *,
     input_roots: tuple[str, ...] | list[str] = (),
     output_dir: str = DEFAULT_OUTPUT_DIR,
+    chosen: tuple[str, ...] | None = None,
+    chosen_reason: str = "",
 ) -> VoyagePlan:
-    """Plan an ordered chain of job drafts for one plain-language request."""
+    """Plan an ordered chain of job drafts for one plain-language request.
+
+    ``chosen`` replaces the keyword match with workflows a reasoning worker
+    picked from the catalogue; everything after the choice stays the same.
+    """
     request = normalize_request(text)
     haystack = request.casefold()
     roots = tuple(str(item).strip() for item in input_roots if str(item).strip())
     roots_missing = not roots
 
-    workflows = matched_workflows(haystack)
-    roadmap = matched_roadmap(haystack)
+    notes: list[str] = []
+    if chosen is not None:
+        workflows = {item for item in chosen if item in WORKFLOW_ORDER}
+        roadmap: list[RoadmapService] = []
+        notes.append(
+            "A reasoning worker chose these workflows from the catalogue"
+            + (f": {chosen_reason}" if chosen_reason else ".")
+        )
+    else:
+        workflows = matched_workflows(haystack)
+        roadmap = matched_roadmap(haystack)
     for service in roadmap:
         workflows.update(service.alternative_workflows)
 
-    notes: list[str] = []
     unavailable = [
         UnavailableIntent(
             key=service.key,
@@ -1006,7 +1037,9 @@ def plan_voyage(
             questions=(
                 (request,)
                 if workflow == "evidence_analyst" and (
-                    fallback or any(mentions(haystack, word) for word in SUMMARY_WORDS)
+                    fallback
+                    or chosen is not None
+                    or any(mentions(haystack, word) for word in SUMMARY_WORDS)
                 )
                 else ("Which claims do the approved sources support?",)
                 if workflow in {"evidence_analyst", "platform_proof"}

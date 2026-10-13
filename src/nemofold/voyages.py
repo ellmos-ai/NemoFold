@@ -584,6 +584,12 @@ class VoyageStore:
                 "schedule": validate_schedule(preset.get("schedule")),
                 "step_count": len(preset["steps"]),
                 "workflows": [step["workflow"] for step in preset["steps"]],
+                # The first step's questions and parameters, so a shipped
+                # blueprint can be tried once without being copied first.
+                "first_step": {
+                    "questions": list(preset["steps"][0].get("questions") or []),
+                    "parameters": dict(preset["steps"][0].get("parameters") or {}),
+                },
                 "editable": False,
             }
             for preset in load_presets()

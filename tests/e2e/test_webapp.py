@@ -249,7 +249,7 @@ def test_web_api_preserves_the_medical_authority_block(tmp_path) -> None:
         ("/folders", "folders", ""),
         ("/processes", "processes", "workflows"),
         ("/processes?tab=registry", "processes", "registry"),
-        ("/processes?tab=artifacts", "processes", "artifacts"),
+        ("/artifacts", "artifacts", "artifacts"),
         ("/processes?tab=nonsense", "processes", "workflows"),
         ("/governance", "governance", "policies"),
         ("/governance?tab=rules", "governance", "rules"),
@@ -269,7 +269,8 @@ def test_web_console_serves_each_area_and_tab_as_a_real_route(tmp_path, route, p
     assert f'<body data-page="{page}" data-tab="{tab}">' in html
     assert 'data-page-link="folders"' in html
     assert 'data-page-link="processes"' in html
-    assert 'data-page-section="folders processes governance connections"' in html
+    assert 'data-page-section="folders processes governance connections artifacts"' in html
+    assert 'data-page-link="artifacts"' in html
 
 
 @pytest.mark.parametrize(
@@ -278,7 +279,8 @@ def test_web_console_serves_each_area_and_tab_as_a_real_route(tmp_path, route, p
         ("/document-center", "/folders"),
         ("/analysis", "/processes?tab=workflows"),
         ("/routines", "/processes?tab=workflows&tag=scheduled"),
-        ("/artifacts", "/processes?tab=artifacts"),
+        # Artifacts became its own area on 2026-10-13; the old tab link follows it.
+        ("/processes?tab=artifacts", "/artifacts"),
         # A link that names one contract lands where single instruments live.
         ("/analysis?workflow=fact_distill", "/processes?tab=registry&workflow=fact_distill"),
         ("/document-center?workflow=smart_inbox", "/processes?tab=registry&workflow=smart_inbox"),
@@ -1002,7 +1004,7 @@ def test_the_scene_follows_the_tab_and_the_schedule_filter(tmp_path) -> None:
 
     # D-036b: the scenes did not disappear with the rooms, they moved to the
     # tabs and to the schedule filter.
-    assert 'if (currentTab === "artifacts") return "artifacts";' in script
+    assert 'if (currentPage === "artifacts") return "artifacts";' in script
     assert 'if (currentTab === "registry") return "registry";' in script
     assert 'return activeTag === "scheduled" ? "scheduled" : "workflows";' in script
     # Line endings differ per checkout, so compare on normalised whitespace.
@@ -1315,6 +1317,54 @@ def test_captains_desk_refuses_a_request_it_cannot_turn_into_a_step(tmp_path) ->
     assert plan["matched"] is False
     assert refused.value.code == 400
     assert json.load(refused.value)["error"] == "wizard_nothing_to_prepare"
+
+
+def test_an_external_captain_planner_needs_the_gate_and_one_request_approval(
+    tmp_path, monkeypatch
+) -> None:
+    # D-046: the captain may let a model choose; an external one needs the
+    # server gate and an approval, and Prepare repeats the choice without
+    # asking the model again.
+    import nemofold.webapp as webapp
+
+    calls: list[str] = []
+
+    def fake_planner(text, config):
+        calls.append(config.provider_id)
+        return ("evidence_analyst",), "one question against the folder"
+
+    monkeypatch.setattr(webapp, "plan_with_model", fake_planner)
+    monkeypatch.setenv("NEBIUS_API_KEY", "test-key")
+    with running_server(tmp_path) as base_url:
+        with pytest.raises(HTTPError) as refused:
+            post_json(
+                base_url + "/api/wizard",
+                {
+                    "text": "Fasse die Akten zusammen",
+                    "planner": {"provider_id": "nebius", "model": "m", "approve_transfer": True},
+                },
+            )
+        local = post_json(
+            base_url + "/api/wizard",
+            {
+                "text": "Fasse die Akten zusammen",
+                "planner": {
+                    "provider_id": "ollama",
+                    "model": "qwen3:4b",
+                    "approve_transfer": False,
+                },
+            },
+        )
+        repeated = post_json(
+            base_url + "/api/wizard",
+            {"text": "Fasse die Akten zusammen", "workflows": ["fact_distill"]},
+        )
+
+    assert refused.value.code == 400
+    assert calls == ["ollama"]
+    assert [step["workflow"] for step in local["steps"]] == ["evidence_analyst"]
+    assert any("reasoning worker chose" in note for note in local["notes"])
+    assert [step["workflow"] for step in repeated["steps"]] == ["fact_distill"]
 
 
 def test_captains_desk_is_absent_in_the_public_demo(tmp_path) -> None:

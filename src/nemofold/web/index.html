@@ -50,6 +50,7 @@
         <a href="/" data-page-link="overview">Engine room</a>
         <a href="/folders" data-page-link="folders">Folders</a>
         <a href="/processes" data-page-link="processes">Processes &amp; Workflows</a>
+        <a href="/artifacts" data-page-link="artifacts">Artifacts</a>
         <a href="/governance" data-page-link="governance">Governance</a>
         <a href="/connections" data-page-link="connections">Connections</a>
       </div>
@@ -74,6 +75,17 @@
         <label class="desk-request">Your request
           <textarea id="deskRequest" rows="2" maxlength="2000" placeholder="e.g. Build a timeline from these files and show me where statements contradict each other"></textarea>
         </label>
+        <fieldset class="desk-modes">
+          <legend>How the captain plans</legend>
+          <label><input type="radio" name="deskMode" value="keywords" checked> Keywords <span>local and instant</span></label>
+          <label><input type="radio" name="deskMode" value="model"> A model chooses <span>it reads your sentence and the workflow list, never a document</span></label>
+          <label><input type="radio" name="deskMode" value="brief"> Brief for Claude Code or Codex <span>copied to the clipboard</span></label>
+        </fieldset>
+        <div id="deskPlanner" class="desk-planner" hidden>
+          <label>Provider<select id="deskProvider"></select></label>
+          <label>Model<input id="deskModel" autocomplete="off" list="deskModelList" placeholder="Choose a model"><datalist id="deskModelList"></datalist></label>
+          <label id="deskApproveRow" class="desk-approve" hidden><input type="checkbox" id="deskApprove"> Send this one sentence, pseudonymized, to this provider</label>
+        </div>
         <div class="desk-controls">
           <div class="desk-folders">
             <label>Approved folders <span>one per line · every step may read them</span>
@@ -331,7 +343,7 @@
     </section>
 
 
-    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="folders processes governance connections">
+    <section id="voyageScene" class="voyage-scene document-center" aria-labelledby="voyageSceneTitle" data-page-section="folders processes governance connections artifacts">
       <div class="voyage-copy">
         <span id="voyageSceneKicker">INSIDE THE NAUTILUS</span>
         <h2 id="voyageSceneTitle">Folders</h2>
@@ -359,7 +371,6 @@
       <span>Processes &amp; workflows</span>
       <a href="/processes?tab=workflows" data-tab-link="workflows">My use cases</a>
       <a href="/processes?tab=registry" data-tab-link="registry">Blueprints</a>
-      <a href="/processes?tab=artifacts" data-tab-link="artifacts">Artifacts</a>
     </nav>
 
     <section id="workingFolders" class="working-folders" aria-labelledby="workingFoldersTitle" data-page-section="folders">
@@ -539,7 +550,7 @@
 
 
 
-    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="processes" data-page-tab="artifacts">
+    <section id="artifactStudio" class="artifact-studio" aria-labelledby="artifactStudioTitle" data-page-section="artifacts" data-page-tab="artifacts">
       <div class="section-title artifact-title">
         <p class="kicker">ARTIFACT STUDIO</p>
         <div>
@@ -700,7 +711,7 @@
             <a href="/folders" role="listitem"><span>02 / HOME</span><h3>Folders</h3><p>Your working folders, kept across restarts, what is on board, and the workflows that watch or file them.</p><b>working folders · corpus at a glance · folder workflows</b></a>
             <a href="/processes?tab=workflows" role="listitem"><span>03 / WORK</span><h3>My use cases</h3><p>Every workflow you adopted, bound to your folders and filtered by topic. A routine is a workflow with a schedule, not a separate room.</p><b>my use cases · standing routines</b></a>
             <a href="/processes?tab=registry" role="listitem"><span>04 / BLUEPRINTS</span><h3>Blueprints</h3><p>Everything you can start from is a workflow, with one step or several: shipped presets, your own blueprints and every single contract, filtered by the same topics.</p><b>adopt · try once · save as blueprint</b></a>
-            <a href="/processes?tab=artifacts" role="listitem"><span>05 / OUTPUT</span><h3>Artifacts</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
+            <a href="/artifacts" role="listitem"><span>05 / OUTPUT</span><h3>Artifacts</h3><p>Open reports, run ledgers and hash-verified outputs from the selected output scope.</p><b>report_studio · click to inspect</b></a>
             <a href="/governance" role="listitem"><span>06 / BRIDGE</span><h3>Governance</h3><p>Named policies and single rules, the exceptions to them, and the gates this server was actually started with.</p><b>policies · rules · gates are read, not granted</b></a>
             <a href="/connections" role="listitem"><span>07 / STATUS</span><h3>Connections</h3><p>Show local, provider, Nebius and NemoClaw status without upgrading readiness into proof.</p><b>platform_proof · status only</b></a>
           </div>

@@ -365,6 +365,13 @@ def _validated_local_base_url(value: str) -> str:
     return value.rstrip("/")
 
 
+def _structured_output_refused(exchange: HTTPExchange) -> bool:
+    if exchange.status not in {400, 422, 501}:
+        return False
+    message = exchange.body[:2000].decode("utf-8", "replace").casefold()
+    return "structured output" in message or "response_format" in message
+
+
 def _json_body(exchange: HTTPExchange) -> dict[str, Any]:
     if not 200 <= exchange.status < 300:
         raise RuntimeError(f"provider HTTP status {exchange.status}")
@@ -453,13 +460,28 @@ class OpenAICompatibleAdapter:
             # hidden reasoning trace. Ollama documents `none` for thinking control
             # on its OpenAI-compatible chat-completions endpoint.
             payload["reasoning_effort"] = "none"
-        body = json.dumps(payload).encode()
         exchange = self.transport.post(
             f"{base_url}/chat/completions",
             headers={"Content-Type": "application/json"},
-            body=body,
+            body=json.dumps(payload).encode(),
             timeout_seconds=self.config.timeout_seconds,
         )
+        if _structured_output_refused(exchange):
+            # Some local models (an MLX build behind Ollama, for one) answer
+            # "structured output is unavailable". Ask once more with the schema
+            # as an instruction; the caller still validates what comes back.
+            payload.pop("response_format")
+            payload["messages"][0]["content"] = (
+                request.system_prompt
+                + "\n\nAnswer with one JSON object only, matching this JSON schema:\n"
+                + json.dumps(request.response_schema)
+            )
+            exchange = self.transport.post(
+                f"{base_url}/chat/completions",
+                headers={"Content-Type": "application/json"},
+                body=json.dumps(payload).encode(),
+                timeout_seconds=self.config.timeout_seconds,
+            )
         payload = _json_body(exchange)
         try:
             text = payload["choices"][0]["message"]["content"]

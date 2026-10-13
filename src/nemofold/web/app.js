@@ -3,11 +3,13 @@ const pageByPath = new Map([
   ["/", "overview"],
   ["/folders", "folders"],
   ["/processes", "processes"],
+  ["/artifacts", "artifacts"],
   ["/governance", "governance"],
   ["/connections", "connections"]
 ]);
 const pageTabs = {
-  processes: ["workflows", "registry", "artifacts"],
+  processes: ["workflows", "registry"],
+  artifacts: ["artifacts"],
   governance: ["policies", "rules"]
 };
 const normalizedPath = globalThis.location.pathname.replace(/\/+$/, "") || "/";
@@ -33,6 +35,7 @@ const pageConfiguration = {
   overview: {title: "NemoFold — Engine room", defaultWorkflow: "evidence_analyst", workflows: []},
   folders: {title: "Folders — NemoFold", defaultWorkflow: "smart_inbox", workflows: []},
   processes: {title: "Processes & Workflows — NemoFold", defaultWorkflow: "evidence_analyst", workflows: []},
+  artifacts: {title: "Artifacts — NemoFold", defaultWorkflow: "evidence_analyst", workflows: []},
   governance: {title: "Governance — NemoFold", defaultWorkflow: "storage_policy", workflows: []},
   connections: {title: "Connections — NemoFold", defaultWorkflow: "platform_proof", workflows: []}
 };
@@ -634,8 +637,8 @@ const voyageScenes = {
 // Porthole for the workflows, echo sounder for the standing routines, library
 // for the artifacts, bridge for governance, home port for the folders.
 function currentSceneKey() {
+  if (currentPage === "artifacts") return "artifacts";
   if (currentPage === "processes") {
-    if (currentTab === "artifacts") return "artifacts";
     if (currentTab === "registry") return "registry";
     return activeTag === "scheduled" ? "scheduled" : "workflows";
   }
@@ -926,6 +929,133 @@ function setEngineDrawer(open, {moveFocus = true} = {}) {
 const reducedMotionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: reduce)");
 let wizardSurfaceEnabled = false;
 let lastVoyageRequest = null;
+// Workflows a model chose for the last plan; Prepare repeats them instead of
+// asking the model a second time.
+let lastPlannedWorkflows = null;
+let plannerProviders = [];
+
+function deskMode() {
+  return document.querySelector("input[name=deskMode]:checked")?.value || "keywords";
+}
+
+// D-046: the captain plans by keywords, lets a model choose from the
+// catalogue, or writes a brief for an external coding agent.
+function updateDeskMode() {
+  $("deskPlanner").hidden = deskMode() !== "model";
+  $("deskPlan").textContent = deskMode() === "brief" ? "Copy the brief" : "Chart the voyage";
+  if (deskMode() === "model") updateDeskProvider();
+}
+
+function renderPlannerProviders(providers, externalAllowed) {
+  plannerProviders = (providers || []).filter((item) =>
+    (item.transport === "local_http" && item.readiness === "running")
+    || (item.transport === "provider_api" && item.readiness === "key_present" && externalAllowed)
+  );
+  const select = $("deskProvider");
+  select.replaceChildren();
+  for (const item of plannerProviders) {
+    const option = document.createElement("option");
+    option.value = item.provider_id;
+    option.textContent = `${item.label}${item.external_transfer ? " · external" : " · this computer"}`;
+    select.append(option);
+  }
+  if (!plannerProviders.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No model reachable: start Ollama or LM Studio, or set a provider key";
+    select.append(option);
+  }
+}
+
+async function updateDeskProvider() {
+  const item = plannerProviders.find((entry) => entry.provider_id === $("deskProvider").value);
+  $("deskApproveRow").hidden = !item?.external_transfer;
+  $("deskApprove").checked = false;
+  $("deskModelList").replaceChildren();
+  if (!item) return;
+  $("deskModel").value = providerModelDefaults[item.provider_id] || "";
+  if (item.transport !== "local_http") return;
+  try {
+    const response = await fetch(`/api/local-models?provider=${encodeURIComponent(item.provider_id)}`);
+    const data = await response.json();
+    for (const model of data.models || []) {
+      const option = document.createElement("option");
+      option.value = model;
+      $("deskModelList").append(option);
+    }
+    if (!(data.models || []).includes($("deskModel").value)) $("deskModel").value = "";
+  } catch {
+    /* the field stays free text */
+  }
+}
+
+function agentBrief(text) {
+  const roots = lines($("deskRoots").value);
+  const output = $("outputDir").value.trim() || "run-reports/web-console";
+  const catalogue = Object.entries(workflowCards).map(([id, card]) => {
+    const parameters = workflowDefaults[id]?.parameters;
+    const defaults = parameters && Object.keys(parameters).length
+      ? ` Default parameters: ${JSON.stringify(parameters)}`
+      : "";
+    return `- ${id}: ${card.title}. ${card.benefit}${defaults}`;
+  }).join("\n");
+  return [
+    "# Task for NemoFold",
+    "",
+    `Request: ${text}`,
+    "",
+    "Approved folders:",
+    ...(roots.length ? roots.map((root) => `- ${root}`) : ["- none chosen yet: ask the person which folder"]),
+    "",
+    `Output folder: ${output}`,
+    "",
+    "NemoFold 0.2.1 is a local evidence workspace (CLI `nemofold`, console at "
+      + "http://127.0.0.1:8765). Everything it runs is a workflow with one step or several; "
+      + "each step is one of these job contracts:",
+    "",
+    catalogue,
+    "",
+    "A job file (JSON) for one step:",
+    '{"schema": "nemofold.job.v1", "workflow": "<id>", "input_roots": ["<folder>"], '
+      + '"output_dir": "<output>/<nn>-<id>", "questions": ["<question>"], "parameters": {}, '
+      + '"privacy_mode": "local_only", "action_mode": "dry_run", "model_budget_usd": 0}',
+    "",
+    "Check, then run each step, then verify its ledger:",
+    "  nemofold preview --job step.json --allow-root <folder> --run-id <id>",
+    "  nemofold run --job step.json --allow-root <folder> --run-id <id>",
+    "  nemofold verify <output>/<nn>-<id>/ledger/<id>.json",
+    "Chain steps by pointing a step's input_roots at the previous step's output folder.",
+    "",
+    "Rules: stay dry_run and local_only unless the person approves otherwise; never move, "
+      + "change or delete their files; quote sources from the ledger; when a parameter is "
+      + "unclear, read the error preview reports instead of guessing.",
+    "",
+    "Report back: which steps ran, their status (executed, blocked, failed), the ledger "
+      + "paths, and the answer to the request in the person's language."
+  ].join("\n");
+}
+
+async function copyAgentBrief(text) {
+  const answer = $("deskAnswer");
+  const brief = agentBrief(text);
+  let copied = false;
+  try {
+    await navigator.clipboard.writeText(brief);
+    copied = true;
+  } catch {
+    copied = false;
+  }
+  answer.textContent = "";
+  deskLine(
+    answer,
+    "p",
+    "desk-note",
+    copied
+      ? "The brief is on the clipboard. Paste it into Claude Code or Codex CLI, started in a folder that may hold the reports. Nothing was sent from here."
+      : "Copy the brief below into Claude Code or Codex CLI. Nothing was sent from here."
+  );
+  deskLine(answer, "pre", "desk-brief", brief);
+}
 
 function deskLine(parent, tag, className, text) {
   const node = document.createElement(tag);
@@ -1018,18 +1148,32 @@ async function askTheCaptain(event) {
   }
   const named = workingFolderNamedIn(text);
   if (named) $("deskRoots").value = named;
+  const mode = deskMode();
+  if (mode === "brief") {
+    await copyAgentBrief(text);
+    return;
+  }
+  const body = {text, context: {input_roots: lines($("deskRoots").value)}};
+  if (mode === "model") {
+    body.planner = {
+      provider_id: $("deskProvider").value,
+      model: $("deskModel").value.trim(),
+      approve_transfer: $("deskApprove").checked
+    };
+  }
   answer.textContent = "";
-  deskLine(answer, "p", "desk-note", "Charting…");
+  deskLine(answer, "p", "desk-note", mode === "model" ? "The model is choosing workflows…" : "Charting…");
   try {
     const response = await fetch("/api/wizard", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({text, context: {input_roots: lines($("deskRoots").value)}})
+      body: JSON.stringify(body)
     });
     const plan = await response.json();
     if (!response.ok || plan.ok !== true) {
       throw new Error(plan.detail || plan.error || `request failed (${response.status})`);
     }
+    lastPlannedWorkflows = mode === "model" ? plan.steps.map((step) => step.workflow) : null;
     renderVoyagePlan(plan);
   } catch (error) {
     answer.textContent = "";
@@ -1047,7 +1191,8 @@ async function prepareVoyage() {
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
         text: lastVoyageRequest || $("deskRequest").value.trim(),
-        context: {input_roots: lines($("deskRoots").value)}
+        context: {input_roots: lines($("deskRoots").value)},
+        ...(lastPlannedWorkflows ? {workflows: lastPlannedWorkflows} : {})
       })
     });
     const result = await response.json();
@@ -2133,7 +2278,7 @@ function showLastRecordedRun(run) {
   deskLine(result, "p", null, `Last recorded run: ${run.workflow} · ${status} · ${run.recorded_at || "time unknown"}`);
   if (run.errors?.length) deskLine(result, "p", null, String(run.errors[0]));
   const link = deskLine(result, "a", null, "Open it under Artifacts →");
-  link.href = "/processes?tab=artifacts";
+  link.href = "/artifacts";
 }
 
 async function loadArtifacts() {
@@ -2169,7 +2314,9 @@ async function loadArtifacts() {
       card.className = `artifact-run ${status}`;
       const head = document.createElement("div");
       const heading = document.createElement("h3");
-      heading.textContent = `${run.workflow} · ${run.run_id}`;
+      // When the ledger was written, in this computer's local time.
+      const when = run.recorded_at ? new Date(run.recorded_at).toLocaleString() : "time unknown";
+      heading.textContent = `${run.workflow} · ${when} · ${run.run_id}`;
       const badge = document.createElement("span");
       badge.textContent = run.verification?.valid
         ? `${String(run.status).toUpperCase()} · LEDGER VERIFIED`
@@ -2797,6 +2944,7 @@ async function loadStatus() {
     const status = await response.json();
     if (status.version) $("footerVersion").textContent = `NemoFold ${status.version}`;
     workingFolders = Array.isArray(status.working_folders) ? status.working_folders : [];
+    if ($("deskProvider")) renderPlannerProviders(status.providers, status.external_models_allowed === true);
     renderWorkingFolders();
     workflowGraphs = new Map(
       (Array.isArray(status.workflow_graphs) ? status.workflow_graphs : []).map((item) => [item.workflow, item])
@@ -2913,6 +3061,10 @@ if (requestedWorkflow && currentTab === "registry") {
 $("runId").value = "";
 $("workflow").addEventListener("change", applyWorkflowDefaults);
 if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
+for (const radio of document.querySelectorAll("input[name=deskMode]")) {
+  radio.addEventListener("change", updateDeskMode);
+}
+if ($("deskProvider")) $("deskProvider").addEventListener("change", updateDeskProvider);
 if ($("libraryRefresh")) $("libraryRefresh").addEventListener("click", loadLibrary);
 if ($("governanceRefresh")) {
   $("governanceRefresh").addEventListener("click", loadGovernanceRegister);
@@ -3154,20 +3306,37 @@ function renderLibraryCards(list, entries) {
       else openLibraryEntry(entry.voyage_id);
     });
     card.append(button);
-    if (entry.notebook) {
+    if (!blueprint) {
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "secondary";
       remove.textContent = "Remove from my use cases";
-      remove.addEventListener("click", () => setNotebookInUseCases(false));
+      remove.addEventListener("click", () => {
+        // A second click confirms; the blueprint it came from stays untouched.
+        if (remove.dataset.armed !== "true") {
+          remove.dataset.armed = "true";
+          remove.textContent = "Click again to remove";
+          globalThis.setTimeout(() => {
+            remove.dataset.armed = "false";
+            remove.textContent = "Remove from my use cases";
+          }, 4000);
+          return;
+        }
+        if (entry.notebook) setNotebookInUseCases(false);
+        else removeUseCase(entry.voyage_id, card);
+      });
       card.append(remove);
     }
-    if (entry.contract) {
+    // Every blueprint can be tried once: a one-step contract as it is, a
+    // shipped or own blueprint with the job of its first step.
+    if (entry.contract || (blueprint && entry.voyage_id)) {
       const trial = document.createElement("button");
       trial.type = "button";
       trial.className = "secondary";
-      trial.textContent = "Try once";
-      trial.addEventListener("click", () => prepareWorkflow(entry.contract));
+      trial.textContent = entry.workflows.length > 1 ? "Try step 1 once" : "Try once";
+      trial.addEventListener("click", () =>
+        entry.contract ? prepareWorkflow(entry.contract) : tryBlueprintOnce(entry, card)
+      );
       card.append(trial);
     }
     if (blueprint && entry.editable) {
@@ -3394,6 +3563,31 @@ async function adoptBlueprint(entry) {
     await openLibraryEntry(payload.voyage.voyage_id);
   } catch (error) {
     libraryNote(list, `Not added: ${error.message}`);
+  }
+}
+
+async function tryBlueprintOnce(entry, card) {
+  if (entry.first_step) {
+    // A shipped blueprint: its first contract with the blueprint's settings,
+    // on the folders currently chosen in the engine room.
+    prepareWorkflow(entry.workflows[0]);
+    $("questions").value = (entry.first_step.questions || []).join("\n");
+    $("parameters").value = JSON.stringify(entry.first_step.parameters || {}, null, 2);
+    $("draftState").textContent = `Loaded “${entry.name}”, step 1 of ${entry.workflows.length}, for review.`;
+    return;
+  }
+  try {
+    const response = await fetch(`/api/voyage?id=${encodeURIComponent(entry.voyage_id)}`);
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    const first = payload.voyage.steps?.[0];
+    if (!first?.job) throw new Error("this blueprint has no step to try");
+    applyDraft({job: first.job, name: `${entry.name} · step 1 of ${entry.workflows.length}`});
+    setEngineDrawer(true);
+  } catch (error) {
+    libraryNote(card, `Not loaded: ${error.message}`);
   }
 }
 
@@ -3649,6 +3843,21 @@ async function saveOpenAsBlueprint() {
     libraryNote(diff, `Saved as blueprint "${payload.voyage.name}". It is listed under Blueprints.`);
   } catch (error) {
     libraryNote(diff, `Not saved as blueprint: ${error.message}`);
+  }
+}
+
+async function removeUseCase(voyageId, card) {
+  try {
+    const response = await fetch("/api/voyage-delete", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: voyageId})
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.detail || payload.error || "not removed");
+    await loadLibrary();
+  } catch (error) {
+    libraryNote(card, `Not removed: ${error.message}`);
   }
 }
 
