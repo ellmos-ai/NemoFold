@@ -1305,7 +1305,7 @@ function showEngineVoyage() {
   run.type = "button";
   run.className = "card-open";
   run.append(instrumentIcon("wheel"), "Run all steps");
-  run.addEventListener("click", runEngineVoyage);
+  run.addEventListener("click", () => runEngineVoyage(run));
   const clear = document.createElement("button");
   clear.type = "button";
   clear.className = "secondary";
@@ -1318,7 +1318,14 @@ function showEngineVoyage() {
   deskLine(box, "ul", "voyage-run-steps");
 }
 
-async function runEngineVoyage() {
+let engineVoyageRunning = false;
+
+async function runEngineVoyage(button) {
+  // One run at a time: a second click must not start the chain again
+  // (review PR7-01).
+  if (engineVoyageRunning) return;
+  engineVoyageRunning = true;
+  button.disabled = true;
   const list = $("engineVoyage").querySelector(".voyage-run-steps");
   list.textContent = "";
   deskLine(list, "li", null, `Running ${engineVoyage.steps} steps…`);
@@ -1344,6 +1351,9 @@ async function runEngineVoyage() {
   } catch (error) {
     list.textContent = "";
     deskLine(list, "li", null, `Not run: ${error.message}`);
+  } finally {
+    engineVoyageRunning = false;
+    button.disabled = false;
   }
 }
 
