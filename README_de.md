@@ -869,8 +869,12 @@ python -m nemofold serve --allow-root $PWD --base-dir $PWD
 ```
 
 Öffne `http://127.0.0.1:8765`; das Etikett oben lautet `FULL LOCAL CONSOLE` (die Demo
-unten: `PUBLIC DEMO · SYNTHETIC DATA ONLY`). Der Standard-Beispielordner ist die
-fiktive Fallakte `examples/synthetic-case` mit deutschen Standardfragen. Die Konsole
+unten: `PUBLIC DEMO · SYNTHETIC DATA ONLY`). Die Vollversion startet sauber: kein
+Beispielordner und keine Beispielfragen; sie beginnt bei deinem ersten Arbeitsordner,
+sonst beim ersten mit `--allow-root` übergebenen Ordner. Die fiktive Fallakte
+`examples/synthetic-case` mit ihren deutschen Fragen gehört zur Public Demo
+(`--allow-root examples/synthetic-case` öffnet denselben Fall auch in der Vollversion).
+Die Konsole
 verwendet denselben strikten Auftragsparser
 und Anwendungsdienst wie die CLI. Sie bindet nur an Loopback, lehnt Cross-Origin-POSTs
 ab und verlangt `--expose-network`, bevor sie eine Nicht-Loopback-Adresse verwendet.
@@ -881,7 +885,10 @@ sichere Pfad; Aktionsworkflows benötigen zusätzlich das serverseitige Gate
 `--approve-actions`, bevor eine Apply-Anfrage erfolgreich sein kann.
 
 Die Startseite `/` ist die **Werkbank**: oben das Captain's Desk, darunter der
-geöffnete Maschinenraum (erster Menüpunkt: *Engine room*). Übersicht und vier
+geöffnete Maschinenraum und am Ende die gefaltete Seekarte, sonst nichts (erster
+Menüpunkt: *Engine room*). Der Maschinenraum zeigt seine vier Bereiche - Mission,
+Bounded territory, Authority and budget, Reasoning worker - als getrennte, farbig
+hinterlegte Kacheln. Übersicht und vier
 Arbeitsbereiche besitzen eigene, direkt aufrufbare Routen statt
 Sprüngen innerhalb einer langen Seite: `/`, `/folders`, `/processes`, `/governance` und
 `/connections`. Analysis, Routines und Artifacts waren einmal eigene Räume — damit
@@ -891,13 +898,14 @@ Untertabs von Processes & Workflows: `?tab=workflows` (My use cases), `?tab=regi
 `/analysis`, `/routines` und `/artifacts` leiten auf ihren Nachfolger um, und ein Link,
 der einen einzelnen Vertrag nennt, landet im Reiter Blueprints mit genau diesem Vertrag.
 
-Begriffe: Eine **Action** ist ein Schritt, also einer der 44 Jobverträge (das API-Feld
-heißt weiterhin `workflow`); ein **Workflow** ist eine Kette aus zwei oder mehr
-Actions; ein **Usecase** ist eine übernommene, an Ihre eigenen Ordner gebundene Action
-oder ein ebensolcher Workflow; **Blueprints** sind die Vorlagen. Der Reiter Blueprints
-listet Workflow-Blueprints (zwei oder mehr Schritte), Single-Action-Blueprints,
-*My blueprints* und darunter alle 44 Actions, jeweils mit *Add to my use cases* und
-*Try once*. Ein Blueprint lässt sich beliebig oft übernehmen (Kopien werden
+Begriffe: Alles, was sich ausführen lässt, ist ein **Workflow**, mit einem Schritt oder
+mehreren; ein Schritt ist einer der 44 Jobverträge (das API-Feld heißt weiterhin
+`workflow`). Ein **Usecase** ist ein übernommener, an deine eigenen Ordner gebundener
+Workflow; **Blueprints** sind die Vorlagen. Der Reiter Blueprints zeigt jeden Blueprint
+als gleichberechtigte Kachel - die mitgelieferten Presets, *My blueprints* und die 44
+einschrittigen Workflows -, gefiltert mit denselben Themen-Chips wie My use cases. Jede
+Kachel bietet *Add to my use cases*; ein einschrittiger Workflow lässt sich zusätzlich
+einmal im Maschinenraum ausprobieren. Ein Blueprint lässt sich beliebig oft übernehmen (Kopien werden
 nummeriert) und im Dialog umbenennen; ein Usecase lässt sich als eigener Blueprint
 speichern oder mit *Remove from my use cases* entfernen, was den Blueprint nie
 berührt. Usecase-Details öffnen als Dialog.
@@ -906,17 +914,24 @@ Verändert hat sich, was vorn steht, nicht die Räume. Usecase-Kacheln sind das
 Primärobjekt, thematisch über Tags filterbar, und eine Routine ist schlicht ein Usecase
 mit Zeitplan und dem abgeleiteten Tag `scheduled` — dieser Filter macht aus dem Bullauge
 das Echolot: die letzten Läufe der Actions, die deine Routinen nutzen, manuelle Läufe
-derselben Action eingeschlossen, denn NemoFold ordnet einen Lauf keinem Zeitplan zu. Die einzelnen Actions, also die
-44 Actions (Jobverträge) für sich, stehen im Reiter Blueprints, dessen Editor
-der Maschinenraum ist. Folders ist das Zuhause der Ordner: welche überwacht werden, was
-tatsächlich an Bord ist, und welche Usecases daran hängen. In der lokalen Konsole
-durchsucht der Ordnerdialog jeden Ordner dieses Rechners und gibt ihn für die laufende
-Sitzung frei (`/api/approve-root`); gelesen wird erst nach dieser Freigabe. Die
-Public Demo und ein netzfreigegebener Server verweigern das. Unter der Werkbank behält die
-Startseite eine Überschrift, einen Satz und die Bereichskarten und faltet Grenz-Kacheln,
-Evidenzkette, Vertragsregister und Roadmap hinter eine alte Seekarte, die sich per Klick
-oder Enter aufklappt. Nichts wird entfernt; die Dokumentation verschmutzt nur nicht mehr
-die Oberfläche.
+derselben Action eingeschlossen, denn NemoFold ordnet einen Lauf keinem Zeitplan zu.
+Die einschrittigen Workflows stehen zwischen den Blueprints, ihr Editor ist der
+Maschinenraum.
+
+Folders ist das Zuhause deiner **Arbeitsordner**: Du legst sie einmal an, und sie
+bleiben bei jedem späteren Start dieser Loopback-Konsole freigegeben
+(`run-reports/web-console/working-folders.json`, `/api/working-folders`). Captain und
+Maschinenraum bieten sie als Chips mit einem Klick an, der Captain nimmt mehrere Ordner,
+und eine Anfrage, die genau einen Arbeitsordner beim Namen nennt („Fasse mir die
+Dokumente im Ordner Steuer zusammen“), läuft auf diesem Ordner. Folders zeigt außerdem,
+was tatsächlich an Bord ist, und *Your folder workflows*. In der lokalen Konsole
+durchsucht der Ordnerdialog jeden Ordner dieses Rechners, nimmt einen eingetippten oder
+eingefügten Pfad an oder öffnet den Ordnerdialog des Systems (`/api/pick-folder`); die
+Freigabe für die Sitzung (`/api/approve-root`) oder das Behalten als Arbeitsordner ist
+immer ein eigener Klick, und gelesen wird erst danach. Die Public Demo und ein
+netzfreigegebener Server verweigern all das, und ein netzfreigegebener Server lädt nie
+Arbeitsordner. Die Seekarte am Ende der Startseite faltet Grenz-Kacheln, Evidenzkette,
+Bereichskarte und Roadmap; sie klappt per Klick oder Enter auf.
 
 Governance zeigt die Autorität, mit der dieser Server gestartet wurde — Gates für
 Dateiaktionen, externe Modelle und Netzexposition, freigegebene Roots, Budgetgrenze und

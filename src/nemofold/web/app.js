@@ -899,17 +899,6 @@ const reducedMotionQuery = globalThis.matchMedia?.("(prefers-reduced-motion: red
 let wizardSurfaceEnabled = false;
 let lastVoyageRequest = null;
 
-function pageForWorkflow(workflow) {
-  const match = Object.entries(pageConfiguration)
-    .find(([, configuration]) => configuration.workflows.includes(workflow));
-  return match ? match[0] : "document";
-}
-
-function routeForPage(page) {
-  for (const [path, name] of pageByPath) if (name === page) return path;
-  return "/document-center";
-}
-
 function deskLine(parent, tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
@@ -1040,24 +1029,41 @@ async function prepareVoyage() {
     const receipt = deskLine(answer, "div", "voyage-receipt");
     deskLine(receipt, "span", null, `${result.drafts.length} DRAFTS PREPARED`);
     const list = deskLine(receipt, "ul", null);
-    for (const draft of result.drafts) deskLine(list, "li", null, draft.name);
-    const first = result.drafts[0];
-    const page = pageForWorkflow(first.workflow);
-    const link = deskLine(receipt, "a", "voyage-link", "Open the engine room →");
-    link.href = `${routeForPage(page)}?workflow=${encodeURIComponent(first.workflow)}`;
+    // The engine room sits right below the captain: each prepared step loads
+    // there with its folders, questions and parameters; nothing runs by itself.
+    for (const draft of result.drafts) {
+      const item = deskLine(list, "li", null, `${draft.name} `);
+      const load = document.createElement("button");
+      load.type = "button";
+      load.className = "voyage-load";
+      load.textContent = "Load into the engine room";
+      load.addEventListener("click", () => loadPreparedStep(draft.draft_id));
+      item.append(load);
+    }
     deskLine(
       receipt,
       "small",
       null,
-      "They wait in the prepared job inbox. Nothing has run and no approval was stored."
+      "Step 1 is loaded below. All steps also wait in the prepared job inbox. "
+      + "Nothing has run and no approval was stored."
     );
-    receipt.scrollIntoView({behavior: reducedMotionQuery?.matches ? "auto" : "smooth",
-      block: "nearest"});
+    await loadPreparedStep(result.drafts[0].draft_id);
   } catch (error) {
     deskLine(answer, "p", "desk-note", `Not prepared: ${error.message}`);
   } finally {
     if (button) button.disabled = false;
   }
+}
+
+async function loadPreparedStep(draftId) {
+  const response = await fetch(`/api/draft?id=${encodeURIComponent(draftId)}`);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || data.error || "Draft load failed.");
+  applyDraft(data.draft);
+  await loadDraftInbox();
+  $("draftSelect").value = draftId;
+  $("engineRoom").scrollIntoView({behavior: reducedMotionQuery?.matches ? "auto" : "smooth",
+    block: "start"});
 }
 
 function toggleCollapse(button) {

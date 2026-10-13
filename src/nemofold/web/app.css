@@ -281,6 +281,7 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .desk-folders textarea{resize:vertical}
 .desk-folders .path-add{align-self:flex-start;border:1px solid #2c5f6b;background:transparent;color:#d8ece9}
 .desk-folders .path-add:hover{background:rgba(120,209,202,.12)}
+.voyage-load{margin-left:8px;border:1px solid #8a6b3c;background:transparent;padding:3px 9px;color:#f3e7d0;font:10px var(--mono);cursor:pointer}
 .desk-folders .folder-chip{border-color:#2c5f6b;background:rgba(4,22,29,.72);color:#d8ece9}
 .use-case-library{margin-top:30px;border:1px solid var(--line-dark);background:var(--white);padding:24px}
 .library-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:3px solid var(--deep);padding-bottom:14px}
@@ -425,6 +426,7 @@ body[data-tab="workflows"] [data-page-tab]:not([data-page-tab~="workflows"]),bod
 .policy-form input,.policy-form select,.policy-form textarea{border:1px solid var(--line-dark);background:var(--white);padding:9px 10px;color:var(--ink);font:12px var(--mono)}
 .policy-form textarea{resize:vertical}
 .policy-default-toggle{grid-column:1/-1;flex-direction:row!important;align-items:center;gap:9px!important;text-transform:none!important;letter-spacing:.02em!important;font:11px var(--mono)!important;color:var(--ink)!important}
+.policy-default-toggle input{flex:none;width:auto;margin:0;padding:0}
 .policy-form-actions{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:10px}
 #policyFormState{color:var(--muted);font:10px var(--mono)}
 .policy-actions,.policy-binder{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:11px}
