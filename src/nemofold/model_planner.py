@@ -98,4 +98,3 @@ def _json_object(text: str) -> dict[str, object]:
     if not isinstance(value, dict):
         raise ValueError("the model did not answer with a JSON object")
     return value
-

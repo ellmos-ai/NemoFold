@@ -285,7 +285,15 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .desk-planner[hidden],.desk-approve[hidden]{display:none}
 .desk-planner label{display:flex;flex-direction:column;gap:5px;color:var(--cyan);font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}
 .desk-planner select,.desk-planner input[type=text],.desk-planner input:not([type]){min-width:220px;border:1px solid #2c5f6b;background:rgba(4,22,29,.72);padding:8px 10px;color:#f2f6f3;font:11px var(--mono)}
-.desk-planner .desk-approve{flex-direction:row;align-items:center;color:#f3e7d0;letter-spacing:0;text-transform:none;font:11px var(--mono)}
+.desk-planner .desk-approve{flex-direction:row;align-items:center;gap:8px;color:#f3e7d0;letter-spacing:0;text-transform:none;font:11px var(--mono)}
+.desk-planner .desk-approve input{flex:none;width:auto;margin:0}
+.desk-created{margin:10px 0 0;border-left:3px solid var(--cyan);padding:6px 10px;color:#d8ece9;font:12px var(--mono)}
+.engine-voyage{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 14px;border:1px solid #8a6b3c;border-left:5px solid #8a6b3c;background:#fbf6ea;padding:12px 16px}
+.engine-voyage[hidden]{display:none}
+.engine-voyage .kicker{flex-basis:100%;margin:0;color:#8a6b3c}
+.engine-voyage b{flex-basis:100%;font:400 20px var(--serif)}
+.engine-voyage p{flex-basis:100%;margin:0;font-size:12px}
+.engine-voyage .voyage-run-steps{flex-basis:100%;margin:4px 0 0;padding-left:18px;font:11px var(--mono)}
 .desk-brief{max-height:340px;overflow:auto;white-space:pre-wrap;border:1px solid #2c5f6b;background:rgba(4,22,29,.72);padding:12px;color:#d8ece9;font:11px/1.5 var(--mono)}
 .desk-folders{display:flex;min-width:0;flex:1 1 100%;flex-direction:column;gap:6px}
 .desk-folders label{flex:none}
@@ -301,6 +309,15 @@ body[data-tab="workflows"] .porthole-life{display:block}
 /* Cards sit in .library-group grids; the list itself stacks group titles,
    groups and notes, so a title never takes a card cell. */
 .library-list{margin-top:18px}
+/* The public demo shows only what it can serve: no folder approval, no
+   library writes, no captain, no policy editor. */
+body[data-demo="true"] [data-full-only]{display:none!important}
+.library-head-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
+.new-entry{display:flex;flex-wrap:wrap;align-items:end;gap:10px 12px;margin-top:14px;border:1px solid var(--line-dark);background:var(--surface);padding:12px 14px}
+.new-entry[hidden]{display:none}
+.new-entry label{display:flex;flex-direction:column;gap:5px;color:var(--sea);font:800 9px var(--mono);letter-spacing:.09em;text-transform:uppercase}
+.new-entry input,.new-entry select{min-width:240px;border:1px solid var(--line-dark);background:var(--white);padding:8px 10px;color:var(--ink);font:12px var(--mono)}
+.new-entry small{flex-basis:100%;color:var(--muted);font:10px var(--mono)}
 .glance-controls[hidden]{display:none}
 /* Engine room: one tile per settings area, each in its own tint. */
 #jobForm>fieldset{margin:0 0 14px;padding:16px 18px 18px;border:1px solid var(--line);border-left:5px solid var(--area);background:var(--area-tint)}

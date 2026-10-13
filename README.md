@@ -917,10 +917,17 @@ and the plan is built exactly as for keywords. A local Ollama or LM Studio model
 no approval; an external provider needs `--allow-external-models` and an approval for
 that one request, and receives the sentence pseudonymized. *Brief for a CLI agent*
 copies a prompt with the folders, the catalogue, the job format, the commands and the
-rules to the clipboard, for an agent such as Claude Code or Codex. A plan can be
-prepared as drafts in the job inbox (engine room, *Run identity & prepared jobs*) or
-run at once: *Run all steps* keeps it as one of My use cases and runs its steps one
-after another, locally and as a dry run.
+rules to the clipboard, for an agent such as Claude Code or Codex. The captain only
+prepares: *Prepare voyage* puts the steps into the job inbox (engine room, *Run
+identity & prepared jobs*) and loads step 1 into the engine room below; a plan of
+several steps is first kept as one new workflow under My use cases, and the engine
+room names it and runs all its steps in order on request, locally and as a dry run.
+Preparing the same plan again reuses that workflow. *+ New use case* and *+ New
+blueprint* start an entry from a name and a first step. Echo sounding - the recent
+runs of the actions folder routines use - sits on Folders; NemoFold has no scheduler
+of its own, a scheduled use case writes a task file the person installs. The public
+demo shows only what it can serve: no captain, no working folders, no library writes
+and no policy editor, and Blueprints lists the five demo workflows to try once.
 
 The model field of a local provider offers the models that server actually holds;
 models it only relays to a cloud (`:cloud`) are not offered and are refused as a local

@@ -686,8 +686,6 @@ function updateVoyageScene(area = null) {
   $("voyageSceneTitle").textContent = scene.title;
   $("voyageSceneText").textContent = scene.text;
   $("voyageRoadmap").textContent = scene.roadmap;
-  // The echo sounder belongs to the routines, so it surfaces with their scene.
-  if ($("echoCheck")) $("echoCheck").hidden = key !== "scheduled";
 }
 
 const workflowCards = {
@@ -959,6 +957,16 @@ function renderPlannerProviders(providers, externalAllowed) {
     option.textContent = `${item.label}${item.external_transfer ? " · external" : " · this computer"}`;
     select.append(option);
   }
+  // A local server that is not answering stays listed, so its absence is
+  // explained rather than silent.
+  for (const item of providers || []) {
+    if (item.transport !== "local_http" || item.readiness === "running") continue;
+    const option = document.createElement("option");
+    option.value = "";
+    option.disabled = true;
+    option.textContent = `${item.label} · not reachable right now`;
+    select.append(option);
+  }
   if (!plannerProviders.length) {
     const option = document.createElement("option");
     option.value = "";
@@ -1116,75 +1124,19 @@ function renderVoyagePlan(plan) {
     prepare.id = "deskPrepare";
     prepare.className = "card-open";
     prepare.append(instrumentIcon("wheel"), "Prepare voyage");
-    prepare.addEventListener("click", prepareVoyage);
-    const runAll = document.createElement("button");
-    runAll.type = "button";
-    runAll.id = "deskRunAll";
-    runAll.className = "card-open";
-    runAll.append(instrumentIcon("wheel"), plan.steps.length > 1 ? "Run all steps" : "Run it");
-    runAll.addEventListener("click", () => runWholeVoyage(plan));
-    actions.append(prepare, runAll);
+    prepare.addEventListener("click", () => prepareVoyage(plan));
+    actions.append(prepare);
     deskLine(
       actions,
       "small",
       null,
-      "Prepare writes drafts into the job inbox (engine room · Run identity & prepared "
-      + "jobs) and runs nothing. Run keeps the plan as one of your use cases and runs "
-      + "its steps one after another, locally and as a dry run."
+      plan.steps.length > 1
+        ? "Prepare keeps these steps as one new workflow under My use cases, puts them in "
+          + "the job inbox and loads them into the engine room below. Nothing runs until "
+          + "you start it there."
+        : "Prepare puts the step in the job inbox and loads it into the engine room below. "
+          + "Nothing runs until you start it there."
     );
-  }
-}
-
-// The whole plan in one go: kept as a use case, then run step after step,
-// each step reading the previous output where the plan says so.
-async function runWholeVoyage(plan) {
-  const answer = $("deskAnswer");
-  const button = $("deskRunAll");
-  if (button) button.disabled = true;
-  const status = deskLine(answer, "p", "desk-note", `Running ${plan.steps.length} step(s)…`);
-  try {
-    const name = `Captain · ${plan.request_text}`.slice(0, 110);
-    const saved = await fetch("/api/voyages", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        name: uniqueName(name, false),
-        description: plan.request_text.slice(0, 400),
-        source: "wizard",
-        steps: plan.steps.map((step) => ({
-          workflow: step.workflow,
-          job: step.job,
-          note: "",
-          reads_previous_output: step.reads_previous_step === true
-        }))
-      })
-    });
-    const kept = await saved.json();
-    if (!saved.ok || kept.ok !== true) throw new Error(kept.detail || kept.error || "not kept");
-    const response = await fetch("/api/voyage-run", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({voyage_id: kept.voyage.voyage_id})
-    });
-    const result = await response.json();
-    if (result.steps === undefined) {
-      throw new Error(result.detail || result.error || `request failed (${response.status})`);
-    }
-    status.textContent = result.status === "executed"
-      ? `Done: ${result.steps.length} step(s) ran. Kept as “${kept.voyage.name}” under My use cases.`
-      : `Stopped at step ${result.stopped_at}. Kept as “${kept.voyage.name}” under My use cases.`;
-    const list = deskLine(answer, "ul", "voyage-run-steps");
-    result.steps.forEach((step, index) => {
-      const errors = Array.isArray(step.errors) && step.errors.length ? ` · ${step.errors[0]}` : "";
-      deskLine(list, "li", null, `${index + 1} · ${step.workflow} · ${String(step.status).toUpperCase()}${errors}`);
-    });
-    const link = deskLine(answer, "a", "voyage-link", "Open the results under Artifacts →");
-    link.href = "/artifacts";
-    await loadLibrary();
-  } catch (error) {
-    status.textContent = `Not run: ${error.message}`;
-  } finally {
-    if (button) button.disabled = false;
   }
 }
 
@@ -1242,11 +1194,21 @@ async function askTheCaptain(event) {
   }
 }
 
-async function prepareVoyage() {
+async function prepareVoyage(plan) {
   const answer = $("deskAnswer");
   const button = $("deskPrepare");
   if (button) button.disabled = true;
   try {
+    // A plan of several steps becomes one workflow first; the engine room
+    // then works on that workflow, step by step or all at once.
+    engineVoyage = plan?.steps?.length > 1 ? await keepCombinedWorkflow(plan) : null;
+    if (engineVoyage) {
+      deskLine(answer, "p", "desk-created",
+        engineVoyage.reused
+          ? `Using the workflow created before: “${engineVoyage.name}” · ${engineVoyage.steps} steps.`
+          : `New workflow created: “${engineVoyage.name}” · ${engineVoyage.steps} steps · `
+            + "kept under My use cases.");
+    }
     const response = await fetch("/api/wizard-prepare", {
       method: "POST",
       headers: {"Content-Type": "application/json"},
@@ -1282,10 +1244,116 @@ async function prepareVoyage() {
       + "Nothing has run and no approval was stored."
     );
     await loadPreparedStep(result.drafts[0].draft_id);
+    showEngineVoyage();
   } catch (error) {
     deskLine(answer, "p", "desk-note", `Not prepared: ${error.message}`);
   } finally {
     if (button) button.disabled = false;
+  }
+}
+
+let engineVoyage = null;
+// The same plan prepared twice reuses the workflow it already created.
+const keptCombined = new Map();
+
+async function keepCombinedWorkflow(plan) {
+  const signature = JSON.stringify([
+    plan.request_text, plan.steps.map((step) => step.workflow), lines($("deskRoots").value)
+  ]);
+  const earlier = keptCombined.get(signature);
+  if (earlier && libraryEntries.some((entry) => entry.voyage_id === earlier.voyage_id)) {
+    return {...earlier, reused: true};
+  }
+  const name = uniqueName(`Captain · ${plan.request_text}`.slice(0, 110), false);
+  const response = await fetch("/api/voyages", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({
+      name,
+      description: plan.request_text.slice(0, 400),
+      source: "wizard",
+      steps: plan.steps.map((step) => ({
+        workflow: step.workflow,
+        job: step.job,
+        note: "",
+        reads_previous_output: step.reads_previous_step === true
+      }))
+    })
+  });
+  const kept = await response.json();
+  if (!response.ok || kept.ok !== true) throw new Error(kept.detail || kept.error || "workflow not kept");
+  await loadLibrary();
+  const created = {voyage_id: kept.voyage.voyage_id, name: kept.voyage.name, steps: plan.steps.length};
+  keptCombined.set(signature, created);
+  return created;
+}
+
+// The engine room names the workflow it works on and runs all its steps on
+// request, each step reading the previous output where the plan says so.
+function showEngineVoyage() {
+  const box = $("engineVoyage");
+  if (!box) return;
+  box.textContent = "";
+  box.hidden = !engineVoyage;
+  if (!engineVoyage) return;
+  deskLine(box, "span", "kicker", `WORKFLOW · ${engineVoyage.steps} STEPS`);
+  deskLine(box, "b", null, engineVoyage.name);
+  deskLine(box, "p", null,
+    "Step 1 is loaded below; every step waits in the job inbox. Run one step at a time "
+    + "here, or all steps in order, locally and as a dry run.");
+  const run = document.createElement("button");
+  run.type = "button";
+  run.className = "card-open";
+  run.append(instrumentIcon("wheel"), "Run all steps");
+  run.addEventListener("click", () => runEngineVoyage(run));
+  const clear = document.createElement("button");
+  clear.type = "button";
+  clear.className = "secondary";
+  clear.textContent = "Close workflow";
+  clear.addEventListener("click", () => {
+    engineVoyage = null;
+    showEngineVoyage();
+  });
+  box.append(run, clear);
+  deskLine(box, "ul", "voyage-run-steps");
+}
+
+let engineVoyageRunning = false;
+
+async function runEngineVoyage(button) {
+  // One run at a time: a second click must not start the chain again
+  // (review PR7-01).
+  if (engineVoyageRunning) return;
+  engineVoyageRunning = true;
+  button.disabled = true;
+  const list = $("engineVoyage").querySelector(".voyage-run-steps");
+  list.textContent = "";
+  deskLine(list, "li", null, `Running ${engineVoyage.steps} steps…`);
+  try {
+    const response = await fetch("/api/voyage-run", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: engineVoyage.voyage_id})
+    });
+    const result = await response.json();
+    if (result.steps === undefined) {
+      throw new Error(result.detail || result.error || `request failed (${response.status})`);
+    }
+    list.textContent = "";
+    result.steps.forEach((step, index) => {
+      const errors = Array.isArray(step.errors) && step.errors.length ? ` · ${step.errors[0]}` : "";
+      deskLine(list, "li", null, `${index + 1} · ${step.workflow} · ${String(step.status).toUpperCase()}${errors}`);
+    });
+    const link = deskLine(list, "li", null, "");
+    const anchor = deskLine(link, "a", null, "Open the results under Artifacts →");
+    anchor.href = "/artifacts";
+    if (artifactSurfaceEnabled) await loadArtifacts();
+  } catch (error) {
+    list.textContent = "";
+    deskLine(list, "li", null, `Not run: ${error.message}`);
+  } finally {
+    engineVoyageRunning = false;
+    button.disabled = false;
   }
 }
 
@@ -1433,7 +1501,7 @@ function actionTags(workflow) {
 }
 
 // A one-step workflow becomes a use case bound to the current folders.
-async function adoptAction(workflow, card) {
+async function adoptAction(workflow, card, {name = "", blueprint = false} = {}) {
   const defaults = workflowDefaults[workflow] || {questions: [], parameters: {}};
   const output = $("outputDir").value.trim().replace(/[\\/]+$/, "");
   try {
@@ -1441,9 +1509,10 @@ async function adoptAction(workflow, card) {
       method: "POST",
       headers: {"Content-Type": "application/json"},
       body: JSON.stringify({
-        name: uniqueName(workflowCards[workflow]?.title || workflow, false),
+        name: uniqueName(name || workflowCards[workflow]?.title || workflow, blueprint),
         description: workflowCards[workflow]?.benefit || "",
-        source: "manual",
+        // An own blueprint is a template; a use case is a manual entry.
+        source: blueprint ? "template" : "manual",
         // "scheduled" follows a schedule field, which a fresh copy does not have.
         tags: actionTags(workflow).filter((tag) => tag !== "scheduled"),
         steps: [{
@@ -3027,6 +3096,7 @@ async function loadStatus() {
       : "FULL LOCAL CONSOLE";
     $("modeBadge").parentElement.classList.toggle("demo", publicDemo);
     if (publicDemo) {
+      document.body.dataset.demo = "true";
       publicDemoParameters = status.public_demo_parameters || {};
       $("analysisScale").value = "custom";
       const supported = new Set(status.workflows);
@@ -3122,6 +3192,34 @@ if (requestedWorkflow && currentTab === "registry") {
 $("runId").value = "";
 $("workflow").addEventListener("change", applyWorkflowDefaults);
 if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
+// "+ New use case" / "+ New blueprint": a name and a first step, then the
+// dialog that opens next takes further steps.
+for (const opener of document.querySelectorAll("[data-new-open]")) {
+  opener.addEventListener("click", () => {
+    const form = document.querySelector(`[data-new-entry="${opener.dataset.newOpen}"]`);
+    const select = form.elements.workflow;
+    if (!select.options.length) {
+      for (const option of $("workflow").options) {
+        if (!workflowCards[option.value]) continue;
+        select.append(new Option(`${workflowCards[option.value].title} · ${option.value}`, option.value));
+      }
+    }
+    form.hidden = false;
+    form.elements.name.focus();
+  });
+}
+for (const form of document.querySelectorAll("[data-new-entry]")) {
+  form.querySelector("[data-new-cancel]").addEventListener("click", () => { form.hidden = true; });
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    await adoptAction(form.elements.workflow.value, form, {
+      name: form.elements.name.value.trim(),
+      blueprint: form.dataset.newEntry === "blueprint"
+    });
+    form.hidden = true;
+    form.reset();
+  });
+}
 for (const radio of document.querySelectorAll("input[name=deskMode]")) {
   radio.addEventListener("change", updateDeskMode);
 }
@@ -3358,7 +3456,11 @@ function renderLibraryCards(list, entries) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "card-open";
-    button.append(instrumentIcon("wheel"), blueprint ? "Add to my use cases" : "Open");
+    // The notebook is no configurable workflow: its button starts it.
+    button.append(
+      instrumentIcon("wheel"),
+      entry.notebook ? "Start" : blueprint ? "Add to my use cases" : "Open"
+    );
     button.addEventListener("click", () => {
       if (entry.notebook) globalThis.location.assign("/#researchNotebook");
       else if (entry.notebookBlueprint) setNotebookInUseCases(true);
@@ -3366,8 +3468,9 @@ function renderLibraryCards(list, entries) {
       else if (blueprint) adoptBlueprint(entry);
       else openLibraryEntry(entry.voyage_id);
     });
-    card.append(button);
-    if (!blueprint) {
+    // The demo keeps no library: no adopting, opening or removing there.
+    if (!publicDemo) card.append(button);
+    if (!blueprint && !publicDemo) {
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "secondary";

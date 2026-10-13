@@ -65,7 +65,7 @@
   </header>
 
   <main id="workspace">
-    <section id="captainsDesk" class="captains-desk" aria-labelledby="captainsDeskTitle" data-page-section="overview">
+    <section id="captainsDesk" data-full-only class="captains-desk" aria-labelledby="captainsDeskTitle" data-page-section="overview">
       <div class="desk-head">
         <p class="kicker">ASK THE CAPTAIN</p>
         <h1 id="captainsDeskTitle">Say what you need. The desk prepares the work.</h1>
@@ -114,6 +114,7 @@
           </button>
         </div>
         <div class="drawer-body">
+          <div id="engineVoyage" class="engine-voyage" aria-live="polite" hidden></div>
           <section class="console" aria-label="Job contract">
         <form id="jobForm">
           <fieldset>
@@ -373,7 +374,7 @@
       <a href="/processes?tab=registry" data-tab-link="registry">Blueprints</a>
     </nav>
 
-    <section id="workingFolders" class="working-folders" aria-labelledby="workingFoldersTitle" data-page-section="folders">
+    <section id="workingFolders" data-full-only class="working-folders" aria-labelledby="workingFoldersTitle" data-page-section="folders">
       <p class="kicker">WORKING FOLDERS</p>
       <h2 id="workingFoldersTitle">The folders you work in.</h2>
       <p>Add them once: they stay approved every time this console starts on this computer, and the captain, the engine room and your use cases choose from them. Removing one forgets it; its files are never touched.</p>
@@ -411,12 +412,20 @@
           <h2 id="blueprintsTitle">Start from a blueprint, make it your use case.</h2>
           <p>Every blueprint is a workflow: one step, or several chained. Add one to your use cases as often as you like, then rename and adapt each copy; the blueprint itself stays as it is. A one-step workflow can also be tried once in the engine room. Your own blueprints appear here after Save as blueprint.</p>
         </div>
+        <button type="button" data-full-only data-new-open="blueprint">+ New blueprint</button>
       </div>
+      <form class="new-entry" data-new-entry="blueprint" hidden>
+        <label>Name<input name="name" autocomplete="off" maxlength="120" placeholder="e.g. Monthly cost check"></label>
+        <label>First step<select name="workflow"></select></label>
+        <button type="submit">Create</button>
+        <button type="button" class="secondary" data-new-cancel>Cancel</button>
+        <small>More steps can be inserted in the dialog that opens next.</small>
+      </form>
       <div id="blueprintFilter" class="library-filter" role="group" aria-label="Filter blueprints by topic"></div>
       <div id="blueprintList" class="library-list" aria-live="polite"></div>
     </section>
 
-    <section id="echoCheck" class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="processes" data-page-tab="workflows" hidden>
+    <section id="echoCheck" data-full-only class="echo-check" aria-labelledby="echoCheckTitle" data-page-section="folders">
       <div class="glance-head">
         <div>
           <p class="kicker"><svg class="instrument-icon radar" aria-hidden="true"><use href="#icon-radar"></use></svg>ECHO SOUNDING</p>
@@ -506,7 +515,7 @@
         <div><span>DEFAULT OUTBOUND RIGHT</span><b id="governanceDefaultRights">—</b></div>
         <button type="button" id="governanceRefresh" class="secondary">Refresh</button>
       </div>
-      <form id="policyForm" class="policy-form">
+      <form id="policyForm" data-full-only class="policy-form">
         <div class="policy-form-head">
           <p class="kicker" id="policyFormMode">NEW ENTRY</p>
           <h3 id="policyFormTitle">Write it down once.</h3>
@@ -635,8 +644,18 @@
           <h2 id="libraryTitle">My use cases.</h2>
           <p>Every workflow and action you adopted, bound to your folders. Open one to rename, reorder, run or remove it; removing never touches its blueprint. New ones come from the <a href="/processes?tab=registry">blueprints</a> or from the captain's desk.</p>
         </div>
-        <button type="button" id="libraryRefresh" class="secondary">Refresh</button>
+        <div class="library-head-actions">
+          <button type="button" data-full-only data-new-open="usecase">+ New use case</button>
+          <button type="button" id="libraryRefresh" class="secondary">Refresh</button>
+        </div>
       </div>
+      <form class="new-entry" data-new-entry="usecase" hidden>
+        <label>Name<input name="name" autocomplete="off" maxlength="120" placeholder="e.g. Tax documents 2026"></label>
+        <label>First step<select name="workflow"></select></label>
+        <button type="submit">Create</button>
+        <button type="button" class="secondary" data-new-cancel>Cancel</button>
+        <small>More steps can be inserted in the dialog that opens next.</small>
+      </form>
       <div id="libraryFilter" class="library-filter" role="group" aria-label="Filter use cases by topic"></div>
       <div id="libraryList" class="library-list" aria-live="polite"></div>
 

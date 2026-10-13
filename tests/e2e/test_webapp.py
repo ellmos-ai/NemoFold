@@ -2279,6 +2279,21 @@ def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) ->
     assert '<dialog id="libraryDetail" class="library-detail"' in html
     assert 'id="blueprintList"' in html
     assert "Save as blueprint" in html
+    # 2026-10-13: both libraries can start an entry from scratch.
+    assert 'data-new-open="usecase"' in html
+    assert 'data-new-open="blueprint"' in html
+    # The public demo hides what it cannot serve (library writes, folder
+    # approval, captain, policy editor) instead of answering it with 404.
+    for marker in (
+        '<section id="captainsDesk" data-full-only',
+        '<section id="workingFolders" data-full-only',
+        '<section id="echoCheck" data-full-only',
+        '<form id="policyForm" data-full-only',
+        'data-full-only data-new-open="usecase"',
+        'data-full-only data-new-open="blueprint"',
+    ):
+        assert marker in html, marker
+    assert 'document.body.dataset.demo = "true";' in script
     for label in ("Add to my use cases", "Remove from my use cases", "Try once",
                   "FULL LOCAL CONSOLE", "PUBLIC DEMO · SYNTHETIC DATA ONLY", "/api/approve-root"):
         assert label in script, label
