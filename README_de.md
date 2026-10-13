@@ -378,7 +378,10 @@ noch aus.
 
 Die genauen Prüfungen und Produktgrenzen stehen im [Release-Gate](RELEASE_GATE.md).
 Der echte Cloud-Beleg bleibt der historische Lauf vom 2026-09-02; die heutige
-Verifikation behauptet weder einen ne### Schlussabnahme (2026-10-12)
+Verifikation behauptet weder einen neuen Cloud-Aufruf noch eine gehostete öffentliche
+Demo.
+
+### Schlussabnahme (2026-10-12)
 
 Die persönliche GUI-Abnahme am 2026-10-12 hat die Konsole umgebaut: Die Startseite ist
 jetzt die Werkbank, Blueprints und eigene Use Cases sind getrennt, ein Ordner lässt sich
@@ -389,9 +392,6 @@ unabhängige Review-Runden durch ein zweites Modell (Codex, OpenAI) haben diese
 Änderungen geprüft. Der [gehostete CI-Lauf](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933) auf [`b0e2bc3`](https://github.com/ellmos-ai/NemoFold/commit/b0e2bc3b78fc045f605df94ca34f28c7079190fe) bestand:
 Windows/Python 3.12 alle 1175 Tests; Ubuntu/Python 3.11 und 3.12 je 1173 bei 2
 plattformbedingten Skips.
-
-uen Cloud-Aufruf noch eine gehostete öffentliche
-Demo.
 
 ### Abnahmegate-Register
 
