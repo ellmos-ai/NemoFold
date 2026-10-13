@@ -1117,13 +1117,74 @@ function renderVoyagePlan(plan) {
     prepare.className = "card-open";
     prepare.append(instrumentIcon("wheel"), "Prepare voyage");
     prepare.addEventListener("click", prepareVoyage);
-    actions.append(prepare);
+    const runAll = document.createElement("button");
+    runAll.type = "button";
+    runAll.id = "deskRunAll";
+    runAll.className = "card-open";
+    runAll.append(instrumentIcon("wheel"), plan.steps.length > 1 ? "Run all steps" : "Run it");
+    runAll.addEventListener("click", () => runWholeVoyage(plan));
+    actions.append(prepare, runAll);
     deskLine(
       actions,
       "small",
       null,
-      "Preparing writes drafts into the job inbox. It runs nothing and sends nothing."
+      "Prepare writes drafts into the job inbox (engine room · Run identity & prepared "
+      + "jobs) and runs nothing. Run keeps the plan as one of your use cases and runs "
+      + "its steps one after another, locally and as a dry run."
     );
+  }
+}
+
+// The whole plan in one go: kept as a use case, then run step after step,
+// each step reading the previous output where the plan says so.
+async function runWholeVoyage(plan) {
+  const answer = $("deskAnswer");
+  const button = $("deskRunAll");
+  if (button) button.disabled = true;
+  const status = deskLine(answer, "p", "desk-note", `Running ${plan.steps.length} step(s)…`);
+  try {
+    const name = `Captain · ${plan.request_text}`.slice(0, 110);
+    const saved = await fetch("/api/voyages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        name: uniqueName(name, false),
+        description: plan.request_text.slice(0, 400),
+        source: "wizard",
+        steps: plan.steps.map((step) => ({
+          workflow: step.workflow,
+          job: step.job,
+          note: "",
+          reads_previous_output: step.reads_previous_step === true
+        }))
+      })
+    });
+    const kept = await saved.json();
+    if (!saved.ok || kept.ok !== true) throw new Error(kept.detail || kept.error || "not kept");
+    const response = await fetch("/api/voyage-run", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({voyage_id: kept.voyage.voyage_id})
+    });
+    const result = await response.json();
+    if (result.steps === undefined) {
+      throw new Error(result.detail || result.error || `request failed (${response.status})`);
+    }
+    status.textContent = result.status === "executed"
+      ? `Done: ${result.steps.length} step(s) ran. Kept as “${kept.voyage.name}” under My use cases.`
+      : `Stopped at step ${result.stopped_at}. Kept as “${kept.voyage.name}” under My use cases.`;
+    const list = deskLine(answer, "ul", "voyage-run-steps");
+    result.steps.forEach((step, index) => {
+      const errors = Array.isArray(step.errors) && step.errors.length ? ` · ${step.errors[0]}` : "";
+      deskLine(list, "li", null, `${index + 1} · ${step.workflow} · ${String(step.status).toUpperCase()}${errors}`);
+    });
+    const link = deskLine(answer, "a", "voyage-link", "Open the results under Artifacts →");
+    link.href = "/artifacts";
+    await loadLibrary();
+  } catch (error) {
+    status.textContent = `Not run: ${error.message}`;
+  } finally {
+    if (button) button.disabled = false;
   }
 }
 
