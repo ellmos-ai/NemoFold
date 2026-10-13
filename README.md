@@ -6,6 +6,10 @@ English | [Deutsch](README_de.md)
 
 **Demo video (2:16):** https://youtu.be/wOToLqDBvvE · built for the Nebius x NVIDIA Global AI Hackathon
 
+**Judge test build:** [download it from the latest release](https://github.com/ellmos-ai/NemoFold/releases/latest), unpack the ZIP and
+follow its `README.txt` (no account or API key needed); details in
+[Installation & Quick Start](#7-installation--quick-start).
+
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
@@ -320,10 +324,26 @@ remain separate human approval gates.
 <a id="install"></a>
 ## 7. Installation & Quick Start
 
-Use Python 3.11 or newer. The free, account-free
-[source test build at the accepted implementation commit](https://github.com/ellmos-ai/NemoFold/archive/f43d66975c241384d55afd11f25bcf929fef47c1.zip)
-contains the code and synthetic examples. Extract it and open a terminal in the
-extracted project folder, or clone this repository, then run:
+Use Python 3.11 or newer. There are two ways in; neither needs an account or an API key.
+
+**Judge test build (recommended for a first look):** download
+`nemofold-judge-testbuild-6b13d12.zip` from the [latest release](https://github.com/ellmos-ai/NemoFold/releases/latest),
+unpack it, open a terminal in the unpacked folder and run:
+
+```powershell
+python -m venv .venv
+.venv\Scripts\python -m pip install nemofold-0.2.1-py3-none-any.whl
+.venv\Scripts\python -m nemofold serve --allow-root . --base-dir .
+```
+
+Then open http://127.0.0.1:8765 for the full local console and add a working folder,
+for example `examples/synthetic-case` (a fictional case, German). The public demo
+mode starts with
+`.venv\Scripts\python -m nemofold serve-demo --demo-root examples/synthetic-case`.
+The `README.txt` in the ZIP lists every step, including the optional Nemotron run
+with your own Nebius key.
+
+**From source:** clone this repository, then run:
 
 ```powershell
 python -m venv .venv
