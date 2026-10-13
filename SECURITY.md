@@ -37,11 +37,8 @@ If you discover a potential security vulnerability in NemoFold:
 1. **Do NOT** open a public issue or discussion.
 2. Submit a report privately via **GitHub Security Advisories**:
    - Navigate to the [Security Tab](https://github.com/ellmos-ai/NemoFold/security/advisories/new).
-3. Alternatively, contact the maintainers directly via email:
-   - `security@ellmos.ai`
-   - `security@open-bricks.org`
-   - `support@lukasgeiger.com`
-   - `lukas@open-bricks.org`
+   - Private vulnerability reporting is enabled for this repository; it is the
+     only reporting channel.
 
 Please include in your report:
 - Affected version, CLI/API/MCP entry point, and expected security invariant.
@@ -96,10 +93,7 @@ Wenn Sie eine potenzielle Sicherheitslücke in NemoFold entdecken:
 1. Eröffnen Sie bitte **kein** öffentliches GitHub-Issue und keine öffentliche Diskussion.
 2. Melden Sie die Schwachstelle vertraulich über **GitHub Security Advisories**:
    - [Sicherheitsbericht vertraulich einreichen](https://github.com/ellmos-ai/NemoFold/security/advisories/new)
-3. Alternativ per E-Mail an das Sicherheitsteam:
-   - `security@ellmos.ai`
-   - `security@open-bricks.org`
-   - `support@lukasgeiger.com`
-   - `lukas@open-bricks.org`
+   - Die vertrauliche Meldung ist für dieses Repository aktiviert; sie ist der
+     einzige Meldeweg.
 
 Bitte geben Sie die betroffene Version, den Einstiegspunkt (CLI/API/MCP) und eine minimale synthetische Reproduktion an. Fügen Sie **niemals** reale API-Schlüssel, vertrauliche Dokumente oder echte Hostpfade bei.

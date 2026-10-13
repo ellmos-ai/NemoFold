@@ -1204,8 +1204,10 @@ async function prepareVoyage(plan) {
     engineVoyage = plan?.steps?.length > 1 ? await keepCombinedWorkflow(plan) : null;
     if (engineVoyage) {
       deskLine(answer, "p", "desk-created",
-        `New workflow created: “${engineVoyage.name}” · ${engineVoyage.steps} steps · `
-        + "kept under My use cases.");
+        engineVoyage.reused
+          ? `Using the workflow created before: “${engineVoyage.name}” · ${engineVoyage.steps} steps.`
+          : `New workflow created: “${engineVoyage.name}” · ${engineVoyage.steps} steps · `
+            + "kept under My use cases.");
     }
     const response = await fetch("/api/wizard-prepare", {
       method: "POST",
@@ -1251,8 +1253,17 @@ async function prepareVoyage(plan) {
 }
 
 let engineVoyage = null;
+// The same plan prepared twice reuses the workflow it already created.
+const keptCombined = new Map();
 
 async function keepCombinedWorkflow(plan) {
+  const signature = JSON.stringify([
+    plan.request_text, plan.steps.map((step) => step.workflow), lines($("deskRoots").value)
+  ]);
+  const earlier = keptCombined.get(signature);
+  if (earlier && libraryEntries.some((entry) => entry.voyage_id === earlier.voyage_id)) {
+    return {...earlier, reused: true};
+  }
   const name = uniqueName(`Captain · ${plan.request_text}`.slice(0, 110), false);
   const response = await fetch("/api/voyages", {
     method: "POST",
@@ -1272,7 +1283,9 @@ async function keepCombinedWorkflow(plan) {
   const kept = await response.json();
   if (!response.ok || kept.ok !== true) throw new Error(kept.detail || kept.error || "workflow not kept");
   await loadLibrary();
-  return {voyage_id: kept.voyage.voyage_id, name: kept.voyage.name, steps: plan.steps.length};
+  const created = {voyage_id: kept.voyage.voyage_id, name: kept.voyage.name, steps: plan.steps.length};
+  keptCombined.set(signature, created);
+  return created;
 }
 
 // The engine room names the workflow it works on and runs all its steps on
@@ -3073,6 +3086,7 @@ async function loadStatus() {
       : "FULL LOCAL CONSOLE";
     $("modeBadge").parentElement.classList.toggle("demo", publicDemo);
     if (publicDemo) {
+      document.body.dataset.demo = "true";
       publicDemoParameters = status.public_demo_parameters || {};
       $("analysisScale").value = "custom";
       const supported = new Set(status.workflows);
@@ -3444,8 +3458,9 @@ function renderLibraryCards(list, entries) {
       else if (blueprint) adoptBlueprint(entry);
       else openLibraryEntry(entry.voyage_id);
     });
-    card.append(button);
-    if (!blueprint) {
+    // The demo keeps no library: no adopting, opening or removing there.
+    if (!publicDemo) card.append(button);
+    if (!blueprint && !publicDemo) {
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "secondary";

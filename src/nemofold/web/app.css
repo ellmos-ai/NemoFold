@@ -309,6 +309,9 @@ body[data-tab="workflows"] .porthole-life{display:block}
 /* Cards sit in .library-group grids; the list itself stacks group titles,
    groups and notes, so a title never takes a card cell. */
 .library-list{margin-top:18px}
+/* The public demo shows only what it can serve: no folder approval, no
+   library writes, no captain, no policy editor. */
+body[data-demo="true"] [data-full-only]{display:none!important}
 .library-head-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-start}
 .new-entry{display:flex;flex-wrap:wrap;align-items:end;gap:10px 12px;margin-top:14px;border:1px solid var(--line-dark);background:var(--surface);padding:12px 14px}
 .new-entry[hidden]{display:none}

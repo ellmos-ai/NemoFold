@@ -943,10 +943,18 @@ und der Plan entsteht genau wie bei Keywords. Ein lokales Ollama- oder LM-Studio
 braucht keine Freigabe; ein externer Anbieter braucht `--allow-external-models` und eine
 Freigabe für genau diese Anfrage und erhält den Satz pseudonymisiert. *Brief for a CLI
 agent* kopiert einen Auftrag mit Ordnern, Katalog, Jobformat, Befehlen und Regeln in die
-Zwischenablage, für einen Agenten wie Claude Code oder Codex. Ein Plan lässt sich als
-Entwürfe in die Job-Inbox legen (Maschinenraum, *Run identity & prepared jobs*) oder
-sofort ausführen: *Run all steps* behält ihn als einen deiner Usecases und führt die
-Schritte nacheinander aus, lokal und als Trockenlauf.
+Zwischenablage, für einen Agenten wie Claude Code oder Codex. Der Captain bereitet nur
+vor: *Prepare voyage* legt die Schritte in die Job-Inbox (Maschinenraum, *Run identity &
+prepared jobs*) und lädt Schritt 1 in den Maschinenraum darunter; ein Plan mit mehreren
+Schritten wird vorher als ein neuer Workflow unter My use cases angelegt, und der
+Maschinenraum nennt ihn und führt auf Wunsch alle Schritte nacheinander aus, lokal und
+als Trockenlauf. Wer denselben Plan erneut vorbereitet, bekommt denselben Workflow.
+*+ New use case* und *+ New blueprint* legen einen Eintrag aus Name und erstem Schritt
+an. Das Echolot - die letzten Läufe der Actions, die Ordner-Routinen nutzen - steht unter
+Folders; einen eigenen Scheduler hat NemoFold nicht, ein Usecase mit Zeitplan schreibt
+eine Aufgabendatei, die man selbst einrichtet. Die Public Demo zeigt nur, was sie bedienen
+kann: keinen Captain, keine Arbeitsordner, keine Bibliotheks-Schreibvorgänge und keinen
+Policy-Editor; unter Blueprints stehen die fünf Demo-Workflows zum einmaligen Ausprobieren.
 
 Das Modellfeld eines lokalen Anbieters bietet die Modelle an, die dieser Server
 tatsächlich hat; Modelle, die er nur an eine Cloud weiterreicht (`:cloud`), werden nicht
