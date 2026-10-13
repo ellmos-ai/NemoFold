@@ -395,26 +395,29 @@ plattformbedingten Skips.
 
 ### GUI-Abnahme durch den Eigentümer abgeschlossen (2026-10-13)
 
-Am 2026-10-13 hat der Eigentümer die Konsole live mit eigenen Ordnern in acht Runden
-getestet und die Abnahme abgeschlossen. Die Runden haben alles Ausführbare zu einem
-Workflow aus einem oder mehreren Schritten in einem Blueprint-Raster gemacht, die
-saubere Vollversion von der Public Demo getrennt und Arbeitsordner ergänzt, die nach
-einem Neustart freigegeben bleiben, dazu Pfadeingabe und Systemordnerdialog, drei
-Captain-Modi (Stichworte, ein Modell wählt aus dem Katalog, ein Auftrag für einen
-CLI-Agenten), Artifacts als eigenen Bereich und eine Connections-Seite, die zeigt, was
-der Rechner tatsächlich meldet. Ein echter Ordner mit rund 8.000 Dateien legte ein
-Speicherlimit in Synopsis Merge offen; der Workflow lehnt jetzt mehr als 500 Dokumente
-mit einem Satz ab, der die Alternativen nennt. Codex (OpenAI) hat die beiden Pull
-Requests dieser Runden (#6, #7) als zweites Modell geprüft und nach dem Urteil
-MERGE-FÄHIG gemergt; das erste Review von #7 fand einen Doppellauf-Fehler, der vor dem
-Merge behoben wurde. Der [gehostete CI-Lauf](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345)
+Der Eigentümer hat die Abnahme am 2026-10-13 in acht Runden abgeschlossen, in denen er
+die Konsole live mit eigenen Ordnern getestet hat. Seitdem ist alles Ausführbare ein
+Workflow aus einem oder mehreren Schritten in einem gemeinsamen Raster der Vorlagen
+(*Blueprints*), und die saubere Vollversion ist von der öffentlichen Demo getrennt.
+Hinzugekommen sind Arbeitsordner, die nach einem Neustart freigegeben bleiben, die
+Eingabe eines Pfads und der Ordnerdialog des Systems, drei Planungsarten des Captains
+(Stichworte, ein Modell wählt aus dem Katalog, ein Auftrag für einen Kommandozeilen-Agenten),
+ein eigener Bereich für Ergebnisse (*Artifacts*) und eine Verbindungsübersicht
+(*Connections*), die zeigt, was der Rechner tatsächlich meldet. Ein echter Ordner mit
+rund 8.000 Dateien legte eine Speichergrenze in Synopsis Merge offen; der Workflow lehnt
+jetzt mehr als 500 Dokumente mit einem Satz ab, der die Alternativen nennt. Codex (OpenAI)
+hat die beiden Änderungsanträge dieser Runden (#6, #7) als zweites Modell geprüft und
+nach dem Urteil MERGE-FÄHIG zusammengeführt; seine erste Prüfung von #7 fand einen
+Fehler, durch den eine Kette doppelt laufen konnte, und er wurde vor der Zusammenführung
+behoben. Der [gehostete CI-Lauf](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345)
 auf [`6b13d12`](https://github.com/ellmos-ai/NemoFold/commit/6b13d12cdb269e8693053ed0d90d173b8a6c8123) bestand:
-Windows/Python 3.12 alle 1189 Tests; Ubuntu/Python 3.11 und 3.12 je 1187 bei 2
-plattformbedingten Skips.
+Windows/Python 3.12 alle 1189 Tests; Ubuntu/Python 3.11 und 3.12 je 1187 bestandene
+und 2 plattformbedingt übersprungene Tests.
 
-**Juroren-Testbuild:** [neuestes Release](https://github.com/ellmos-ai/NemoFold/releases/latest) - ein ZIP mit dem Wheel,
-Startbefehlen für die volle lokale Konsole und die Public Demo sowie dem fiktiven
-Beispielfall; entpackt und in eine frische Umgebung installiert liefen beide Wege.
+**Testpaket für die Jury:** [neueste Veröffentlichung](https://github.com/ellmos-ai/NemoFold/releases/latest) - ein ZIP mit dem
+Wheel, Startbefehlen für die volle lokale Konsole und die öffentliche Demo sowie dem
+fiktiven Beispielfall; entpackt und in eine frische Umgebung installiert liefen beide
+Wege.
 
 ### Abnahmegate-Register
 

@@ -396,19 +396,20 @@ skips.
 
 ### Owner's GUI acceptance completed (2026-10-13)
 
-On 2026-10-13 the owner tested the console live, with his own folders, in eight
-rounds and closed the acceptance. The rounds made everything runnable a workflow of
-one step or several in one blueprint grid, split the clean full console from the
-public demo, added working folders that stay approved across restarts, a typed path
-and the system folder dialog, three captain modes (keywords, a model choosing from
-the catalogue, a brief for a CLI agent), Artifacts as its own area and a Connections
-page that reports what the computer actually shows. A real folder of about 8,000
-files exposed a memory limit in Synopsis Merge, which now refuses more than 500
-documents with a sentence naming the alternatives. Codex (OpenAI) reviewed the two
-pull requests of these rounds (#6, #7) as a second model and merged them after its
-verdict MERGE-FÄHIG; the first review of #7 found a double-run bug, fixed before the
-merge. The [hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345)
-on [`6b13d12`](https://github.com/ellmos-ai/NemoFold/commit/6b13d12cdb269e8693053ed0d90d173b8a6c8123) passed:
+The owner completed the acceptance on 2026-10-13 in eight rounds of live testing
+with his own folders. These rounds turned every runnable task into a workflow of
+one or more steps in a single blueprint grid and separated the clean full console
+from the public demo. They added working folders that stay approved across
+restarts, path entry and the system folder dialog, three captain modes (keywords,
+a model choosing from the catalogue, a brief for a CLI agent), Artifacts as an area
+of its own, and a Connections page that reports what the computer actually shows.
+A real folder of about 8,000 files exposed a memory limit in Synopsis Merge, which
+now refuses more than 500 documents with a sentence naming the alternatives. Codex
+(OpenAI) reviewed the two pull requests of these rounds (#6, #7) as a second model
+and merged them after its verdict MERGE-FÄHIG; its first review of #7 found a
+double-run bug, which was fixed before the merge. The
+[hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/38366200345) on
+[`6b13d12`](https://github.com/ellmos-ai/NemoFold/commit/6b13d12cdb269e8693053ed0d90d173b8a6c8123) passed:
 Windows/Python 3.12 all 1189 tests; Ubuntu/Python 3.11 and 3.12 each 1187 with 2
 platform-specific skips.
 
