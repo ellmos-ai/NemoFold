@@ -322,6 +322,23 @@ def test_web_console_assets_expose_workflow_specific_defaults(tmp_path) -> None:
     assert "renderConnectionStatus" in script
 
 
+def test_blueprint_group_titles_span_the_list_and_the_engine_handle_sits_on_use_cases(
+    tmp_path,
+) -> None:
+    # 2026-10-13 GUI acceptance: the list was itself a card grid, so each group
+    # title took a card cell; the engine-room tab belongs on "My use cases".
+    with (
+        running_server(tmp_path) as base_url,
+        urlopen(base_url + "/assets/app.css", timeout=5) as response,  # noqa: S310
+    ):
+        stylesheet = response.read().decode()
+
+    assert ".library-list{display:grid" not in stylesheet
+    assert ".library-group{display:grid" in stylesheet
+    assert 'body[data-page="processes"][data-tab="workflows"] .engine-handle' in stylesheet
+    assert 'body[data-tab="registry"] .engine-handle' not in stylesheet
+
+
 def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> None:
     with (
         running_server(tmp_path) as base_url,

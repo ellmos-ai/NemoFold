@@ -148,7 +148,7 @@ body[data-page="governance"]
 .engine-handle{position:fixed;z-index:38;top:50%;right:0;display:flex;transform:translateY(-50%);align-items:center;gap:9px;border:1px solid #8a6b3c;border-right:0;background:linear-gradient(160deg,#0b2b35,#061c24);padding:14px 11px;color:#f3e7d0;cursor:pointer;font:800 9px var(--mono);letter-spacing:.12em;text-transform:uppercase;writing-mode:vertical-rl}
 .engine-handle:hover{background:linear-gradient(160deg,#12414e,#08242e)}
 .engine-handle .instrument-icon{width:22px;height:22px;color:#e8c98f}
-.engine-handle{display:none}body[data-tab="registry"] .engine-handle{display:inline-flex}
+.engine-handle{display:none}body[data-page="processes"][data-tab="workflows"] .engine-handle{display:inline-flex}
 .engine-drawer{position:fixed;z-index:40;top:0;right:0;bottom:0;width:min(780px,calc(100vw - 54px));visibility:hidden;transform:translateX(101%);border-left:3px solid #8a6b3c;background:linear-gradient(168deg,#0a2731,#05191f 62%);box-shadow:-18px 0 46px rgba(2,14,19,.44);color:#eef3f0;transition:transform .28s ease,visibility .28s}
 .engine-drawer[data-open="true"]{visibility:visible;transform:none}
 .drawer-shell{display:flex;min-width:0;height:100%;flex-direction:column}
@@ -293,7 +293,9 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .library-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:16px;border-bottom:3px solid var(--deep);padding-bottom:14px}
 .library-head h2{margin:6px 0 0;font:400 clamp(23px,3vw,32px)/1.05 var(--serif);letter-spacing:-.02em}
 .library-head>div>p{max-width:760px;margin:10px 0 0;color:var(--muted);font-size:13px;line-height:1.55}
-.library-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr));margin-top:18px}
+/* Cards sit in .library-group grids; the list itself stacks group titles,
+   groups and notes, so a title never takes a card cell. */
+.library-list{margin-top:18px}
 .library-card{display:flex;min-width:0;flex-direction:column;border:1px solid var(--line-dark);border-left:0;background:var(--surface);padding:15px 16px}
 .library-card:first-child{border-left:1px solid var(--line-dark)}
 .library-card[data-shipped="true"]{background:linear-gradient(180deg,#f4f1e6,var(--surface))}
@@ -312,7 +314,7 @@ body[data-tab="workflows"] .porthole-life{display:block}
 body[data-page="overview"] .engine-drawer{position:static;z-index:auto;width:auto;visibility:visible;transform:none;margin-top:18px;border:1px solid #8a6b3c;box-shadow:none}
 body[data-page="overview"] #engineClose{display:none}
 .where-to-change{margin-top:10px;padding:10px 12px;border-left:3px solid var(--cyan);background:rgba(120,209,202,.08)}
-.library-group-title{margin:22px 0 10px}
+.library-list>.library-group-title{margin:22px 0 10px;padding:0}
 .masthead-state.demo{color:#ffb4a2}
 .detail-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px}
 .detail-source{color:var(--sea);font:800 8px var(--mono);letter-spacing:.1em}
@@ -349,8 +351,9 @@ body[data-page="overview"] #engineClose{display:none}
 .diff-column ol{margin:6px 0 0;padding-left:18px;font:10px/1.6 var(--mono);overflow-wrap:anywhere}
 .diff-after{border-color:var(--sea);background:#f0f5f2}
 .library-diff small{display:block;margin-top:9px;color:var(--muted);font:10px var(--mono)}
-@media(max-width:600px){.library-list{grid-template-columns:minmax(0,1fr)}.library-card{border-left:1px solid var(--line-dark)}.library-step{grid-template-columns:minmax(0,1fr)}.library-step-controls{grid-row:auto}}
+@media(max-width:600px){.library-card{border-left:1px solid var(--line-dark)}.library-step{grid-template-columns:minmax(0,1fr)}.library-step-controls{grid-row:auto}}
 .library-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
+@media(max-width:600px){.library-group{grid-template-columns:minmax(0,1fr)}}
 .library-waiting{margin-top:22px;border-top:2px dashed var(--line-dark);padding-top:16px}
 .library-waiting .kicker{margin:0;color:var(--warn)}
 .library-waiting .desk-note{margin:6px 0 12px}
