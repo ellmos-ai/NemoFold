@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 import threading
 from dataclasses import dataclass, replace
 from datetime import UTC, datetime
@@ -524,6 +526,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/provider-preview",
             "/api/folders",
             "/api/approve-root",
+            "/api/pick-folder",
             "/api/corpus-glance",
             "/api/artifacts",
             "/api/drafts",
@@ -549,6 +552,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/provider-preview",
                 "/api/folders",
                 "/api/approve-root",
+                "/api/pick-folder",
                 "/api/corpus-glance",
                 "/api/artifacts",
                 "/api/drafts",
@@ -605,6 +609,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/approve-root":
             self._handle_approve_root()
+            return
+        if path == "/api/pick-folder":
+            self._handle_pick_folder()
             return
         if path == "/api/corpus-glance":
             self._handle_corpus_glance()
@@ -826,6 +833,38 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             self._error(HTTPStatus.BAD_REQUEST, "approve_root_rejected", str(exc))
             return
         self._json({"ok": True, "path": str(folder), "approved_roots": list(roots)})
+
+    def _handle_pick_folder(self) -> None:
+        # The server runs on the operator's own computer, so it can open the
+        # system folder dialog there; a browser never hands a page a real path.
+        # The pick only navigates the folder browser: approving stays a click.
+        if self.server.app_config.exposed_to_network:
+            self._reject_before_body_read(
+                HTTPStatus.FORBIDDEN,
+                "folder_picker_loopback_only",
+                "the system folder dialog is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if payload != {}:
+                raise ValueError("request body must be an empty object")
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "pick_folder_rejected", str(exc))
+            return
+        try:
+            picked = subprocess.run(  # noqa: S603 - fixed interpreter and script
+                [sys.executable, "-c", _PICK_FOLDER_SCRIPT],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=600,
+                check=True,
+            ).stdout.strip()
+        except (OSError, subprocess.SubprocessError) as exc:
+            self._json({"available": False, "path": None, "detail": str(exc)[:300]})
+            return
+        self._json({"available": True, "path": os.path.normpath(picked) if picked else None})
 
     def _handle_corpus_glance(self) -> None:
         if self.server.app_config.exposed_to_network:
@@ -1628,15 +1667,10 @@ def _allowed_folder_roots(config: WebAppConfig) -> tuple[Path, ...]:
 
 
 def _default_input_root(config: WebAppConfig) -> str | None:
+    # D-043: the full console starts clean, at the first folder its operator
+    # approved; the fictional case file belongs to the public demo only.
     roots = _allowed_folder_roots(config)
-    if not roots:
-        return None
-    # D-040: the fictional case file is the example to start from.
-    for name in ("synthetic-case", "synthetic-home"):
-        synthetic = config.base_dir / "examples" / name
-        if synthetic.is_dir() and _matching_folder_root(synthetic.resolve(), roots) is not None:
-            return f"examples/{name}"
-    return str(roots[0])
+    return str(roots[0]) if roots else None
 
 
 def _matching_folder_root(candidate: Path, roots: tuple[Path, ...]) -> Path | None:
@@ -1676,6 +1710,16 @@ def _computer_places() -> list[dict[str, str]]:
     else:
         places.append("/")
     return [{"name": place, "path": place} for place in places]
+
+
+_PICK_FOLDER_SCRIPT = """
+import tkinter, tkinter.filedialog
+root = tkinter.Tk()
+root.withdraw()
+root.attributes("-topmost", True)
+path = tkinter.filedialog.askdirectory(title="Choose a folder for NemoFold", mustexist=True)
+print(path or "")
+"""
 
 
 def _folder_listing(

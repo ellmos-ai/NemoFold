@@ -223,7 +223,7 @@ WORKFLOW_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "contradiction_synopsis": (
         "widerspruch", "widersprüche", "widerspr", "gegensätzlich", "abweichende aussage",
-        "contradiction", "aussagen vergleichen",
+        "contradict", "disagree", "aussagen vergleichen",
     ),
     "corpus_query": (
         "wo taucht", "wo kommt", "finde alle stellen", "suche im bestand", "nadel",

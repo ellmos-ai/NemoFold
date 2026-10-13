@@ -104,6 +104,16 @@ const providerModelDefaults = {
   anthropic: "",
   nebius: "nvidia/nemotron-3-super-120b-a12b"
 };
+// D-043: questions about the fictional case file exist only in the public
+// demo, which reads that case; the full console starts with an empty list.
+const demoQuestions = {
+  evidence_analyst: [
+    "Welche Farbe hatte der Wagen mit dem Kennzeichen B-TL 4471?",
+    "Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?"
+  ],
+  corpus_query: ["Wo taucht ein blauer VW Golf auf?"]
+};
+
 const workflowDefaults = {
   cleanup_rules: {
     questions: [],
@@ -146,11 +156,7 @@ const workflowDefaults = {
     hint: "Contact Monitor extracts email and responsibility candidates with source quotes, compares a named earlier snapshot and never auto-deletes missing contacts."
   },
   evidence_analyst: {
-    // D-040: the default questions fit the fictional case file, the default folder.
-    questions: [
-      "Welche Farbe hatte der Wagen mit dem Kennzeichen B-TL 4471?",
-      "Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?"
-    ],
+    questions: [],
     parameters: {max_chunks: 256, formats: ["md", "txt"], conflict_scan: true},
     hint: "Evidence Analyst searches the approved inputs and reports exact source locations, conflicts and coverage."
   },
@@ -245,7 +251,7 @@ const workflowDefaults = {
     hint: "Contradiction Synopsis puts disagreeing statements side by side in both wordings with their anchors. It names which sources disagree; it never decides which is right."
   },
   corpus_query: {
-    questions: ["Wo taucht ein blauer VW Golf auf?"],
+    questions: [],
     parameters: {formats: ["md"], terms: [], partition_size: 20, dedupe_scope: "normalized"},
     hint: "Corpus Query answers one narrow question over a large bundle through staged aggregation. Every match is a quoted sentence with its sources; no match means the corpus does not contain one."
   },
@@ -589,8 +595,8 @@ const voyageScenes = {
     className: "analysis-lab",
     kicker: "THE BLUEPRINT LIBRARY",
     title: "Blueprints",
-    text: "Workflow blueprints and single actions: adopt one into your use cases as often as you like, or try a single action once in the engine room.",
-    roadmap: "ACTIVE · workflow blueprints + single actions + my blueprints"
+    text: "Every blueprint is a workflow with one step or several: adopt one into your use cases as often as you like, or try a one-step workflow once in the engine room.",
+    roadmap: "ACTIVE · shipped and my blueprints · filtered by topic"
   },
   artifacts: {
     className: "artifact-library",
@@ -1078,7 +1084,6 @@ function prepareWorkflow(workflow) {
   if (!option) return;
   select.value = workflow;
   applyWorkflowDefaults();
-  renderTaskCards();
   setEngineDrawer(true);
 }
 
@@ -1087,16 +1092,16 @@ function prepareWorkflow(workflow) {
 // contract does to your files, which is the distinction a reader is actually
 // making when they scan it.
 const registryGroups = [
-  {title: "Intake and filing", workflows: ["smart_inbox", "cleanup_rules", "storage_policy"]},
-  {title: "Mail", workflows: ["mail_to_case", "controlled_email"]},
-  {title: "Reading a corpus", workflows: ["evidence_analyst", "bundle_export", "fact_distill",
+  {title: "Intake and filing", tags: ["folder-watch"], workflows: ["smart_inbox", "cleanup_rules", "storage_policy"]},
+  {title: "Mail", tags: ["document-analysis"], workflows: ["mail_to_case", "controlled_email"]},
+  {title: "Reading a corpus", tags: ["document-analysis"], workflows: ["evidence_analyst", "bundle_export", "fact_distill",
     "synopsis_merge", "document_registry", "corpus_query", "pattern_mining", "chunk_export", "ocr_pipeline"]},
-  {title: "Case chronicle", workflows: ["person_registry", "relation_model", "person_timeline",
+  {title: "Case chronicle", tags: ["case-analysis"], workflows: ["person_registry", "relation_model", "person_timeline",
     "coverage_timeline", "cost_timeline", "subscription_reconcile", "medication_reconcile", "database_reader", "alibi_weave", "contradiction_synopsis"]},
-  {title: "Folder routines", workflows: ["folder_digest", "daily_arrivals", "routine_query", "version_resolver",
+  {title: "Folder routines", tags: ["folder-watch"], workflows: ["folder_digest", "daily_arrivals", "routine_query", "version_resolver",
     "contact_monitor"]},
-  {title: "Outward and status", workflows: ["web_research", "dossier", "briefing", "platform_proof"]},
-  {title: "Checks and output", workflows: ["bundle_completeness_check", "reference_check",
+  {title: "Outward and status", tags: ["reporting"], workflows: ["web_research", "dossier", "briefing", "platform_proof"]},
+  {title: "Checks and output", tags: ["reporting", "review"], workflows: ["bundle_completeness_check", "reference_check",
     "rater_race", "report_studio", "guide_compose", "wiki_export",
     "document_compose", "mail_merge_compose", "knowledge_composer", "document_qa", "print_action"]}
 ];
@@ -1171,75 +1176,12 @@ function applyAnswers() {
     + "Run it again to continue.";
 }
 
-function renderTaskCards() {
-  const list = $("taskCardList");
-  if (!list) return;
-  // Non-thematic on purpose: the registry lists every contract the server
-  // actually offers, in the order the contract dropdown holds them.
-  const workflows = [...$("workflow").options]
-    .map((option) => option.value)
-    .filter((item) => workflowCards[item]);
-  list.textContent = "";
-  if (!workflows.length) {
-    const note = document.createElement("p");
-    note.textContent = "This server offers no job contract.";
-    list.append(note);
-    return;
-  }
-  const active = $("workflow").value;
-  const grouped = new Set();
-  for (const group of registryGroups) {
-    const present = group.workflows.filter((item) => workflows.includes(item));
-    if (!present.length) continue;
-    const heading = document.createElement("p");
-    heading.className = "kicker task-group";
-    heading.textContent = group.title.toUpperCase();
-    list.append(heading);
-    for (const workflow of present) {
-      grouped.add(workflow);
-      list.append(taskCard(workflow, active));
-    }
-  }
-  // Anything a group forgot still shows, rather than disappearing because a
-  // list somewhere was not updated.
-  const ungrouped = workflows.filter((item) => !grouped.has(item));
-  if (ungrouped.length) {
-    const heading = document.createElement("p");
-    heading.className = "kicker task-group";
-    heading.textContent = "NOT YET GROUPED";
-    list.append(heading);
-    for (const workflow of ungrouped) list.append(taskCard(workflow, active));
-  }
+function actionTags(workflow) {
+  const tags = registryGroups.find((group) => group.workflows.includes(workflow))?.tags || [];
+  return workflow === "daily_arrivals" ? [...tags, "scheduled"] : tags;
 }
 
-function taskCard(workflow, active) {
-  {
-    const card = document.createElement("article");
-    card.className = "task-card";
-    card.setAttribute("role", "listitem");
-    if (workflow === active) card.dataset.active = "true";
-    const title = document.createElement("b");
-    title.textContent = workflowCards[workflow].title;
-    const benefit = document.createElement("p");
-    benefit.textContent = workflowCards[workflow].benefit;
-    const technical = document.createElement("span");
-    technical.textContent = workflow;
-    const button = document.createElement("button");
-    button.type = "button";
-    button.className = "card-open";
-    button.append(instrumentIcon("wheel"), "Add to my use cases");
-    button.addEventListener("click", () => adoptAction(workflow, card));
-    const trial = document.createElement("button");
-    trial.type = "button";
-    trial.className = "secondary";
-    trial.textContent = workflow === active ? "Selected · open engine room" : "Try once";
-    trial.addEventListener("click", () => prepareWorkflow(workflow));
-    card.append(technical, title, benefit, button, trial);
-    return card;
-  }
-}
-
-// D-039: a single action becomes a one-step use case bound to the current folders.
+// A one-step workflow becomes a use case bound to the current folders.
 async function adoptAction(workflow, card) {
   const defaults = workflowDefaults[workflow] || {questions: [], parameters: {}};
   const output = $("outputDir").value.trim().replace(/[\\/]+$/, "");
@@ -1251,6 +1193,8 @@ async function adoptAction(workflow, card) {
         name: uniqueName(workflowCards[workflow]?.title || workflow, false),
         description: workflowCards[workflow]?.benefit || "",
         source: "manual",
+        // "scheduled" follows a schedule field, which a fresh copy does not have.
+        tags: actionTags(workflow).filter((tag) => tag !== "scheduled"),
         steps: [{
           workflow,
           job: {
@@ -1754,7 +1698,7 @@ function applyWorkflowDefaults() {
   // The public demo runs only the server's own parameters, so show exactly
   // those and keep the analysis scale from rewriting them.
   const demoParameters = publicDemo ? publicDemoParameters[$("workflow").value] : undefined;
-  $("questions").value = defaults.questions.join("\n");
+  $("questions").value = ((publicDemo && demoQuestions[$("workflow").value]) || defaults.questions).join("\n");
   $("parameters").value = JSON.stringify(demoParameters || defaults.parameters, null, 2);
   $("analysisScale").disabled = Boolean(demoParameters)
     || !["evidence_analyst", "platform_proof"].includes($("workflow").value);
@@ -1888,6 +1832,8 @@ async function loadFolderChoices(path = null) {
   if (!response.ok) throw new Error(data.detail || data.error || "Folder request failed.");
   folderCurrentPath = data.current?.path || null;
   folderCurrentApproved = data.current?.approved === true;
+  $("folderPathInput").value = folderCurrentPath || "";
+  $("folderCurrent").hidden = Boolean(folderCurrentPath);
   $("folderCurrent").textContent = folderCurrentPath || "Choose an approved folder or a place on this computer.";
   $("folderUp").disabled = !data.parent;
   $("folderUp").dataset.path = data.parent || "";
@@ -1924,6 +1870,25 @@ async function loadFolderChoices(path = null) {
   $("folderStatus").textContent = skipped
     ? `${skipped} inaccessible or linked folders were omitted. ${scope}`
     : scope;
+}
+
+function goToTypedFolder() {
+  const typed = $("folderPathInput").value.trim().replace(/^"(.*)"$/, "$1");
+  if (typed) loadFolderChoices(typed).catch(showFolderError);
+}
+
+async function pickNativeFolder() {
+  $("folderStatus").textContent = "The system folder dialog is open on this computer…";
+  const response = await fetch("/api/pick-folder", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: "{}"
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.detail || data.error || "The system folder dialog failed.");
+  if (!data.available) throw new Error("No system folder dialog on this computer. Type the path instead.");
+  if (data.path) await loadFolderChoices(data.path);
+  else $("folderStatus").textContent = "No folder chosen.";
 }
 
 function showFolderError(error) {
@@ -2635,6 +2600,7 @@ async function loadStatus() {
   try {
     const response = await fetch("/api/status");
     const status = await response.json();
+    if (status.version) $("footerVersion").textContent = `NemoFold ${status.version}`;
     workflowGraphs = new Map(
       (Array.isArray(status.workflow_graphs) ? status.workflow_graphs : []).map((item) => [item.workflow, item])
     );
@@ -2678,10 +2644,8 @@ async function loadStatus() {
       updateProviderPanel();
       for (const button of document.querySelectorAll("[data-folder-target]")) button.disabled = true;
     } else {
-      // The shipped default names the repository's synthetic corpus; a server
-      // started on other folders says which approved root to begin with.
-      if (status.default_input_root
-          && $("inputRoots").value.trim() === $("inputRoots").defaultValue.trim()) {
+      // The full console begins at the first folder its operator approved.
+      if (status.default_input_root && !$("inputRoots").value.trim()) {
         $("inputRoots").value = status.default_input_root;
       }
       configureRoutedPage();
@@ -2690,7 +2654,7 @@ async function loadStatus() {
         button.disabled = !folderPickerEnabled;
       }
     }
-    renderTaskCards();
+    renderBlueprints(libraryEntries);
     if ($("deskRoots") && !$("deskRoots").value.trim()) {
       $("deskRoots").value = lines($("inputRoots").value)[0] || "";
     }
@@ -2720,7 +2684,6 @@ configureRoutedPage();
 // answered. currentPage/currentTab/activeTag are already known from the URL,
 // so the scene can be set in this same synchronous render step.
 updateVoyageScene();
-renderTaskCards();
 if ($("engineHandle")) {
   $("engineHandle").addEventListener("click", () => setEngineDrawer(!engineDrawerIsOpen()));
 }
@@ -2742,7 +2705,7 @@ if (requestedWorkflow && currentTab === "registry") {
   setEngineDrawer(true, {moveFocus: false});
 }
 $("runId").value = "";
-$("workflow").addEventListener("change", () => { applyWorkflowDefaults(); renderTaskCards(); });
+$("workflow").addEventListener("change", applyWorkflowDefaults);
 if ($("deskForm")) $("deskForm").addEventListener("submit", askTheCaptain);
 if ($("libraryRefresh")) $("libraryRefresh").addEventListener("click", loadLibrary);
 if ($("governanceRefresh")) {
@@ -2788,6 +2751,13 @@ for (const button of document.querySelectorAll("[data-folder-target]")) {
 }
 $("folderUp").addEventListener("click", () => loadFolderChoices($("folderUp").dataset.path || null).catch(showFolderError));
 $("folderSelectCurrent").addEventListener("click", useCurrentFolder);
+$("folderPathGo").addEventListener("click", goToTypedFolder);
+$("folderPathInput").addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") return;
+  event.preventDefault();
+  goToTypedFolder();
+});
+$("folderNative").addEventListener("click", () => pickNativeFolder().catch(showFolderError));
 $("promptLibraryButton").addEventListener("click", () => openPromptLibrary("catalog"));
 $("promptSaveButton").addEventListener("click", saveCurrentPromptSet);
 $("promptLibraryClose").addEventListener("click", () => $("promptLibraryDialog").close());
@@ -2937,13 +2907,9 @@ function renderLibraryCards(list, entries) {
     card.setAttribute("role", "listitem");
     const blueprint = isBlueprint(entry);
     if (blueprint) card.dataset.shipped = "true";
-    const shape = entry.workflows.length > 1 ? `WORKFLOW · ${entry.workflows.length} ACTIONS` : "ACTION";
-    deskLine(
-      card,
-      "span",
-      "library-kind",
-      blueprint ? `${entry.editable ? "MY BLUEPRINT" : "BLUEPRINT"} · ${shape}` : shape
-    );
+    const count = entry.workflows.length;
+    const shape = `WORKFLOW · ${count} ${count === 1 ? "STEP" : "STEPS"}`;
+    deskLine(card, "span", "library-kind", blueprint && entry.editable ? `MY BLUEPRINT · ${shape}` : shape);
     if (entry.overrides_links) {
       const warning = deskLine(card, "p", "library-warning");
       deskLine(warning, "span", "warning-mark", "▲");
@@ -2974,10 +2940,20 @@ function renderLibraryCards(list, entries) {
     button.type = "button";
     button.className = "card-open";
     button.append(instrumentIcon("wheel"), blueprint ? "Add to my use cases" : "Open");
-    button.addEventListener("click", () =>
-      blueprint ? adoptBlueprint(entry) : openLibraryEntry(entry.voyage_id)
-    );
+    button.addEventListener("click", () => {
+      if (entry.contract) adoptAction(entry.contract, card);
+      else if (blueprint) adoptBlueprint(entry);
+      else openLibraryEntry(entry.voyage_id);
+    });
     card.append(button);
+    if (entry.contract) {
+      const trial = document.createElement("button");
+      trial.type = "button";
+      trial.className = "secondary";
+      trial.textContent = "Try once";
+      trial.addEventListener("click", () => prepareWorkflow(entry.contract));
+      card.append(trial);
+    }
     if (blueprint && entry.editable) {
       const edit = document.createElement("button");
       edit.type = "button";
@@ -3029,9 +3005,15 @@ function renderLibraryFilter(entries) {
   const panel = $("libraryFilter");
   if (!panel) return;
   panel.textContent = "";
-  // Only on the tabs where a topic is the point. The registry is non-thematic
-  // and the overview shows everything someone kept.
+  // Only on the tab where a topic is the point; the overview shows everything
+  // someone kept.
   if (!(currentPage === "processes" && currentTab === "workflows")) return;
+  renderTagChips(panel, entries, activeTag, setLibraryTag);
+}
+
+function renderTagChips(panel, entries, active, choose) {
+  if (!panel) return;
+  panel.textContent = "";
   const tags = [...new Set(entries.flatMap((entry) => entry.tags || []))].sort();
   if (!tags.length) return;
   for (const [tag, label] of [["", "All"], ...tags.map((tag) => [tag, tagLabel(tag)])]) {
@@ -3039,30 +3021,40 @@ function renderLibraryFilter(entries) {
     chip.type = "button";
     chip.dataset.tagFilter = tag;
     chip.textContent = label;
-    chip.setAttribute("aria-pressed", String(tag === activeTag));
-    chip.addEventListener("click", () => setLibraryTag(tag));
+    chip.setAttribute("aria-pressed", String(tag === active));
+    chip.addEventListener("click", () => choose(tag));
     panel.append(chip);
   }
 }
 
+let blueprintTag = "";
+
+// D-042: everything is a workflow with one step or several. Shipped presets,
+// the person's own blueprints and every one-step contract the server offers sit
+// side by side and filter by the same topics as the use cases.
 function renderBlueprints(entries) {
   const list = $("blueprintList");
   if (!list) return;
   list.textContent = "";
-  const blueprints = entries.filter(isBlueprint);
-  const sections = [
-    ["WORKFLOW BLUEPRINTS · TWO OR MORE ACTIONS", blueprints.filter((e) => !e.editable && e.workflows.length > 1)],
-    ["SINGLE-ACTION BLUEPRINTS · PRECONFIGURED", blueprints.filter((e) => !e.editable && e.workflows.length === 1)],
-    ["MY BLUEPRINTS", blueprints.filter((e) => e.editable)]
-  ];
-  for (const [title, items] of sections) {
-    deskLine(list, "p", "kicker library-group-title", title);
-    if (!items.length) {
-      libraryNote(list, "None yet. Open one of your use cases and choose Save as blueprint.");
-      continue;
-    }
-    renderLibraryCards(deskLine(list, "div", "library-group"), items);
-  }
+  const contracts = [...new Set([...$("workflow").options].map((option) => option.value))]
+    .filter((workflow) => workflowCards[workflow]);
+  const oneStep = contracts.map((workflow) => ({
+    contract: workflow,
+    name: workflowCards[workflow].title,
+    description: workflowCards[workflow].benefit,
+    workflows: [workflow],
+    editable: false,
+    tags: actionTags(workflow)
+  }));
+  const tiles = [...entries.filter(isBlueprint), ...oneStep];
+  renderTagChips($("blueprintFilter"), tiles, blueprintTag, (tag) => {
+    const cameFromChip = document.activeElement?.dataset?.tagFilter !== undefined;
+    blueprintTag = tag;
+    renderBlueprints(libraryEntries);
+    if (cameFromChip) $("blueprintFilter").querySelector(`[data-tag-filter="${CSS.escape(tag)}"]`)?.focus();
+  });
+  const shown = blueprintTag ? tiles.filter((tile) => (tile.tags || []).includes(blueprintTag)) : tiles;
+  renderLibraryCards(deskLine(list, "div", "library-group"), shown);
 }
 
 function renderLibrary(entries) {

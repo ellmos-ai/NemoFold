@@ -117,7 +117,8 @@ def test_web_console_serves_product_ui_and_executes_strict_preview(tmp_path) -> 
     assert 'href="/processes"' in html
     assert 'href="/governance"' in html
     assert 'href="/connections"' in html
-    assert "Know what your documents prove." in html
+    # D-043: the start page is the captain and the engine room only.
+    assert "Know what your documents prove." not in html
     assert "EVIDENCE CHAIN" in html
     assert "ORIGIN" in html
     assert "ACTION" in html
@@ -366,8 +367,8 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     assert ".exception-row" in stylesheet
     assert ".connection-registry" in stylesheet
     assert ".command-bridge" in stylesheet
-    assert ".task-card" in stylesheet
-    assert ".home-glance,.task-cards,.echo-check" in stylesheet
+    assert ".library-group{display:grid" in stylesheet
+    assert ".home-glance,.echo-check" in stylesheet
     assert ".form-grid>*{min-width:0}" in stylesheet
     assert 'body[data-page="governance"]' in stylesheet
     # Pin the effect, not its formatting: the porthole must have a branch that
@@ -378,7 +379,7 @@ def test_web_console_css_keeps_evidence_labels_inside_their_cells(tmp_path) -> N
     # column; two cramped columns were still readable but clipped their captions.
     assert "@media(max-width:600px){" in stylesheet
     assert (
-        ".glance-tiles,.bridge-panel,.task-card-list,.bridge-doctrine ol,.bridge-gauges"
+        ".glance-tiles,.bridge-panel,.bridge-doctrine ol,.bridge-gauges"
         "{grid-template-columns:minmax(0,1fr)}"
     ) in stylesheet
 
@@ -968,8 +969,9 @@ def test_the_default_input_root_follows_the_approved_roots(tmp_path) -> None:
     with running_server(tmp_path) as base_url:
         with_examples, _ = get_json(base_url + "/api/status")
 
+    # D-043: the full console never prefers the demo case over the approved root.
     assert without_examples["default_input_root"] == str(tmp_path.resolve())
-    assert with_examples["default_input_root"] == "examples/synthetic-home"
+    assert with_examples["default_input_root"] == str(tmp_path.resolve())
     assert without_examples["public_demo_parameters"] == {}
 
 
@@ -1026,18 +1028,16 @@ def test_use_cases_come_first_and_single_instruments_live_in_the_registry(tmp_pa
     assert 'id="homeGlance"' in folders
     assert 'data-folder-target="homeGlanceRoot"' in folders
     assert 'data-page-section="folders"' in folders
-    assert 'data-page-section="overview folders processes"' in folders
-    # The single instruments are one collapsed advanced view in the registry,
-    # not a card deck repeated in every room.
-    assert (
-        'id="taskCards" class="task-cards" aria-labelledby="taskCardsTitle" '
-        'data-page-section="processes" data-page-tab="registry"'
-    ) in folders
-    assert "SINGLE ACTIONS · ONE STEP EACH" in folders
+    assert 'data-page-section="folders processes"' in folders
+    # D-042: every one-step workflow is a tile among the blueprints, filtered
+    # by topic; there is no separate card deck of single actions.
+    assert 'id="blueprintFilter"' in folders
+    assert 'id="taskCards"' not in folders
+    assert "SINGLE ACTIONS" not in folders
     # The engine room is their editor and follows them.
-    assert 'data-page-section="processes" data-page-tab="registry"' in folders
+    assert 'data-page-tab="registry workflows"' in folders
     assert "workflowCards" in script
-    assert "renderTaskCards" in script
+    assert "renderBlueprints" in script
     assert "loadHomeGlance" in script
     assert "loadEcho" in script
     assert "prepareWorkflow" in script
@@ -1202,14 +1202,9 @@ def test_overview_folds_its_documentation_behind_the_ships_chart(tmp_path) -> No
         "ROADMAP:",
     ):
         assert marker in folded_away, marker
-    # The hero keeps one sentence and the area cards stay in the open.
-    assert (
-        '<p class="lede">NemoFold turns approved folders into traceable working memory.</p>'
-        in html
-    )
-    hero_and_cards = html.split('id="chartDetail"', 1)[0]
-    assert 'class="product-areas"' in hero_and_cards
-    assert "Governance" in hero_and_cards
+    # D-043: no hero and no area cards repeat the navigation on the start page.
+    assert 'class="product-areas"' not in html
+    assert 'id="captainsDeskTitle"' in html
 
 
 def test_captains_desk_plans_and_prepares_drafts_without_running_anything(tmp_path) -> None:
@@ -1848,7 +1843,9 @@ def test_the_registry_offers_every_contract_the_server_supports(tmp_path) -> Non
         assert f">{workflow}</option>" in html, workflow
         assert f"  {workflow}: {{\n    title:" in script.replace("\r\n", "\n"), workflow
     assert "const registryGroups" in script
-    assert "NOT YET GROUPED" in script
+    # Every contract with a card is a blueprint tile, grouped or not.
+    assert "function actionTags" in script
+    assert ".filter((workflow) => workflowCards[workflow])" in script
 
 
 def test_a_run_that_asked_back_is_rendered_with_answer_fields(tmp_path) -> None:
@@ -1964,8 +1961,11 @@ def test_approving_a_folder_is_refused_in_the_demo_and_on_an_exposed_server(tmp_
     source_root = tmp_path / "synthetic-home"
     source_root.mkdir()
     (source_root / "note.txt").write_text("Coverage begins in April.", encoding="utf-8")
-    with running_public_demo(source_root) as (_, base_url), pytest.raises(HTTPError) as demo:
-        post_json(base_url + "/api/approve-root", {"path": str(tmp_path)})
+    with running_public_demo(source_root) as (_, base_url):
+        with pytest.raises(HTTPError) as demo:
+            post_json(base_url + "/api/approve-root", {"path": str(tmp_path)})
+        with pytest.raises(HTTPError) as demo_pick:
+            post_json(base_url + "/api/pick-folder", {})
     server = build_server(
         WebAppConfig(
             base_dir=tmp_path,
@@ -1983,14 +1983,46 @@ def test_approving_a_folder_is_refused_in_the_demo_and_on_an_exposed_server(tmp_
                 "http://{}:{}/api/approve-root".format(*server.server_address[:2]),
                 {"path": str(tmp_path)},
             )
+        with pytest.raises(HTTPError) as exposed_pick:
+            post_json("http://{}:{}/api/pick-folder".format(*server.server_address[:2]), {})
     finally:
         server.shutdown()
         server.server_close()
         thread.join(timeout=5)
 
     assert demo.value.code == 404
+    assert demo_pick.value.code == 404
     assert exposed.value.code == 403
+    assert exposed_pick.value.code == 403
     assert server.app_config.execution.allowed_roots == (str(source_root),)
+
+
+def test_the_system_folder_dialog_only_navigates_and_never_approves(tmp_path, monkeypatch) -> None:
+    import subprocess
+
+    import nemofold.webapp as webapp
+
+    root = tmp_path / "root"
+    root.mkdir()
+    picked = tmp_path / "picked"
+    picked.mkdir()
+    answers = [picked.as_posix() + "\n", ""]
+    monkeypatch.setattr(
+        webapp.subprocess,
+        "run",
+        lambda *args, **kwargs: subprocess.CompletedProcess(args, 0, stdout=answers.pop(0)),
+    )
+    with running_server(root) as base_url:
+        chosen = post_json(base_url + "/api/pick-folder", {})
+        cancelled = post_json(base_url + "/api/pick-folder", {})
+        with pytest.raises(HTTPError) as with_body:
+            post_json(base_url + "/api/pick-folder", {"path": "C:\\"})
+        listing = post_json(base_url + "/api/folders", {"path": chosen["path"]})
+
+    assert chosen == {"available": True, "path": str(picked)}
+    assert cancelled == {"available": True, "path": None}
+    assert with_body.value.code == 400
+    assert listing["current"]["approved"] is False
 
 
 def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) -> None:
@@ -2021,7 +2053,8 @@ def test_my_blueprints_are_saved_and_listed_apart_from_my_use_cases(tmp_path) ->
     assert 'data-tab-link="registry">Blueprints</a>' in html
     assert '<dialog id="libraryDetail" class="library-detail"' in html
     assert 'id="blueprintList"' in html
-    for label in ("Add to my use cases", "Remove from my use cases", "Save as blueprint",
+    assert "Save as blueprint" in html
+    for label in ("Add to my use cases", "Remove from my use cases", "Try once",
                   "FULL LOCAL CONSOLE", "PUBLIC DEMO · SYNTHETIC DATA ONLY", "/api/approve-root"):
         assert label in script, label
 

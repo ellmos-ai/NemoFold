@@ -78,7 +78,7 @@ body[data-page="governance"] [data-page-section]:not([data-page-section~="govern
 .bridge-doctrine li small{display:block;margin-top:2px;color:var(--muted);font:9px/1.35 var(--mono)}
 @media(max-width:980px){.bridge-console{grid-template-columns:1fr}.bridge-gauges{border-left:0;border-top:1px solid rgba(120,209,202,.16)}}
 .form-grid>*{min-width:0}
-.home-glance,.task-cards,.echo-check{margin-top:28px}
+.home-glance,.echo-check{margin-top:28px}
 .glance-head{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto);align-items:end;gap:18px;border-bottom:3px solid var(--deep);padding-bottom:14px}
 .glance-head h2{margin:0;font:400 clamp(23px,3vw,32px)/1.05 var(--serif);letter-spacing:-.02em}
 .glance-controls{display:flex;min-width:0;flex-wrap:wrap;align-items:end;gap:9px}
@@ -97,18 +97,6 @@ body[data-page="governance"] [data-page-section]:not([data-page-section~="govern
 .glance-list span{color:var(--muted);font:9px var(--mono);white-space:nowrap}
 .glance-list p{margin:0;padding:12px 13px;color:var(--muted);font:11px var(--mono)}
 .glance-state{margin:10px 0 0;color:var(--muted);font:10px/1.5 var(--mono);overflow-wrap:anywhere}
-.task-cards-head{border-bottom:3px solid var(--deep);padding-bottom:12px}
-.task-cards-head h2{margin:0;font:400 clamp(23px,3vw,32px)/1.05 var(--serif);letter-spacing:-.02em}
-.task-cards-head .kicker{margin:0 0 6px}
-.task-card-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(232px,1fr));margin-top:0;border-bottom:1px solid var(--line-dark)}
-.task-card{display:flex;min-width:0;flex-direction:column;border:1px solid var(--line-dark);border-top:0;border-left:0;background:var(--white);padding:15px 16px 14px}
-.task-card:first-child{border-left:1px solid var(--line-dark)}
-.task-card[data-active="true"]{background:#eef3ee;box-shadow:inset 3px 0 0 var(--sea)}
-.task-card>span{color:var(--muted);font:800 8px var(--mono);letter-spacing:.1em;overflow-wrap:anywhere}
-.task-card b{margin-top:7px;font:400 19px var(--serif)}
-.task-card p{margin:8px 0 14px;color:var(--ink);font-size:12px;line-height:1.5}
-.task-card button{margin-top:auto;align-self:flex-start}
-.task-card-list>p{margin:0;padding:14px 16px;color:var(--muted);font:11px var(--mono)}
 .echo-list{display:grid;margin-top:18px;border:1px solid var(--line-dark);background:var(--white)}
 .echo-row{display:grid;min-width:0;grid-template-columns:16px minmax(0,1fr);gap:4px 12px;border-bottom:1px solid var(--line);padding:11px 14px}
 .echo-row i{position:relative;width:10px;height:10px;align-self:center;grid-row:span 2;border-radius:50%;background:var(--muted)}
@@ -124,19 +112,17 @@ body[data-page="connections"]{--paper:#eef2f2}
 body[data-page="connections"] .connection-summary>div,body[data-page="connections"] .connection-registry>div{background:linear-gradient(178deg,#fdfdf6,var(--white))}
 body[data-page="connections"] .connection-title{border-bottom-color:#1c7f86}
 body[data-page="connections"] .section-title .kicker{color:#12727a}
-@media(max-width:680px){.glance-head{grid-template-columns:1fr}.glance-controls input{width:100%}.glance-controls label{width:100%}.glance-tiles .tile{border-right:0;border-bottom:1px solid var(--line)}.task-card{border-left:1px solid var(--line-dark)}}
+@media(max-width:680px){.glance-head{grid-template-columns:1fr}.glance-controls input{width:100%}.glance-controls label{width:100%}.glance-tiles .tile{border-right:0;border-bottom:1px solid var(--line)}}
 .command-bridge{margin-top:44px}
 body[data-page="governance"] .scope-rail{display:none}
 body[data-page="governance"] 
 .glance-tiles{grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
 .bridge-panel{grid-template-columns:repeat(auto-fit,minmax(215px,1fr))}
-.task-card-list{grid-template-columns:repeat(auto-fit,minmax(258px,1fr))}
 @media(max-width:600px){
-.glance-tiles,.bridge-panel,.task-card-list,.bridge-doctrine ol,.bridge-gauges{grid-template-columns:minmax(0,1fr)}
+.glance-tiles,.bridge-panel,.bridge-doctrine ol,.bridge-gauges{grid-template-columns:minmax(0,1fr)}
 .glance-tiles .tile{border-right:0;border-bottom:1px solid var(--line)}
 .glance-tiles .tile:last-child{border-bottom:0}
 .instrument{border-right:0}
-.task-card{border-left:1px solid var(--line-dark)}
 .glance-list>div,.bridge-roots>div{grid-template-columns:minmax(0,1fr)}
 .glance-list span{white-space:normal}
 .glance-controls input{width:100%}
@@ -251,7 +237,7 @@ body[data-tab="workflows"] .porthole-life{display:block}
 .chart-band:hover .chart-fold{background:#fdf7e6}
 .captains-desk{margin-top:30px;border:1px solid #14414c;background:linear-gradient(165deg,#0a2731,#06202a 62%);color:#eef3f0;padding:26px 26px 24px}
 .desk-head .kicker{margin:0;color:var(--cyan)}
-.desk-head h2{margin:7px 0 0;font:400 clamp(24px,3.1vw,34px)/1.05 var(--serif);color:#f7f3e7;letter-spacing:-.02em}
+.desk-head h1,.desk-head h2{margin:7px 0 0;font:400 clamp(24px,3.1vw,34px)/1.05 var(--serif);color:#f7f3e7;letter-spacing:-.02em}
 .desk-head>p{max-width:760px;margin:11px 0 0;color:#b9d0ce;font-size:13px;line-height:1.55}
 .desk-form{margin-top:20px}
 .desk-request{display:flex;min-width:0;flex-direction:column;gap:6px;color:var(--cyan);font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}
@@ -296,6 +282,9 @@ body[data-tab="workflows"] .porthole-life{display:block}
 /* Cards sit in .library-group grids; the list itself stacks group titles,
    groups and notes, so a title never takes a card cell. */
 .library-list{margin-top:18px}
+.folder-path-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px}
+.folder-path-row label{font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}
+.folder-path-row input{flex:1 1 260px;min-width:0;font:12px var(--mono)}
 .library-card{display:flex;min-width:0;flex-direction:column;border:1px solid var(--line-dark);border-left:0;background:var(--surface);padding:15px 16px}
 .library-card:first-child{border-left:1px solid var(--line-dark)}
 .library-card[data-shipped="true"]{background:linear-gradient(180deg,#f4f1e6,var(--surface))}
@@ -314,7 +303,6 @@ body[data-tab="workflows"] .porthole-life{display:block}
 body[data-page="overview"] .engine-drawer{position:static;z-index:auto;width:auto;visibility:visible;transform:none;margin-top:18px;border:1px solid #8a6b3c;box-shadow:none}
 body[data-page="overview"] #engineClose{display:none}
 .where-to-change{margin-top:10px;padding:10px 12px;border-left:3px solid var(--cyan);background:rgba(120,209,202,.08)}
-.library-list>.library-group-title{margin:22px 0 10px;padding:0}
 .masthead-state.demo{color:#ffb4a2}
 .detail-head{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:14px}
 .detail-source{color:var(--sea);font:800 8px var(--mono);letter-spacing:.1em}
@@ -434,8 +422,6 @@ body[data-tab="workflows"] [data-page-tab]:not([data-page-tab~="workflows"]),bod
 .core-claim h2{margin:6px 0 0;font:400 clamp(24px,3.4vw,36px)/1.12 var(--serif)}
 .core-claim>p:last-child{margin:10px 0 0;max-width:720px;color:var(--muted);font-size:13px}
 .use-case-library .core-claim+.library-head{margin-top:26px}
-.task-group{grid-column:1/-1;margin:18px 0 2px!important;color:var(--sea)!important;font:800 9px var(--mono)!important;letter-spacing:.11em!important}
-.task-card-list .task-group:first-child{margin-top:4px!important}
 .ask-back{margin-top:22px;border:1px solid var(--signal);background:#fff7f3;padding:16px 15px}
 .ask-back[hidden]{display:none}
 .ask-back-head h3{margin:5px 0 0;font:400 19px var(--serif)}
