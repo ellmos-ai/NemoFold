@@ -42,7 +42,6 @@ def test_pyproject_project_urls():
         "Notice",
         "Third-Party Licenses",
         "Third-Party Licenses (Text)",
-        "Marketing Log",
         "Parent Organization",
         "Umbrella Ecosystem",
         "LLM Ready",
@@ -128,7 +127,7 @@ def test_third_party_licenses_audit():
     assert "INV-SLA-10" in lic_text
     assert "MIT" in lic_text
     assert "Apache-2.0" in lic_text
-    assert "Level 1 SBOM" in lic_text
+    assert "Dependency Inventory" in lic_text
     assert "2026-09-26" in lic_text
 
 
@@ -219,7 +218,7 @@ def test_pyproject_keywords_and_license_files():
         "ai-agents",
         "evidence-first",
         "reversible-actions",
-        "zero-egress",
+        "opt-in-cloud",
         "local-first",
     ]
     for expected_kw in expected_sample:
@@ -230,18 +229,6 @@ def test_pyproject_keywords_and_license_files():
     assert "NOTICE" in license_files
     assert "THIRD_PARTY_LICENSES.md" in license_files
     assert "THIRD_PARTY_LICENSES.txt" in license_files
-
-
-def test_marketing_log_and_audit():
-    """Verify local MARKETING-LOG.txt is present and documents Pfad B audit."""
-    marketing_path = REPO_ROOT / "MARKETING-LOG.txt"
-    assert marketing_path.is_file(), "Missing local MARKETING-LOG.txt"
-    marketing_text = marketing_path.read_text(encoding="utf-8")
-    assert "ellmos-ai/NemoFold" in marketing_text
-    assert "2026-09-26" in marketing_text
-    assert "INV-LOCAL-01" in marketing_text
-    assert "INV-SLA-10" in marketing_text
-    assert "[PERSONA-01]" in marketing_text
 
 
 def test_changelog_unreleased_entry():
@@ -298,15 +285,15 @@ def test_auto_assign_and_label_sync_workflows():
 
 
 def test_third_party_licenses_plain_text():
-    """Verify plain-text companion THIRD_PARTY_LICENSES.txt exists with Level 1 SBOM invariants."""
+    """Verify plain-text companion THIRD_PARTY_LICENSES.txt exists with the inventory invariants."""
     txt_file = REPO_ROOT / "THIRD_PARTY_LICENSES.txt"
     assert txt_file.is_file(), "Missing THIRD_PARTY_LICENSES.txt"
     txt_content = txt_file.read_text(encoding="utf-8")
 
-    assert "LEVEL 1 SBOM" in txt_content or "Level 1 SBOM" in txt_content
+    assert "DEPENDENCY INVENTORY" in txt_content
     assert "INV-LOCAL-01" in txt_content
     assert "INV-SLA-10" in txt_content
-    assert "RunAsInvoker" in txt_content
+    assert "administrator" in txt_content
     assert "Zero-Copyleft" in txt_content
     assert "2026-09-28" in txt_content
 
@@ -342,7 +329,7 @@ def test_pyproject_pytest_norecursedirs_hardened():
 
 
 def test_bilingual_contributing_parity_and_invariants():
-    """Verify CONTRIBUTING.md contains bilingual sections, 10 invariants, RunAsInvoker,
+    """Verify CONTRIBUTING.md contains bilingual sections, 10 invariants, no-admin statement,
     and Plan D."""
     contrib_path = REPO_ROOT / "CONTRIBUTING.md"
     assert contrib_path.is_file(), "Missing CONTRIBUTING.md"
@@ -350,8 +337,7 @@ def test_bilingual_contributing_parity_and_invariants():
 
     assert "## English" in content
     assert "## Deutsch" in content
-    assert "RunAsInvoker" in content
-    assert "T-20260920-167562623" in content
+    assert "administrator rights" in content
     assert "0.2.1" in content
     assert "Plan D" in content
     assert "MIT License" in content
@@ -388,8 +374,8 @@ def test_level1_sbom_currency_20261001():
 
     assert "2026-10-01" in md_text
     assert "2026-10-01" in txt_text
-    assert "RunAsInvoker" in md_text
-    assert "RunAsInvoker" in txt_text
+    assert "administrator" in md_text
+    assert "administrator" in txt_text
 
     for inv in ["INV-LOCAL-01", "INV-RUNAS-08", "INV-SLA-10"]:
         assert inv in md_text
@@ -397,23 +383,13 @@ def test_level1_sbom_currency_20261001():
 
 
 def test_pfad_b_discoverability_audit_currency_20261003():
-    """Verify Level 1 SBOM, badges, llms.txt, and MARKETING-LOG.txt document 2026-10-03 audit."""
+    """Verify the license inventory and changelog document the 2026-10-03 audit."""
     md_text = (REPO_ROOT / "THIRD_PARTY_LICENSES.md").read_text(encoding="utf-8")
     txt_text = (REPO_ROOT / "THIRD_PARTY_LICENSES.txt").read_text(encoding="utf-8")
-    readme_en = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
-    readme_de = (REPO_ROOT / "README_de.md").read_text(encoding="utf-8")
-    llms_text = (REPO_ROOT / "llms.txt").read_text(encoding="utf-8")
-    marketing_text = (REPO_ROOT / "MARKETING-LOG.txt").read_text(encoding="utf-8")
     changelog_text = (REPO_ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
 
     assert "2026-10-03" in md_text, "THIRD_PARTY_LICENSES.md missing 2026-10-03 audit date"
     assert "2026-10-03" in txt_text, "THIRD_PARTY_LICENSES.txt missing 2026-10-03 audit date"
-    assert "Verified-2026--10--03" in readme_en
-    assert "Last--Checked-2026--10--03" in readme_en
-    assert "Verified-2026--10--03" in readme_de
-    assert "Last--Checked-2026--10--03" in readme_de
-    assert "Last-checked: 2026-10-03" in llms_text
-    assert "9. IMPLEMENTED PFAD B DISCOVERABILITY & RE-AUDIT (2026-10-03)" in marketing_text
     assert "Pfad B Discoverability, Level 1 SBOM Re-Audit & Marketing Registry (2026-10-03)" in (
         changelog_text
     )

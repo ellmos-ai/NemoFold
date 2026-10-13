@@ -123,7 +123,7 @@ def executed_result(job, provider, run_id):
     )
 
 
-def test_cli_exposes_provider_and_mcp_commands_without_mixing_nebius(capsys) -> None:
+def test_cli_exposes_provider_and_mcp_commands(capsys) -> None:
     assert main(["providers"]) == 0
     payload = json.loads(capsys.readouterr().out)
     ids = {item["provider_id"] for item in payload["providers"]}
@@ -135,8 +135,10 @@ def test_cli_exposes_provider_and_mcp_commands_without_mixing_nebius(capsys) -> 
         "claude-code",
         "openai",
         "anthropic",
+        "nebius",
     }
-    assert "nebius" not in ids
+    nebius = next(item for item in payload["providers"] if item["provider_id"] == "nebius")
+    assert nebius["competition_proof"] is False
     parsed = build_parser().parse_args(["mcp", "--allow-root", "C:/documents"])
     assert parsed.command == "mcp"
 
@@ -267,6 +269,7 @@ def test_loopback_status_exposes_external_server_gate_without_claiming_runtime(t
         "anthropic",
         "claude-code",
         "codex-cli",
+        "nebius",
         "openai",
     }
 

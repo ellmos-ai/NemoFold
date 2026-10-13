@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from datetime import date
 
 from .document_index import SearchHit
 from .evidence_analyst import ContextReceipt
@@ -45,14 +46,78 @@ PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ),
     (
         "PHONE",
-        re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)"),
+        # One candidate per whole run of digits joined by separators, of any
+        # length. A capped pattern split long runs and could leave a remainder
+        # under seven digits readable; _not_a_phone_number applies the minimum
+        # of seven digits and the date exemption to the whole run instead.
+        re.compile(r"(?<!\w)\+?\d(?:[ .()/\-]*\d)*(?!\w)"),
     ),
 )
+
+_DATE_CANDIDATE = re.compile(
+    r"(?:(?P<day>\d{1,2})\.(?P<month>\d{1,2})\.(?P<year>\d{4}|\d{2})"
+    r"|(?P<iso_year>\d{4})-(?P<iso_month>\d{2})-(?P<iso_day>\d{2}))"
+    r"(?:[ ](?P<hour>\d{1,2}))?"
+)
+# After the hour: valid minutes that stand alone. When another digit run
+# follows the minutes directly, the minutes belong to that run and are masked
+# with it, so the date and hour are masked too; the produced text then never
+# needs an exemption that the input could forge.
+_MINUTES = re.compile(r":(\d{2})(?!\d)(?![ .()/\-]*\d)")
+_MIN_PHONE_DIGITS = 7
+
+
+def _is_date(match: re.Match[str]) -> bool:
+    """A PHONE candidate that is exactly one calendar date stays readable.
+
+    A date has eight digits and used to be masked as a phone number, which left
+    an outbound timeline without a single date. The PHONE pattern finds whole
+    digit runs; only a candidate that is nothing but a valid date between 1900
+    and 2100, at most followed by the hour of a time whose minutes stand alone
+    ("13.03.2026 17" before ":00", with no number right after), is exempt.
+    Anything else in the same digit run (a following number, a longer
+    identifier) keeps the whole run masked.
+    """
+    found = _DATE_CANDIDATE.fullmatch(match.group(0))
+    if found is None:
+        return False
+    if found["hour"] is not None:
+        minutes = _MINUTES.match(match.string, match.end())
+        if int(found["hour"]) > 23 or minutes is None or int(minutes[1]) > 59:
+            return False
+    if found["iso_year"] is not None:
+        year, month, day = (int(found[key]) for key in ("iso_year", "iso_month", "iso_day"))
+    else:
+        year, month, day = (int(found[key]) for key in ("year", "month", "day"))
+        if len(found["year"]) == 2:
+            year += 2000
+    if not 1900 <= year <= 2100:
+        return False
+    try:
+        date(year, month, day)
+    except ValueError:
+        return False
+    return True
+
+
+def _not_a_phone_number(match: re.Match[str]) -> bool:
+    digits = sum(character.isdigit() for character in match.group(0))
+    return digits < _MIN_PHONE_DIGITS or _is_date(match)
+
+
+_EXEMPT: dict[str, Callable[[re.Match[str]], bool]] = {"PHONE": _not_a_phone_number}
+
+
+def _sensitive_matches(category: str, pattern: re.Pattern[str], text: str) -> bool:
+    exempt = _EXEMPT.get(category)
+    return any(exempt is None or not exempt(match) for match in pattern.finditer(text))
 
 
 def detect_sensitive_categories(text: str) -> tuple[str, ...]:
     """Return deterministic categories still visible in an outbound text field."""
-    return tuple(category for category, pattern in PATTERNS if pattern.search(text))
+    return tuple(
+        category for category, pattern in PATTERNS if _sensitive_matches(category, pattern, text)
+    )
 
 
 class Pseudonymizer:
@@ -69,8 +134,11 @@ class Pseudonymizer:
 
     def _replace(self, text: str, category: str, pattern: re.Pattern[str]) -> str:
         replacements = self._maps.setdefault(category, {})
+        exempt = _EXEMPT.get(category)
 
         def replace_match(match: re.Match[str]) -> str:
+            if exempt is not None and exempt(match):
+                return match.group(0)
             key = match.group(0).casefold()
             if key not in replacements:
                 replacements[key] = f"<{category}_{len(replacements) + 1:03d}>"

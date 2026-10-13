@@ -232,6 +232,7 @@ class NemoFoldHTTPServer(ThreadingHTTPServer):
         super().__init__(address, NemoFoldRequestHandler)
         self.app_config = config
         self.demo_slots = threading.BoundedSemaphore(config.max_parallel_jobs)
+        self.roots_lock = threading.Lock()
 
 
 class NemoFoldRequestHandler(BaseHTTPRequestHandler):
@@ -436,6 +437,21 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                         else []
                     ),
                     "approved_root_count": len(self.server.app_config.execution.allowed_roots),
+                    # The console's shipped default names the repository's own
+                    # synthetic corpus; a server started on other folders says
+                    # where to start instead, under the same disclosure rule.
+                    "default_input_root": (
+                        _default_input_root(self.server.app_config)
+                        if provider_surface_enabled
+                        else None
+                    ),
+                    # The public demo accepts only these parameters, so the
+                    # console takes them from here rather than keeping a copy.
+                    "public_demo_parameters": (
+                        {name: PUBLIC_DEMO_PARAMETERS[name] for name in sorted(available_workflows)}
+                        if public_demo
+                        else {}
+                    ),
                     "network_exposed": self.server.app_config.exposed_to_network,
                     "public_demo": public_demo,
                     "read_only": public_demo,
@@ -507,6 +523,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             "/api/provider-analyze",
             "/api/provider-preview",
             "/api/folders",
+            "/api/approve-root",
             "/api/corpus-glance",
             "/api/artifacts",
             "/api/drafts",
@@ -531,6 +548,7 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
                 "/api/provider-analyze",
                 "/api/provider-preview",
                 "/api/folders",
+                "/api/approve-root",
                 "/api/corpus-glance",
                 "/api/artifacts",
                 "/api/drafts",
@@ -584,6 +602,9 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             return
         if path == "/api/folders":
             self._handle_folder_browser()
+            return
+        if path == "/api/approve-root":
+            self._handle_approve_root()
             return
         if path == "/api/corpus-glance":
             self._handle_corpus_glance()
@@ -763,11 +784,48 @@ class NemoFoldRequestHandler(BaseHTTPRequestHandler):
             result = _folder_listing(
                 self.server.app_config,
                 requested_path=path,
+                browse_anywhere=True,
             )
         except (OSError, ValueError) as exc:
             self._error(HTTPStatus.BAD_REQUEST, "folder_rejected", str(exc))
             return
         self._json({"ok": True, **result})
+
+    def _handle_approve_root(self) -> None:
+        # The person at this loopback console is the operator who could have
+        # passed --allow-root; approving here does the same, for this session
+        # only. Never on a network-exposed server (the demo is refused above).
+        if self.server.app_config.exposed_to_network:
+            self._reject_before_body_read(
+                HTTPStatus.FORBIDDEN,
+                "folder_picker_loopback_only",
+                "approving folders is disabled when the HTTP server is network-exposed",
+            )
+            return
+        try:
+            payload = self._read_json()
+            if not isinstance(payload, dict) or set(payload) != {"path"}:
+                raise ValueError("request body must carry only path")
+            raw = payload["path"]
+            if not isinstance(raw, str) or not Path(raw).is_absolute():
+                raise ValueError("path must be an absolute folder path")
+            if any(_is_link(part) for part in (Path(raw), *Path(raw).parents)):
+                raise ValueError("a linked folder cannot be approved")
+            folder = Path(raw).resolve()
+            if not folder.is_dir():
+                raise ValueError("folder must be an existing directory")
+            with self.server.roots_lock:
+                config = self.server.app_config
+                roots = config.execution.allowed_roots
+                if _matching_folder_root(folder, _allowed_folder_roots(config)) is None:
+                    roots = (*roots, str(folder))
+                    self.server.app_config = replace(
+                        config, execution=replace(config.execution, allowed_roots=roots)
+                    )
+        except (OSError, ValueError) as exc:
+            self._error(HTTPStatus.BAD_REQUEST, "approve_root_rejected", str(exc))
+            return
+        self._json({"ok": True, "path": str(folder), "approved_roots": list(roots)})
 
     def _handle_corpus_glance(self) -> None:
         if self.server.app_config.exposed_to_network:
@@ -1569,6 +1627,18 @@ def _allowed_folder_roots(config: WebAppConfig) -> tuple[Path, ...]:
     return tuple(roots)
 
 
+def _default_input_root(config: WebAppConfig) -> str | None:
+    roots = _allowed_folder_roots(config)
+    if not roots:
+        return None
+    # D-040: the fictional case file is the example to start from.
+    for name in ("synthetic-case", "synthetic-home"):
+        synthetic = config.base_dir / "examples" / name
+        if synthetic.is_dir() and _matching_folder_root(synthetic.resolve(), roots) is not None:
+            return f"examples/{name}"
+    return str(roots[0])
+
+
 def _matching_folder_root(candidate: Path, roots: tuple[Path, ...]) -> Path | None:
     return next(
         (
@@ -1580,10 +1650,39 @@ def _matching_folder_root(candidate: Path, roots: tuple[Path, ...]) -> Path | No
     )
 
 
+# IO_REPARSE_TAG_MOUNT_POINT (junction) and IO_REPARSE_TAG_SYMLINK.
+_LINK_REPARSE_TAGS = frozenset({0xA0000003, 0xA000000C})
+
+
+def _is_link(path: Path) -> bool:
+    # A Windows junction is a reparse point that is_symlink() does not report.
+    # Cloud placeholders (OneDrive) are reparse points too, with other tags,
+    # and stay allowed.
+    if path.is_symlink():
+        return True
+    return getattr(os.lstat(path), "st_reparse_tag", 0) in _LINK_REPARSE_TAGS
+
+
+def _computer_places() -> list[dict[str, str]]:
+    places = [str(Path.home())]
+    if os.name == "nt":
+        # Ask Windows which drives exist instead of touching each one: probing a
+        # disconnected network drive stalls the folder dialog for seconds.
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32  # type: ignore[attr-defined]
+        mask = kernel32.GetLogicalDrives()
+        places += [f"{chr(65 + i)}:\\" for i in range(26) if mask >> i & 1]
+    else:
+        places.append("/")
+    return [{"name": place, "path": place} for place in places]
+
+
 def _folder_listing(
     config: WebAppConfig,
     *,
     requested_path: str | None,
+    browse_anywhere: bool = False,
 ) -> dict[str, object]:
     roots = _allowed_folder_roots(config)
     root_values = [
@@ -1593,6 +1692,8 @@ def _folder_listing(
     if requested_path is None:
         return {
             "roots": root_values,
+            # Names only: browsing shows folders, approving one is a separate step.
+            "places": _computer_places() if browse_anywhere else [],
             "current": None,
             "parent": None,
             "directories": [],
@@ -1602,9 +1703,11 @@ def _folder_listing(
     candidate = (
         raw_candidate if raw_candidate.is_absolute() else config.base_dir / raw_candidate
     ).resolve()
-    root = _matching_folder_root(candidate, roots)
-    if root is None:
+    approved_root = _matching_folder_root(candidate, roots)
+    if approved_root is None and not browse_anywhere:
         raise PermissionError("folder is outside the server-approved roots")
+    # Outside the approved roots the listing is bounded by the drive instead.
+    root = approved_root or Path(candidate.anchor)
     if not candidate.is_dir():
         raise ValueError("folder must be an existing directory")
     directories: list[dict[str, str]] = []
@@ -1613,10 +1716,10 @@ def _folder_listing(
     # folder the cap left out, so it must not make a complete listing look cut.
     over_cap = 0
     for item in sorted(candidate.iterdir(), key=lambda path: path.name.casefold()):
-        if item.is_symlink():
-            skipped += 1
-            continue
         try:
+            if _is_link(item):
+                skipped += 1
+                continue
             resolved = item.resolve()
             if not resolved.is_dir() or _matching_folder_root(resolved, (root,)) is None:
                 continue
@@ -1635,7 +1738,11 @@ def _folder_listing(
             parent = str(parent_candidate)
     return {
         "roots": root_values,
-        "current": {"name": candidate.name or str(candidate), "path": str(candidate)},
+        "current": {
+            "name": candidate.name or str(candidate),
+            "path": str(candidate),
+            "approved": approved_root is not None,
+        },
         "parent": parent,
         "directories": directories,
         "skipped_count": skipped,

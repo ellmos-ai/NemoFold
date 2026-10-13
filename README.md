@@ -9,17 +9,14 @@ English | [Deutsch](README_de.md)
 [![Attribution NOTICE](https://img.shields.io/badge/Attribution-NOTICE-blue.svg)](NOTICE)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](pyproject.toml)
 [![CI](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml/badge.svg)](https://github.com/ellmos-ai/NemoFold/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-1154%20passed%20%7C%201%20skipped-brightgreen.svg)](tests/)
+[![Tests](https://img.shields.io/badge/tests-1173%20passed%20%7C%202%20skipped-brightgreen.svg)](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933)
 [![Python](https://img.shields.io/badge/python-3.11%20%7C%203.12%20(CI)-blue.svg)](.github/workflows/ci.yml)
 [![Platforms](https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20(CI)%20%7C%20macOS%20(mypy)-lightgrey.svg)](.github/workflows/ci.yml)
-[![Privacy](https://img.shields.io/badge/privacy-100%25%20Local--First%20%7C%20Zero--Egress-success.svg)](#sec-05)
-[![Security](https://img.shields.io/badge/security-RunAsInvoker%20%7C%20Non--Elevated-blue.svg)](THIRD_PARTY_LICENSES.md)
-[![Security SLA](https://img.shields.io/badge/security%20SLA-48h%20%2F%205d%20triage-blue.svg)](SECURITY.md)
+[![Privacy](https://img.shields.io/badge/privacy-local--first%20%7C%20cloud%20opt--in-success.svg)](#sec-05)
+[![Security SLA](https://img.shields.io/badge/security%20response%20target-48h%20%2F%205d-blue.svg)](SECURITY.md)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Third-Party Licenses](https://img.shields.io/badge/licenses-Audited%20%7C%20Level%201%20SBOM-success.svg)](THIRD_PARTY_LICENSES.md)
-[![SBOM Plain Text](https://img.shields.io/badge/Level%201%20SBOM-Plain%20Text-blue.svg)](THIRD_PARTY_LICENSES.txt)
-[![Verified](https://img.shields.io/badge/Verified-2026--10--03-blue.svg)](MARKETING-LOG.txt)
-[![Last-Checked](https://img.shields.io/badge/Last--Checked-2026--10--03-success.svg)](llms.txt)
+[![Third-Party Licenses](https://img.shields.io/badge/licenses-third--party%20license%20list-success.svg)](THIRD_PARTY_LICENSES.md)
+[![Licenses Plain Text](https://img.shields.io/badge/licenses-plain%20text-blue.svg)](THIRD_PARTY_LICENSES.txt)
 [![Ecosystem](https://img.shields.io/badge/ecosystem-ellmos--ai-informational.svg)](https://github.com/ellmos-ai)
 [![Umbrella](https://img.shields.io/badge/umbrella-open--bricks-informational.svg)](https://github.com/open-bricks)
 [![LLM Ready](https://img.shields.io/badge/LLM--Ready-llms.txt-blueviolet.svg)](llms.txt)
@@ -51,9 +48,9 @@ shared rather than private to one workflow, the same building blocks can be chai
 for a case nobody has written a workflow for yet.
 
 It adapts to your use cases in two honest ways: the Captain's Desk plans new
-combinations of existing primitives from one plain sentence, and every prepared voyage
+combinations of existing primitives from one plain sentence, and every prepared plan
 becomes a reusable draft. That is the whole learning story - a growing library of
-voyages, not a model that trains on your files. Nothing is fine-tuned, and nothing
+use cases, not a model that trains on your files. Nothing is fine-tuned, and nothing
 about your documents leaves the host unless you approve that specific transfer.
 
 The same core serves both ends of the range: everyday work on a laptop with a small
@@ -81,8 +78,8 @@ corpus. The evidence contract does not change between them - only the worker doe
 | 14 | [Structured Sources & Controlled Output](#14-structured-sources--controlled-output) | CSV/JSON ingestion, sanitized web boundary, Controlled Email drafting |
 | 15 | [Checking, Comparing & Composing](#15-checking-comparing--composing) | Reference check, Rater Race, Guide Compose, Wiki Export, Pattern Mining |
 | 16 | [Local Web Console & Routes](#16-local-web-console--routes) | Area routing (`/folders`, `/processes`, `/governance`, `/connections`) |
-| 17 | [Sibling Ecosystem & Integration](#17-sibling-ecosystem--integration) | Cross-reference table for 16 sister repositories across open-bricks |
-| 18 | [Transparency, Licenses & Security Policy](#18-transparency-licenses--security-policy) | Dependency audit, zero-copyleft guarantee, 48h vulnerability SLA |
+| 17 | [Sibling Ecosystem & Integration](#17-sibling-ecosystem--integration) | Cross-reference table for 10 public sister repositories in ellmos-ai, dev-bricks and doc-bricks |
+| 18 | [Transparency, Licenses & Security Policy](#18-transparency-licenses--security-policy) | Dependency audit, zero-copyleft guarantee, 48h response target |
 
 ---
 
@@ -109,7 +106,7 @@ flowchart TB
     subgraph Governance["3. Trust Boundary & Governance Gates"]
         ROOTS["Approved Roots Policy<br/>(Fail-Closed Directory Boundaries)"]
         GATES["Execution Gates<br/>(File Actions, External Models, Budget Ceiling)"]
-        RUNAS["User Space Boundary<br/>(Unprivileged RunAsInvoker, Non-Elevated)"]
+        RUNAS["User Space Boundary<br/>(runs as a regular user, no administrator rights)"]
     end
 
     subgraph CoreEngine["4. Core Engine & Shared Primitives"]
@@ -213,16 +210,16 @@ sequenceDiagram
 
 | Evaluation Dimension | NemoFold (v0.2.1) | Cloud AI Assistants (Copilot / NotebookLM) | Desktop Search Tools (DocFetcher / Copernic) | Agent Frameworks (LangChain / LlamaIndex) | Invariant Mapping |
 |:---|:---:|:---:|:---:|:---:|:---:|
-| **1. Execution Boundary** | **100% Local-First / Zero-Egress** | Cloud Ingestion Mandatory | 100% Local | Mixed / Cloud Default | `INV-LOCAL-01` |
+| **1. Execution Boundary** | **Local-First by default / cloud opt-in** | Cloud Ingestion Mandatory | 100% Local | Mixed / Cloud Default | `INV-LOCAL-01` |
 | **2. Citation Rigor** | **Verbatim Byte-Exact Quote Verification** | Probabilistic Synthesis | Raw Text Snippets Only | Prompt-Dependent Hallucinations | `INV-EVID-02` |
 | **3. File Action Safety** | **Reversible Journal / Undo / Resume** | Read-Only (No File Actions) | Manual File Operations | Unchecked Shell Tool Calls | `INV-ACTION-03` |
 | **4. Approval Gates** | **Multi-Tier (Local / Remote / Spend)** | Implicit Cloud Upload | N/A (No Automation) | Often Ungated Auto-Execution | `INV-GATE-04` |
 | **5. Package Sanitization** | **Path-Free / Hash-Verified Packages** | Raw File Transmission | N/A | Variable / Host Leaks Common | `INV-ISOL-05` |
 | **6. Attack Surface** | **Loopback-Only (127.0.0.1)** | Public Multi-Tenant SaaS | Local GUI Only | Often Exposed HTTP Endpoints | `INV-PROV-06` |
 | **7. Workflow Architecture** | **4 Primitives / 44 Workflows** | Monolithic Chat Interface | Keyword Search Index | Complex Dynamic Graphs | `INV-POLICY-07` |
-| **8. Privilege Boundary** | **Unprivileged `RunAsInvoker`** | Browser Sandbox | Standard User Space | Often Demands Root/Sudo | `INV-RUNAS-08` |
+| **8. Privilege Boundary** | **Regular user, no admin rights** | Browser Sandbox | Standard User Space | Often Demands Root/Sudo | `INV-RUNAS-08` |
 | **9. Auditability** | **Cryptographic SHA-256 Ledgers** | Proprietary Session Log | Minimal Plaintext Log | Transient Memory Dumps | `INV-DET-09` |
-| **10. Vulnerability SLA** | **48h Ack / 5d Triage Public SLA** | Enterprise Support Contract | Volunteer / Inactive | Best-Effort GitHub Issues | `INV-SLA-10` |
+| **10. Vulnerability SLA** | **48h Ack / 5d Triage (target)** | Enterprise Support Contract | Volunteer / Inactive | Best-Effort GitHub Issues | `INV-SLA-10` |
 
 ---
 
@@ -234,16 +231,16 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 
 | Invariant ID | Name | Architectural Guarantee | Compliance Verification |
 |:---:|:---|:---|:---:|
-| **INV-LOCAL-01** | 100% Local-First & Zero-Egress | Original documents, absolute paths, FTS index, policies, and ledger remain strictly local on host; zero automatic telemetry. | Verified in `tests/` |
+| **INV-LOCAL-01** | Local-First by default; cloud transfer only on explicit approval | Original documents, absolute paths, FTS index, policies, and ledger remain strictly local on host; zero automatic telemetry. | Verified in `tests/` |
 | **INV-EVID-02** | Byte-Exact Evidence Citation | Claims accepted only when verbatim quotes match source text byte-for-byte; line and page locators preserved. | Verified in `tests/unit/test_evidence_analyst.py` |
 | **INV-ACTION-03** | Reversible Actions & Journaled Undo | File mutations require pre-flight dry-run, atomic commit, and provide full reversible undo and resume via run journal. | Verified in `tests/unit/test_journal.py` |
 | **INV-GATE-04** | Multi-Tier Explicit Approval Gates | File actions, external model transfers, cloud spend ceilings, and network exposure require explicit operator flags. | Verified in `tests/unit/test_gates.py` |
 | **INV-ISOL-05** | Path-Free Sanitized Packaging | Outbound packages strip host paths, secrets, symlinks, and unapproved files; preflight validates package before network transit. | Verified in `tests/unit/test_package_validator.py` |
 | **INV-PROV-06** | Provider-Neutral Loopback Surface | Pluggable local and remote backends; unauthenticated interfaces and Captain's Desk restricted strictly to loopback (127.0.0.1). | Verified in `tests/e2e/test_webapp.py` |
 | **INV-POLICY-07** | Composable Primitives & Voyages | 4 shared primitives compose 44 document workflows; reusable voyage drafts adapt without model fine-tuning. | Verified in `tests/unit/test_primitives.py` |
-| **INV-RUNAS-08** | Unprivileged User-Mode (`RunAsInvoker`) | Operates entirely under standard user privileges (`RunAsInvoker`); zero system daemon or administrative elevation required. | Verified in `THIRD_PARTY_LICENSES.md` |
+| **INV-RUNAS-08** | Unprivileged User Mode | Runs as a regular user; requests no administrator rights; no system daemon required. | Documented in `SECURITY.md` |
 | **INV-DET-09** | Deterministic Artifacts & Ledgers | Deterministic SVG figures, structured reports, and cryptographic SHA-256 run ledgers guarantee reproducible audit trails. | Verified in `tests/unit/test_report_studio.py` |
-| **INV-SLA-10** | 48h Security & Triage SLA | Security vulnerability disclosures acknowledged within 48h; triage and remediation assessment completed within 5 business days. | Verified in `SECURITY.md` |
+| **INV-SLA-10** | 48h Security & Triage SLA | Target: security vulnerability disclosures acknowledged within 48h; triage and remediation assessment within 5 business days. | Stated target in `SECURITY.md` |
 
 ---
 
@@ -252,7 +249,9 @@ NemoFold enforces ten architectural invariants across all workflows, CLI command
 <a id="what-is-implemented"></a>
 ## 6. Implemented Document Workflows
 
-`SUPPORTED_WORKFLOWS` registers 44 job contracts. The founding sixteen are below;
+`SUPPORTED_WORKFLOWS` registers 44 job contracts; in the console each one is an
+**action** (a single step), while a **workflow** is a chain of two or more actions
+([Section 16](#16-local-web-console--routes)). The founding sixteen are below;
 Case Chronicle deep analysis adds seven more ([Section 13](#13-case-chronicle-deep-analysis)),
 the checking/comparing/composing set adds seven ([Section 15](#15-checking-comparing--composing)),
 and fourteen further gate-verified structured-source, web, export and specialist workflows
@@ -275,11 +274,11 @@ are listed in the second table further down (16 + 7 + 7 + 14 = 44).
 | Fact Distill | Quotable sentences per source with repeated statements struck from the findings and every struck occurrence kept visible in its own appendix |
 | Synopsis Merge | Section-wise merge of several documents with a source anchor per paragraph and disagreeing labels shown as conflict blocks instead of a silent choice |
 | Daily Arrivals | Comparison against a named snapshot with name, size, time and short content per new file, the owner where the platform can name one, and a task file you install yourself |
-| NemoClaw Platform & Proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; proven by a real Token Factory run committed under `examples/proven-run/` |
+| NemoClaw skill package & Token Factory proof | Path-free, hashed job packages plus a fail-closed Nebius Token Factory adapter and independently verifiable result receipt; proven by a real Token Factory run committed under `examples/proven-run/` |
 
 ### Gate-verified structured-source, web & specialist workflows
 
-Thirteen more workflows were built against the Ellmos use-case acceptance gates
+Fourteen more workflows were built against the Ellmos use-case acceptance gates
 (`G05`-`G14`, see [Section 8](#8-offline-proof--verification)) and structured/web
 sources ([Section 14](#14-structured-sources--controlled-output)); none had a
 table row before this pass.
@@ -301,7 +300,7 @@ table row before this pass.
 | Print Action (`print_action`) | Hands one named file to the OS-registered print handler and records that printing, not the run, is the user's own step |
 | Chunk Export (`chunk_export`) | Deterministic, overlapping retrieval chunks for your own RAG index, each with source, character offsets, lines and SHA-256, plus a hashed manifest; unread or empty sources stay listed, and a corpus over the declared bound is refused whole instead of exported in part |
 
-The Registry tab under Processes & Workflows also holds the local **Research Notebook**
+The Blueprints tab under Processes & Workflows also holds the local **Research Notebook**
 workspace. It keeps an investigation goal, approved roots, reusable questions/prompts,
 provider configuration, and a trail of verified run ledgers together without storing
 API keys or approvals.
@@ -314,7 +313,7 @@ unreadable files remain visible as coverage gaps.
 Cloud spend, uploads, live NemoClaw/Nebius execution, and further Devpost changes
 remain separate human approval gates.
 
-![NemoFold console, Processes & Workflows: the use-case library with saved voyages and the shipped specialists](docs/media/nemofold-console.png)
+![NemoFold console start page, the workbench: the Captain's Desk on top, the engine room open below it](docs/media/nemofold-console.png)
 
 <a id="sec-07"></a><a id="7-installation--quick-start"></a><a id="7-installation--schnellstart"></a>
 <a id="installation--quick-start"></a><a id="installation--schnellstart"></a>
@@ -382,6 +381,18 @@ full-suite pass. Personal GUI acceptance remains pending.
 See the [release gate](RELEASE_GATE.md) for the exact checks and product boundaries.
 The real cloud proof remains the historical 2026-09-02 run; today's verification
 does not claim a new cloud call or a hosted public demo.
+
+### Final acceptance round (2026-10-12)
+
+The personal GUI acceptance on 2026-10-12 reworked the console: the start page is
+now the workbench, blueprints and your own use cases are separate, a folder can be
+approved for a session from the folder dialog, and Nemotron on Nebius is selectable
+as a provider. It also fixed the anonymizer, so dates reach a cloud model readable
+while phone, case and policy numbers stay masked. Ten independent review rounds
+by a second model (Codex, OpenAI) checked these changes. The
+[hosted CI run](https://github.com/ellmos-ai/NemoFold/actions/runs/38312717933) on [`b0e2bc3`](https://github.com/ellmos-ai/NemoFold/commit/b0e2bc3b78fc045f605df94ca34f28c7079190fe) passed: Windows/Python 3.12 all
+1175 tests; Ubuntu/Python 3.11 and 3.12 each 1173 with 2 platform-specific
+skips.
 
 ### Acceptance gate register
 
@@ -461,8 +472,14 @@ claude mcp add --scope user nemofold -- python -m nemofold mcp `
 
 Local providers are restricted to loopback. External adapters require `allow_once`, a
 server-side external-model gate, and per-call transfer approval. Keys come only from
-environment variables. Generic provider receipts never become Nebius competition
-proof; the next section remains the only such route. See
+environment variables. Nemotron on Nebius Token Factory is also selectable in the
+local console as provider `nebius`: the key comes only from `NEBIUS_API_KEY`, the
+server must be started with `--allow-external-models --max-external-cost-usd <n>`,
+every run needs its own approval with privacy `allow_once`, and only pseudonymized
+excerpts are sent. Generic provider receipts, including a console run on `nebius`,
+never become Nebius competition proof; the next section (the separate
+`token-factory-run` path, committed under `examples/proven-run/`) remains the only
+such route. See
 [Provider adapters, local API, and MCP](docs/providers-and-mcp.md).
 
 <a id="sec-11"></a><a id="11-approved-nebius-token-factory-run"></a><a id="11-belegter-nebius-token-factory-lauf"></a>
@@ -574,6 +591,8 @@ its complete output schema inside the bounded user payload and validates the ret
 object locally. It therefore does not depend on model-specific server-side JSON-schema
 enforcement to protect the evidence contract.
 
+The NemoClaw/OpenShell runtime itself was not installed or executed for this submission. What is proven is the real Nebius Token Factory run (`examples/proven-run/`, `nemoclaw_proof: false`); the skill package in `skills/nemofold/` is ready to install.
+
 The optional declared NemoClaw version is metadata only. The result records
 `nemoclaw_proof: false`; only a separately captured, sanitized runtime log from the
 actual sandbox may support a NemoClaw execution claim.
@@ -590,9 +609,13 @@ preserving the original job identity and journal.
 <a id="my-use-cases-the-voyage-library"></a>
 ## 12. Voyage Library & Captain's Desk
 
-A plan you keep gets a name. The overview holds the library: saved voyages next to
-five specialists that ship with NemoFold - fact digest as PDF, topic bundle with
-evidence, daily arrivals, registry table, and offer synopsis. A specialist is a
+A plan you keep gets a name and is called a **use case**: an action or a workflow
+adopted from a blueprint (or planned by the captain) and bound to your own folders.
+The console lists them under *My use cases*; the shipped starting points live under
+*Blueprints* ([Section 16](#16-local-web-console--routes)). In the text below, a
+"voyage" is the stored plan behind a use case. The library holds saved voyages next to
+five blueprints that ship with NemoFold - fact digest as PDF, topic bundle with
+evidence, daily arrivals, registry table, and offer synopsis. A shipped blueprint is a
 read-only starting point that carries workflows and parameters but no path, so a
 shipped file can never name a folder on your machine and can never run by itself.
 Copying one binds it to your approved roots; from then on it is an ordinary entry you
@@ -824,7 +847,10 @@ $env:PYTHONPATH = "$PWD\src"
 python -m nemofold serve --allow-root $PWD --base-dir $PWD
 ```
 
-Open `http://127.0.0.1:8765`. The console uses the same strict job parser and
+Open `http://127.0.0.1:8765`; the label at the top reads `FULL LOCAL CONSOLE` (the
+demo below reads `PUBLIC DEMO · SYNTHETIC DATA ONLY`). The default example folder is the
+fictional case file `examples/synthetic-case`, with default questions in German. The
+console uses the same strict job parser and
 application service as the CLI. It starts on loopback only, rejects cross-origin POSTs,
 and requires `--expose-network` before it will bind to a non-loopback address. Even
 then the authority-bearing surfaces stay loopback-only: a network-exposed server
@@ -833,26 +859,42 @@ hosting for other people goes through `serve-demo`. Preview is the default safe 
 action workflows additionally require the server-side `--approve-actions` gate before
 an apply request can succeed.
 
-The overview and four work areas use distinct, bookmarkable routes instead of in-page
+The start page `/` is the **workbench**: the Captain's Desk on top and the engine room
+open below it (the first menu item is *Engine room*). The overview and four work areas use distinct, bookmarkable routes instead of in-page
 scroll jumps: `/`, `/folders`, `/processes`, `/governance` and `/connections`. Analysis,
 Routines and Artifacts used to be rooms of their own, which meant the door you came
 through decided what you could see. They are now three tabs of Processes & Workflows —
-`?tab=workflows`, `?tab=registry` and `?tab=artifacts`. The old routes still lead
+`?tab=workflows` (My use cases), `?tab=registry` (Blueprints) and `?tab=artifacts`
+(the URL keys are unchanged). The old routes still lead
 somewhere: `/document-center`, `/analysis`, `/routines` and `/artifacts` redirect to
-their replacement, and a link that names one contract lands in the registry with that
-contract selected.
+their replacement, and a link that names one contract lands in the Blueprints tab with
+that contract selected.
+
+Vocabulary: an **action** is one step, i.e. one of the 44 job contracts (the API field
+is still `workflow`); a **workflow** is a chain of two or more actions; a **use case**
+is an action or workflow you adopted and bound to your own folders; **blueprints** are
+the templates. The Blueprints tab lists workflow blueprints (two or more steps),
+single-action blueprints, *My blueprints*, and below them all 44 actions, each with
+*Add to my use cases* and *Try once*. A blueprint can be adopted any number of times
+(copies are numbered) and renamed in the dialog; a use case can be saved as a blueprint
+of your own or removed with *Remove from my use cases*, which never touches its
+blueprint. Use-case details open as a dialog.
 
 What stands in front changed, not the rooms. Use-case tiles are the primary object,
 filtered by topic tags, and a routine is simply a use case that carries a schedule and
 the derived `scheduled` tag — choosing that filter is what turns the porthole into the
-echo sounder and surfaces the last routine ledgers. The single instruments, meaning the
-44 job contracts on their own, live in one non-thematic registry with the engine
-room as their editor. Folders is the home of your folders: which ones are watched, what
-is actually on board, and the use cases bound to them. The overview itself stays
-deliberately bare — one headline, one sentence and the area cards — and folds the
-boundary tiles, the evidence chain, the contract register and the roadmap behind an
-antique ship's chart that unfolds on click or Enter. Nothing is removed; documentation
-simply stops crowding the surface.
+echo sounder: recent runs of the actions your routines use, manual runs of the same
+action included, since NemoFold does not tie a run to a schedule. The single actions, meaning the
+44 actions (job contracts) on their own, are listed in the Blueprints tab, with the
+engine room as their editor. Folders is the home of your folders: which ones are watched, what
+is actually on board, and the use cases bound to them. In the local console the folder
+dialog browses any folder on this computer and approves it for the current session
+(`/api/approve-root`); reading starts only after that approval. The public demo and a
+network-exposed server refuse it. Below the workbench the start page keeps one
+headline, one sentence and the area cards, and folds the boundary tiles, the evidence
+chain, the contract register and the roadmap behind an antique ship's chart that
+unfolds on click or Enter. Nothing is removed; documentation simply stops crowding the
+surface.
 
 Governance renders the authority this server was started with — the file-action,
 external-model and network gates, approved roots, budget ceiling and contracted
@@ -860,7 +902,8 @@ workflows. Gates are read there, never granted there: a closed gate still requir
 restart with the matching flag. Below them sit the two registers described in the next
 section. Artifacts opens executed or blocked ledgers and verifies every recorded
 artifact hash. Connections is a pure status page that keeps configured adapters,
-executed provider runs, transfers, and cloud proof visibly separate. The registry still
+executed provider runs, transfers, and cloud proof visibly separate; Connections and
+Governance each say where a setting is changed. The console still
 holds everything it always did: explainable Cleanup Rules, read-only Mail-to-Case
 intake, Controlled Email drafts, the source-grounded Contact Monitor, deterministic
 bundle preparation, privacy preflight, Evidence Analyst, reusable prompt sets and
@@ -917,7 +960,7 @@ not proof of a Nebius, Nemotron or NemoClaw runtime call; `cloud_proof` remains 
 <a id="sibling-ecosystem--integration"></a><a id="geschwister-oekosystem--integration"></a>
 ## 17. Sibling Ecosystem & Integration
 
-NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem and the wider `open-bricks` architecture. It seamlessly integrates with peer tools across the portfolio:
+NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem. Sister projects live in the `ellmos-ai`, `dev-bricks` and `doc-bricks` organizations; `open-bricks` is an umbrella profile organization without code repositories. Public peer tools:
 
 | Tool / Repository | Organization | Role & Interoperability |
 |:---|:---:|:---|
@@ -926,17 +969,12 @@ NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem 
 | **[ellmos-controlcenter-mcp](https://github.com/ellmos-ai/ellmos-controlcenter-mcp)** | `ellmos-ai` | Central orchestration and capability-routing MCP server |
 | **[ellmos-homebase-mcp](https://github.com/ellmos-ai/ellmos-homebase-mcp)** | `ellmos-ai` | Agent persistent memory, state management, and profile store |
 | **[report-forge](https://github.com/ellmos-ai/report-forge)** | `ellmos-ai` | Headless DOCX template engine and professional report renderer |
-| **[assistant-core](https://github.com/ellmos-ai/assistant-core)** | `ellmos-ai` | Unified prompt engine, multi-provider interfaces & agent runtime |
 | **[DevCenter](https://github.com/dev-bricks/DevCenter)** | `dev-bricks` | Multi-repository workspace manager and local developer dashboard |
-| **[ticket-master](https://github.com/dev-bricks/ticket-master)** | `dev-bricks` | Issue tracker, linear sprint workflow, and task engine |
-| **[lock-master](https://github.com/dev-bricks/lock-master)** | `dev-bricks` | Host concurrency locking, fail-closed access, and sync locks |
-| **[sync-master](https://github.com/dev-bricks/sync-master)** | `dev-bricks` | Multi-device file synchronizer and conflict copy resolution |
-| **[file-cleaner](https://github.com/file-bricks/file-cleaner)** | `file-bricks` | Batch temporary file scanner, duplicate resolver, and declutterer |
-| **[folder-organizer](https://github.com/file-bricks/folder-organizer)** | `file-bricks` | Rule-based folder taxonomies and automated directory structuring |
+| **[ticket-master](https://github.com/ellmos-ai/ticket-master)** | `ellmos-ai` | Multi-provider LLM ticket router and agent triage console |
+| **[lock-master](https://github.com/ellmos-ai/lock-master)** | `ellmos-ai` | Portable multi-agent file locks: exclusive and team locks with scopes and expiry |
+| **[system-gap-master](https://github.com/ellmos-ai/system-gap-master)** | `ellmos-ai` | Serverless sync yard for multi-machine, multi-agent setups |
 | **[CleanMarkdown](https://github.com/doc-bricks/CleanMarkdown)** | `doc-bricks` | Markdown linter, anchor normalization, and documentation formatter |
-| **[ChainReaction](https://github.com/entertain-and-more/ChainReaction)** | `entertain-and-more` | Interactive turn-based board game with local AI agents |
-| **[githubbot](https://github.com/dev-bricks/githubbot)** | `dev-bricks` | Automated multi-organization repository maintenance and telemetry |
-| **[open-bricks](https://github.com/open-bricks)** | `open-bricks` | Umbrella open-source organization and standards federation |
+| **[open-bricks](https://github.com/open-bricks)** | `open-bricks` | Umbrella profile organization (no code repositories) |
 
 ---
 
@@ -973,7 +1011,7 @@ NemoFold is a core document intelligence component of the `ellmos-ai` ecosystem 
 - [Submission readiness](docs/submission-readiness.md)
 - [Competition code map](COMPETITION_CODE_MAP.md)
 - [Third-Party Software & Dependency Audit](THIRD_PARTY_LICENSES.md)
-- [Security Policy & 48h Vulnerability SLA](SECURITY.md)
+- [Security Policy & 48h response target](SECURITY.md)
 - [Contributing Guidelines](CONTRIBUTING.md)
 - [Release Gate Checklist](RELEASE_GATE.md)
 

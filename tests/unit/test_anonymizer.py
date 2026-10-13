@@ -1,6 +1,15 @@
 from __future__ import annotations
 
-from nemofold.anonymizer import pseudonymize_text
+import itertools
+import re
+
+from nemofold.anonymizer import (
+    _EXEMPT,
+    PATTERNS,
+    _is_date,
+    detect_sensitive_categories,
+    pseudonymize_text,
+)
 
 
 def test_pseudonymizer_removes_common_identifiers_and_explicit_terms() -> None:
@@ -37,3 +46,150 @@ def test_pseudonymizer_is_deterministic_and_does_not_store_original_values() -> 
     assert first == second
     assert first.text == "<EMAIL_001> then <EMAIL_001>"
     assert "a@example.org" not in repr(first)
+
+
+def test_dates_stay_readable_while_phone_and_case_numbers_are_masked() -> None:
+    # Endabnahme 2026-10-12: every date was masked as PHONE, so a cloud
+    # timeline question arrived without a single date.
+    text = (
+        "Am Samstag, 14.03.2026, gegen 21:30 Uhr. Annahme: 13.03.2026 17:00. "
+        "ISO 2026-03-14. Police KV-2026-0447. Ruf 0761 1234567 oder +49 171 1234567, "
+        "am 01.03.2026: 0761/987654."
+    )
+
+    result = pseudonymize_text(text)
+
+    for date in ("14.03.2026", "13.03.2026 17:00", "2026-03-14", "01.03.2026"):
+        assert date in result.text, date
+    for secret in ("0761 1234567", "+49 171 1234567", "0761/987654", "2026-0447"):
+        assert secret not in result.text, secret
+    assert result.replacement_counts == {"PHONE": 4}
+
+
+def test_a_date_never_frees_the_digits_around_it() -> None:
+    # Independent review R4 (Codex): a first date exemption let these through
+    # unmasked and unflagged. The PHONE pattern is the original one again; only
+    # a run that is exactly one calendar-valid date is exempt.
+    leaks = [
+        "14.03.2026-01711234567",
+        "2026-03-14-01711234567",
+        "2026-03-14.01711234567",
+        "Tel. 0761-12-30",
+        "Police KV-2026-03-14-1234",
+        "31.02.2026",
+        "29.02.2025",
+        "2026-02-31",
+        "0000-01-01",
+        "01.12.1234567",
+        "14.03.2026 99",
+    ]
+    for text in leaks:
+        assert "PHONE" in detect_sensitive_categories(text), text
+        assert pseudonymize_text(text).replacement_counts.get("PHONE") == 1, text
+    for text in ("Am 14.03.2026.", "Leap day 29.02.2024 ok", "um 13.03.2026 17:00 Uhr",
+                 "(14.03.2026)"):
+        assert detect_sensitive_categories(text) == (), text
+        assert pseudonymize_text(text).text == text, text
+
+
+def test_masked_text_passes_the_residual_check_and_times_need_real_minutes() -> None:
+    # Review R5 (Codex): after masking, "14.03.2026-<PHONE_001>" was flagged
+    # again and blocked the context; and "17:abc" counted as a time.
+    for text in ("14.03.2026-01711234567", "2026-03-14/01711234567", "Am 14.03.2026. 0761 1234567"):
+        masked = pseudonymize_text(text).text
+        assert "<PHONE_001>" in masked, text
+        assert detect_sensitive_categories(masked) == (), masked
+    for text in ("14.03.2026 17:abc", "14.03.2026 17:99", "14.03.2026 17.:00", "14.03.2026 17"):
+        assert "PHONE" in detect_sensitive_categories(text), text
+
+
+def test_runs_longer_than_any_cap_leave_no_readable_tail() -> None:
+    # Review R6 (Codex): a cap of 64 digits moved the split and left "987654"
+    # readable after sixteen four-digit groups.
+    for groups in (16, 17, 40):
+        result = pseudonymize_text("1234 " * groups + "987654")
+        assert "987654" not in result.text, groups
+        assert result.replacement_counts == {"PHONE": 1}, groups
+        assert detect_sensitive_categories(result.text) == ()
+
+
+def test_unicode_minutes_keep_a_date_with_its_time() -> None:
+    # Review R6-02: [0-5] accepted only ASCII minutes.
+    for text in ("14.03.2026 23:\u0660\u0660", "14.03.2026 23:\uff10\uff10"):
+        assert pseudonymize_text(text).text == text
+    assert "PHONE" in detect_sensitive_categories("14.03.2026 23:\u0666\u0660")
+
+
+def test_a_long_digit_run_is_masked_as_a_whole() -> None:
+    # Review R5-B01 (pre-existing): a cap of 15 digits split long runs and a
+    # remainder under seven digits stayed readable.
+    result = pseudonymize_text("am 01.03.2026 0761/987654 und 1234 5678 9012 3456 7890 12")
+
+    assert "987654" not in result.text
+    assert "7890 12" not in result.text
+    assert detect_sensitive_categories(result.text) == ()
+
+
+def test_minutes_never_stay_readable_by_themselves() -> None:
+    # Review R7 (Codex): keeping the minutes of "any digit:" exposed "12" in
+    # "99:12 3456789", and an exemption that relied on text masked in the same
+    # pass blocked the residual check.
+    for text, masked in (
+        ("13.03.2026 17:00 0761 1234567", "<PHONE_001>:<PHONE_002>"),
+        ("13.03.2026 17:00, 0761 1234567", "13.03.2026 17:00, <PHONE_001>"),
+        ("99:12 3456789", "99:<PHONE_001>"),
+        ("9263428960:34.154191", "<PHONE_001>:<PHONE_002>"),
+        ("0761 1234567 17:00 14.03.2026", "<PHONE_001>:<PHONE_002>"),
+    ):
+        assert pseudonymize_text(text).text == masked, text
+        assert detect_sensitive_categories(masked) == (), masked
+
+
+def test_a_placeholder_in_the_input_proves_nothing_and_masking_adds_no_residue() -> None:
+    # Review R8 (Codex): "<PHONE_n>" written into a document made a date with
+    # an hour count as followed by masked minutes; and masking a run directly
+    # before letters created a word boundary that turned "AB12..." into an IBAN.
+    assert pseudonymize_text("13.03.2026 17:<PHONE_001>").text == "<PHONE_001>:<PHONE_001>"
+    # Review R9: the same check guards raw web queries and imported packages,
+    # so a placeholder never counts as minutes anywhere.
+    assert detect_sensitive_categories("13.03.2026 17:<PHONE_001>") == ("PHONE",)
+    for text in ("1234567AB1234567890123", "1234567C:\\notes\\a.txt"):
+        result = pseudonymize_text(text)
+        assert detect_sensitive_categories(result.text) == (), result.text
+
+
+def test_every_digit_the_original_pattern_masked_is_still_masked() -> None:
+    # Property from review rounds R4-R9: apart from exact dates (with an hour
+    # before minutes that stand alone), nothing the pre-2026-10-12 pattern
+    # masked may become readable, and masked text never trips the residual check.
+    original = re.compile(r"(?<!\w)(?:\+\d{1,3}[ .()/\-]*)?(?:\d[ .()/\-]*){7,15}(?!\w)")
+    phone = dict(PATTERNS)["PHONE"]
+    for sep, width, count, tail in itertools.product(
+        (" ", ".", "-", "/", "(", ")"), range(1, 9), range(1, 13), ("", " 9", " 987", " 987654")
+    ):
+        text = "Contact " + sep.join(["12345678"[:width]] * count) + tail + " end"
+        before = {
+            index
+            for match in original.finditer(text)
+            for index in range(match.start(), match.end())
+            if text[index].isdigit()
+        }
+        masked, allowed = set(), set()
+        for match in phone.finditer(text):
+            digits = {i for i in range(match.start(), match.end()) if text[i].isdigit()}
+            if _is_date(match):
+                allowed |= digits
+            elif not _EXEMPT["PHONE"](match):
+                masked |= digits
+        assert before <= masked | allowed, text
+        assert detect_sensitive_categories(pseudonymize_text(text).text) == (), text
+
+
+def test_a_raw_web_query_with_a_forged_placeholder_is_refused() -> None:
+    # Review R9-01: raw web queries share the residual check.
+    from nemofold.web_research import validate_queries
+
+    queries, refused = validate_queries(["13.03.2026 17:<PHONE_001>", "Kiosk Uferstrasse"])
+
+    assert queries == ("Kiosk Uferstrasse",)
+    assert len(refused) == 1

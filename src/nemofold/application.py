@@ -775,6 +775,13 @@ def _execute_digest(
     )
 
 
+_QUESTION_WORDS = frozenset(
+    {"what", "which", "where", "when", "does", "have", "with", "from", "that", "this",
+     "welche", "welcher", "welches", "wann", "warum", "wieso", "hatte", "haben",
+     "sind", "wird", "wurde", "eine", "einer", "einem", "einen", "gegen", "nach"}
+)
+
+
 def _analysis_claim(
     question: str,
     hits: tuple[SearchHit, ...],
@@ -785,7 +792,23 @@ def _analysis_claim(
         raise ValueError("analysis claim requires at least one search hit")
     primary = hits[0]
     quote = primary.text
-    first_sentence = re.split(r"(?<=[.!?])\s+", quote.strip(), maxsplit=1)[0]
+    # The headline is the first sentence that shares a word with the question,
+    # so a boilerplate opening line (a fixture's fiction notice, a letterhead)
+    # does not stand in for the answer. The full passage stays in the evidence.
+    sentences = re.split(r"(?<=[.!?])\s+", quote.strip())
+    terms = {
+        word.casefold() for word in re.findall(r"\w{4,}", question)
+    } - _QUESTION_WORDS
+    first_sentence = next(
+        (
+            sentence
+            for sentence in sentences
+            if terms & {word.casefold() for word in re.findall(r"\w{4,}", sentence)}
+        ),
+        sentences[0],
+    )
+    if len(first_sentence) > 240:
+        first_sentence = first_sentence[:239].rstrip() + "…"
     fingerprints = {
         tuple(
             re.findall(

@@ -23,14 +23,14 @@ const currentTab = availableTabs.includes(requestedTab) ? requestedTab : (availa
 const roomTag = {folders: "folder-watch"};
 let activeTag = searchParameters.get("tag") || roomTag[currentPage] || "";
 const tabTitles = {
-  workflows: "Workflows — NemoFold",
-  registry: "Registry — NemoFold",
+  workflows: "My use cases — NemoFold",
+  registry: "Blueprints — NemoFold",
   artifacts: "Artifacts — NemoFold",
   policies: "Policies — NemoFold",
   rules: "Rules — NemoFold"
 };
 const pageConfiguration = {
-  overview: {title: "NemoFold — Local evidence workspace", defaultWorkflow: "smart_inbox", workflows: []},
+  overview: {title: "NemoFold — Engine room", defaultWorkflow: "evidence_analyst", workflows: []},
   folders: {title: "Folders — NemoFold", defaultWorkflow: "smart_inbox", workflows: []},
   processes: {title: "Processes & Workflows — NemoFold", defaultWorkflow: "evidence_analyst", workflows: []},
   governance: {title: "Governance — NemoFold", defaultWorkflow: "storage_policy", workflows: []},
@@ -41,6 +41,8 @@ document.body.dataset.tab = currentTab;
 document.title = tabTitles[currentTab] || pageConfiguration[currentPage].title;
 const lines = (value) => value.split(/\r?\n/).map((item) => item.trim()).filter(Boolean);
 let publicDemo = false;
+let folderCurrentApproved = false;
+let publicDemoParameters = {};
 let folderPickerEnabled = false;
 let providerSurfaceEnabled = false;
 let externalModelsAllowed = false;
@@ -99,7 +101,8 @@ const providerModelDefaults = {
   "codex-cli": "gpt-5.4",
   "claude-code": "sonnet",
   openai: "",
-  anthropic: ""
+  anthropic: "",
+  nebius: "nvidia/nemotron-3-super-120b-a12b"
 };
 const workflowDefaults = {
   cleanup_rules: {
@@ -143,7 +146,11 @@ const workflowDefaults = {
     hint: "Contact Monitor extracts email and responsibility candidates with source quotes, compares a named earlier snapshot and never auto-deletes missing contacts."
   },
   evidence_analyst: {
-    questions: ["When does the current policy begin?", "Which earlier wording changed?"],
+    // D-040: the default questions fit the fictional case file, the default folder.
+    questions: [
+      "Welche Farbe hatte der Wagen mit dem Kennzeichen B-TL 4471?",
+      "Wo war Tobias Lenz am Samstag, 14.03.2026, gegen 21:30 Uhr?"
+    ],
     parameters: {max_chunks: 256, formats: ["md", "txt"], conflict_scan: true},
     hint: "Evidence Analyst searches the approved inputs and reports exact source locations, conflicts and coverage."
   },
@@ -567,9 +574,9 @@ const voyageScenes = {
   workflows: {
     className: "analysis-lab",
     kicker: "THE GREAT OBSERVATION WINDOW",
-    title: "Workflows",
-    text: "Every use case you kept and every specialist that ships with NemoFold, filtered by topic. Look into the deep corpus with Captain Nemo and follow each finding back to its exact source.",
-    roadmap: "ACTIVE · my use cases + shipped specialists + standing routines"
+    title: "My use cases",
+    text: "Every workflow and action you adopted, filtered by topic. Look into the deep corpus with Captain Nemo and follow each finding back to its exact source.",
+    roadmap: "ACTIVE · my use cases + standing routines"
   },
   scheduled: {
     className: "folder-routines",
@@ -580,10 +587,10 @@ const voyageScenes = {
   },
   registry: {
     className: "analysis-lab",
-    kicker: "THE INSTRUMENT REGISTRY",
-    title: "Registry",
-    text: "Every job contract on its own, without a topic: the instruments a use case is built from. Reach for one to diagnose a step, try a parameter, or build something the library does not have yet.",
-    roadmap: "ACTIVE · every job contract this server offers · the engine room is their editor"
+    kicker: "THE BLUEPRINT LIBRARY",
+    title: "Blueprints",
+    text: "Workflow blueprints and single actions: adopt one into your use cases as often as you like, or try a single action once in the engine room.",
+    roadmap: "ACTIVE · workflow blueprints + single actions + my blueprints"
   },
   artifacts: {
     className: "artifact-library",
@@ -840,7 +847,7 @@ function syncDrawerModality() {
   if (!drawer) return;
   // The drawer only traps the page on the mobile full-surface overlay. Beside a
   // readable page it is a panel, and announcing it as a modal would lie.
-  if (overlayQuery?.matches && engineDrawerIsOpen()) {
+  if (currentPage !== "overview" && overlayQuery?.matches && engineDrawerIsOpen()) {
     drawer.setAttribute("role", "dialog");
     drawer.setAttribute("aria-modal", "true");
   } else {
@@ -852,6 +859,8 @@ function syncDrawerModality() {
 function setEngineDrawer(open, {moveFocus = true} = {}) {
   const drawer = $("engineRoom");
   if (!drawer) return;
+  // On the workbench the engine room is the page itself and never closes.
+  if (currentPage === "overview" && !open) return;
   const wasOpen = engineDrawerIsOpen();
   drawer.dataset.open = open ? "true" : "false";
   document.body.dataset.engineRoom = open ? "open" : "closed";
@@ -965,7 +974,7 @@ async function askTheCaptain(event) {
       answer,
       "p",
       "desk-note",
-      "The captain's desk is a loopback-only surface and stays closed on this server."
+      "The captain's desk opens only in a loopback console started with nemofold serve; this server keeps it closed."
     );
     return;
   }
@@ -1217,14 +1226,57 @@ function taskCard(workflow, active) {
     technical.textContent = workflow;
     const button = document.createElement("button");
     button.type = "button";
-    button.className = workflow === active ? "card-open secondary" : "card-open";
-    button.append(
-      instrumentIcon("wheel"),
-      workflow === active ? "Selected · open engine room" : "Prepare in engine room"
-    );
-    button.addEventListener("click", () => prepareWorkflow(workflow));
-    card.append(technical, title, benefit, button);
+    button.className = "card-open";
+    button.append(instrumentIcon("wheel"), "Add to my use cases");
+    button.addEventListener("click", () => adoptAction(workflow, card));
+    const trial = document.createElement("button");
+    trial.type = "button";
+    trial.className = "secondary";
+    trial.textContent = workflow === active ? "Selected · open engine room" : "Try once";
+    trial.addEventListener("click", () => prepareWorkflow(workflow));
+    card.append(technical, title, benefit, button, trial);
     return card;
+  }
+}
+
+// D-039: a single action becomes a one-step use case bound to the current folders.
+async function adoptAction(workflow, card) {
+  const defaults = workflowDefaults[workflow] || {questions: [], parameters: {}};
+  const output = $("outputDir").value.trim().replace(/[\\/]+$/, "");
+  try {
+    const response = await fetch("/api/voyages", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        name: uniqueName(workflowCards[workflow]?.title || workflow, false),
+        description: workflowCards[workflow]?.benefit || "",
+        source: "manual",
+        steps: [{
+          workflow,
+          job: {
+            schema: "nemofold.job.v1",
+            workflow,
+            input_roots: lines($("deskRoots")?.value || $("inputRoots").value),
+            output_dir: `${output}/voyage/01-${workflow}`,
+            questions: defaults.questions,
+            privacy_mode: "local_only",
+            action_mode: "dry_run",
+            model_budget_usd: 0,
+            parameters: defaults.parameters
+          },
+          note: "",
+          reads_previous_output: false
+        }]
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    await loadLibrary();
+    await openLibraryEntry(payload.voyage.voyage_id);
+  } catch (error) {
+    libraryNote(card, `Not added: ${error.message}. Try it once in the engine room instead.`);
   }
 }
 
@@ -1307,7 +1359,12 @@ async function loadEcho() {
     if (!response.ok || payload.ok !== true) {
       throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
     }
-    const routineWorkflows = new Set(pageConfiguration.routines.workflows);
+    // The routines room became a filter (D-036): an echo comes from the
+    // registry's folder-routine group or from any saved use case with a schedule.
+    const routineWorkflows = new Set([
+      ...(registryGroups.find((group) => group.title === "Folder routines")?.workflows || []),
+      ...libraryEntries.filter((entry) => entry.schedule).flatMap((entry) => entry.workflows || [])
+    ]);
     const runs = (Array.isArray(payload.runs) ? payload.runs : [])
       .filter((run) => routineWorkflows.has(run.workflow));
     list.textContent = "";
@@ -1694,9 +1751,13 @@ function updateProviderAvailability() {
 function applyWorkflowDefaults() {
   const defaults = workflowDefaults[$("workflow").value];
   if (!defaults) return;
+  // The public demo runs only the server's own parameters, so show exactly
+  // those and keep the analysis scale from rewriting them.
+  const demoParameters = publicDemo ? publicDemoParameters[$("workflow").value] : undefined;
   $("questions").value = defaults.questions.join("\n");
-  $("parameters").value = JSON.stringify(defaults.parameters, null, 2);
-  $("analysisScale").disabled = !["evidence_analyst", "platform_proof"].includes($("workflow").value);
+  $("parameters").value = JSON.stringify(demoParameters || defaults.parameters, null, 2);
+  $("analysisScale").disabled = Boolean(demoParameters)
+    || !["evidence_analyst", "platform_proof"].includes($("workflow").value);
   if (!$("analysisScale").disabled) applyAnalysisScale();
   updateVoyageScene();
   renderWorkflowMap();
@@ -1826,13 +1887,19 @@ async function loadFolderChoices(path = null) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.detail || data.error || "Folder request failed.");
   folderCurrentPath = data.current?.path || null;
-  $("folderCurrent").textContent = folderCurrentPath || "Choose one server-approved root.";
+  folderCurrentApproved = data.current?.approved === true;
+  $("folderCurrent").textContent = folderCurrentPath || "Choose an approved folder or a place on this computer.";
   $("folderUp").disabled = !data.parent;
   $("folderUp").dataset.path = data.parent || "";
   $("folderSelectCurrent").disabled = !folderCurrentPath;
+  $("folderSelectCurrent").textContent = !folderCurrentPath || folderCurrentApproved
+    ? "Use this folder"
+    : "Approve for this session and use";
   const choices = $("folderChoices");
   choices.replaceChildren();
-  const entries = folderCurrentPath ? data.directories : data.roots;
+  const entries = folderCurrentPath
+    ? data.directories
+    : [...(data.roots || []), ...(data.places || [])];
   for (const entry of entries || []) {
     const button = document.createElement("button");
     button.type = "button";
@@ -1851,9 +1918,12 @@ async function loadFolderChoices(path = null) {
     choices.append(empty);
   }
   const skipped = Number(data.skipped_count || 0);
+  const scope = folderCurrentPath && !folderCurrentApproved
+    ? "Not approved yet. Approving works like --allow-root until the server stops: workflows may read this folder and write their reports into it; moving or deleting files still needs --approve-actions."
+    : "Approved folders first; any other folder on this computer can be approved for this session.";
   $("folderStatus").textContent = skipped
-    ? `${skipped} inaccessible or linked folders were omitted.`
-    : "Only real folders inside server-approved roots are shown.";
+    ? `${skipped} inaccessible or linked folders were omitted. ${scope}`
+    : scope;
 }
 
 function showFolderError(error) {
@@ -1868,8 +1938,21 @@ function openFolderDialog(targetId) {
   loadFolderChoices(null).catch(showFolderError);
 }
 
-function useCurrentFolder() {
+async function useCurrentFolder() {
   if (!folderCurrentPath || !folderTargetId) return;
+  if (!folderCurrentApproved) {
+    const response = await fetch("/api/approve-root", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({path: folderCurrentPath})
+    });
+    const data = await response.json();
+    if (!response.ok || data.ok !== true) {
+      showFolderError(new Error(data.detail || data.error || "Approval failed."));
+      return;
+    }
+    folderCurrentApproved = true;
+  }
   const target = $(folderTargetId);
   if (["outputDir", "homeGlanceRoot"].includes(folderTargetId)) {
     target.value = folderCurrentPath;
@@ -2233,7 +2316,7 @@ async function loadHomeModules() {
     if (folderPickerEnabled) await loadHomeGlance();
     else {
       $("glanceState").textContent =
-        "The corpus overview is a loopback-only surface and stays closed here.";
+        "The corpus overview opens only in a loopback console started with nemofold serve; this server keeps it closed.";
     }
   }
   if ($("echoCheck")) {
@@ -2242,7 +2325,7 @@ async function loadHomeModules() {
     else {
       $("echoList").textContent = "";
       const note = document.createElement("p");
-      note.textContent = "Echo sounding is a loopback-only surface and stays closed here.";
+      note.textContent = "Echo sounding opens only in a loopback console started with nemofold serve; this server keeps it closed.";
       $("echoList").append(note);
     }
   }
@@ -2527,7 +2610,7 @@ async function loadGovernanceRegister() {
   if (!list || currentPage !== "governance") return;
   if (!policySurfaceEnabled) {
     list.textContent = "";
-    libraryNote(list, "The policy register is a loopback-only surface and stays closed here.");
+    libraryNote(list, "The policy register opens only in a loopback console started with nemofold serve; this server keeps it closed.");
     return;
   }
   try {
@@ -2567,7 +2650,13 @@ async function loadStatus() {
     renderConnectionStatus(status);
     renderWebRoute(status);
     renderCommandBridge(status);
+    $("modeBadge").textContent = publicDemo
+      ? "PUBLIC DEMO · SYNTHETIC DATA ONLY"
+      : "FULL LOCAL CONSOLE";
+    $("modeBadge").parentElement.classList.toggle("demo", publicDemo);
     if (publicDemo) {
+      publicDemoParameters = status.public_demo_parameters || {};
+      $("analysisScale").value = "custom";
       const supported = new Set(status.workflows);
       for (const option of [...$("workflow").options]) {
         if (!supported.has(option.value)) option.remove();
@@ -2589,6 +2678,12 @@ async function loadStatus() {
       updateProviderPanel();
       for (const button of document.querySelectorAll("[data-folder-target]")) button.disabled = true;
     } else {
+      // The shipped default names the repository's synthetic corpus; a server
+      // started on other folders says which approved root to begin with.
+      if (status.default_input_root
+          && $("inputRoots").value.trim() === $("inputRoots").defaultValue.trim()) {
+        $("inputRoots").value = status.default_input_root;
+      }
       configureRoutedPage();
       applyWorkflowDefaults();
       for (const button of document.querySelectorAll("[data-folder-target]")) {
@@ -2602,8 +2697,9 @@ async function loadStatus() {
     await loadDraftInbox();
     await loadResearchNotebooks();
     await loadArtifacts();
-    await loadHomeModules();
+    // The library first: the echo sounder counts scheduled use cases as routines.
     await loadLibrary();
+    await loadHomeModules();
     await loadGovernanceRegister();
     if (currentPage !== "governance" && policySurfaceEnabled) await loadKnownPolicies();
     $("systemState").textContent = status.live_runtime_ready
@@ -2628,6 +2724,7 @@ renderTaskCards();
 if ($("engineHandle")) {
   $("engineHandle").addEventListener("click", () => setEngineDrawer(!engineDrawerIsOpen()));
 }
+if (currentPage === "overview") setEngineDrawer(true, {moveFocus: false});
 if ($("engineClose")) $("engineClose").addEventListener("click", () => setEngineDrawer(false));
 overlayQuery?.addEventListener?.("change", syncDrawerModality);
 document.addEventListener("keydown", (event) => {
@@ -2659,10 +2756,17 @@ if ($("policyForm")) {
 }
 if ($("libraryClose")) {
   $("libraryClose").addEventListener("click", () => { openVoyage = null; renderVoyageDetail(); });
+  $("libraryDetail").addEventListener("close", () => { openVoyage = null; });
 }
 if ($("libraryRun")) $("libraryRun").addEventListener("click", runOpenVoyage);
 if ($("librarySave")) $("librarySave").addEventListener("click", saveVoyageChanges);
 if ($("libraryDelete")) $("libraryDelete").addEventListener("click", deleteOpenVoyage);
+if ($("libraryBlueprint")) $("libraryBlueprint").addEventListener("click", saveOpenAsBlueprint);
+if ($("libraryAdopt")) {
+  $("libraryAdopt").addEventListener("click", () => adoptBlueprint(
+    {voyage_id: openVoyage.voyage_id, name: openVoyage.name, editable: true, source: "template"}
+  ));
+}
 if ($("libraryEditForm")) $("libraryEditForm").addEventListener("submit", askVoyageEdit);
 if ($("homeGlanceLook")) $("homeGlanceLook").addEventListener("click", loadHomeGlance);
 if ($("echoCheckRun")) $("echoCheckRun").addEventListener("click", loadEcho);
@@ -2810,7 +2914,7 @@ async function loadLibrary() {
   if (!list) return;
   if (!voyageSurfaceEnabled) {
     list.textContent = "";
-    libraryNote(list, "The use-case library is a loopback-only surface and stays closed here.");
+    libraryNote(list, "The use-case library opens only in a loopback console started with nemofold serve; this server keeps it closed.");
     return;
   }
   try {
@@ -2831,8 +2935,15 @@ function renderLibraryCards(list, entries) {
   for (const entry of entries) {
     const card = deskLine(list, "article", "library-card");
     card.setAttribute("role", "listitem");
-    if (!entry.editable) card.dataset.shipped = "true";
-    deskLine(card, "span", "library-kind", entry.editable ? "SAVED" : "SPECIALIST · READ-ONLY");
+    const blueprint = isBlueprint(entry);
+    if (blueprint) card.dataset.shipped = "true";
+    const shape = entry.workflows.length > 1 ? `WORKFLOW · ${entry.workflows.length} ACTIONS` : "ACTION";
+    deskLine(
+      card,
+      "span",
+      "library-kind",
+      blueprint ? `${entry.editable ? "MY BLUEPRINT" : "BLUEPRINT"} · ${shape}` : shape
+    );
     if (entry.overrides_links) {
       const warning = deskLine(card, "p", "library-warning");
       deskLine(warning, "span", "warning-mark", "▲");
@@ -2861,16 +2972,38 @@ function renderLibraryCards(list, entries) {
     deskLine(card, "small", "library-steps-line", entry.workflows.join(" → "));
     const button = document.createElement("button");
     button.type = "button";
-    button.className = entry.editable ? "card-open" : "card-open secondary";
-    button.append(
-      instrumentIcon("wheel"),
-      entry.editable ? "Open" : "Copy to my use cases"
-    );
+    button.className = "card-open";
+    button.append(instrumentIcon("wheel"), blueprint ? "Add to my use cases" : "Open");
     button.addEventListener("click", () =>
-      entry.editable ? openLibraryEntry(entry.voyage_id) : copySpecialist(entry.voyage_id)
+      blueprint ? adoptBlueprint(entry) : openLibraryEntry(entry.voyage_id)
     );
     card.append(button);
+    if (blueprint && entry.editable) {
+      const edit = document.createElement("button");
+      edit.type = "button";
+      edit.className = "secondary";
+      edit.textContent = "Edit blueprint";
+      edit.addEventListener("click", () => openLibraryEntry(entry.voyage_id));
+      card.append(edit);
+    }
   }
+}
+
+// D-039: shipped presets and the person's own saved blueprints are blueprints;
+// everything else in the library is one of their use cases.
+function isBlueprint(entry) {
+  return !entry.editable || entry.source === "template";
+}
+
+function uniqueName(base, blueprint) {
+  const taken = new Set(
+    libraryEntries.filter((entry) => entry.editable && isBlueprint(entry) === blueprint)
+      .map((entry) => entry.name)
+  );
+  if (!taken.has(base)) return base;
+  let number = 2;
+  while (taken.has(`${base} (${number})`)) number += 1;
+  return `${base} (${number})`;
 }
 
 function tagLabel(tag) {
@@ -2912,15 +3045,36 @@ function renderLibraryFilter(entries) {
   }
 }
 
+function renderBlueprints(entries) {
+  const list = $("blueprintList");
+  if (!list) return;
+  list.textContent = "";
+  const blueprints = entries.filter(isBlueprint);
+  const sections = [
+    ["WORKFLOW BLUEPRINTS · TWO OR MORE ACTIONS", blueprints.filter((e) => !e.editable && e.workflows.length > 1)],
+    ["SINGLE-ACTION BLUEPRINTS · PRECONFIGURED", blueprints.filter((e) => !e.editable && e.workflows.length === 1)],
+    ["MY BLUEPRINTS", blueprints.filter((e) => e.editable)]
+  ];
+  for (const [title, items] of sections) {
+    deskLine(list, "p", "kicker library-group-title", title);
+    if (!items.length) {
+      libraryNote(list, "None yet. Open one of your use cases and choose Save as blueprint.");
+      continue;
+    }
+    renderLibraryCards(deskLine(list, "div", "library-group"), items);
+  }
+}
+
 function renderLibrary(entries) {
   const list = $("libraryList");
   list.textContent = "";
+  renderBlueprints(entries);
+  entries = entries.filter((entry) => !isBlueprint(entry));
   renderLibraryFilter(entries);
   if (!entries.length) {
     libraryNote(
       list,
-      "Nothing here yet. A use case starts as a copied specialist, and none are "
-      + "aboard right now - ask the captain above to plan one instead."
+      "No use cases yet. Add one from the blueprints, or ask the captain above to plan one."
     );
     return;
   }
@@ -2961,18 +3115,62 @@ function renderLibrary(entries) {
   renderLibraryCards(group, pending);
 }
 
-async function copySpecialist(presetId) {
-  const list = $("libraryList");
+// A copy carries the whole definition, so a local-only cap, rights and bound
+// policies survive; the derived "scheduled" tag travels with the schedule.
+async function copyDefinition(voyageId, name, source, steps = null) {
+  const loaded = await (await fetch(`/api/voyage?id=${encodeURIComponent(voyageId)}`)).json();
+  if (loaded.ok !== true) throw new Error(loaded.detail || loaded.error || "not readable");
+  const voyage = loaded.voyage;
+  const body = {
+    name,
+    source,
+    description: voyage.description || "",
+    // The open editor's order wins over the stored one when it is passed.
+    steps: steps || voyage.steps,
+    tags: (voyage.tags || []).filter((tag) => tag !== "scheduled")
+  };
+  for (const field of ["schedule", "model_pref", "model_authority", "authority_reason",
+    "rights", "policy_refs", "status", "missing_capability"]) {
+    if (voyage[field] !== undefined && voyage[field] !== null) body[field] = voyage[field];
+  }
+  const post = (payload) => fetch("/api/voyages", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(payload)
+  });
+  const response = await post(body);
+  if (response.ok) return response;
+  const refusal = await response.clone().json().catch(() => ({}));
+  // A chain that lets an external model override its links needs a fresh,
+  // explicit confirmation for every copy; it is never carried over silently.
+  if (String(refusal.detail || "").includes("confirm_external_authority")
+      && globalThis.confirm(
+        "This chain lets an external model override its links. Confirm that authority for the copy as well?"
+      )) {
+    return post({...body, confirm_external_authority: true});
+  }
+  return response;
+}
+
+async function adoptBlueprint(entry) {
+  const list = $("blueprintList") || $("libraryList");
+  const name = uniqueName(entry.name, false);
   try {
-    const response = await fetch("/api/voyage-preset", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({
-        preset_id: presetId,
-        input_roots: lines($("deskRoots")?.value || $("inputRoots").value),
-        output_dir: $("outputDir").value
-      })
-    });
+    let response;
+    if (entry.editable) {
+      response = await copyDefinition(entry.voyage_id, name, "manual");
+    } else {
+      response = await fetch("/api/voyage-preset", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+          preset_id: entry.voyage_id,
+          name,
+          input_roots: lines($("deskRoots")?.value || $("inputRoots").value),
+          output_dir: $("outputDir").value
+        })
+      });
+    }
     const payload = await response.json();
     if (!response.ok || payload.ok !== true) {
       throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
@@ -2980,7 +3178,7 @@ async function copySpecialist(presetId) {
     await loadLibrary();
     await openLibraryEntry(payload.voyage.voyage_id);
   } catch (error) {
-    libraryNote(list, `Not copied: ${error.message}`);
+    libraryNote(list, `Not added: ${error.message}`);
   }
 }
 
@@ -3002,6 +3200,7 @@ async function openLibraryEntry(voyageId) {
       policy_refs: voyage.policy_refs || [],
       tags: voyage.tags || [],
       schedule: voyage.schedule || null,
+      source: voyage.source || "manual",
       workflows: voyage.steps.map((step) => step.workflow),
       steps: voyage.steps
     };
@@ -3014,10 +3213,18 @@ async function openLibraryEntry(voyageId) {
 function renderVoyageDetail() {
   const panel = $("libraryDetail");
   if (!openVoyage) {
-    panel.hidden = true;
+    if (panel.open) panel.close();
     return;
   }
-  panel.hidden = false;
+  // A dialog, so opening a use case is visible wherever the person scrolled.
+  if (!panel.open) panel.showModal();
+  const blueprint = openVoyage.source === "template";
+  $("libraryDetailSource").textContent = blueprint ? "MY BLUEPRINT" : "MY USE CASE";
+  $("libraryDetailName").value = openVoyage.name;
+  $("libraryRun").hidden = blueprint;
+  $("libraryAdopt").hidden = !blueprint;
+  $("libraryBlueprint").hidden = blueprint;
+  $("libraryDelete").textContent = blueprint ? "Delete this blueprint" : "Remove from my use cases";
   $("libraryDetailTitle").textContent = openVoyage.name;
   $("libraryDetailDescription").textContent = openVoyage.description || "";
   const banner = $("libraryDetailWarning");
@@ -3200,12 +3407,33 @@ async function saveVoyageChanges() {
   const diff = $("libraryDiff");
   diff.textContent = "";
   try {
-    adoptSavedVoyage(await saveOpenVoyage(openVoyage.steps));
+    adoptSavedVoyage(await saveOpenVoyage(openVoyage.steps, $("libraryDetailName").value.trim()));
     libraryNote(diff, "Saved. The library now holds this order.");
     renderVoyageDetail();
     await loadLibrary();
   } catch (error) {
     libraryNote(diff, `Not saved: ${error.message}`);
+  }
+}
+
+async function saveOpenAsBlueprint() {
+  const diff = $("libraryDiff");
+  diff.textContent = "";
+  try {
+    const response = await copyDefinition(
+      openVoyage.voyage_id,
+      uniqueName($("libraryDetailName").value.trim() || openVoyage.name, true),
+      "template",
+      openVoyage.steps
+    );
+    const payload = await response.json();
+    if (!response.ok || payload.ok !== true) {
+      throw new Error(payload.detail || payload.error || `request failed (${response.status})`);
+    }
+    await loadLibrary();
+    libraryNote(diff, `Saved as blueprint "${payload.voyage.name}". It is listed under Blueprints.`);
+  } catch (error) {
+    libraryNote(diff, `Not saved as blueprint: ${error.message}`);
   }
 }
 
