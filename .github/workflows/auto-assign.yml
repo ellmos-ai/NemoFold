@@ -17,8 +17,8 @@ jobs:
   assign:
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    # Dependabot PRs run under pull_request_target with a read-only token, so
-    # assigning them returns 403 and turned every Dependabot PR red.
+    # Assigning a bot author (dependabot[bot]) returns 403 Forbidden, which
+    # turned every Dependabot PR red.
     if: github.event.pull_request.user.type != 'Bot'
     steps:
       - uses: actions/github-script@v7
