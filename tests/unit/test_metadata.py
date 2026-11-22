@@ -407,3 +407,5 @@ def test_event_workflows_group_concurrency_per_issue_or_pull_request():
         assert "group: ${{ github.workflow }}-${{ github.ref }}" not in text
     # An organization cannot be an assignee; the author is assigned instead.
     assert "repoData.owner.type === 'Organization'" in auto_assign
+    # Bot PRs get a read-only token; assigning them would fail with 403.
+    assert "if: github.event.pull_request.user.type != 'Bot'" in auto_assign
