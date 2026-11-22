@@ -15,6 +15,9 @@ permissions:
 
 jobs:
   assign:
+    # Bot PRs (Dependabot) get a read-only token under pull_request_target;
+    # addAssignees then fails with 403 and turns the PR red.
+    if: github.event.pull_request.user.type != 'Bot'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
